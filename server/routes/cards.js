@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
-const { getAll, create, update, remove, setDefault, getSavingsSummary, updateBalance } = require('../controllers/cardController');
+const { getAll, create, update, remove, setDefault, getSavingsSummary, updateBalance, payCard } = require('../controllers/cardController');
 
 router.use(protect);
 
@@ -18,6 +18,8 @@ router.route('/:id')
 
 router.patch('/:id/set-default', setDefault);
 router.patch('/:id/balance', updateBalance);
+router.patch('/:id/pay', payCard);
 
 
 module.exports = router;
+

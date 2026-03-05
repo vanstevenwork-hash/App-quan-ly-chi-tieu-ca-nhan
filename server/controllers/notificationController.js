@@ -71,6 +71,11 @@ exports.clearAll = async (req, res) => {
 exports.createNotification = async ({ userId, title, message, type = 'transaction', icon = '🔔', iconBg = '#EEF2FF', isImportant = false, relatedId, relatedModel, actionUrl }) => {
     try {
         const notif = await Notification.create({ userId, title, message, type, icon, iconBg, isImportant, relatedId, relatedModel, actionUrl });
+        // Push realtime to browser via SSE
+        try {
+            const { pushSSE } = require('../sse');
+            pushSSE(userId.toString(), { type: 'notification', data: notif });
+        } catch { /* server may not be fully loaded yet — ignore */ }
         return notif;
     } catch (err) {
         console.error('Notification creation failed:', err.message);

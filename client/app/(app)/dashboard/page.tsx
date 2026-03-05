@@ -11,6 +11,7 @@ import { useAuthStore, useUIStore } from '@/store/useStore';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCards } from '@/hooks/useCards';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useWealth } from '@/hooks/useWealth';
 import { CATEGORIES } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 import {
@@ -106,9 +107,10 @@ export default function DashboardPage() {
     const { transactions, summary, refetch } = useTransactions();
     const { cards, totalBalance, totalDebt } = useCards();
     const { unreadCount, notifications } = useNotifications();
+    const { sources: wealthSources, total: wealthTotal } = useWealth();
 
     // ── Derived values ──
-    const netWorth = totalBalance - totalDebt;
+    const netWorth = totalBalance + wealthTotal - totalDebt;
     const totalSavings = cards.filter(c => c.cardType === 'savings').reduce((s, c) => s + c.balance, 0);
 
     const creditAlerts = cards.filter(c => c.cardType === 'credit' && c.balance > 0).slice(0, 2);
@@ -176,7 +178,13 @@ export default function DashboardPage() {
                     <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(147,197,253,0.2)' }} />
 
                     <div className="text-center mb-6 relative z-10">
-                        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Tổng tài sản ròng</p>
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Tổng tài sản ròng</p>
+                            <Link href="/wealth"
+                                className="w-6 h-6 rounded-full bg-purple-50 hover:bg-purple-100 flex items-center justify-center transition-colors">
+                                <ChevronRight className="w-3.5 h-3.5 text-purple-500" />
+                            </Link>
+                        </div>
                         <div className="flex items-center justify-center gap-2 mb-1">
                             <span className="text-3xl font-bold text-slate-800 tracking-tight leading-none text-money">
                                 {hideBalance ? '• • • • • •' : fmtFull(netWorth)}

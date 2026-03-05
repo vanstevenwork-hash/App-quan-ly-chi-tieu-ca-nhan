@@ -7,7 +7,7 @@ const notificationSchema = new mongoose.Schema(
         message: { type: String, required: true },
         type: {
             type: String,
-            enum: ['payment', 'saving', 'promo', 'security', 'transaction', 'budget'],
+            enum: ['payment', 'saving', 'promo', 'security', 'transaction', 'budget', 'system', 'general'],
             default: 'transaction',
         },
         icon: { type: String, default: '🔔' },

@@ -10,6 +10,7 @@ import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import CardFormModal from '@/components/CardFormModal';
 import AddTransactionModal from '@/components/AddTransactionModal';
+import CardPaymentModal from '@/components/CardPaymentModal';
 import { useUIStore } from '@/store/useStore';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -39,6 +40,22 @@ function getGradient(card: Card, idx: number) {
     return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
 }
 
+// ── Cashback rate by category ──────────────────────────────────────────────
+const CASHBACK_RATES: Record<string, number> = {
+    'Ăn uống': 0.03,
+    'Siêu thị': 0.025,
+    'Di chuyển': 0.02,
+    'Mua sắm': 0.015,
+    'Giải trí': 0.015,
+    'Sức khỏe': 0.01,
+    'Giáo dục': 0.01,
+};
+const DEFAULT_RATE = 0.005;
+
+function getCashbackRate(category: string) {
+    return CASHBACK_RATES[category] || DEFAULT_RATE;
+}
+
 // ── Days until next payment -------------------------------------------------
 function daysUntilPayment(paymentDueDay: number): number | null {
     if (!paymentDueDay) return null;
@@ -49,9 +66,9 @@ function daysUntilPayment(paymentDueDay: number): number | null {
 }
 
 // ── Credit card slide -------------------------------------------------------
-function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
+function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
     card: Card; idx: number;
-    onEdit: () => void; onDelete: () => void; onSetDefault: () => void;
+    onEdit: () => void; onDelete: () => void; onPay: () => void;
 }) {
     const usedPct = card.creditLimit > 0 ? Math.min((card.balance / card.creditLimit) * 100, 100) : 0;
     const dueDays = daysUntilPayment(card.paymentDueDay);
@@ -88,7 +105,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
                 </div>
             </div>
 
-            <div className="flex justify-between items-end mb-5">
+            <div className="flex justify-between items-end mb-4">
                 <div>
                     <p className="text-xs opacity-70 mb-1">Dư nợ hiện tại</p>
                     <p className="text-2xl font-bold tracking-tight">{fmt(card.balance)}₫</p>
@@ -119,7 +136,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
                         <span>Đã dùng {usedPct.toFixed(0)}%</span>
                         <span>Hạn mức: {fmtShort(card.creditLimit)}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden mb-3">
                         <div className="h-full rounded-full transition-all"
                             style={{
                                 width: `${usedPct}%`,
@@ -127,6 +144,14 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
                             }} />
                     </div>
                 </>
+            )}
+
+            {/* Pay button on card */}
+            {card.balance > 0 && (
+                <button onClick={onPay}
+                    className="w-full mt-1 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
+                </button>
             )}
         </div>
     );
@@ -165,29 +190,49 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CardsPage() {
-    const { cards, totalDebt, loading, createCard, updateCard, deleteCard, setDefaultCard } = useCards();
+    const { cards, totalDebt, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch: refetchCards } = useCards();
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const { transactions, refetch: refetchTx } = useTransactions();
 
     const [showForm, setShowForm] = useState(false);
     const [editCard, setEditCard] = useState<Card | null>(null);
+    const [showPayment, setShowPayment] = useState(false);
     const [addType] = useState<'expense'>('expense');
     const router = useRouter();
 
     const creditCards = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
 
-    // ── Cashback / reward estimate from transactions ──
-    const cashbackTotal = useMemo(() => {
-        const now = new Date();
-        return transactions
-            .filter(t => {
-                const d = new Date(t.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.type === 'expense';
-            })
-            .reduce((sum, t) => sum + t.amount * 0.005, 0); // 0.5% estimate
-    }, [transactions]);
+    // ── Cashback breakdown per card ─────────────────────────────────────────
+    const now = new Date();
+    const monthLabel = `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`;
 
-    // ── Payment alerts (cards with balance and due within 30d) ──
+    const thisMonthTx = useMemo(() =>
+        transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === now.getMonth() &&
+                d.getFullYear() === now.getFullYear() &&
+                t.type === 'expense' &&
+                t.category !== 'Thanh toán thẻ';
+        }), [transactions]);
+
+    // Total cashback estimated
+    const cashbackTotal = useMemo(() =>
+        thisMonthTx.reduce((sum, t) => sum + t.amount * getCashbackRate(t.category), 0),
+        [thisMonthTx]);
+
+    // Cashback by category
+    const cashbackByCategory = useMemo(() => {
+        const map: Record<string, number> = {};
+        thisMonthTx.forEach(t => {
+            const cb = t.amount * getCashbackRate(t.category);
+            map[t.category] = (map[t.category] || 0) + cb;
+        });
+        return Object.entries(map)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 4);
+    }, [thisMonthTx]);
+
+    // ── Payment alerts (cards with balance and due within 30d) ──────────────
     const paymentAlerts = useMemo(() =>
         creditCards
             .filter(c => c.balance > 0 && c.paymentDueDay > 0)
@@ -201,9 +246,6 @@ export default function CardsPage() {
         else await createCard(data);
         setEditCard(null);
     };
-
-    const now = new Date();
-    const monthLabel = `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`;
 
     return (
         <div className="min-h-screen pb-32 bg-gray-50">
@@ -222,7 +264,7 @@ export default function CardsPage() {
                         <p className="text-xs text-slate-400 font-medium">Tài chính</p>
                         <h1 className="text-xl font-bold text-slate-900 leading-tight">Quản lý Thẻ 💳</h1>
                     </div>
-                    <button onClick={() => { }}
+                    <button onClick={refetchCards}
                         className="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-slate-600 hover:bg-gray-50 active:scale-95 transition-all relative flex-shrink-0">
                         <RefreshCw className="w-4 h-4" />
                         {paymentAlerts.length > 0 && (
@@ -260,11 +302,14 @@ export default function CardsPage() {
                     </div>
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x pr-6"
                         style={{ scrollbarWidth: 'none' }}>
-                        {creditCards.map((card, idx) => (
+                        {loading && (
+                            <div className="snap-center shrink-0 w-[85%] min-h-[200px] rounded-3xl bg-gray-100 animate-pulse" />
+                        )}
+                        {!loading && creditCards.map((card, idx) => (
                             <CreditCardSlide key={card._id} card={card} idx={idx}
                                 onEdit={() => { setEditCard(card); setShowForm(true); }}
                                 onDelete={() => deleteCard(card._id)}
-                                onSetDefault={() => setDefaultCard(card._id)} />
+                                onPay={() => setShowPayment(true)} />
                         ))}
                         {/* Add new card slide */}
                         <button
@@ -282,10 +327,10 @@ export default function CardsPage() {
                 <div className="px-6 mb-6">
                     <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50">
                         {[
-                            { icon: <CreditCard className="w-5 h-5 text-indigo-600" />, label: 'Thanh toán', bg: '#EEF2FF', onClick: openAddModal },
-                            { icon: <Wallet className="w-5 h-5 text-emerald-600" />, label: 'Nạp ví', bg: '#D1FAE5', onClick: () => { } },
-                            { icon: <History className="w-5 h-5 text-orange-600" />, label: 'Lịch sử', bg: '#FEF3C7', onClick: () => { } },
-                            { icon: <BarChart3 className="w-5 h-5 text-purple-600" />, label: 'Báo cáo', bg: '#EDE9FE', onClick: () => { } },
+                            { icon: <CreditCard className="w-5 h-5 text-indigo-600" />, label: 'Thanh toán', bg: '#EEF2FF', onClick: () => setShowPayment(true) },
+                            { icon: <Wallet className="w-5 h-5 text-emerald-600" />, label: 'Giao dịch', bg: '#D1FAE5', onClick: openAddModal },
+                            { icon: <History className="w-5 h-5 text-orange-600" />, label: 'Lịch sử', bg: '#FEF3C7', onClick: () => router.push('/dashboard') },
+                            { icon: <BarChart3 className="w-5 h-5 text-purple-600" />, label: 'Báo cáo', bg: '#EDE9FE', onClick: () => router.push('/analytics') },
                         ].map(item => (
                             <button key={item.label} onClick={item.onClick}
                                 className="flex flex-col items-center gap-2 group">
@@ -299,14 +344,13 @@ export default function CardsPage() {
                     </div>
                 </div>
 
-                {/* ── Detail info ──────────────────────────────── */}
+                {/* ── Payment alerts ───────────────────────────── */}
                 <div className="px-6 mb-5">
-                    <h3 className="text-base font-bold text-slate-800 mb-3">Thông tin chi tiết</h3>
+                    <h3 className="text-base font-bold text-slate-800 mb-3">Hạn thanh toán</h3>
                     <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
-                        {/* Payment due alerts */}
                         {paymentAlerts.length > 0 ? paymentAlerts.map(({ card, days }) => {
                             const isUrgent = (days ?? 99) <= 5;
-                            const minPay = card.balance * 0.05; // 5% minimum estimate
+                            const minPay = card.balance * 0.05;
                             return (
                                 <DetailRow
                                     key={card._id}
@@ -331,20 +375,6 @@ export default function CardsPage() {
 
                         <div className="mx-4 border-t border-gray-100" />
 
-                        {/* Cashback this month */}
-                        <DetailRow
-                            icon={<BadgePercent className="w-5 h-5 text-emerald-500" />}
-                            iconBg="#D1FAE5"
-                            title="Hoàn tiền tạm tính"
-                            sub={monthLabel}
-                            value={`${fmtShort(cashbackTotal)}₫`}
-                            badge={cashbackTotal > 0 ? `+${fmtShort(cashbackTotal)}` : undefined}
-                            badgeColor="#10B981"
-                        />
-
-                        <div className="mx-4 border-t border-gray-100" />
-
-                        {/* Total credit limit */}
                         <DetailRow
                             icon={<TrendingUp className="w-5 h-5 text-indigo-500" />}
                             iconBg="#EEF2FF"
@@ -352,6 +382,54 @@ export default function CardsPage() {
                             sub={`${creditCards.length} thẻ tín dụng`}
                             value={`${fmtShort(creditCards.reduce((s, c) => s + c.creditLimit, 0))}₫`}
                         />
+                    </div>
+                </div>
+
+                {/* ── Cashback section ─────────────────────────── */}
+                <div className="px-6 mb-5">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-base font-bold text-slate-800">Hoàn tiền ước tính</h3>
+                        <span className="text-xs text-slate-400">{monthLabel}</span>
+                    </div>
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                        {/* Total cashback hero */}
+                        <div className="flex items-center gap-4 p-4 border-b border-gray-100"
+                            style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                <BadgePercent className="w-6 h-6 text-emerald-600" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-xs text-emerald-700 font-medium">Tổng hoàn tiền tháng này</p>
+                                <p className="text-2xl font-bold text-emerald-700 tracking-tight">+{fmtShort(cashbackTotal)}₫</p>
+                            </div>
+                            <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700">
+                                Chờ duyệt
+                            </span>
+                        </div>
+
+                        {/* Per-category breakdown */}
+                        {cashbackByCategory.length > 0 ? cashbackByCategory.map(([cat, cb]) => (
+                            <div key={cat} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-slate-700 truncate">{cat}</p>
+                                    <p className="text-xs text-slate-400">
+                                        {Math.round((CASHBACK_RATES[cat] || DEFAULT_RATE) * 100 * 10) / 10}% hoàn tiền
+                                    </p>
+                                </div>
+                                <span className="text-sm font-bold text-emerald-600 flex-shrink-0">+{fmtShort(cb)}₫</span>
+                            </div>
+                        )) : (
+                            <div className="p-6 text-center">
+                                <p className="text-sm text-slate-400">Chưa có giao dịch tháng này</p>
+                            </div>
+                        )}
+
+                        {/* Info note */}
+                        <div className="mx-4 border-t border-gray-100 py-3">
+                            <p className="text-[10px] text-gray-400 text-center">
+                                * Ước tính dựa trên tỷ lệ hoàn tiền trung bình. Số thực tế tùy theo chính sách ngân hàng.
+                            </p>
+                        </div>
                     </div>
                 </div>
 
@@ -364,8 +442,9 @@ export default function CardsPage() {
                             <div>
                                 <p className="text-xs font-semibold opacity-80 mb-1">Ưu đãi thẻ</p>
                                 <p className="font-bold text-lg leading-tight">Hoàn tiền không giới hạn<br />với thẻ chính</p>
-                                <button className="mt-3 bg-white text-indigo-700 text-xs font-bold py-1.5 px-3 rounded-xl shadow-sm hover:bg-indigo-50 transition">
-                                    Xem ngay
+                                <button onClick={() => setShowPayment(true)}
+                                    className="mt-3 bg-white text-indigo-700 text-xs font-bold py-1.5 px-3 rounded-xl shadow-sm hover:bg-indigo-50 transition">
+                                    Thanh toán ngay
                                 </button>
                             </div>
                             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-sm flex-shrink-0">
@@ -396,6 +475,12 @@ export default function CardsPage() {
                 onClose={closeAddModal}
                 onSaved={refetchTx}
                 defaultType={addType}
+            />
+            <CardPaymentModal
+                open={showPayment}
+                onClose={() => setShowPayment(false)}
+                onPaid={() => { refetchCards(); refetchTx(); }}
+                creditCards={creditCards}
             />
         </div>
     );

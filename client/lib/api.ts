@@ -80,6 +80,16 @@ export const cardsApi = {
     update: (id: string, data: object) => api.put(`/cards/${id}`, data),
     delete: (id: string) => api.delete(`/cards/${id}`),
     setDefault: (id: string) => api.patch(`/cards/${id}/set-default`),
+    pay: (id: string, amount: number) => api.patch(`/cards/${id}/pay`, { amount }),
+    updateBalance: (id: string, amount: number, action: 'add' | 'set') => api.patch(`/cards/${id}/balance`, { amount, action }),
+};
+
+// Wealth Sources
+export const wealthApi = {
+    getAll: () => api.get('/wealth'),
+    create: (data: object) => api.post('/wealth', data),
+    update: (id: string, data: object) => api.put(`/wealth/${id}`, data),
+    delete: (id: string) => api.delete(`/wealth/${id}`),
 };
 
 // Notifications

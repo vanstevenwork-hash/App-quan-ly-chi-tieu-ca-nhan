@@ -1,4 +1,5 @@
 const Card = require('../models/Card');
+const { createNotification } = require('./notificationController');
 
 // @desc  Get all cards for user
 // @route GET /api/cards
@@ -52,6 +53,27 @@ exports.create = async (req, res) => {
             statementDay: statementDay || 0,
             note: note || '',
         });
+        // Notification for card/savings creation
+        const typeLabel = {
+            credit: 'Thẻ tín dụng',
+            debit: 'Thẻ ghi nợ',
+            savings: 'Sổ tiết kiệm',
+            eWallet: 'Ví điện tử',
+            crypto: 'Ví crypto',
+        }[card.cardType] || 'Thẻ';
+        const icon = card.cardType === 'savings' ? '🏦' :
+            card.cardType === 'credit' ? '💳' :
+                card.cardType === 'eWallet' ? '📱' : '💳';
+        await createNotification({
+            userId: req.user.id.toString(),
+            title: `Đã thêm ${typeLabel} mới`,
+            message: `${card.bankName} – Số dư: ${(card.balance || 0).toLocaleString('vi-VN')}đ`,
+            type: 'system',
+            icon,
+            iconBg: '#EEF2FF',
+            relatedId: card._id,
+            relatedModel: 'Card',
+        });
         res.status(201).json({ success: true, data: card });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
@@ -96,6 +118,16 @@ exports.remove = async (req, res) => {
             const nextCard = await Card.findOne({ userId: req.user.id, isActive: true });
             if (nextCard) { nextCard.isDefault = true; await nextCard.save(); }
         }
+        await createNotification({
+            userId: req.user.id.toString(),
+            title: 'Đã xoá thẻ',
+            message: `${card.bankName} đã được xoá khỏi danh sách`,
+            type: 'system',
+            icon: '🗑️',
+            iconBg: '#FEE2E2',
+            relatedId: card._id,
+            relatedModel: 'Card',
+        });
         res.json({ success: true, message: 'Đã xoá thẻ' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -183,8 +215,66 @@ exports.updateBalance = async (req, res) => {
         else card.balance = Number(amount) || 0;
 
         await card.save();
+        const actionLabel = action === 'add' ? 'Nạp tiền' : 'Cập nhật số dư';
+        await createNotification({
+            userId: req.user.id.toString(),
+            title: `${actionLabel}: ${card.bankName}`,
+            message: `Số dư mới: ${card.balance.toLocaleString('vi-VN')}đ`,
+            type: 'system',
+            icon: '💰',
+            iconBg: '#ECFDF5',
+            relatedId: card._id,
+            relatedModel: 'Card',
+        });
         res.json({ success: true, data: card });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
     }
 };
+
+// @desc  Pay credit card bill
+// @route PATCH /api/cards/:id/pay
+exports.payCard = async (req, res) => {
+    try {
+        const card = await Card.findOne({ _id: req.params.id, userId: req.user.id });
+        if (!card) return res.status(404).json({ success: false, message: 'Không tìm thấy thẻ' });
+        if (card.cardType !== 'credit')
+            return res.status(400).json({ success: false, message: 'Chỉ áp dụng cho thẻ tín dụng' });
+
+        const amount = Number(req.body.amount);
+        if (!amount || amount <= 0)
+            return res.status(400).json({ success: false, message: 'Số tiền không hợp lệ' });
+
+        const paid = Math.min(amount, card.balance); // cannot pay more than balance
+        card.balance = Math.max(0, card.balance - paid);
+        await card.save();
+
+        // Create expense transaction for the payment
+        const Transaction = require('../models/Transaction');
+        await Transaction.create({
+            userId: req.user.id,
+            type: 'expense',
+            amount: paid,
+            category: 'Thanh toán thẻ',
+            note: `Thanh toán ${card.bankName} ••${card.cardNumber}`,
+            date: new Date(),
+        });
+
+        await createNotification({
+            userId: req.user.id.toString(),
+            title: `Đã thanh toán thẻ ${card.bankName}`,
+            message: `Số tiền: ${paid.toLocaleString('vi-VN')}đ — Dư nợ còn lại: ${card.balance.toLocaleString('vi-VN')}đ`,
+            type: 'payment',
+            icon: '✅',
+            iconBg: '#D1FAE5',
+            isImportant: true,
+            relatedId: card._id,
+            relatedModel: 'Card',
+        });
+
+        res.json({ success: true, data: card, paid });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
