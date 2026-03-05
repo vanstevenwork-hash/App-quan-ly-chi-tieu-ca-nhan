@@ -39,6 +39,7 @@ app.use('/api/goals', require('./routes/goals'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/cards', require('./routes/cards'));
 app.use('/api/wealth', require('./routes/wealth'));
+app.use('/api/banks', require('./routes/banks'));
 
 // ===== SSE Stream endpoint =====
 // GET /api/notifications/stream  (auth via ?token=... query param)

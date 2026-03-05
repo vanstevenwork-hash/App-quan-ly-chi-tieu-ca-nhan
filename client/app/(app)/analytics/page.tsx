@@ -11,9 +11,7 @@ import AddTransactionModal from '@/components/AddTransactionModal';
 import { toast } from 'sonner';
 
 const RADIAN = Math.PI / 180;
-const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: {
-    cx: number; cy: number; midAngle: number; innerRadius: number; outerRadius: number; percent: number;
-}) => {
+const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
     if (percent < 0.05) return null;
     const r = innerRadius + (outerRadius - innerRadius) * 0.55;
     const x = cx + r * Math.cos(-midAngle * RADIAN);

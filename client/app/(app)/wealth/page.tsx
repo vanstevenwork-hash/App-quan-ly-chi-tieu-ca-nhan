@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, Wallet, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useWealth, type WealthSource } from '@/hooks/useWealth';
+import { useCards } from '@/hooks/useCards';
 import WealthSourceModal from '@/components/WealthSourceModal';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -19,50 +20,34 @@ const CATEGORY_LABELS: Record<string, string> = {
     savings: 'Tiết kiệm', gold: 'Vàng bạc', crypto: 'Crypto',
     cashback: 'Hoàn tiền', affiliate: 'Affiliate', stock: 'Cổ phiếu',
     real_estate: 'Bất động sản', other: 'Khác',
+    credit: 'Thẻ tín dụng', bank: 'Tài khoản ngân hàng', eWallet: 'Ví điện tử'
 };
 
 function WealthCard({ source, onEdit, onDelete }: {
     source: WealthSource; onEdit: () => void; onDelete: () => void;
 }) {
     return (
-        <div className="relative overflow-hidden rounded-3xl p-5 text-white shadow-lg transition-transform hover:scale-[1.01]"
-            style={{ background: `linear-gradient(135deg, ${source.color}dd, ${source.color}99)` }}>
-            {/* Glow */}
-            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
-            <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-black/10 pointer-events-none" />
-
-            <div className="relative z-10">
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl">
-                            {source.icon}
-                        </div>
-                        <div>
-                            <p className="font-bold text-base text-white">{source.name}</p>
-                            <p className="text-[11px] text-white/70 font-medium">{CATEGORY_LABELS[source.category] || 'Khác'}</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-1">
-                        <button onClick={onEdit}
-                            className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
-                            <Pencil className="w-3 h-3" />
-                        </button>
-                        <button onClick={onDelete}
-                            className="w-7 h-7 rounded-full bg-red-400/30 hover:bg-red-400/50 flex items-center justify-center transition">
-                            <Trash2 className="w-3 h-3" />
-                        </button>
-                    </div>
+        <div className="bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-2xl p-4 flex items-center justify-between group hover:border-purple-200 transition-colors cursor-pointer relative" onClick={onEdit}>
+            <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: `${source.color}15`, border: `1px solid ${source.color}30`, color: source.color }}>
+                    {source.icon}
                 </div>
-
                 <div>
-                    <p className="text-[11px] text-white/70 mb-0.5">Giá trị hiện tại</p>
-                    <p className="text-2xl font-bold tracking-tight">{fmtFull(source.balance)}₫</p>
+                    <h4 className="font-bold text-slate-800 text-sm">{source.name}</h4>
+                    <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-xs text-slate-500 font-medium">{CATEGORY_LABELS[source.category] || 'Khác'}</span>
+                    </div>
                 </div>
-
-                {source.note && (
-                    <p className="mt-2 text-[11px] text-white/60 truncate">{source.note}</p>
-                )}
             </div>
+            <div className="text-right">
+                <div className="font-bold text-slate-800 text-base">{fmtFull(source.balance)}đ</div>
+                {source.note && <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[100px]">{source.note}</div>}
+            </div>
+            {!(source as any).isExternal && (
+                <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 w-7 h-7 bg-red-50 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm">
+                    <Trash2 className="w-3.5 h-3.5" />
+                </button>
+            )}
         </div>
     );
 }
@@ -70,18 +55,38 @@ function WealthCard({ source, onEdit, onDelete }: {
 export default function WealthPage() {
     const router = useRouter();
     const { sources, total, loading, createSource, updateSource, deleteSource, refetch } = useWealth();
+    const { cards, loading: cardsLoading } = useCards();
     const [showModal, setShowModal] = useState(false);
     const [editSource, setEditSource] = useState<WealthSource | null>(null);
+    const [isVisible, setIsVisible] = useState(true);
+
+    const allSources = useMemo(() => {
+        const cardSources = cards.map(c => ({
+            _id: c._id,
+            name: `${c.bankShortName} ${c.cardNumber ? '••' + c.cardNumber : ''}`.trim(),
+            category: c.cardType === 'savings' ? 'savings' : c.cardType === 'credit' ? 'credit' : c.cardType === 'eWallet' ? 'eWallet' : 'bank',
+            balance: c.cardType === 'credit' ? -(c.balance || c.creditLimit || 0) : c.balance,
+            icon: c.cardType === 'savings' ? '🏦' : c.cardType === 'eWallet' ? '📱' : '💳',
+            color: c.bankColor || '#3B82F6',
+            note: c.cardType === 'credit' ? 'Thẻ tín dụng' : c.cardType === 'savings' ? 'Sổ tiết kiệm' : 'Tài khoản',
+            isExternal: true
+        } as unknown as WealthSource));
+        return [...sources, ...cardSources];
+    }, [sources, cards]);
+
+    const combinedTotal = useMemo(() => {
+        return allSources.reduce((sum, s) => sum + s.balance, 0);
+    }, [allSources]);
 
     // Group by category
     const byCategory = useMemo(() => {
         const map: Record<string, WealthSource[]> = {};
-        sources.forEach(s => {
+        allSources.forEach(s => {
             if (!map[s.category]) map[s.category] = [];
             map[s.category].push(s);
         });
         return map;
-    }, [sources]);
+    }, [allSources]);
 
     const handleSave = async (data: Parameters<typeof createSource>[0]) => {
         if (editSource) {
@@ -124,28 +129,33 @@ export default function WealthPage() {
                 </header>
 
                 {/* Hero total */}
-                <div className="mx-5 mb-6 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden"
-                    style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)' }}>
-                    <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
-                    <div className="absolute -bottom-10 -left-10 w-36 h-36 rounded-full bg-black/10 pointer-events-none" />
-                    <div className="relative z-10">
-                        <p className="text-xs text-white/70 font-semibold uppercase tracking-widest mb-2">Tổng tài sản ròng</p>
-                        <p className="text-4xl font-bold tracking-tight mb-3">{fmtFull(total)}₫</p>
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-1.5 bg-white/20 rounded-xl px-3 py-1.5">
-                                <Wallet className="w-3.5 h-3.5" />
-                                <span className="text-xs font-semibold">{sources.length} nguồn</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 bg-white/20 rounded-xl px-3 py-1.5">
-                                <TrendingUp className="w-3.5 h-3.5" />
-                                <span className="text-xs font-semibold">{Object.keys(byCategory).length} loại</span>
-                            </div>
+                <div className="mx-6 mb-6 rounded-3xl p-6 shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)] relative overflow-hidden"
+                    style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F3FF 100%)', border: '1px solid #E9D5FF' }}>
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-200/40 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-200/40 rounded-full blur-3xl pointer-events-none" />
+
+                    <div className="text-center relative z-10">
+                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wider">Tổng tài sản</p>
+                        <div className="flex items-center justify-center gap-3">
+                            <h2 className="text-4xl font-bold text-slate-800 tracking-tight leading-none">
+                                {isVisible ? fmtFull(combinedTotal) : '*********'}
+                            </h2>
+                            <span className="text-xl align-top text-slate-500 font-medium">đ</span>
+                            <button onClick={() => setIsVisible(!isVisible)} className="text-slate-400 w-8 h-8 hover:text-purple-600 transition-colors focus:outline-none p-1 flex items-center justify-center rounded-full hover:bg-purple-50">
+                                <span className="material-symbols-outlined text-[22px]" style={{ fontFamily: 'Material Symbols Outlined' }}>
+                                    {isVisible ? 'visibility' : 'visibility_off'}
+                                </span>
+                            </button>
+                        </div>
+                        <div className="mt-4 inline-flex items-center px-4 py-1.5 bg-white rounded-full border border-purple-100 shadow-sm">
+                            <TrendingUp className="w-3.5 h-3.5 text-green-500 mr-1" />
+                            <span className="text-xs font-bold text-slate-600">+{Object.keys(byCategory).length} danh mục <span className="text-slate-400 font-normal">đang quản lý</span></span>
                         </div>
                     </div>
                 </div>
 
                 {/* Empty state */}
-                {!loading && sources.length === 0 && (
+                {!(loading || cardsLoading) && allSources.length === 0 && (
                     <div className="flex flex-col items-center justify-center gap-4 py-16 px-8 text-center">
                         <div className="w-20 h-20 rounded-3xl bg-purple-50 flex items-center justify-center text-4xl">💼</div>
                         <div>
@@ -161,7 +171,7 @@ export default function WealthPage() {
                 )}
 
                 {/* Loading skeleton */}
-                {loading && (
+                {(loading || cardsLoading) && (
                     <div className="px-5 space-y-3">
                         {[1, 2, 3].map(i => (
                             <div key={i} className="h-28 rounded-3xl bg-gray-100 animate-pulse" />
@@ -169,28 +179,68 @@ export default function WealthPage() {
                     </div>
                 )}
 
-                {/* Sources grid */}
-                {!loading && sources.length > 0 && (
-                    <div className="px-5 space-y-6">
-                        {Object.entries(byCategory).map(([cat, items]) => (
-                            <div key={cat}>
-                                <div className="flex items-center justify-between mb-3">
-                                    <h2 className="text-sm font-bold text-slate-600 uppercase tracking-wide">
-                                        {CATEGORY_LABELS[cat] || cat}
-                                    </h2>
-                                    <span className="text-xs text-slate-400 font-semibold">
-                                        {fmtShort(items.reduce((s, w) => s + w.balance, 0))}₫
-                                    </span>
+                {/* Sources list */}
+                {!(loading || cardsLoading) && allSources.length > 0 && (
+                    <div className="px-6 space-y-6">
+                        <section>
+                            <h3 className="text-lg font-bold text-slate-800 mb-4">Chi tiết tài sản</h3>
+                            <div className="space-y-3">
+                                {allSources.map(s => (
+                                    <WealthCard key={s._id} source={s}
+                                        onEdit={() => { if (!(s as any).isExternal) { setEditSource(s); setShowModal(true); } }}
+                                        onDelete={() => handleDelete(s._id, s.name)} />
+                                ))}
+                            </div>
+                        </section>
+
+                        <section className="pb-8">
+                            <h3 className="text-lg font-bold text-slate-800 mb-4">Cơ cấu tài sản</h3>
+                            <div className="bg-white border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-3xl p-6 relative">
+                                <div className="flex justify-center items-center py-4">
+                                    <div className="relative w-48 h-48">
+                                        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                            {(() => {
+                                                let currentOffset = 0;
+                                                return allSources.map((s, idx) => {
+                                                    // For pie chart, map negative balances to 0 or absolute so it renders somewhat, or just exclude debt 
+                                                    const value = Math.max(0, s.balance);
+                                                    const chartTotal = allSources.reduce((sum, item) => sum + Math.max(0, item.balance), 0);
+                                                    const percentage = chartTotal > 0 ? (value / chartTotal) * 100 : 0;
+                                                    const dashArray = `${percentage} 251.2`;
+                                                    const length = (percentage / 100) * 251.2;
+                                                    const strokeDashoffset = -currentOffset;
+                                                    currentOffset += length;
+
+                                                    return (
+                                                        <circle key={s._id} cx="50" cy="50" fill="transparent" r="40"
+                                                            stroke={s.color} strokeDasharray={dashArray}
+                                                            strokeDashoffset={strokeDashoffset} strokeWidth="16" />
+                                                    );
+                                                });
+                                            })()}
+                                        </svg>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                            <span className="text-xs text-slate-500 font-medium">Tổng cộng</span>
+                                            <span className="text-lg font-bold text-slate-800">100%</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-3">
-                                    {items.map(s => (
-                                        <WealthCard key={s._id} source={s}
-                                            onEdit={() => { setEditSource(s); setShowModal(true); }}
-                                            onDelete={() => handleDelete(s._id, s.name)} />
-                                    ))}
+
+                                <div className="grid grid-cols-2 gap-y-3 gap-x-4 mt-6">
+                                    {allSources.map(s => {
+                                        const value = Math.max(0, s.balance);
+                                        const chartTotal = allSources.reduce((sum, item) => sum + Math.max(0, item.balance), 0);
+                                        const pct = chartTotal > 0 ? (value / chartTotal) * 100 : 0;
+                                        return (
+                                            <div key={s._id} className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }}></div>
+                                                <span className="text-xs text-slate-600 truncate" title={s.name}>{s.name} ({pct.toFixed(0)}%)</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
-                        ))}
+                        </section>
                     </div>
                 )}
             </div>

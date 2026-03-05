@@ -101,4 +101,9 @@ export const notificationsApi = {
     clearAll: () => api.delete('/notifications/clear-all'),
 };
 
+// Banks (VietQR proxy)
+export const banksApi = {
+    getAll: () => api.get('/banks'),
+};
+
 export default api;

@@ -5,6 +5,7 @@ import { CATEGORIES } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 import { X, Check, Loader2 } from 'lucide-react';
 import { useCards } from '@/hooks/useCards';
+import { useWealth } from '@/hooks/useWealth';
 import { transactionsApi } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -29,18 +30,34 @@ export default function AddTransactionModal({
     const [saving, setSaving] = useState(false);
 
     const { cards } = useCards();
+    const { sources: wealthSources } = useWealth();
+
+    const WEALTH_CATEGORIES: Record<string, string> = {
+        savings: 'Tiết kiệm', gold: 'Vàng bạc', crypto: 'Crypto',
+        cashback: 'Hoàn tiền', affiliate: 'Affiliate', stock: 'Cổ phiếu',
+        real_estate: 'Bất động sản', other: 'Khác',
+    };
 
     const paymentSources = [
         { id: 'cash', label: 'Tiền mặt', icon: '💵', sub: '', balance: null as number | null, cardType: '' },
         ...cards.map(c => ({
             id: c._id,
-            label: `${c.bankShortName} ••${c.cardNumber}`,
+            label: `${c.bankShortName} ${c.cardNumber ? '••' + c.cardNumber : ''}`,
             icon: c.cardType === 'credit' ? '💳' : c.cardType === 'savings' ? '🐷' : c.cardType === 'eWallet' ? '📱' : '🏧',
             sub: c.cardType === 'credit' ? 'Tín dụng' : c.cardType === 'debit' ? 'Ghi nợ' : c.cardType === 'savings' ? 'Tiết kiệm' : 'Ví điện tử',
             balance: c.balance,
             bankColor: c.bankColor,
             cardType: c.cardType,
         })),
+        ...wealthSources.map(w => ({
+            id: w._id,
+            label: w.name,
+            icon: w.icon,
+            sub: WEALTH_CATEGORIES[w.category] || 'Tài sản',
+            balance: w.balance,
+            bankColor: w.color,
+            cardType: 'wealth',
+        }))
     ];
 
     useEffect(() => {
