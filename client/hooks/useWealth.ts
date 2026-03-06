@@ -22,51 +22,80 @@ export interface WealthFormData {
     note: string;
 }
 
-export function useWealth() {
-    const [sources, setSources] = useState<WealthSource[]>([]);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+import { create } from 'zustand';
 
-    const fetch = useCallback(async () => {
+interface WealthStore {
+    sources: WealthSource[];
+    total: number;
+    loading: boolean;
+    error: string | null;
+    hasFetched: boolean;
+    fetch: (force?: boolean) => Promise<void>;
+    createSource: (data: WealthFormData) => Promise<any>;
+    updateSource: (id: string, data: Partial<WealthFormData>) => Promise<any>;
+    deleteSource: (id: string) => Promise<void>;
+}
+
+export const useWealthStore = create<WealthStore>((set, get) => ({
+    sources: [],
+    total: 0,
+    loading: false,
+    error: null,
+    hasFetched: false,
+    fetch: async (force = false) => {
+        if (get().loading || (get().hasFetched && !force)) return;
+        set({ loading: true, error: null });
         try {
-            setLoading(true);
             const res = await wealthApi.getAll();
-            setSources(res.data.data || []);
-            setTotal(res.data.total || 0);
+            set({
+                sources: res.data?.data || [],
+                total: res.data?.total || 0,
+                hasFetched: true,
+                loading: false
+            });
         } catch {
-            setError('Không thể tải nguồn tài sản');
-        } finally {
-            setLoading(false);
+            set({ error: 'Không thể tải nguồn tài sản', loading: false });
         }
+    },
+    createSource: async (data: WealthFormData) => {
+        const res = await wealthApi.create(data);
+        await get().fetch(true);
+        return res.data?.data;
+    },
+    updateSource: async (id: string, data: Partial<WealthFormData>) => {
+        const res = await wealthApi.update(id, data);
+        set({ sources: get().sources.map(s => s._id === id ? { ...s, ...res.data.data } : s) });
+        set({
+            total: get().total - (get().sources.find(s => s._id === id)?.balance || 0) + (res.data.data.balance || 0)
+        });
+        return res.data?.data;
+    },
+    deleteSource: async (id: string) => {
+        await wealthApi.delete(id);
+        const removed = get().sources.find(s => s._id === id);
+        set({
+            total: get().total - (removed?.balance || 0),
+            sources: get().sources.filter(s => s._id !== id)
+        });
+    }
+}));
+
+export function useWealth() {
+    const store = useWealthStore();
+
+    useEffect(() => {
+        store.fetch();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => { fetch(); }, [fetch]);
-
-    const createSource = async (data: WealthFormData) => {
-        const res = await wealthApi.create(data);
-        await fetch();
-        return res.data.data;
+    return {
+        sources: store.sources,
+        total: store.total,
+        loading: store.loading,
+        error: store.error,
+        createSource: store.createSource,
+        updateSource: store.updateSource,
+        deleteSource: store.deleteSource,
+        refetch: () => store.fetch(true)
     };
-
-    const updateSource = async (id: string, data: Partial<WealthFormData>) => {
-        const res = await wealthApi.update(id, data);
-        setSources(prev => prev.map(s => s._id === id ? { ...s, ...res.data.data } : s));
-        setTotal(prev => {
-            const old = sources.find(s => s._id === id);
-            return prev - (old?.balance || 0) + (res.data.data.balance || 0);
-        });
-        return res.data.data;
-    };
-
-    const deleteSource = async (id: string) => {
-        await wealthApi.delete(id);
-        setSources(prev => {
-            const removed = prev.find(s => s._id === id);
-            setTotal(t => t - (removed?.balance || 0));
-            return prev.filter(s => s._id !== id);
-        });
-    };
-
-    return { sources, total, loading, error, createSource, updateSource, deleteSource, refetch: fetch };
 }

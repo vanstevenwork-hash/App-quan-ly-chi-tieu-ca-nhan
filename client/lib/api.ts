@@ -80,7 +80,7 @@ export const cardsApi = {
     update: (id: string, data: object) => api.put(`/cards/${id}`, data),
     delete: (id: string) => api.delete(`/cards/${id}`),
     setDefault: (id: string) => api.patch(`/cards/${id}/set-default`),
-    pay: (id: string, amount: number) => api.patch(`/cards/${id}/pay`, { amount }),
+    pay: (id: string, amount: number, sourceId?: string) => api.patch(`/cards/${id}/pay`, { amount, sourceId }),
     updateBalance: (id: string, amount: number, action: 'add' | 'set') => api.patch(`/cards/${id}/balance`, { amount, action }),
 };
 

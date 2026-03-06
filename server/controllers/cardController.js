@@ -242,12 +242,26 @@ exports.payCard = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Chỉ áp dụng cho thẻ tín dụng' });
 
         const amount = Number(req.body.amount);
+        const sourceId = req.body.sourceId;
         if (!amount || amount <= 0)
             return res.status(400).json({ success: false, message: 'Số tiền không hợp lệ' });
 
-        const paid = Math.min(amount, card.balance); // cannot pay more than balance
+        let sourceAccount = null;
+        if (sourceId) {
+            sourceAccount = await Card.findOne({ _id: sourceId, userId: req.user.id });
+            if (!sourceAccount) return res.status(404).json({ success: false, message: 'Nguồn tiền không tồn tại' });
+            if (sourceAccount.balance < amount) return res.status(400).json({ success: false, message: 'Số dư nguồn tiền không đủ' });
+        }
+
+        const MathPaid = Math.min(amount, card.balance); // cannot pay more than balance (renamed to avoid conflict)
+        const paid = MathPaid;
         card.balance = Math.max(0, card.balance - paid);
         await card.save();
+
+        if (sourceAccount) {
+            sourceAccount.balance -= paid;
+            await sourceAccount.save();
+        }
 
         // Create expense transaction for the payment
         const Transaction = require('../models/Transaction');
@@ -256,8 +270,10 @@ exports.payCard = async (req, res) => {
             type: 'expense',
             amount: paid,
             category: 'Thanh toán thẻ',
-            note: `Thanh toán ${card.bankName} ••${card.cardNumber}`,
+            note: `Thanh toán ${card.bankName} ••${card.cardNumber}${sourceAccount ? ` từ ${sourceAccount.bankName}` : ''}`,
             date: new Date(),
+            accountId: sourceId || null,
+            paymentMethod: sourceId ? 'card' : 'cash',
         });
 
         await createNotification({

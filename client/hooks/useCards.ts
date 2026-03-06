@@ -9,6 +9,7 @@ export interface Card {
     cardType: 'credit' | 'debit' | 'savings' | 'eWallet' | 'crypto';
     cardNumber: string;
     cardHolder: string;
+    cardNetwork: 'visa' | 'mastercard' | 'jcb' | 'amex' | 'napas' | 'other' | '';
     balance: number;
     creditLimit: number;
     color: string;
@@ -23,6 +24,7 @@ export interface Card {
     // credit
     paymentDueDay: number;
     statementDay: number;
+    expirationDate: string;
     note: string;
 }
 
@@ -32,6 +34,7 @@ export interface CardFormData {
     cardType: 'credit' | 'debit' | 'savings' | 'eWallet' | 'crypto';
     cardNumber: string;
     cardHolder: string;
+    cardNetwork: 'visa' | 'mastercard' | 'jcb' | 'amex' | 'napas' | 'other' | '';
     balance: number;
     creditLimit: number;
     color: string;
@@ -45,53 +48,87 @@ export interface CardFormData {
     // credit
     paymentDueDay: number;
     statementDay: number;
+    expirationDate: string;
     note: string;
 }
 
-export function useCards() {
-    const [cards, setCards] = useState<Card[]>([]);
-    const [totalBalance, setTotalBalance] = useState(0);
-    const [totalDebt, setTotalDebt] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+import { create } from 'zustand';
 
-    const fetch = useCallback(async () => {
+interface CardStore {
+    cards: Card[];
+    totalBalance: number;
+    totalDebt: number;
+    loading: boolean;
+    error: string | null;
+    hasFetched: boolean;
+    fetch: (force?: boolean) => Promise<void>;
+    createCard: (data: CardFormData) => Promise<any>;
+    updateCard: (id: string, data: Partial<CardFormData>) => Promise<any>;
+    deleteCard: (id: string) => Promise<void>;
+    setDefaultCard: (id: string) => Promise<void>;
+}
+
+export const useCardStore = create<CardStore>((set, get) => ({
+    cards: [],
+    totalBalance: 0,
+    totalDebt: 0,
+    loading: false,
+    error: null,
+    hasFetched: false,
+    fetch: async (force = false) => {
+        if (get().loading || (get().hasFetched && !force)) return;
+        set({ loading: true, error: null });
         try {
-            setLoading(true);
             const res = await cardsApi.getAll();
-            setCards(res.data.data || []);
-            setTotalBalance(res.data.totalBalance || 0);
-            setTotalDebt(res.data.totalDebt || 0);
+            set({
+                cards: res.data?.data || [],
+                totalBalance: res.data?.totalBalance || 0,
+                totalDebt: res.data?.totalDebt || 0,
+                hasFetched: true,
+                loading: false
+            });
         } catch {
-            setError('Không thể tải danh sách thẻ');
-        } finally {
-            setLoading(false);
+            set({ error: 'Không thể tải danh sách thẻ', loading: false });
         }
+    },
+    createCard: async (data: CardFormData) => {
+        const res = await cardsApi.create(data);
+        await get().fetch(true);
+        return res.data?.data;
+    },
+    updateCard: async (id: string, data: Partial<CardFormData>) => {
+        const res = await cardsApi.update(id, data);
+        set({ cards: get().cards.map(c => c._id === id ? { ...c, ...res.data.data } : c) });
+        return res.data?.data;
+    },
+    deleteCard: async (id: string) => {
+        await cardsApi.delete(id);
+        set({ cards: get().cards.filter(c => c._id !== id) });
+    },
+    setDefaultCard: async (id: string) => {
+        await cardsApi.setDefault(id);
+        set({ cards: get().cards.map(c => ({ ...c, isDefault: c._id === id })) });
+    }
+}));
+
+export function useCards() {
+    const store = useCardStore();
+
+    useEffect(() => {
+        store.fetch();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => { fetch(); }, [fetch]);
-
-    const createCard = async (data: CardFormData) => {
-        const res = await cardsApi.create(data);
-        await fetch();
-        return res.data.data;
+    return {
+        cards: store.cards,
+        totalBalance: store.totalBalance,
+        totalDebt: store.totalDebt,
+        loading: store.loading,
+        error: store.error,
+        createCard: store.createCard,
+        updateCard: store.updateCard,
+        deleteCard: store.deleteCard,
+        setDefaultCard: store.setDefaultCard,
+        refetch: () => store.fetch(true)
     };
-
-    const updateCard = async (id: string, data: Partial<CardFormData>) => {
-        const res = await cardsApi.update(id, data);
-        setCards(prev => prev.map(c => c._id === id ? { ...c, ...res.data.data } : c));
-        return res.data.data;
-    };
-
-    const deleteCard = async (id: string) => {
-        await cardsApi.delete(id);
-        setCards(prev => prev.filter(c => c._id !== id));
-    };
-
-    const setDefaultCard = async (id: string) => {
-        await cardsApi.setDefault(id);
-        setCards(prev => prev.map(c => ({ ...c, isDefault: c._id === id })));
-    };
-
-    return { cards, totalBalance, totalDebt, loading, error, createCard, updateCard, deleteCard, setDefaultCard, refetch: fetch };
 }

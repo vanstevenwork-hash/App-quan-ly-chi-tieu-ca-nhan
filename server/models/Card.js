@@ -11,6 +11,7 @@ const cardSchema = new mongoose.Schema({
     },
     cardNumber: { type: String, required: true, maxlength: 4 },
     cardHolder: { type: String, required: true, trim: true },
+    cardNetwork: { type: String, enum: ['visa', 'mastercard', 'jcb', 'amex', 'napas', 'other', ''], default: '' },
     balance: { type: Number, default: 0 },
     creditLimit: { type: Number, default: 0 },
     color: { type: String, default: '#6C63FF' },
@@ -26,6 +27,7 @@ const cardSchema = new mongoose.Schema({
     paymentDueDay: { type: Number, default: 0 },       // day of month, e.g. 25
     statementDay: { type: Number, default: 0 },        // statement cut day
     // === General ===
+    expirationDate: { type: String, default: '' }, // MM/YY or similar
     note: { type: String, default: '' },
 }, { timestamps: true });
 

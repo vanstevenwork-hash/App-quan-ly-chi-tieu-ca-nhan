@@ -84,20 +84,20 @@ export default function AnalyticsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#F0F2F8] flex items-center justify-center">
-                <p className="text-gray-400">Đang tải...</p>
+            <div className="min-h-screen bg-[#F0F2F8] dark:bg-slate-900 flex items-center justify-center">
+                <p className="text-gray-400 dark:text-gray-500">Đang tải...</p>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#F0F2F8]">
+        <div className="min-h-screen bg-[#F0F2F8] dark:bg-slate-900 transition-colors duration-200">
             {/* Header */}
-            <div className="gradient-primary px-5 pt-12 pb-6">
+            <div className="gradient-primary dark:bg-slate-800 px-5 pt-12 pb-6">
                 <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center gap-3">
                         <button onClick={() => router.back()}
-                            className="w-9 h-9 rounded-2xl bg-white/20 flex items-center justify-center">
+                            className="w-9 h-9 rounded-2xl bg-white/20 hover:bg-white/30 dark:hover:bg-slate-700/50 flex items-center justify-center transition-colors">
                             <ChevronLeft className="w-5 h-5 text-white" />
                         </button>
                         <h1 className="font-bold text-white text-lg">Báo cáo chi tiêu</h1>
@@ -109,11 +109,11 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Period tabs */}
-                <div className="flex gap-1.5 bg-white/15 rounded-2xl p-1">
+                <div className="flex gap-1.5 bg-white/15 dark:bg-slate-700/50 rounded-2xl p-1">
                     {PERIOD_TABS.map(p => (
                         <button key={p} onClick={() => setPeriodTab(p)}
                             className={cn('flex-1 py-2 rounded-xl text-xs font-bold transition-all',
-                                periodTab === p ? 'bg-white text-indigo-600' : 'text-white/80')}>
+                                periodTab === p ? 'bg-white text-indigo-600 dark:bg-slate-600 dark:text-white shadow-sm' : 'text-white/80 dark:text-slate-400 hover:text-white')}>
                             {p}
                         </button>
                     ))}
@@ -136,8 +136,8 @@ export default function AnalyticsPage() {
 
             <div className="px-4 py-4 space-y-4 pb-28">
                 {/* Trend chart */}
-                <div className="bg-white rounded-3xl shadow-sm p-4">
-                    <p className="font-bold text-gray-900 mb-3">Xu hướng 14 ngày</p>
+                <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm p-4 border border-gray-100 dark:border-slate-700">
+                    <p className="font-bold text-gray-900 dark:text-white mb-3">Xu hướng 14 ngày</p>
                     <ResponsiveContainer width="100%" height={140}>
                         <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: -30 }}>
                             <defs>
@@ -166,8 +166,8 @@ export default function AnalyticsPage() {
 
                 {/* Category pie chart */}
                 {categoryBreakdown.length > 0 && (
-                    <div className="bg-white rounded-3xl shadow-sm p-4">
-                        <p className="font-bold text-gray-900 mb-3">Chi tiêu theo danh mục</p>
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm p-4 border border-gray-100 dark:border-slate-700">
+                        <p className="font-bold text-gray-900 dark:text-white mb-3">Chi tiêu theo danh mục</p>
                         <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
                                 <Pie data={categoryBreakdown} cx="50%" cy="50%" labelLine={false}
@@ -189,14 +189,14 @@ export default function AnalyticsPage() {
                                         <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: `${c.color}20` }}>{c.icon}</div>
                                         <div className="flex-1">
                                             <div className="flex items-center justify-between mb-0.5">
-                                                <span className="text-xs font-semibold text-gray-700">{c.category}</span>
-                                                <span className="text-xs font-bold text-gray-800">{fmt(c.total)}đ</span>
+                                                <span className="text-xs font-semibold text-gray-700 dark:text-slate-300">{c.category}</span>
+                                                <span className="text-xs font-bold text-gray-800 dark:text-slate-100">{fmt(c.total)}đ</span>
                                             </div>
-                                            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                            <div className="h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
                                                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: c.color }} />
                                             </div>
                                         </div>
-                                        <span className="text-xs text-gray-400 w-8 text-right">{pct}%</span>
+                                        <span className="text-xs text-gray-400 dark:text-slate-500 w-8 text-right">{pct}%</span>
                                     </div>
                                 );
                             })}
@@ -205,14 +205,14 @@ export default function AnalyticsPage() {
                 )}
 
                 {/* Transaction list with filter */}
-                <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100">
-                        <p className="font-bold text-gray-900">Lịch sử giao dịch</p>
+                <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-100 dark:border-slate-700">
+                        <p className="font-bold text-gray-900 dark:text-white">Lịch sử giao dịch</p>
                         <div className="flex gap-1.5">
                             {(['all', 'expense', 'income'] as const).map(f => (
                                 <button key={f} onClick={() => setFilterType(f)}
                                     className={cn('px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all',
-                                        filterType === f ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-500')}>
+                                        filterType === f ? 'bg-indigo-500 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400')}>
                                     {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi' : 'Thu'}
                                 </button>
                             ))}
@@ -221,12 +221,12 @@ export default function AnalyticsPage() {
 
                     {filteredTx.length === 0 ? (
                         <div className="py-8 text-center">
-                            <p className="text-gray-400 text-sm">Chưa có giao dịch nào</p>
+                            <p className="text-gray-400 dark:text-slate-500 text-sm">Chưa có giao dịch nào</p>
                             <button onClick={() => setShowAddModal(true)}
-                                className="mt-2 text-indigo-600 text-sm font-semibold">+ Thêm giao dịch</button>
+                                className="mt-2 text-indigo-600 dark:text-indigo-400 text-sm font-semibold">+ Thêm giao dịch</button>
                         </div>
                     ) : (
-                        <div className="divide-y divide-gray-50">
+                        <div className="divide-y divide-gray-50 dark:divide-slate-700/50">
                             {filteredTx.map(t => {
                                 const cat = CATEGORIES.find(c => c.label === t.category) || CATEGORIES[CATEGORIES.length - 1];
                                 const isIncome = t.type === 'income';
@@ -236,17 +236,17 @@ export default function AnalyticsPage() {
                                             {cat.icon}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-sm text-gray-800 truncate">{t.note || t.category}</p>
-                                            <p className="text-gray-400 text-xs mt-0.5">
+                                            <p className="font-semibold text-sm text-gray-800 dark:text-slate-200 truncate">{t.note || t.category}</p>
+                                            <p className="text-gray-400 dark:text-slate-500 text-xs mt-0.5">
                                                 {t.category} · {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' })}
                                             </p>
                                         </div>
-                                        <p className={cn('font-bold text-sm flex-shrink-0 mr-1', isIncome ? 'text-emerald-500' : 'text-gray-800')}>
+                                        <p className={cn('font-bold text-sm flex-shrink-0 mr-1', isIncome ? 'text-emerald-500 dark:text-emerald-400' : 'text-gray-800 dark:text-slate-200')}>
                                             {isIncome ? '+' : '-'}{fmt(t.amount)}
                                         </p>
                                         <button onClick={() => handleDelete(t._id)}
-                                            className="p-1.5 rounded-full hover:bg-red-50 transition-colors flex-shrink-0">
-                                            <Trash2 className="w-3.5 h-3.5 text-gray-300 hover:text-red-400" />
+                                            className="p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex-shrink-0">
+                                            <Trash2 className="w-3.5 h-3.5 text-gray-300 dark:text-slate-500 hover:text-red-400 dark:hover:text-red-400" />
                                         </button>
                                     </div>
                                 );

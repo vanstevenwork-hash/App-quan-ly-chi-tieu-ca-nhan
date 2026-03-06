@@ -12,47 +12,75 @@ export interface Transaction {
     paymentMethod: string;
 }
 
-export function useTransactions(params?: object) {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
-    const [loading, setLoading] = useState(true);
+import { create } from 'zustand';
 
-    const fetch = useCallback(async () => {
+interface TransactionStore {
+    transactions: Transaction[];
+    summary: { income: number; expense: number; balance: number };
+    loading: boolean;
+    hasFetched: boolean;
+    fetch: (force?: boolean) => Promise<void>;
+    createTransaction: (data: object) => Promise<any>;
+    updateTransaction: (id: string, data: object) => Promise<any>;
+    deleteTransaction: (id: string) => Promise<void>;
+}
+
+export const useTransactionStore = create<TransactionStore>((set, get) => ({
+    transactions: [],
+    summary: { income: 0, expense: 0, balance: 0 },
+    loading: false,
+    hasFetched: false,
+    fetch: async (force = false) => {
+        if (get().loading || (get().hasFetched && !force)) return;
+        set({ loading: true });
         try {
-            setLoading(true);
             const [txRes, sumRes] = await Promise.all([
-                transactionsApi.getAll(params),
-                transactionsApi.getSummary(params),
+                transactionsApi.getAll(),
+                transactionsApi.getSummary(),
             ]);
-            setTransactions(txRes.data.data || []);
-            const s = sumRes.data.data || {};
-            setSummary({ income: s.income || 0, expense: s.expense || 0, balance: (s.income || 0) - (s.expense || 0) });
+            const s = sumRes.data?.data || {};
+            set({
+                transactions: txRes.data?.data || [],
+                summary: { income: s.income || 0, expense: s.expense || 0, balance: (s.income || 0) - (s.expense || 0) },
+                hasFetched: true,
+                loading: false
+            });
         } catch {
-            // silent
-        } finally {
-            setLoading(false);
+            set({ loading: false });
         }
+    },
+    createTransaction: async (data: object) => {
+        const res = await transactionsApi.create(data);
+        await get().fetch(true);
+        return res.data?.data;
+    },
+    updateTransaction: async (id: string, data: object) => {
+        const res = await transactionsApi.update(id, data);
+        await get().fetch(true);
+        return res.data?.data;
+    },
+    deleteTransaction: async (id: string) => {
+        await transactionsApi.delete(id);
+        set({ transactions: get().transactions.filter(t => t._id !== id) });
+        await get().fetch(true);
+    }
+}));
+
+export function useTransactions(params?: object) {
+    const store = useTransactionStore();
+
+    useEffect(() => {
+        store.fetch();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => { fetch(); }, [fetch]);
-
-    const createTransaction = async (data: object) => {
-        const res = await transactionsApi.create(data);
-        await fetch();
-        return res.data.data;
+    return {
+        transactions: store.transactions,
+        summary: store.summary,
+        loading: store.loading,
+        createTransaction: store.createTransaction,
+        updateTransaction: store.updateTransaction,
+        deleteTransaction: store.deleteTransaction,
+        refetch: () => store.fetch(true)
     };
-
-    const updateTransaction = async (id: string, data: object) => {
-        const res = await transactionsApi.update(id, data);
-        await fetch();
-        return res.data.data;
-    };
-
-    const deleteTransaction = async (id: string) => {
-        await transactionsApi.delete(id);
-        setTransactions(prev => prev.filter(t => t._id !== id));
-        await fetch();
-    };
-
-    return { transactions, summary, loading, createTransaction, updateTransaction, deleteTransaction, refetch: fetch };
 }

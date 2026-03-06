@@ -164,14 +164,14 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
     badge?: string; badgeColor?: string;
 }) {
     return (
-        <div className="flex items-center p-4 hover:bg-gray-50 rounded-2xl transition group cursor-pointer">
+        <div className="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-2xl transition group cursor-pointer">
             <div className="w-12 h-12 rounded-full flex items-center justify-center mr-4 flex-shrink-0"
                 style={{ backgroundColor: iconBg }}>
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start gap-2">
-                    <h4 className="font-semibold text-slate-800 text-sm truncate">{title}</h4>
+                    <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">{title}</h4>
                     {badge && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg flex-shrink-0"
                             style={{ backgroundColor: `${badgeColor}18`, color: badgeColor }}>
@@ -180,8 +180,8 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
                     )}
                 </div>
                 <div className="flex justify-between items-end mt-0.5">
-                    <p className="text-xs text-slate-400">{sub}</p>
-                    <p className="font-bold text-slate-800 text-sm">{value}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{sub}</p>
+                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{value}</p>
                 </div>
             </div>
         </div>
@@ -201,6 +201,7 @@ export default function CardsPage() {
     const router = useRouter();
 
     const creditCards = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
+    const accounts = useMemo(() => cards.filter(c => ['debit', 'eWallet'].includes(c.cardType)), [cards]);
 
     // ── Cashback breakdown per card ─────────────────────────────────────────
     const now = new Date();
@@ -240,7 +241,6 @@ export default function CardsPage() {
             .filter(x => x.days !== null && x.days <= 30)
             .sort((a, b) => (a.days ?? 99) - (b.days ?? 99))
         , [creditCards]);
-
     const handleSave = async (data: Parameters<typeof createCard>[0]) => {
         if (editCard) await updateCard(editCard._id, data);
         else await createCard(data);
@@ -248,27 +248,29 @@ export default function CardsPage() {
     };
 
     return (
-        <div className="min-h-screen pb-32 bg-gray-50">
+        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
             {/* Background gradient blob */}
-            <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0"
+            <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 dark:hidden"
                 style={{ background: 'linear-gradient(to bottom, rgba(199,210,254,0.4), transparent)' }} />
+            <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 hidden dark:block"
+                style={{ background: 'linear-gradient(to bottom, rgba(139,92,246,0.1), transparent)' }} />
 
             <div className="relative z-10 pb-8">
                 {/* ── Header ─────────────────────────────────────── */}
                 <header className="pt-14 px-5 pb-2 flex items-center gap-4">
                     <button onClick={() => router.push('/dashboard')}
-                        className="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-slate-600 hover:bg-gray-50 active:scale-95 transition-all flex-shrink-0">
+                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="flex-1">
-                        <p className="text-xs text-slate-400 font-medium">Tài chính</p>
-                        <h1 className="text-xl font-bold text-slate-900 leading-tight">Quản lý Thẻ 💳</h1>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Tài chính</p>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">Quản lý Thẻ 💳</h1>
                     </div>
                     <button onClick={refetchCards}
-                        className="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-slate-600 hover:bg-gray-50 active:scale-95 transition-all relative flex-shrink-0">
+                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
                         <RefreshCw className="w-4 h-4" />
                         {paymentAlerts.length > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800" />
                         )}
                     </button>
                 </header>
@@ -276,16 +278,16 @@ export default function CardsPage() {
                 {/* ── Hero: Total debt ─────────────────────────── */}
                 <div className="text-center px-6 mb-8">
                     <p className="text-sm text-slate-500 mb-1">Tổng dư nợ thẻ</p>
-                    <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
+                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
                         {fmt(totalDebt)}₫
                     </h1>
                     {totalDebt > 0 ? (
-                        <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 text-sm font-medium">
+                        <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
                             <TrendingDown className="w-4 h-4" />
                             <span>Thanh toán đúng hạn để tiết kiệm lãi</span>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 text-sm font-medium">
+                        <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
                             <CheckCircle2 className="w-4 h-4" />
                             <span>Không có dư nợ thẻ tín dụng</span>
                         </div>
@@ -295,15 +297,15 @@ export default function CardsPage() {
                 {/* ── Card carousel ───────────────────────────── */}
                 <div className="pl-6 mb-2 overflow-hidden">
                     <div className="flex items-center justify-between pr-6 mb-4">
-                        <h2 className="text-base font-bold text-slate-800">Thẻ của tôi</h2>
-                        <Link href="/accounts" className="text-xs font-semibold text-indigo-600 hover:opacity-80">
+                        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Thẻ của tôi</h2>
+                        <Link href="/accounts" className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:opacity-80">
                             Xem tất cả
                         </Link>
                     </div>
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x pr-6"
                         style={{ scrollbarWidth: 'none' }}>
                         {loading && (
-                            <div className="snap-center shrink-0 w-[85%] min-h-[200px] rounded-3xl bg-gray-100 animate-pulse" />
+                            <div className="snap-center shrink-0 w-[85%] min-h-[200px] rounded-3xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
                         )}
                         {!loading && creditCards.map((card, idx) => (
                             <CreditCardSlide key={card._id} card={card} idx={idx}
@@ -325,20 +327,20 @@ export default function CardsPage() {
 
                 {/* ── Quick actions ────────────────────────────── */}
                 <div className="px-6 mb-6">
-                    <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50">
+                    <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
-                            { icon: <CreditCard className="w-5 h-5 text-indigo-600" />, label: 'Thanh toán', bg: '#EEF2FF', onClick: () => setShowPayment(true) },
-                            { icon: <Wallet className="w-5 h-5 text-emerald-600" />, label: 'Giao dịch', bg: '#D1FAE5', onClick: openAddModal },
-                            { icon: <History className="w-5 h-5 text-orange-600" />, label: 'Lịch sử', bg: '#FEF3C7', onClick: () => router.push('/dashboard') },
-                            { icon: <BarChart3 className="w-5 h-5 text-purple-600" />, label: 'Báo cáo', bg: '#EDE9FE', onClick: () => router.push('/analytics') },
-                        ].map(item => (
+                            { icon: <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />, label: 'Thanh toán', bg: '#EEF2FF', bgDark: '#312E81', onClick: () => setShowPayment(true) },
+                            { icon: <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, label: 'Giao dịch', bg: '#D1FAE5', bgDark: '#064E3B', onClick: openAddModal },
+                            { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, label: 'Lịch sử', bg: '#FEF3C7', bgDark: '#78350F', onClick: () => router.push('/dashboard') },
+                            { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, label: 'Báo cáo', bg: '#EDE9FE', bgDark: '#4C1D95', onClick: () => router.push('/analytics') },
+                        ].map((item: any) => (
                             <button key={item.label} onClick={item.onClick}
                                 className="flex flex-col items-center gap-2 group">
                                 <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
-                                    style={{ backgroundColor: item.bg }}>
+                                    style={{ backgroundColor: typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? item.bgDark : item.bg }}>
                                     {item.icon}
                                 </div>
-                                <span className="text-xs font-medium text-slate-600">{item.label}</span>
+                                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
                             </button>
                         ))}
                     </div>
@@ -346,8 +348,8 @@ export default function CardsPage() {
 
                 {/* ── Payment alerts ───────────────────────────── */}
                 <div className="px-6 mb-5">
-                    <h3 className="text-base font-bold text-slate-800 mb-3">Hạn thanh toán</h3>
-                    <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">Hạn thanh toán</h3>
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800">
                         {paymentAlerts.length > 0 ? paymentAlerts.map(({ card, days }) => {
                             const isUrgent = (days ?? 99) <= 5;
                             const minPay = card.balance * 0.05;
@@ -366,18 +368,18 @@ export default function CardsPage() {
                         }) : (
                             <DetailRow
                                 icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                                iconBg="#D1FAE5"
+                                iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#064E3B' : '#D1FAE5'}
                                 title="Không có hạn thanh toán gần"
                                 sub="Tất cả thẻ đều ổn"
                                 value="Tốt 👍"
                             />
                         )}
 
-                        <div className="mx-4 border-t border-gray-100" />
+                        <div className="mx-4 border-t border-gray-100 dark:border-slate-700" />
 
                         <DetailRow
                             icon={<TrendingUp className="w-5 h-5 text-indigo-500" />}
-                            iconBg="#EEF2FF"
+                            iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#312E81' : '#EEF2FF'}
                             title="Tổng hạn mức tín dụng"
                             sub={`${creditCards.length} thẻ tín dụng`}
                             value={`${fmtShort(creditCards.reduce((s, c) => s + c.creditLimit, 0))}₫`}
@@ -388,14 +390,14 @@ export default function CardsPage() {
                 {/* ── Cashback section ─────────────────────────── */}
                 <div className="px-6 mb-5">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-base font-bold text-slate-800">Hoàn tiền ước tính</h3>
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Hoàn tiền ước tính</h3>
                         <span className="text-xs text-slate-400">{monthLabel}</span>
                     </div>
-                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
                         {/* Total cashback hero */}
-                        <div className="flex items-center gap-4 p-4 border-b border-gray-100"
-                            style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
-                            <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <div className="flex items-center gap-4 p-4 border-b border-gray-100 dark:border-slate-700"
+                            style={{ background: typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? 'linear-gradient(135deg, #064E3B, #022C22)' : 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center flex-shrink-0">
                                 <BadgePercent className="w-6 h-6 text-emerald-600" />
                             </div>
                             <div className="flex-1">
@@ -408,25 +410,29 @@ export default function CardsPage() {
                         </div>
 
                         {/* Per-category breakdown */}
-                        {cashbackByCategory.length > 0 ? cashbackByCategory.map(([cat, cb]) => (
-                            <div key={cat} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-slate-700 truncate">{cat}</p>
-                                    <p className="text-xs text-slate-400">
-                                        {Math.round((CASHBACK_RATES[cat] || DEFAULT_RATE) * 100 * 10) / 10}% hoàn tiền
-                                    </p>
-                                </div>
-                                <span className="text-sm font-bold text-emerald-600 flex-shrink-0">+{fmtShort(cb)}₫</span>
+                        {cashbackByCategory.length > 0 ? (
+                            <div className="divide-y divide-gray-100 dark:divide-slate-700">
+                                {cashbackByCategory.map(([cat, cb]) => (
+                                    <div key={cat} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 transition">
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{cat}</p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500">
+                                                {Math.round((CASHBACK_RATES[cat] || DEFAULT_RATE) * 100 * 10) / 10}% hoàn tiền
+                                            </p>
+                                        </div>
+                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">+{fmtShort(cb)}₫</span>
+                                    </div>
+                                ))}
                             </div>
-                        )) : (
+                        ) : (
                             <div className="p-6 text-center">
-                                <p className="text-sm text-slate-400">Chưa có giao dịch tháng này</p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">Chưa có giao dịch tháng này</p>
                             </div>
                         )}
 
                         {/* Info note */}
-                        <div className="mx-4 border-t border-gray-100 py-3">
-                            <p className="text-[10px] text-gray-400 text-center">
+                        <div className="mx-4 border-t border-gray-100 dark:border-slate-700 py-3">
+                            <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center">
                                 * Ước tính dựa trên tỷ lệ hoàn tiền trung bình. Số thực tế tùy theo chính sách ngân hàng.
                             </p>
                         </div>
@@ -481,7 +487,8 @@ export default function CardsPage() {
                 onClose={() => setShowPayment(false)}
                 onPaid={() => { refetchCards(); refetchTx(); }}
                 creditCards={creditCards}
+                accounts={accounts}
             />
-        </div>
+        </div >
     );
 }

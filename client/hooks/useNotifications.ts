@@ -16,92 +16,119 @@ export interface NotificationItem {
     createdAt: string;
     relatedId?: string;
 }
+import { create } from 'zustand';
 
-export function useNotifications() {
-    const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const esRef = useRef<EventSource | null>(null);
+interface NotificationStore {
+    notifications: NotificationItem[];
+    loading: boolean;
+    error: string | null;
+    hasFetched: boolean;
+    esConnected: boolean;
+    fetch: (force?: boolean) => Promise<void>;
+    setupSSE: () => void;
+    markRead: (id: string) => Promise<void>;
+    markAllRead: () => Promise<void>;
+    deleteOne: (id: string) => Promise<void>;
+    clearAll: () => Promise<void>;
+}
 
-    const fetchAll = useCallback(async () => {
+let esRef: EventSource | null = null;
+
+export const useNotificationStore = create<NotificationStore>((set, get) => ({
+    notifications: [],
+    loading: false,
+    error: null,
+    hasFetched: false,
+    esConnected: false,
+    fetch: async (force = false) => {
+        if (get().loading || (get().hasFetched && !force)) return;
+        set({ loading: true, error: null });
         try {
-            setLoading(true);
             const res = await notificationsApi.getAll({ limit: 50 });
-            setNotifications(res.data.data || []);
+            set({
+                notifications: res.data?.data || [],
+                hasFetched: true,
+                loading: false
+            });
         } catch {
-            setError('Không thể tải thông báo');
-        } finally {
-            setLoading(false);
+            set({ error: 'Không thể tải thông báo', loading: false });
         }
-    }, []);
-
-    // Initial load
-    useEffect(() => { fetchAll(); }, [fetchAll]);
-
-    // SSE — realtime push from server
-    useEffect(() => {
+    },
+    setupSSE: () => {
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (!token) return;
+        if (!token || get().esConnected) return;
+
+        set({ esConnected: true });
 
         const connect = () => {
-            // Close existing connection before reconnecting
-            esRef.current?.close();
-
-            // Pass token as query param since EventSource cannot set custom headers
+            if (esRef) esRef.close();
             const es = new EventSource(`${API_URL}/notifications/stream?token=${token}`);
-            esRef.current = es;
+            esRef = es;
 
             es.onmessage = (e) => {
                 try {
                     const payload = JSON.parse(e.data);
                     if (payload.type === 'notification' && payload.data) {
-                        setNotifications(prev => {
-                            // Avoid duplicate if already exists
-                            if (prev.some(n => n._id === payload.data._id)) return prev;
-                            return [payload.data, ...prev];
+                        set(state => {
+                            if (state.notifications.some(n => n._id === payload.data._id)) return state;
+                            return { notifications: [payload.data, ...state.notifications] };
                         });
                     }
-                } catch { /* ignore malformed events */ }
+                } catch { /* ignore */ }
             };
 
             es.onerror = () => {
                 es.close();
-                // Reconnect after 5s on failure
-                setTimeout(connect, 5_000);
+                setTimeout(connect, 5000);
             };
         };
 
         connect();
+    },
+    markRead: async (id: string) => {
+        set(state => ({
+            notifications: state.notifications.map(n => n._id === id ? { ...n, isRead: true } : n)
+        }));
+        try { await notificationsApi.markRead(id); } catch { await get().fetch(true); }
+    },
+    markAllRead: async () => {
+        set(state => ({
+            notifications: state.notifications.map(n => ({ ...n, isRead: true }))
+        }));
+        try { await notificationsApi.markAllRead(); } catch { await get().fetch(true); }
+    },
+    deleteOne: async (id: string) => {
+        set(state => ({
+            notifications: state.notifications.filter(n => n._id !== id)
+        }));
+        try { await notificationsApi.deleteOne(id); } catch { await get().fetch(true); }
+    },
+    clearAll: async () => {
+        set({ notifications: [] });
+        try { await notificationsApi.clearAll(); } catch { await get().fetch(true); }
+    }
+}));
 
-        return () => {
-            esRef.current?.close();
-            esRef.current = null;
-        };
+export function useNotifications() {
+    const store = useNotificationStore();
+
+    useEffect(() => {
+        store.fetch();
+        store.setupSSE();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const markRead = async (id: string) => {
-        setNotifications(prev =>
-            prev.map(n => n._id === id ? { ...n, isRead: true } : n)
-        );
-        try { await notificationsApi.markRead(id); } catch { await fetchAll(); }
+    const unreadCount = store.notifications.filter(n => !n.isRead).length;
+
+    return {
+        notifications: store.notifications,
+        loading: store.loading,
+        error: store.error,
+        unreadCount,
+        markRead: store.markRead,
+        markAllRead: store.markAllRead,
+        deleteOne: store.deleteOne,
+        clearAll: store.clearAll,
+        refetch: () => store.fetch(true)
     };
-
-    const markAllRead = async () => {
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-        try { await notificationsApi.markAllRead(); } catch { await fetchAll(); }
-    };
-
-    const deleteOne = async (id: string) => {
-        setNotifications(prev => prev.filter(n => n._id !== id));
-        try { await notificationsApi.deleteOne(id); } catch { await fetchAll(); }
-    };
-
-    const clearAll = async () => {
-        setNotifications([]);
-        try { await notificationsApi.clearAll(); } catch { await fetchAll(); }
-    };
-
-    const unreadCount = notifications.filter(n => !n.isRead).length;
-
-    return { notifications, loading, error, unreadCount, markRead, markAllRead, deleteOne, clearAll, refetch: fetchAll };
 }

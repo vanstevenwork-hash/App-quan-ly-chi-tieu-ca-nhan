@@ -142,14 +142,14 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
     badge?: string; badgeColor?: string;
 }) {
     return (
-        <div className="flex items-center p-4 hover:bg-gray-50 rounded-2xl transition">
+        <div className="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-2xl transition">
             <div className="w-12 h-12 rounded-full flex items-center justify-center mr-4 flex-shrink-0"
                 style={{ backgroundColor: iconBg }}>
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-start gap-2 mb-0.5">
-                    <h4 className="font-semibold text-slate-800 text-sm truncate">{title}</h4>
+                    <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">{title}</h4>
                     {badge && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg flex-shrink-0"
                             style={{ backgroundColor: `${badgeColor}18`, color: badgeColor }}>
@@ -158,8 +158,8 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
                     )}
                 </div>
                 <div className="flex justify-between items-end">
-                    <p className="text-xs text-slate-400">{sub}</p>
-                    <p className="font-bold text-sm text-slate-800">{value}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">{sub}</p>
+                    <p className="font-bold text-sm text-slate-800 dark:text-slate-100">{value}</p>
                 </div>
             </div>
         </div>
@@ -227,27 +227,29 @@ export default function SavingsPage() {
     const monthLabel = `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`;
 
     return (
-        <div className="min-h-screen pb-32 bg-gray-50">
+        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
             {/* Gradient bg blob */}
-            <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0"
+            <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 dark:hidden"
                 style={{ background: 'linear-gradient(to bottom, rgba(167,243,208,0.3), transparent)' }} />
+            <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 hidden dark:block"
+                style={{ background: 'linear-gradient(to bottom, rgba(16,185,129,0.1), transparent)' }} />
 
             <div className="relative z-10 pb-8">
                 {/* ── Header ─────────────────────────────────────── */}
                 <header className="pt-14 px-5 pb-2 flex items-center gap-4">
                     <button onClick={() => router.push('/dashboard')}
-                        className="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-slate-600 hover:bg-gray-50 active:scale-95 transition-all flex-shrink-0">
+                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div className="flex-1">
-                        <p className="text-xs text-slate-400 font-medium">Tài chính</p>
-                        <h1 className="text-xl font-bold text-slate-900 leading-tight">Tiết kiệm 🐷</h1>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Tài chính</p>
+                        <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">Tiết kiệm 🐷</h1>
                     </div>
                     <button onClick={refresh}
-                        className="w-10 h-10 rounded-full bg-white border border-gray-100 shadow-sm flex items-center justify-center text-slate-600 hover:bg-gray-50 active:scale-95 transition-all relative flex-shrink-0">
+                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
                         <RefreshCw className="w-4 h-4" />
                         {maturingSoon.length > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-white" />
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-white dark:border-slate-800" />
                         )}
                     </button>
                 </header>
@@ -255,26 +257,26 @@ export default function SavingsPage() {
                 {/* ── Hero ─────────────────────────────────────── */}
                 <div className="text-center px-6 mb-8">
                     <p className="text-sm text-slate-500 mb-1">Tổng tiền đang gửi</p>
-                    <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
+                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
                         {fmt(totalBalance)}₫
                     </h1>
                     {totalInterest > 0 && (
-                        <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 text-sm font-medium">
+                        <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
                             <TrendingUp className="w-4 h-4" />
                             <span>Lãi tạm tính: +{fmtShort(totalInterest)}₫</span>
                         </div>
                     )}
                     {totalBalance === 0 && (
-                        <p className="text-slate-400 text-sm mt-2">Chưa có sổ tiết kiệm nào</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-sm mt-2">Chưa có sổ tiết kiệm nào</p>
                     )}
                 </div>
 
                 {/* ── Savings carousel ─────────────────────────── */}
                 <div className="pl-6 mb-2 overflow-hidden">
                     <div className="flex items-center justify-between pr-6 mb-4">
-                        <h2 className="text-base font-bold text-slate-800">Sổ của tôi</h2>
+                        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Sổ của tôi</h2>
                         <Link href="/accounts?tab=savings"
-                            className="text-xs font-semibold text-emerald-600 hover:opacity-80">
+                            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:opacity-80">
                             Xem tất cả
                         </Link>
                     </div>
@@ -282,8 +284,8 @@ export default function SavingsPage() {
                         style={{ scrollbarWidth: 'none' }}>
 
                         {savingsCards.length === 0 && (
-                            <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 bg-white/70 flex flex-col items-center justify-center gap-3 text-gray-400">
-                                <PiggyBank className="w-10 h-10 text-gray-300" />
+                            <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
+                                <PiggyBank className="w-10 h-10 text-gray-300 dark:text-slate-600" />
                                 <p className="text-sm font-medium">Chưa có sổ tiết kiệm</p>
                             </div>
                         )}
@@ -295,8 +297,8 @@ export default function SavingsPage() {
                         ))}
 
                         <button onClick={() => { setEditCard(null); setShowForm(true); }}
-                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 bg-white flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-emerald-300 hover:text-emerald-500 transition">
-                            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
+                            <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                                 <Plus className="w-6 h-6" />
                             </div>
                             <span className="font-semibold text-sm">Thêm sổ mới</span>
@@ -306,20 +308,20 @@ export default function SavingsPage() {
 
                 {/* ── Quick actions ─────────────────────────────── */}
                 <div className="px-6 mb-6">
-                    <div className="bg-white/70 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50">
+                    <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
-                            { icon: <PiggyBank className="w-5 h-5 text-emerald-600" />, bg: '#D1FAE5', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
-                            { icon: <RefreshCw className="w-5 h-5 text-blue-600" />, bg: '#DBEAFE', label: 'Tái tục', onClick: () => { setEditCard(null); setShowForm(true); } },
-                            { icon: <History className="w-5 h-5 text-orange-600" />, bg: '#FEF3C7', label: 'Lịch sử', onClick: () => { } },
-                            { icon: <BarChart3 className="w-5 h-5 text-purple-600" />, bg: '#EDE9FE', label: 'Báo cáo', onClick: () => { } },
+                            { icon: <PiggyBank className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
+                            { icon: <RefreshCw className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: () => { setEditCard(null); setShowForm(true); } },
+                            { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, bg: '#FEF3C7', bgDark: '#78350F', label: 'Lịch sử', onClick: () => { } },
+                            { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, bg: '#EDE9FE', bgDark: '#4C1D95', label: 'Báo cáo', onClick: () => { } },
                         ].map(item => (
                             <button key={item.label} onClick={item.onClick}
                                 className="flex flex-col items-center gap-2 group">
                                 <div className="w-12 h-12 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
-                                    style={{ backgroundColor: item.bg }}>
+                                    style={{ backgroundColor: typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? item.bgDark : item.bg }}>
                                     {item.icon}
                                 </div>
-                                <span className="text-xs font-medium text-slate-600">{item.label}</span>
+                                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
                             </button>
                         ))}
                     </div>
@@ -328,14 +330,14 @@ export default function SavingsPage() {
                 {/* ── Maturity alerts ───────────────────────────── */}
                 {maturingSoon.length > 0 && (
                     <div className="px-6 mb-5">
-                        <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-2xl p-4">
-                            <AlertTriangle className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex items-start gap-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 rounded-2xl p-4">
+                            <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" />
                             <div>
-                                <p className="font-bold text-sm text-orange-800">
+                                <p className="font-bold text-sm text-orange-800 dark:text-orange-300">
                                     {maturingSoon.length} sổ sắp đáo hạn trong 30 ngày
                                 </p>
                                 {maturingSoon.map(m => (
-                                    <p key={m._id} className="text-xs text-orange-600 mt-1">
+                                    <p key={m._id} className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                                         · {m.bankName} — {fmt(m.balance)}₫ · còn {m.daysLeft} ngày
                                     </p>
                                 ))}
@@ -346,8 +348,8 @@ export default function SavingsPage() {
 
                 {/* ── Detail info ───────────────────────────────── */}
                 <div className="px-6 mb-5">
-                    <h3 className="text-base font-bold text-slate-800 mb-3">Thông tin chi tiết</h3>
-                    <div className="bg-white rounded-3xl shadow-sm overflow-hidden border border-gray-100">
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">Thông tin chi tiết</h3>
+                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800">
 
                         {/* Maturity countdown — best upcoming */}
                         {savingsCards.filter(c => c.maturityDate).length > 0 ? (
@@ -372,19 +374,19 @@ export default function SavingsPage() {
                         ) : (
                             <DetailRow
                                 icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                                iconBg="#D1FAE5"
+                                iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#064E3B' : '#D1FAE5'}
                                 title="Không có sổ sắp đáo hạn"
                                 sub="Tất cả đang hoạt động bình thường"
                                 value="Tốt 👍"
                             />
                         )}
 
-                        <div className="mx-4 border-t border-gray-100" />
+                        <div className="mx-4 border-t border-gray-100 dark:border-slate-700" />
 
                         {/* Total estimated interest */}
                         <DetailRow
                             icon={<Percent className="w-5 h-5 text-emerald-500" />}
-                            iconBg="#D1FAE5"
+                            iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#064E3B' : '#D1FAE5'}
                             title="Lãi tạm tính toàn bộ"
                             sub={`${savingsCards.length} sổ tiết kiệm`}
                             value={totalInterest > 0 ? `+${fmtShort(totalInterest)}₫` : '—'}
@@ -392,12 +394,12 @@ export default function SavingsPage() {
                             badgeColor="#10B981"
                         />
 
-                        <div className="mx-4 border-t border-gray-100" />
+                        <div className="mx-4 border-t border-gray-100 dark:border-slate-700" />
 
                         {/* Best interest rate */}
                         <DetailRow
                             icon={<TrendingUp className="w-5 h-5 text-indigo-500" />}
-                            iconBg="#EEF2FF"
+                            iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#312E81' : '#EEF2FF'}
                             title="Lãi suất cao nhất"
                             sub="Trong danh mục của bạn"
                             value={bestRate > 0 ? `${bestRate}%/năm` : '—'}
@@ -440,6 +442,7 @@ export default function SavingsPage() {
                 onClose={() => { setShowForm(false); setEditCard(null); }}
                 onSave={handleSave}
                 editCard={editCard}
+                initialType="savings"
             />
         </div>
     );

@@ -1,22 +1,20 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
-import { X, Check, Loader2 } from 'lucide-react';
 import { useCards } from '@/hooks/useCards';
-import { useWealth } from '@/hooks/useWealth';
+import { useBanks } from '@/hooks/useBanks';
 import { transactionsApi } from '@/lib/api';
 import { toast } from 'sonner';
+import { Banknote, ArrowRight, Calendar, Check } from 'lucide-react';
 
 interface AddTransactionModalProps {
     open: boolean;
     onClose: () => void;
-    onSaved?: () => void;          // called after API succeeds — for parent to refresh
+    onSaved?: () => void;
     defaultType?: 'expense' | 'income';
 }
-
-const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000];
 
 export default function AddTransactionModal({
     open, onClose, onSaved, defaultType = 'expense',
@@ -25,40 +23,20 @@ export default function AddTransactionModal({
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState('');
     const [note, setNote] = useState('');
+    const [paymentTab, setPaymentTab] = useState<'cash' | 'account' | 'credit'>('cash');
     const [selectedCardId, setSelectedCardId] = useState<string>('cash');
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
+    const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     const { cards } = useCards();
-    const { sources: wealthSources } = useWealth();
 
-    const WEALTH_CATEGORIES: Record<string, string> = {
-        savings: 'Tiết kiệm', gold: 'Vàng bạc', crypto: 'Crypto',
-        cashback: 'Hoàn tiền', affiliate: 'Affiliate', stock: 'Cổ phiếu',
-        real_estate: 'Bất động sản', other: 'Khác',
-    };
+    useEffect(() => {
+        fetchBanks();
+    }, [fetchBanks]);
 
-    const paymentSources = [
-        { id: 'cash', label: 'Tiền mặt', icon: '💵', sub: '', balance: null as number | null, cardType: '' },
-        ...cards.map(c => ({
-            id: c._id,
-            label: `${c.bankShortName} ${c.cardNumber ? '••' + c.cardNumber : ''}`,
-            icon: c.cardType === 'credit' ? '💳' : c.cardType === 'savings' ? '🐷' : c.cardType === 'eWallet' ? '📱' : '🏧',
-            sub: c.cardType === 'credit' ? 'Tín dụng' : c.cardType === 'debit' ? 'Ghi nợ' : c.cardType === 'savings' ? 'Tiết kiệm' : 'Ví điện tử',
-            balance: c.balance,
-            bankColor: c.bankColor,
-            cardType: c.cardType,
-        })),
-        ...wealthSources.map(w => ({
-            id: w._id,
-            label: w.name,
-            icon: w.icon,
-            sub: WEALTH_CATEGORIES[w.category] || 'Tài sản',
-            balance: w.balance,
-            bankColor: w.color,
-            cardType: 'wealth',
-        }))
-    ];
+    const debitCards = cards.filter(c => c.cardType === 'debit' || c.cardType === 'eWallet');
+    const creditCards = cards.filter(c => c.cardType === 'credit');
 
     useEffect(() => {
         if (open) {
@@ -67,17 +45,23 @@ export default function AddTransactionModal({
             setCategory('');
             setNote('');
             setDate(new Date().toISOString().slice(0, 10));
-            const defaultCard = cards.find(c => c.isDefault);
-            setSelectedCardId(defaultCard ? defaultCard._id : 'cash');
+            setPaymentTab('cash');
+            setSelectedCardId('cash');
         }
     }, [open, defaultType]);
 
+    // Update selected card automatically when tab changes
+    useEffect(() => {
+        if (paymentTab === 'cash') setSelectedCardId('cash');
+        else if (paymentTab === 'account') {
+            setSelectedCardId(debitCards.length > 0 ? debitCards[0]._id : '');
+        } else if (paymentTab === 'credit') {
+            setSelectedCardId(creditCards.length > 0 ? creditCards[0]._id : '');
+        }
+    }, [paymentTab]);
+
     const handleAmountInput = (v: string) => {
         setAmount(v.replace(/\D/g, ''));
-    };
-
-    const addQuick = (v: number) => {
-        setAmount(String((parseInt(amount || '0')) + v));
     };
 
     const INCOME_CATS = ['Lương', 'Freelance', 'Đầu tư', 'Thưởng', 'Tiền lãi', 'Khác'];
@@ -89,7 +73,6 @@ export default function AddTransactionModal({
 
     const displayAmount = amount ? parseInt(amount).toLocaleString('vi-VN') : '';
 
-    // ===== ACTUAL API CALL =====
     const handleSave = async () => {
         if (!amount || !category) return;
         setSaving(true);
@@ -100,8 +83,8 @@ export default function AddTransactionModal({
                 category,
                 note,
                 date: new Date(date),
-                paymentMethod: selectedCardId === 'cash' ? 'cash' : 'card',
-                cardId: selectedCardId === 'cash' ? null : selectedCardId,
+                paymentMethod: paymentTab === 'cash' ? 'cash' : 'card',
+                cardId: paymentTab === 'cash' ? null : selectedCardId,
             });
             toast.success(type === 'income' ? '💰 Đã thêm thu nhập!' : '💸 Đã thêm chi tiêu!');
             onSaved?.();
@@ -114,133 +97,201 @@ export default function AddTransactionModal({
         }
     };
 
+    const formatDateStr = (dateStr: string) => {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const isToday = new Date().toDateString() === d.toDateString();
+        return `${isToday ? 'Hôm nay, ' : ''}${d.getDate()} Thg ${d.getMonth() + 1}`;
+    };
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-sm rounded-3xl p-0 overflow-hidden border-0 shadow-2xl">
+            <DialogContent className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden p-0 border-0">
+                <button className="flex h-6 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
+                    <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                </button>
+                <div className="flex items-center px-4 py-3 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                    <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">Thêm giao dịch</h2>
+                </div>
 
-                {/* ===== Gradient Header ===== */}
-                <div className="gradient-primary px-5 pt-5 pb-6">
-                    <DialogHeader>
-                        <div className="flex items-center justify-between mb-4">
-                            <DialogTitle className="text-white text-lg font-bold">Thêm giao dịch</DialogTitle>
-                            <button onClick={onClose} className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors">
-                                <X className="w-4 h-4 text-white" />
-                            </button>
-                        </div>
-                    </DialogHeader>
-
-                    {/* Type toggle */}
-                    <div className="flex gap-2 bg-white/20 rounded-2xl p-1 mb-5">
+                <div className="flex-1 overflow-y-auto hide-scrollbar pb-24 bg-white dark:bg-slate-900 px-4 pt-4 space-y-6">
+                    {/* Toggle Type */}
+                    <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
                         {(['expense', 'income'] as const).map(t => (
                             <button key={t} onClick={() => { setType(t); setCategory(''); }}
-                                className={cn('flex-1 py-2 rounded-xl text-sm font-semibold transition-all',
-                                    type === t ? 'bg-white text-indigo-600' : 'text-white/80 hover:text-white')}>
-                                {t === 'expense' ? '💸 Chi tiêu' : '💰 Thu nhập'}
+                                className={cn('flex-1 py-1.5 px-3 text-sm font-bold rounded-md transition-colors',
+                                    type === t ? 'bg-white dark:bg-slate-700 text-[#7f19e6] dark:text-purple-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300')}>
+                                {t === 'expense' ? 'Chi tiêu' : 'Thu nhập'}
                             </button>
                         ))}
                     </div>
 
-                    {/* Amount */}
-                    <div className="text-center">
-                        <p className="text-white/70 text-xs mb-1">Số tiền</p>
-                        <div className="flex items-center justify-center gap-2">
-                            <input type="tel" value={displayAmount}
-                                onChange={e => handleAmountInput(e.target.value.replace(/\./g, '').replace(/,/g, ''))}
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-bold text-[#000000] dark:text-white">Số tiền</label>
+                        <div className="flex w-full items-stretch rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden focus-within:border-[#7f19e6] focus-within:ring-1 focus-within:ring-[#7f19e6] transition-colors">
+                            <div className="flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                                <Banknote className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <input
+                                className="w-full flex-1 border-0 bg-transparent py-4 px-3 text-2xl font-bold text-[#000000] dark:text-white focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 placeholder="0"
-                                className="bg-transparent text-white text-4xl font-bold text-center placeholder-white/40 w-full outline-none"
-                                style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }} />
-                            <span className="text-white/60 text-xl flex-shrink-0">đ</span>
+                                value={displayAmount}
+                                onChange={e => handleAmountInput(e.target.value)}
+                                type="text"
+                                style={{ fontVariantNumeric: 'tabular-nums' }}
+                            />
+                            <div className="flex items-center justify-center px-4 text-[#000000] dark:text-white font-bold">
+                                VND
+                            </div>
                         </div>
-                        <div className="flex gap-1.5 mt-3 justify-center flex-wrap">
-                            {QUICK_AMOUNTS.map(v => (
-                                <button key={v} onClick={() => addQuick(v)}
-                                    className="bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-2.5 py-1 rounded-full transition-colors">
-                                    +{v >= 1000000 ? `${v / 1000000}tr` : `${v / 1000}k`}
-                                </button>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <h3 className="text-sm font-bold text-[#000000] dark:text-white">Danh mục</h3>
+                        <div className="grid grid-cols-4 gap-2">
+                            {filteredCategories.map(cat => (
+                                <div key={cat.id} onClick={() => setCategory(cat.label)} className="flex flex-col items-center gap-2 group cursor-pointer">
+                                    <div className={cn('w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all',
+                                        category === cat.label
+                                            ? 'bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400 border-[#7f19e6]'
+                                            : 'bg-slate-50 dark:bg-slate-800 border-transparent group-hover:bg-slate-100 dark:group-hover:bg-slate-700')}
+                                        style={category === cat.label ? {} : { color: cat.color }}>
+                                        <span className="text-2xl">{cat.icon}</span>
+                                    </div>
+                                    <span className={cn('text-[11px] font-bold text-center', category === cat.label ? 'text-[#7f19e6] dark:text-purple-400' : 'text-slate-800 dark:text-slate-300')}>
+                                        {cat.label}
+                                    </span>
+                                </div>
                             ))}
-                            {amount && (
-                                <button onClick={() => setAmount('')}
-                                    className="bg-white/20 hover:bg-white/30 text-white text-xs px-2.5 py-1 rounded-full">
-                                    ✕
-                                </button>
-                            )}
                         </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <h3 className="text-sm font-bold text-[#000000] dark:text-white">Phương thức thanh toán</h3>
+                        <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                            <button onClick={() => setPaymentTab('cash')} className={cn('flex-1 py-2 px-3 text-sm font-bold rounded-md transition-colors', paymentTab === 'cash' ? 'bg-white dark:bg-slate-700 text-[#7f19e6] dark:text-purple-400 shadow-sm ring-1 ring-black/5 dark:ring-white/5' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200')}>Tiền mặt</button>
+                            <button onClick={() => setPaymentTab('account')} className={cn('flex-1 py-2 px-3 text-sm font-bold rounded-md transition-colors', paymentTab === 'account' ? 'bg-white dark:bg-slate-700 text-[#7f19e6] dark:text-purple-400 shadow-sm ring-1 ring-black/5 dark:ring-white/5' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200')}>Tài khoản</button>
+                            <button onClick={() => setPaymentTab('credit')} className={cn('flex-1 py-2 px-3 text-sm font-bold rounded-md transition-colors', paymentTab === 'credit' ? 'bg-white dark:bg-slate-700 text-[#7f19e6] dark:text-purple-400 shadow-sm ring-1 ring-black/5 dark:ring-white/5' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200')}>Thẻ tín dụng</button>
+                        </div>
+
+                        {(paymentTab === 'account' || paymentTab === 'credit') && (
+                            <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x py-1 mt-2 -mx-4 px-4">
+                                {(paymentTab === 'account' ? debitCards : creditCards).map(card => {
+                                    const isSelected = selectedCardId === card._id;
+                                    const cBg = card.bankColor || '#3B82F6';
+
+                                    const renderNetworkLogo = (network?: string) => {
+                                        switch (network) {
+                                            case 'visa': return <span className="font-bold italic text-blue-900 text-sm tracking-tighter">VISA</span>;
+                                            case 'mastercard': return <div className="flex -space-x-1.5 opacity-90"><div className="w-4 h-4 rounded-full bg-red-500 mix-blend-multiply"></div><div className="w-4 h-4 rounded-full bg-amber-400 mix-blend-multiply"></div></div>;
+                                            case 'jcb': return <span className="font-bold text-green-600 text-xs">JCB</span>;
+                                            case 'amex': return <span className="font-bold text-blue-600 text-[10px] bg-blue-50 px-1 py-0.5 rounded border border-blue-200">AMEX</span>;
+                                            case 'napas': return <span className="font-bold text-green-500 text-xs">NAPAS</span>;
+                                            default: return null;
+                                        }
+                                    };
+
+                                    const selectedBankObj = fetchedBanks.find(b => b.shortName === card.bankShortName);
+
+                                    if (paymentTab === 'credit') {
+                                        return (
+                                            <div key={card._id} onClick={() => setSelectedCardId(card._id)}
+                                                className={cn("snap-start shrink-0 w-44 p-3 rounded-2xl border-2 relative cursor-pointer flex flex-col justify-between transition-colors min-h-[100px]",
+                                                    isSelected ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600')}>
+
+                                                {/* Top Row: Bank Badge & Checkmark */}
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        {selectedBankObj?.logo ? (
+                                                            <div className="w-8 h-8 p-1 bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-center">
+                                                                <img src={selectedBankObj.logo} className="w-full h-full object-contain" alt="logo" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="px-2.5 py-1 rounded-md text-white text-[11px] font-bold shadow-sm" style={{ backgroundColor: cBg }}>
+                                                                {card.bankShortName?.slice(0, 6) || card.cardType.toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    {isSelected && (
+                                                        <div className="w-4 h-4 rounded-full border border-[#7f19e6] flex items-center justify-center bg-white dark:bg-slate-900">
+                                                            <Check className="w-2.5 h-2.5 text-[#7f19e6] dark:text-purple-400 stroke-[3]" />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Middle: Card Name */}
+                                                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 leading-tight mb-3">
+                                                    {card.bankName}
+                                                </p>
+
+                                                {/* Bottom Row: Card Mask & Network */}
+                                                <div className="flex justify-between items-end mt-auto">
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-widest">
+                                                        **** {card.cardNumber || '....'}
+                                                    </p>
+                                                    <div>
+                                                        {renderNetworkLogo(card.cardNetwork)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    // Render for Debit / E-Wallet
+                                    return (
+                                        <div key={card._id} onClick={() => setSelectedCardId(card._id)}
+                                            className={cn("snap-start shrink-0 w-36 p-3 rounded-xl border-2 relative overflow-hidden cursor-pointer flex flex-col gap-3 transition-colors",
+                                                isSelected ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600')}>
+                                            {isSelected && (
+                                                <div className="absolute top-0 right-0 p-1">
+                                                    <div className="w-5 h-5 rounded-full bg-[#7f19e6] flex items-center justify-center">
+                                                        <Check className="w-3 h-3 text-white stroke-[3]" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: cBg }}>
+                                                {card.bankShortName?.slice(0, 4) || card.cardType}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-[#000000] dark:text-white truncate">{card.bankName}</p>
+                                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{card.cardType === 'eWallet' ? 'Ví điện tử' : card.cardType === 'savings' ? 'Sổ tiết kiệm' : 'Ngân hàng'}</p>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                                {(paymentTab === 'account' ? debitCards : creditCards).length === 0 && (
+                                    <div className="text-sm text-slate-500 italic px-2 py-4">Không có thẻ nào</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-bold text-[#000000] dark:text-white">Ngày giao dịch</label>
+                        <div className="relative">
+                            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                            <button className="flex w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-left hover:border-slate-300 dark:hover:border-slate-600 transition-colors focus:outline-none focus:ring-1 focus:ring-[#7f19e6]">
+                                <span className="text-base font-bold text-[#000000] dark:text-white">{formatDateStr(date)}</span>
+                                <Calendar className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 pb-6">
+                        <label className="text-sm font-bold text-[#000000] dark:text-white">Ghi chú</label>
+                        <textarea
+                            value={note} onChange={e => setNote(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 text-base text-[#000000] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-[#7f19e6] focus:ring-1 focus:ring-[#7f19e6] focus:outline-none resize-none h-24"
+                            placeholder="Ví dụ: Ăn trưa với đối tác..."></textarea>
                     </div>
                 </div>
 
-                {/* ===== White body ===== */}
-                <div className="bg-white px-5 py-4 space-y-4 max-h-[55vh] overflow-y-auto">
-
-                    {/* Category */}
-                    <div>
-                        <p className="text-sm font-bold text-gray-800 mb-2">Danh mục</p>
-                        <div className="grid grid-cols-4 gap-2">
-                            {filteredCategories.map(cat => (
-                                <button key={cat.id} onClick={() => setCategory(cat.label)}
-                                    className={cn('flex flex-col items-center gap-1 p-2.5 rounded-2xl border-2 transition-all',
-                                        category === cat.label ? 'border-indigo-400 scale-95' : 'border-transparent bg-gray-50 hover:bg-gray-100')}
-                                    style={category === cat.label ? { backgroundColor: `${cat.color}20`, borderColor: cat.color } : {}}>
-                                    <span className="text-2xl">{cat.icon}</span>
-                                    <span className="text-[10px] text-gray-500 text-center leading-tight">{cat.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Payment card selection */}
-                    <div>
-                        <p className="text-sm font-bold text-gray-800 mb-2">Thanh toán bằng</p>
-                        <div className="flex flex-col gap-1.5">
-                            {paymentSources.map(s => {
-                                const isCredit = s.cardType === 'credit';
-                                return (
-                                    <button key={s.id} onClick={() => setSelectedCardId(s.id)}
-                                        className={cn('flex items-center gap-3 px-3 py-2.5 rounded-2xl border-2 transition-all text-left',
-                                            selectedCardId === s.id ? 'border-indigo-400 bg-indigo-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200')}>
-                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 bg-gray-100">
-                                            {s.icon}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-sm text-gray-800 truncate">{s.label}</p>
-                                            {s.sub && <p className="text-xs text-gray-400">{s.sub}</p>}
-                                        </div>
-                                        {s.balance !== null && (
-                                            <p className={cn('text-xs font-bold flex-shrink-0', isCredit ? 'text-red-500' : 'text-emerald-600')}>
-                                                {isCredit ? '-' : ''}{s.balance.toLocaleString('vi-VN')}đ
-                                            </p>
-                                        )}
-                                        {selectedCardId === s.id && (
-                                            <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
-                                                <Check className="w-3 h-3 text-white" />
-                                            </div>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Date */}
-                    <div>
-                        <p className="text-sm font-bold text-gray-800 mb-1.5">Ngày giao dịch</p>
-                        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                            className="w-full border border-gray-200 rounded-2xl px-4 py-2.5 text-gray-800 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-                    </div>
-
-                    {/* Note */}
-                    <div>
-                        <p className="text-sm font-bold text-gray-800 mb-1.5">Ghi chú</p>
-                        <input value={note} onChange={e => setNote(e.target.value)}
-                            placeholder="VD: Ăn trưa, Cà phê sáng..."
-                            className="w-full border border-gray-200 rounded-2xl px-4 py-2.5 text-gray-800 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
-                    </div>
-
-                    {/* Save button */}
-                    <button onClick={handleSave} disabled={!amount || !category || saving}
-                        className={cn('w-full gradient-primary text-white rounded-2xl py-4 text-base font-bold flex items-center justify-center gap-2 transition-all',
-                            (!amount || !category || saving) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90 active:scale-95')}>
-                        {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                        {saving ? 'Đang lưu...' : 'Lưu giao dịch'}
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800">
+                    <button onClick={handleSave} disabled={saving || !amount || !category}
+                        className="w-full bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl py-4 text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>{saving ? 'Đang lưu...' : 'Thêm ngay'}</span>
+                        <ArrowRight className="w-5 h-5" />
                     </button>
                 </div>
             </DialogContent>

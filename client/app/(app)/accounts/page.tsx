@@ -516,6 +516,7 @@ export default function AccountsPage() {
                 onClose={() => { setShowForm(false); setEditCard(null); }}
                 onSave={handleSave}
                 editCard={editCard}
+                initialType={defaultType}
             />
 
             {deleteTarget && (
