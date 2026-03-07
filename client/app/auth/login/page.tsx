@@ -49,7 +49,7 @@ export default function LoginPage() {
             {/* Logo area */}
             <div className="px-6 pt-16 pb-8 text-center">
                 <div className="w-16 h-16 gradient-primary rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-glow animate-float">
-                    <span className="text-3xl">💰</span>
+                    <span className="text-2xl">💰</span>
                 </div>
                 <h1 className="text-2xl font-bold text-foreground">Đăng nhập</h1>
                 <p className="text-muted-foreground text-sm mt-1">Quản lý tài chính cá nhân thông minh</p>

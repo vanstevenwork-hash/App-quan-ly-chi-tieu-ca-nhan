@@ -27,7 +27,7 @@ export default function BalanceCard({
                     Tổng tài sản
                 </p>
                 <div className="flex items-center justify-center gap-3">
-                    <p className="text-3xl font-bold text-foreground text-money tracking-tight">
+                    <p className="text-2xl font-bold text-foreground text-money tracking-tight">
                         {hidden ? '••••••••' : totalBalance.toLocaleString('vi-VN')}
                         <span className="text-lg font-semibold text-muted-foreground ml-2">VND</span>
                     </p>

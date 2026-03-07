@@ -19,7 +19,7 @@ export default function BottomNav() {
     return (
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50">
             <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 shadow-bottom-nav">
-                <div className="flex items-center justify-around px-1 pb-6 pt-2">
+                <div className="flex items-center justify-around px-1 pb-2 pt-2">
                     {navItems.map(({ href, icon: Icon, label }) => {
                         const active = pathname === href || pathname.startsWith(href + '/');
                         return (

@@ -273,7 +273,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                     {/* Tabs */}
                     <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
                         {TABS.map(tab => {
-                            const count = notifications.filter(n => (tab.types as readonly string[]).includes(n.type) || (tab.key === 'transaction' && !(TABS.flatMap(x => x.types) as readonly string[]).includes(n.type))).length;
+                            const count = notifications.filter(n => !n.isRead && ((tab.types as readonly string[]).includes(n.type) || (tab.key === 'transaction' && !(TABS.flatMap(x => x.types) as readonly string[]).includes(n.type)))).length;
                             const isActive = activeTab === tab.key;
                             return (
                                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}

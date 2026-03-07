@@ -21,12 +21,14 @@ import {
 import Link from 'next/link';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
+// const fmt = (n: number) => {
+//     return `${n.toLocaleString('vi-VN')} đ`;
+// };
 const fmt = (n: number) => {
-    const abs = Math.abs(n);
-    if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
-    if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
-    if (abs >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
-    return n.toLocaleString('vi-VN');
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} tỷ`;
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
+    return `${n}`;
 };
 const fmtFull = (n: number) => n.toLocaleString('vi-VN');
 
@@ -58,7 +60,7 @@ function TransactionRow({ t }: { t: { type: string; amount: number; category: st
                 </div>
             </div>
             <span className={cn('text-sm font-bold flex-shrink-0', isIncome ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-100')}>
-                {isIncome ? '+' : '-'}{fmt(t.amount)}đ
+                {isIncome ? '+' : '-'}{fmt(t.amount)}
             </span>
         </div>
     );
@@ -213,7 +215,7 @@ export default function DashboardPage() {
         <div className="min-h-screen pb-28 bg-[#F8F9FF] dark:bg-slate-900 transition-colors duration-200">
 
             {/* ── Header ─────────────────────────────────────────────── */}
-            <header className="px-5 pt-14 pb-3 flex justify-between items-center">
+            <header className="px-5 pt-4 pb-3 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-sm">
                         {(user?.name || 'N').charAt(0).toUpperCase()}
@@ -237,7 +239,7 @@ export default function DashboardPage() {
             <main className="px-5 space-y-5">
 
                 {/* ── Asset card (light lavender gradient) ─────────── */}
-                <div className="relative overflow-hidden rounded-3xl p-6 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] border border-[#E9D5FF] dark:border-purple-900/30 bg-gradient-to-br from-white to-[#F5F3FF] dark:from-slate-800 dark:to-slate-800/80">
+                <div className="relative overflow-hidden rounded-[20px] p-2.5 pb-2 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] border border-[#E9D5FF] dark:border-purple-900/30 bg-gradient-to-br from-white to-[#F5F3FF] dark:from-slate-800 dark:to-slate-800/80">
                     <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(167,139,250,0.25)' }} />
                     <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(147,197,253,0.2)' }} />
 
@@ -261,25 +263,28 @@ export default function DashboardPage() {
                                 {hideBalance ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
-                        <div className="flex items-center gap-2 mt-3 justify-center">
+                        <div className="flex items-center justify-center gap-2 mt-3">
+
                             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
                                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                <Link href="/analytics" className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                                     Thu: +{fmt(summary.income)}
-                                </span>
+                                </Link>
                             </div>
+
                             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-500/10 rounded-full border border-red-100 dark:border-red-500/20 shadow-sm">
                                 <TrendingDown className="w-3.5 h-3.5 text-red-500" />
-                                <span className="text-xs font-bold text-red-600 dark:text-red-400">
+                                <Link href="/analytics" className="text-xs font-bold text-red-600 dark:text-red-400">
                                     Chi: -{fmt(summary.expense)}
-                                </span>
+                                </Link>
                             </div>
+
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 relative z-10 pt-4">
                             <Link href="/savings"
-                                className="bg-white dark:bg-slate-800 rounded-2xl p-4 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
-                                <div className="w-full flex justify-between items-start mb-3">
+                                className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
+                                <div className="w-full flex justify-between items-start mb-2">
                                     <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                                         <PiggyBank className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                                     </div>
@@ -293,8 +298,8 @@ export default function DashboardPage() {
                                 </p>
                             </Link>
                             <Link href="/cards"
-                                className="bg-white dark:bg-slate-800 rounded-2xl p-4 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
-                                <div className="w-full flex justify-between items-start mb-3">
+                                className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
+                                <div className="w-full flex justify-between items-start mb-2">
                                     <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                                         <CreditCard className="w-5 h-5 text-red-500" />
                                     </div>
@@ -399,7 +404,7 @@ export default function DashboardPage() {
                 {/* ── Spending trend chart ─────────────────────────── */}
                 <section>
                     <div className="flex justify-between items-center mb-3">
-                        <h2 className="text-base font-bold text-slate-800">Xu hướng thu chi</h2>
+                        <h2 className="text-base font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
                         <Link href="/analytics"
                             className="text-xs font-semibold text-purple-600 px-3 py-1 bg-purple-50 rounded-lg hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 transition-colors">
                             Xem chi tiết

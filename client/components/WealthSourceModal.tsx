@@ -131,7 +131,7 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
                         <div className="space-y-5">
                             {/* Icon + Color preview */}
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0 shadow-sm"
+                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 shadow-sm"
                                     style={{ backgroundColor: `${form.color}22`, border: `2px solid ${form.color}44` }}>
                                     {form.icon}
                                 </div>
