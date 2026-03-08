@@ -51,10 +51,15 @@ export default function LoginPage() {
 
             {/* Logo area */}
             <div className="px-6 pt-16 pb-8 text-center">
-                <div className="w-16 h-16 gradient-primary rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-glow animate-float">
-                    <span className="text-2xl">💰</span>
-                </div>
-                <h1 className="text-2xl font-bold text-foreground">Đăng nhập</h1>
+                <div
+                    className="w-full h-[180px] bg-cover bg-center rounded-2xl mb-6"
+                    style={{
+                        backgroundImage: 'url("/images/login.png")'
+
+                    }}
+                />
+
+                <h1 className="text-3xl font-bold text-foreground">Đăng nhập</h1>
                 <p className="text-muted-foreground text-sm mt-1">Quản lý tài chính cá nhân thông minh</p>
             </div>
 
@@ -103,7 +108,7 @@ export default function LoginPage() {
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full gradient-primary text-white rounded-2xl h-14 text-base font-bold shadow-glow hover:opacity-90 transition-all border-0 mt-2"
+                        className="w-full gradient-primary text-white rounded-2xl h-14 text-2xl font-bold shadow-glow hover:opacity-90 transition-all border-0 mt-2"
                     >
                         {loading ? 'Đang đăng nhập...' : (
                             <>Đăng nhập <ArrowRight className="w-4 h-4 ml-2" /></>
