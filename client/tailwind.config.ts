@@ -65,9 +65,11 @@ const config: Config = {
 				"4xl": "2.5rem",
 			},
 			fontSize: {
+				"4xl": "26px",
 				"3xl": "22px",
+				"xl": "16px",
 				"lg": "14px",
-				"base": "12px"
+				"base": "13px"
 			},
 			fontFamily: {
 				sans: ["Inter", "system-ui", "sans-serif"],

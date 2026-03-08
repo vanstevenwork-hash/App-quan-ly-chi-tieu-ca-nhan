@@ -8,6 +8,9 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '@/store/useStore';
 import { authApi } from '@/lib/api';
 import { mockUser } from '@/lib/mockData';
+import GoogleIcon from '@/components/icons/GoogleIcon';
+import AppleIcon from '@/components/icons/AppleIcon';
+import FacebookIcon from '@/components/icons/FacebookIcon';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -118,9 +121,11 @@ export default function LoginPage() {
                 {/* Social Login */}
                 <div className="grid grid-cols-3 gap-3">
                     {[
-                        { label: 'Google', icon: '🌐', color: '#DB4437' },
-                        { label: 'Apple', icon: '🍎', color: '#000' },
-                        { label: 'Facebook', icon: '📘', color: '#1877F2' },
+                        { label: 'Google', icon: <GoogleIcon />, color: '#DB4437' },
+                        {
+                            label: 'Apple', icon: <AppleIcon />, color: '#000'
+                        },
+                        { label: 'Facebook', icon: <FacebookIcon />, color: '#1877F2' },
                     ].map((s) => (
                         <button
                             key={s.label}

@@ -3,9 +3,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, CreditCard, PiggyBank, Target, BarChart3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-    { href: '/dashboard', icon: Home, label: 'Tổng quan' },
+import HomeIcon from './icons/HomeIcon';
+type NavItem = {
+    href: string;
+    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    label: string;
+};
+const navItems: NavItem[] = [
+    { href: '/dashboard', icon: HomeIcon, label: 'Tổng quan' },
     { href: '/cards', icon: CreditCard, label: 'Thẻ' },
     { href: '/savings', icon: PiggyBank, label: 'Tiết kiệm' },
     { href: '/goals', icon: Target, label: 'Mục tiêu' },
@@ -36,6 +41,7 @@ export default function BottomNav() {
                                         className={cn('w-[18px] h-[18px] transition-colors', active ? 'text-primary dark:text-purple-400' : 'text-muted-foreground dark:text-slate-400')}
                                         strokeWidth={active ? 2.5 : 1.8}
                                     />
+
                                 </div>
                                 <span className={cn(
                                     'text-[9px] font-medium transition-colors leading-none truncate w-full text-center',

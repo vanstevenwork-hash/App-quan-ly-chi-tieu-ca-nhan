@@ -14,7 +14,7 @@ export default function GoalsPage() {
 
             <div className="relative z-10">
                 {/* Header */}
-                <header className="pt-14 px-5 pb-4 flex items-center gap-4">
+                <header className="pt-4 px-5 pb-4 flex items-center gap-4">
                     <button onClick={() => router.push('/dashboard')}
                         className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
