@@ -88,7 +88,16 @@ export const useCardStore = create<CardStore>((set, get) => ({
                 loading: false
             });
         } catch {
-            set({ error: 'Không thể tải danh sách thẻ', loading: false });
+            // Demo mode fallback: if using mock token, load sample data
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            if (token === 'mock-token') {
+                const { mockCards } = await import('@/lib/mockData');
+                const totalBalance = mockCards.filter(c => c.cardType !== 'credit').reduce((s, c) => s + c.balance, 0);
+                const totalDebt = mockCards.filter(c => c.cardType === 'credit').reduce((s, c) => s + c.balance, 0);
+                set({ cards: mockCards as any, totalBalance, totalDebt, hasFetched: true, loading: false });
+            } else {
+                set({ error: 'Không thể tải danh sách thẻ', loading: false });
+            }
         }
     },
     createCard: async (data: CardFormData) => {

@@ -51,12 +51,18 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
                 loading: false
             });
         } catch {
-            set({ error: 'Không thể tải thông báo', loading: false });
+            // In demo mode, just show empty notifications (no error)
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            if (token === 'mock-token') {
+                set({ notifications: [], hasFetched: true, loading: false });
+            } else {
+                set({ error: 'Không thể tải thông báo', loading: false });
+            }
         }
     },
     setupSSE: () => {
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-        if (!token || get().esConnected) return;
+        if (!token || token === 'mock-token' || get().esConnected) return;
 
         set({ esConnected: true });
 

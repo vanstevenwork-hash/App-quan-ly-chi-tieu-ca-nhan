@@ -34,10 +34,17 @@ const CARD_GRADIENTS = [
     'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)',
 ];
 
-function getGradient(card: Card, idx: number) {
+function getGradient(card: Card, idx: number): string {
+    if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
     if (card.bankColor && card.color && card.bankColor !== '#1B4FD8')
         return `linear-gradient(135deg, ${card.bankColor} 0%, ${card.color} 100%)`;
     return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
+}
+
+function cardTextStyle(color: string) {
+    if (color === '#111111') return { text: '#F59E0B', subtext: '#FCD34D', border: '1px solid #374151' };
+    if (color === '#FFFFFF') return { text: '#1E293B', subtext: '#64748B', border: '1px solid #E2E8F0' };
+    return { text: '#FFFFFF', subtext: 'rgba(255,255,255,0.85)', border: undefined };
 }
 
 // ── Cashback rate by category ──────────────────────────────────────────────
@@ -73,18 +80,21 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
     const usedPct = card.creditLimit > 0 ? Math.min((card.balance / card.creditLimit) * 100, 100) : 0;
     const dueDays = daysUntilPayment(card.paymentDueDay);
     const isUrgent = dueDays !== null && dueDays <= 5;
+    const ts = cardTextStyle(card.color);
 
     return (
-        <div className="snap-center shrink-0 w-[85%] relative rounded-3xl p-6 text-white shadow-xl overflow-hidden
+        <div className="snap-center shrink-0 w-[85%] relative rounded-xl p-3 shadow-xl overflow-hidden
                         transform transition-transform hover:scale-[1.02]"
-            style={{ background: getGradient(card, idx) }}>
+            style={{ background: getGradient(card, idx), border: ts.border }}>
             {/* Glow blob */}
-            <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
+            {card.color !== '#111111' && card.color !== '#FFFFFF' && (
+                <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
+            )}
 
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-3">
                 <div>
-                    <p className="text-xs opacity-80 font-semibold tracking-widest uppercase">{card.bankName}</p>
-                    <p className="text-2xl font-bold mt-1 tracking-widest">•••• {card.cardNumber}</p>
+                    <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
+                    <p className="text-xl font-bold mt-1 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
                 </div>
                 <div className="flex gap-2 items-center">
                     {card.isDefault && (
@@ -94,28 +104,28 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
                     )}
                     <div className="flex gap-1">
                         <button onClick={onEdit}
-                            className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
-                            <Pencil className="w-3 h-3" />
+                            className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition">
+                            <Pencil className="w-3 h-3" style={{ color: ts.text }} />
                         </button>
                         <button onClick={onDelete}
-                            className="w-7 h-7 rounded-full bg-red-400/30 hover:bg-red-400/50 flex items-center justify-center transition">
-                            <Trash2 className="w-3 h-3" />
+                            className="w-7 h-7 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center transition">
+                            <Trash2 className="w-3 h-3 text-red-500" />
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div className="flex justify-between items-end mb-4">
+            <div className="flex justify-between items-end mb-3">
                 <div>
-                    <p className="text-xs opacity-70 mb-1">Dư nợ hiện tại</p>
-                    <p className="text-2xl font-bold tracking-tight">{fmt(card.balance)}₫</p>
+                    <p className="text-xs mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
+                    <p className="text-xl font-bold tracking-tight" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
                 </div>
                 {dueDays !== null ? (
                     <div className="text-right">
-                        <p className="text-xs opacity-70 mb-1">Hạn thanh toán</p>
+                        <p className="text-xs mb-1" style={{ color: ts.subtext }}>Hạn thanh toán</p>
                         <div className="flex items-center gap-1 justify-end">
-                            {isUrgent && <AlertCircle className="w-4 h-4 text-red-300" />}
-                            <p className={cn('text-sm font-bold', isUrgent ? 'text-red-200' : 'text-white/90')}>
+                            {isUrgent && <AlertCircle className="w-4 h-4 text-red-400" />}
+                            <p className={cn('text-sm font-bold', isUrgent ? 'text-red-400' : '')} style={isUrgent ? undefined : { color: ts.subtext }}>
                                 {dueDays <= 0 ? 'Đã quá hạn!' : `${dueDays} ngày nữa`}
                             </p>
                         </div>
@@ -123,8 +133,8 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
                 ) : (
                     card.statementDay > 0 && (
                         <div className="text-right">
-                            <p className="text-xs opacity-70 mb-1">Sao kê ngày</p>
-                            <p className="text-sm font-bold">{card.statementDay}/{new Date().getMonth() + 1}</p>
+                            <p className="text-xs mb-1" style={{ color: ts.subtext }}>Sao kê ngày</p>
+                            <p className="text-sm font-bold" style={{ color: ts.text }}>{card.statementDay}/{new Date().getMonth() + 1}</p>
                         </div>
                     )
                 )}
@@ -132,15 +142,15 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
 
             {card.creditLimit > 0 && (
                 <>
-                    <div className="flex justify-between text-[10px] opacity-80 mb-1.5">
+                    <div className="flex justify-between text-[10px] mb-1.5" style={{ color: ts.subtext }}>
                         <span>Đã dùng {usedPct.toFixed(0)}%</span>
-                        <span>Hạn mức: {fmtShort(card.creditLimit)}</span>
+                        <span>Hạn mức:<span className="text-base ml-0.5 font-bold">{fmtShort(card.creditLimit)}</span></span>
                     </div>
-                    <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden mb-3">
+                    <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-3">
                         <div className="h-full rounded-full transition-all"
                             style={{
                                 width: `${usedPct}%`,
-                                backgroundColor: usedPct > 80 ? '#FCA5A5' : 'rgba(255,255,255,0.85)',
+                                backgroundColor: usedPct > 80 ? '#FCA5A5' : ts.subtext,
                             }} />
                     </div>
                 </>
@@ -149,7 +159,8 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
             {/* Pay button on card */}
             {card.balance > 0 && (
                 <button onClick={onPay}
-                    className="w-full mt-1 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center justify-center gap-1.5">
+                    className="w-full mt-1 py-2 rounded-xl bg-black/10 hover:bg-black/20 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                    style={{ color: ts.text }}>
                     <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
                 </button>
             )}
@@ -297,7 +308,14 @@ export default function CardsPage() {
                 {/* ── Card carousel ───────────────────────────── */}
                 <div className="pl-6 mb-2 overflow-hidden">
                     <div className="flex items-center justify-between pr-6 mb-4">
-                        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Thẻ của tôi</h2>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Thẻ của tôi</h2>
+                            {creditCards.length > 0 && (
+                                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
+                                    {creditCards.length} thẻ
+                                </span>
+                            )}
+                        </div>
                         <Link href="/accounts" className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:opacity-80">
                             Xem tất cả
                         </Link>
@@ -402,7 +420,7 @@ export default function CardsPage() {
                             </div>
                             <div className="flex-1">
                                 <p className="text-xs text-emerald-700 font-medium">Tổng hoàn tiền tháng này</p>
-                                <p className="text-2xl font-bold text-emerald-700 tracking-tight">+{fmtShort(cashbackTotal)}₫</p>
+                                <p className="text-xl font-bold text-emerald-700 tracking-tight">+{fmtShort(cashbackTotal)}₫</p>
                             </div>
                             <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700">
                                 Chờ duyệt

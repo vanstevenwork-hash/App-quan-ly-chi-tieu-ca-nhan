@@ -67,6 +67,7 @@ const config: Config = {
 			fontSize: {
 				"4xl": "26px",
 				"3xl": "22px",
+				"2xl": "18px",
 				"xl": "16px",
 				"lg": "14px",
 				"base": "13px"

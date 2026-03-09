@@ -15,11 +15,20 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
     const router = useRouter();
     const login = useAuthStore(s => s.login);
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+        const errs: { name?: string; email?: string; password?: string } = {};
+        if (!name.trim()) errs.name = 'Vui lòng nhập họ và tên';
+        if (!email.trim()) errs.email = 'Vui lòng nhập email';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Email không hợp lệ';
+        if (!password) errs.password = 'Vui lòng nhập mật khẩu';
+        else if (password.length < 6) errs.password = 'Mật khẩu ít nhất 6 ký tự';
+        setErrors(errs);
+        if (Object.keys(errs).length > 0) return;
         setLoading(true);
         try {
             const res = await authApi.register({ name, email, password });
@@ -52,9 +61,11 @@ export default function RegisterPage() {
                         <Input
                             placeholder="Họ và tên"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="pl-11 rounded-2xl border-border/50 bg-muted/50 h-14 text-sm"
+                            onChange={(e) => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })); }}
+                            className={`pl-11 rounded-2xl h-14 text-sm ${errors.name ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
+                                }`}
                         />
+                        {errors.name && <p className="text-xs text-red-500 mt-1 ml-1">{errors.name}</p>}
                     </div>
                     <div className="relative">
                         <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -62,9 +73,11 @@ export default function RegisterPage() {
                             type="email"
                             placeholder="Email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="pl-11 rounded-2xl border-border/50 bg-muted/50 h-14 text-sm"
+                            onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
+                            className={`pl-11 rounded-2xl h-14 text-sm ${errors.email ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
+                                }`}
                         />
+                        {errors.email && <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>}
                     </div>
                     <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -72,13 +85,15 @@ export default function RegisterPage() {
                             type={showPass ? 'text' : 'password'}
                             placeholder="Mật khẩu"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="pl-11 pr-12 rounded-2xl border-border/50 bg-muted/50 h-14 text-sm"
+                            onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }}
+                            className={`pl-11 pr-12 rounded-2xl h-14 text-sm ${errors.password ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
+                                }`}
                         />
                         <button type="button" onClick={() => setShowPass(!showPass)}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
                             {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
+                        {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
                     </div>
 
                     <Button

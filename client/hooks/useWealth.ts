@@ -54,7 +54,12 @@ export const useWealthStore = create<WealthStore>((set, get) => ({
                 loading: false
             });
         } catch {
-            set({ error: 'Không thể tải nguồn tài sản', loading: false });
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            if (token === 'mock-token') {
+                set({ sources: [], total: 0, hasFetched: true, loading: false });
+            } else {
+                set({ error: 'Không thể tải nguồn tài sản', loading: false });
+            }
         }
     },
     createSource: async (data: WealthFormData) => {

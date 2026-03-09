@@ -42,6 +42,7 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
     const [saving, setSaving] = useState(false);
     const [step, setStep] = useState<'preset' | 'form'>('preset');
     const [rawBalance, setRawBalance] = useState('');
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -56,6 +57,7 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
                 setRawBalance('');
                 setStep('preset');
             }
+            setErrors({});
         }
     }, [open, editSource]);
 
@@ -65,10 +67,15 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
     };
 
     const handleSave = async () => {
-        if (!form.name) return;
+        const errs: Record<string, string> = {};
+        if (!form.name.trim()) errs.name = 'Vui lòng nhập tên nguồn tài sản';
+        const bal = parseInt(rawBalance.replace(/\D/g, '') || '0');
+        if (rawBalance && bal < 0) errs.balance = 'Số dư không hợp lệ';
+        setErrors(errs);
+        if (Object.keys(errs).length > 0) return;
         setSaving(true);
         try {
-            await onSave({ ...form, balance: parseInt(rawBalance.replace(/\D/g, '') || '0') });
+            await onSave({ ...form, balance: bal });
             onClose();
         } finally { setSaving(false); }
     };
@@ -163,23 +170,34 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
 
                             {/* Name */}
                             <div>
-                                <p className="text-sm font-bold text-gray-700 mb-1.5">Tên nguồn tài sản</p>
-                                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                                <p className="text-sm font-bold text-gray-700 mb-1.5">
+                                    Tên nguồn tài sản <span className="text-red-500">*</span>
+                                </p>
+                                <input value={form.name}
+                                    onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setErrors(p => ({ ...p, name: '' })); }}
                                     placeholder="VD: Vàng SJC, Bitcoin cá nhân..."
-                                    className="w-full border-2 border-gray-200 focus:border-purple-400 rounded-2xl px-4 py-3 text-gray-800 text-sm outline-none transition-colors" />
+                                    className={cn(
+                                        'w-full border-2 rounded-2xl px-4 py-3 text-gray-800 text-sm outline-none transition-colors',
+                                        errors.name ? 'border-red-400 focus:border-red-400' : 'border-gray-200 focus:border-purple-400'
+                                    )} />
+                                {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
                             </div>
 
                             {/* Balance */}
                             <div>
                                 <p className="text-sm font-bold text-gray-700 mb-1.5">Số dư / Giá trị hiện tại</p>
-                                <div className="flex items-center gap-2 border-2 border-gray-200 focus-within:border-purple-400 rounded-2xl px-4 py-3 transition-colors">
+                                <div className={cn(
+                                    'flex items-center gap-2 border-2 rounded-2xl px-4 py-3 transition-colors',
+                                    errors.balance ? 'border-red-400 focus-within:border-red-400' : 'border-gray-200 focus-within:border-purple-400'
+                                )}>
                                     <input type="tel"
                                         value={displayBalance}
-                                        onChange={e => setRawBalance(e.target.value.replace(/\./g, '').replace(/,/g, ''))}
+                                        onChange={e => { setRawBalance(e.target.value.replace(/\./g, '').replace(/,/g, '')); setErrors(p => ({ ...p, balance: '' })); }}
                                         placeholder="0"
                                         className="flex-1 text-2xl font-bold text-gray-900 bg-transparent outline-none" />
                                     <span className="text-gray-400 font-semibold">đ</span>
                                 </div>
+                                {errors.balance && <p className="text-xs text-red-500 mt-1">{errors.balance}</p>}
                             </div>
 
                             {/* Note */}

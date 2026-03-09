@@ -10,7 +10,7 @@ type NavItem = {
     label: string;
 };
 const navItems: NavItem[] = [
-    { href: '/dashboard', icon: HomeIcon, label: 'Tổng quan' },
+    { href: '/dashboard', icon: Home, label: 'Tổng quan' },
     { href: '/cards', icon: CreditCard, label: 'Thẻ' },
     { href: '/savings', icon: PiggyBank, label: 'Tiết kiệm' },
     { href: '/goals', icon: Target, label: 'Mục tiêu' },

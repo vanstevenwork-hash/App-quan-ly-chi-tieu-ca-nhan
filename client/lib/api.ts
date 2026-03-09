@@ -21,8 +21,12 @@ api.interceptors.response.use(
     (res) => res,
     (err) => {
         if (err.response?.status === 401 && typeof window !== 'undefined') {
-            localStorage.removeItem('token');
-            window.location.href = '/auth/login';
+            const token = localStorage.getItem('token');
+            // Don't redirect if using demo/mock mode
+            if (token !== 'mock-token') {
+                localStorage.removeItem('token');
+                window.location.href = '/auth/login';
+            }
         }
         return Promise.reject(err);
     }

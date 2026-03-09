@@ -296,6 +296,9 @@ export default function DashboardPage() {
                                 <p className="text-lg font-bold text-slate-800 dark:text-white mt-1 text-money">
                                     {hideBalance ? '••' : fmt(totalSavings)}
                                 </p>
+                                {cards.filter(c => c.cardType === 'savings').length > 0 && (
+                                    <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'savings').length} sổ tiết kiệm</p>
+                                )}
                             </Link>
                             <Link href="/cards"
                                 className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
@@ -311,6 +314,9 @@ export default function DashboardPage() {
                                 <p className="text-lg font-bold text-red-500 mt-1 text-money">
                                     {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
                                 </p>
+                                {cards.filter(c => c.cardType === 'credit').length > 0 && (
+                                    <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng</p>
+                                )}
                             </Link>
                         </div>
                     </div>

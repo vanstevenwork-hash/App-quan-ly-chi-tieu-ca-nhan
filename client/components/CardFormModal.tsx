@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Search, Save, Check } from 'lucide-react';
 import type { Card, CardFormData } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
+import { useAuthStore } from '@/store/useStore';
 
 const CARD_TYPES = [
     { value: 'credit', label: 'Thẻ tín dụng', icon: '💳', desc: 'Thanh toán sau, có hạn mức' },
@@ -27,10 +28,32 @@ const CRYPTOS = [
     { name: 'Bybit', short: 'BBT', color: '#F7A600', logo: '' },
 ];
 
+// Standard color palette — black & white are special
 const CARD_COLORS = [
     '#6C63FF', '#EF4444', '#10B981', '#3B82F6', '#F59E0B',
     '#8B5CF6', '#EC4899', '#14B8A6', '#84CC16', '#1E1B4B',
 ];
+const SPECIAL_COLORS = [
+    { value: '#FFFFFF', label: 'Trắng', textClass: 'text-slate-800', ring: 'ring-slate-400' },
+    { value: '#111111', label: 'Đen', textClass: 'text-yellow-400', ring: 'ring-yellow-400' },
+];
+
+/** Returns text color class for a given card color */
+function cardTextColor(color: string) {
+    if (color === '#111111') return 'text-yellow-400';
+    if (color === '#FFFFFF') return 'text-slate-800';
+    return 'text-white';
+}
+function cardTextOpacity(color: string) {
+    if (color === '#111111') return 'text-yellow-300/80';
+    if (color === '#FFFFFF') return 'text-slate-500';
+    return 'text-white/90';
+}
+function cardTextSubtle(color: string) {
+    if (color === '#111111') return 'text-yellow-200/70';
+    if (color === '#FFFFFF') return 'text-slate-400';
+    return 'text-white/70';
+}
 
 interface CardFormModalProps {
     open: boolean;
@@ -49,8 +72,12 @@ const EMPTY: CardFormData = {
 };
 
 export default function CardFormModal({ open, onClose, onSave, editCard, initialType }: CardFormModalProps) {
+    const { user } = useAuthStore();
     const [form, setForm] = useState<CardFormData>(EMPTY);
+    // cardLabel is separate — not saved to DB, just affects how bankName is composed
+    const [cardLabel, setCardLabel] = useState('');
     const [saving, setSaving] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
     const { banks: fetchedBanks, fetchBanks } = useBanks();
     const [searchBank, setSearchBank] = useState('');
 
@@ -60,27 +87,34 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
 
     useEffect(() => {
         if (open) {
-            setForm(editCard ? {
-                bankName: editCard.bankName,
-                bankShortName: editCard.bankShortName,
-                cardType: editCard.cardType,
-                cardNumber: editCard.cardNumber,
-                cardHolder: editCard.cardHolder,
-                cardNetwork: editCard.cardNetwork || '',
-                balance: editCard.balance,
-                creditLimit: editCard.creditLimit,
-                color: editCard.color,
-                bankColor: editCard.bankColor,
-                isDefault: editCard.isDefault,
-                interestRate: editCard.interestRate || 0,
-                depositDate: editCard.depositDate ? editCard.depositDate.slice(0, 10) : '',
-                maturityDate: editCard.maturityDate ? editCard.maturityDate.slice(0, 10) : '',
-                term: editCard.term || 12,
-                paymentDueDay: editCard.paymentDueDay || 0,
-                statementDay: editCard.statementDay || 0,
-                expirationDate: (editCard as any).expirationDate || '',
-                note: editCard.note || '',
-            } : { ...EMPTY, cardType: initialType || 'debit' });
+            if (editCard) {
+                setForm({
+                    bankName: editCard.bankName,
+                    bankShortName: editCard.bankShortName,
+                    cardType: editCard.cardType,
+                    cardNumber: editCard.cardNumber,
+                    cardHolder: editCard.cardHolder,
+                    cardNetwork: editCard.cardNetwork || '',
+                    balance: editCard.balance,
+                    creditLimit: editCard.creditLimit,
+                    color: editCard.color,
+                    bankColor: editCard.bankColor,
+                    isDefault: editCard.isDefault,
+                    interestRate: editCard.interestRate || 0,
+                    depositDate: editCard.depositDate ? editCard.depositDate.slice(0, 10) : '',
+                    maturityDate: editCard.maturityDate ? editCard.maturityDate.slice(0, 10) : '',
+                    term: editCard.term || 12,
+                    paymentDueDay: editCard.paymentDueDay || 0,
+                    statementDay: editCard.statementDay || 0,
+                    expirationDate: (editCard as any).expirationDate || '',
+                    note: editCard.note || '',
+                });
+                setCardLabel(editCard.bankName);
+            } else {
+                setForm({ ...EMPTY, cardType: initialType || 'debit' });
+                setCardLabel('');
+            }
+            setErrors({});
         }
     }, [open, editCard, initialType]);
 
@@ -88,18 +122,50 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
         setForm(prev => ({ ...prev, [key]: val }));
 
     const selectBank = (bank: any) => {
-        set('bankName', bank.name || bank.shortName);
-        set('bankShortName', bank.shortName);
+        const name = bank.name || bank.shortName;
+        const short = bank.shortName || bank.short || name;
+        set('bankShortName', short);
         set('bankColor', bank.color || '#3B82F6');
+        // Auto-fill card label with SHORT name (e.g. VIB, VCB)
+        setCardLabel(prev => (prev === '' || prev === form.bankName) ? short : prev);
+        set('bankName', name);
+    };
+
+    const handleCardLabelChange = (val: string) => {
+        setCardLabel(val);
+        set('bankName', val || form.bankShortName || 'Thẻ');
+    };
+
+    const validate = () => {
+        const errs: Record<string, string> = {};
+        if (!form.bankShortName && !cardLabel.trim()) errs.bank = 'Vui lòng chọn ngân hàng';
+        if (isSavings) {
+            if (!form.balance || form.balance <= 0) errs.balance = 'Số tiền gửi phải lớn hơn 0';
+            if (!form.depositDate) errs.depositDate = 'Vui lòng nhập ngày gửi';
+            if (!form.interestRate || form.interestRate <= 0) errs.interestRate = 'Lãi suất phải lớn hơn 0';
+        } else {
+            if (isCredit && form.creditLimit > 0 && form.balance > form.creditLimit)
+                errs.balance = 'Dư nợ không được lớn hơn hạn mức';
+            if (isCredit && (form.statementDay < 0 || form.statementDay > 31))
+                errs.statementDay = 'Ngày sao kê phải từ 1–31';
+            if (isCredit && (form.paymentDueDay < 0 || form.paymentDueDay > 31))
+                errs.paymentDueDay = 'Hạn thanh toán phải từ 1–31';
+            if (form.expirationDate && !/^\d{2}\/\d{2}$/.test(form.expirationDate))
+                errs.expirationDate = 'Định dạng MM/YY';
+        }
+        setErrors(errs);
+        return Object.keys(errs).length === 0;
     };
 
     const handleSave = async () => {
+        if (!validate()) return;
+        const finalLabel = cardLabel.trim() || form.bankShortName || 'Thẻ';
         const finalForm: CardFormData = {
             ...form,
+            bankName: finalLabel,
             cardNumber: form.cardNumber.trim() || String(Math.floor(1000 + Math.random() * 9000)),
-            cardHolder: form.cardHolder.trim() || 'CHU SO HUU',
+            cardHolder: form.cardHolder.trim() || (user?.name?.toUpperCase() ?? 'CHU SO HUU'),
         };
-        if (!finalForm.bankName) return;
         setSaving(true);
         try {
             await onSave(finalForm);
@@ -113,14 +179,30 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
     const isSavings = form.cardType === 'savings';
     const isCredit = form.cardType === 'credit';
 
-    const selectedBankObj = fetchedBanks.find(b => b.shortName === form.bankShortName);
+    const isBankSelected = !!form.bankShortName || !!cardLabel.trim();
+    const hasErrors = Object.keys(errors).length > 0;
 
-    // Find logo from ewallets/cryptos if not found in banks
+    // Helper: field error class
+    const errCls = (field: string) => errors[field]
+        ? 'border-red-400 focus:border-red-400 focus:ring-red-400'
+        : '';
+
+    const selectedBankObj = fetchedBanks.find(b => b.shortName === form.bankShortName);
     let previewLogo = selectedBankObj?.logo;
     if (!previewLogo) {
         if (form.cardType === 'eWallet') previewLogo = E_WALLETS.find(w => w.short === form.bankShortName)?.logo;
         if (form.cardType === 'crypto') previewLogo = CRYPTOS.find(c => c.short === form.bankShortName)?.logo;
     }
+
+    const textCol = cardTextColor(form.color);
+    const textOpacity = cardTextOpacity(form.color);
+    const textSubtle = cardTextSubtle(form.color);
+    const isBlack = form.color === '#111111';
+    const isWhite = form.color === '#FFFFFF';
+
+    const cardBg = (isBlack || isWhite)
+        ? form.color
+        : `linear-gradient(135deg, ${form.bankColor}, ${form.color})`;
 
     const renderNetworkLogo = (network?: string) => {
         switch (network) {
@@ -132,6 +214,10 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
             default: return null;
         }
     };
+
+    const userNamePlaceholder = user?.name
+        ? user.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()
+        : 'NGUYEN VAN A';
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
@@ -151,42 +237,49 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                     {!isSavings && (
                         (isCredit || form.cardType === 'debit') ? (
                             <div className="w-full h-44 p-5 rounded-3xl relative flex flex-col justify-between transition-colors shadow-sm overflow-hidden"
-                                style={{ background: `linear-gradient(135deg, ${form.bankColor}, ${form.color})` }}>
+                                style={{
+                                    background: cardBg,
+                                    border: isWhite ? '1px solid #E2E8F0' : undefined,
+                                }}>
                                 <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
 
                                 <div className="flex justify-between items-start mb-2 relative z-10">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-col gap-0.5">
                                         {previewLogo ? (
                                             <div className="w-10 h-10 p-1 bg-white rounded-lg shadow-sm flex items-center justify-center">
                                                 <img src={previewLogo} className="w-full h-full object-contain" alt="logo" />
                                             </div>
                                         ) : (
-                                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                                            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs shadow-sm', isWhite ? 'bg-slate-100 text-slate-600' : 'bg-white/20 text-white')}>
                                                 {form.bankShortName?.slice(0, 4) || '???'}
                                             </div>
                                         )}
+                                        {/* Card label shown on preview */}
+                                        <p className={cn('text-[10px] font-bold mt-1 uppercase tracking-wider', textOpacity)}>
+                                            {cardLabel || form.bankName || 'Tên thẻ'}
+                                        </p>
                                     </div>
-                                    <div className="w-6 h-6 rounded-full border border-white/40 flex items-center justify-center bg-white/10">
-                                        <Check className="w-3.5 h-3.5 text-white" />
+                                    <div className={cn('w-6 h-6 rounded-full border flex items-center justify-center', isWhite ? 'border-slate-300 bg-slate-100' : 'border-white/40 bg-white/10')}>
+                                        <Check className={cn('w-3.5 h-3.5', isWhite ? 'text-slate-600' : 'text-white')} />
                                     </div>
                                 </div>
 
                                 <div className="relative z-10">
-                                    <p className="text-sm font-bold text-white/90 leading-tight mb-2 uppercase">
-                                        {form.cardHolder || 'TÊN CHỦ THẺ'}
+                                    <p className={cn('text-sm font-bold leading-tight mb-2 uppercase', textCol)}>
+                                        {form.cardHolder || userNamePlaceholder}
                                     </p>
                                     <div className="flex justify-between items-end">
                                         <div className="flex flex-col">
-                                            <p className="text-xl font-bold text-white tracking-widest font-mono drop-shadow-sm">
+                                            <p className={cn('text-xl font-bold tracking-widest font-mono drop-shadow-sm', textCol)}>
                                                 **** {form.cardNumber || '1234'}
                                             </p>
-                                            {(form.expirationDate) && (
-                                                <p className="text-xs text-white/80 font-mono mt-1 drop-shadow-sm">
+                                            {form.expirationDate && (
+                                                <p className={cn('text-xs font-mono mt-1', textSubtle)}>
                                                     {form.expirationDate}
                                                 </p>
                                             )}
                                         </div>
-                                        <div className="bg-white/90 px-2 py-1.5 rounded-md shadow-sm">
+                                        <div className={cn('px-2 py-1.5 rounded-md shadow-sm', isBlack ? 'bg-yellow-400/20' : 'bg-white/90')}>
                                             {renderNetworkLogo(form.cardNetwork)}
                                         </div>
                                     </div>
@@ -194,7 +287,10 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                             </div>
                         ) : (
                             <div className="w-full h-40 rounded-3xl p-5 relative overflow-hidden shadow-sm"
-                                style={{ background: `linear-gradient(135deg, ${form.bankColor}, ${form.color})` }}>
+                                style={{
+                                    background: cardBg,
+                                    border: isWhite ? '1px solid #E2E8F0' : undefined,
+                                }}>
                                 <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-2">
@@ -203,19 +299,20 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                                 <img src={previewLogo} className="w-full h-full object-contain" alt="logo" />
                                             </div>
                                         ) : (
-                                            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white font-bold text-xs">
+                                            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs', isWhite ? 'bg-slate-100 text-slate-600' : 'bg-white/20 text-white')}>
                                                 {form.bankShortName?.slice(0, 4) || '???'}
                                             </div>
                                         )}
                                     </div>
-                                    <span className="text-white/80 text-sm font-medium">
+                                    <span className={cn('text-sm font-medium', textOpacity)}>
                                         {CARD_TYPES.find(t => t.value === form.cardType)?.icon} {CARD_TYPES.find(t => t.value === form.cardType)?.label}
                                     </span>
                                 </div>
-                                <p className="text-white/70 text-sm mb-1 font-mono tracking-widest">•••• •••• •••• {form.cardNumber || '????'}</p>
-                                <p className="text-white font-bold tracking-wide uppercase">{form.cardHolder || 'TÊN CHỦ THẺ'}</p>
+                                <p className={cn('text-sm font-mono tracking-widest mb-1', textSubtle)}>•••• •••• •••• {form.cardNumber || '????'}</p>
+                                <p className={cn('font-bold tracking-wide uppercase', textCol)}>{form.cardHolder || userNamePlaceholder}</p>
                             </div>
-                        ))}
+                        )
+                    )}
 
                     {/* CARD TYPE SELECTION */}
                     {!isEdit && form.cardType !== 'savings' && (
@@ -280,14 +377,30 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                         </div>
                     </div>
 
+                    {/* ─── Card label / name (hidden for savings) ─── */}
                     <div className="flex flex-col gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <div className="flex flex-col gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        {!isSavings && (
+                            <div>
+                                <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">
+                                    Tên thẻ <span className="text-slate-400 font-normal text-xs">(vd: VCB Cashback, TCB Visa...)</span>
+                                </p>
+                                <Input
+                                    value={cardLabel}
+                                    onChange={e => handleCardLabelChange(e.target.value)}
+                                    placeholder={form.bankName || 'Nhập tên thẻ...'}
+                                    className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-4">
                             {/* Card holder */}
                             {!isSavings && (
                                 <div>
                                     <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Tên chủ {isSavings ? 'sổ' : 'thẻ'}</p>
                                     <Input value={form.cardHolder} onChange={e => set('cardHolder', e.target.value.toUpperCase())}
-                                        placeholder="NGUYEN VAN A" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold uppercase text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        placeholder={userNamePlaceholder}
+                                        className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold uppercase text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                 </div>
                             )}
 
@@ -308,33 +421,36 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                     </p>
                                     <Input type="text"
                                         value={form.balance ? new Intl.NumberFormat('vi-VN').format(form.balance) : ''}
-                                        onChange={e => {
-                                            const val = e.target.value.replace(/\D/g, '');
-                                            set('balance', Number(val));
-                                        }}
-                                        placeholder="0" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        onChange={e => { set('balance', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
+                                        placeholder="0"
+                                        className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                    {errors.balance && <p className="text-xs text-red-500 mt-1">{errors.balance}</p>}
                                 </div>
                             )}
 
                             {/* Savings Details */}
                             {isSavings && (
                                 <>
+                                    {/* Amount */}
                                     <div>
-                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Số tiền gửi (VND)</p>
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Số tiền gửi (VND) <span className="text-red-500">*</span></p>
                                         <Input type="text"
                                             value={form.balance ? new Intl.NumberFormat('vi-VN').format(form.balance) : ''}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '');
-                                                set('balance', Number(val));
-                                            }}
-                                            placeholder="0" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                            onChange={e => { set('balance', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
+                                            placeholder="0"
+                                            className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                        {errors.balance && <p className="text-xs text-red-500 mt-1">{errors.balance}</p>}
                                     </div>
+
+                                    {/* Interest + Term side by side */}
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Lãi suất (%/năm)</p>
+                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Lãi suất (%/năm) <span className="text-red-500">*</span></p>
                                             <Input type="number" step="0.1" value={form.interestRate || ''}
-                                                onChange={e => set('interestRate', Number(e.target.value))}
-                                                placeholder="7.5" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                onChange={e => { set('interestRate', Number(e.target.value)); setErrors(p => ({ ...p, interestRate: '' })); }}
+                                                placeholder="7.5"
+                                                className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('interestRate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                            {errors.interestRate && <p className="text-xs text-red-500 mt-1">{errors.interestRate}</p>}
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Kỳ hạn</p>
@@ -355,23 +471,39 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                             </select>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày gửi</p>
-                                            <Input type="date" value={form.depositDate} onChange={e => set('depositDate', e.target.value)}
-                                                className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+
+                                    {/* Deposit date — full width */}
+                                    <div>
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày gửi <span className="text-red-500">*</span></p>
+                                        <Input type="date" value={form.depositDate}
+                                            onChange={e => {
+                                                const dep = e.target.value;
+                                                set('depositDate', dep);
+                                                setErrors(p => ({ ...p, depositDate: '' }));
+                                                // Auto-calc maturity
+                                                if (dep && form.term) {
+                                                    const d = new Date(dep);
+                                                    d.setMonth(d.getMonth() + form.term);
+                                                    set('maturityDate', d.toISOString().slice(0, 10));
+                                                }
+                                            }}
+                                            className={cn('w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:ring-1', errCls('depositDate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                        {errors.depositDate && <p className="text-xs text-red-500 mt-1">{errors.depositDate}</p>}
+                                    </div>
+
+                                    {/* Maturity date — full width, read-only */}
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <p className="text-sm font-bold text-[#000000] dark:text-white">Ngày đáo hạn</p>
+                                            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">Tự tính</span>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày đáo hạn</p>
-                                            <Input type="date" value={form.maturityDate} onChange={e => set('maturityDate', e.target.value)}
-                                                className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
-                                        </div>
+                                        <Input type="date" value={form.maturityDate} readOnly disabled
+                                            className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-12 px-3 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-70" />
                                     </div>
                                 </>
                             )}
 
-
-                            {/* Network and Expiration Details for Credit & Debit */}
+                            {/* Network and Expiration for Credit & Debit */}
                             {(isCredit || form.cardType === 'debit') && (
                                 <div className="flex flex-col gap-4">
                                     <div className="grid grid-cols-2 gap-3">
@@ -414,40 +546,63 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                         <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hạn mức tín dụng (VND)</p>
                                         <Input type="text"
                                             value={form.creditLimit ? new Intl.NumberFormat('vi-VN').format(form.creditLimit) : ''}
-                                            onChange={e => {
-                                                const val = e.target.value.replace(/\D/g, '');
-                                                set('creditLimit', Number(val));
-                                            }}
-                                            placeholder="50.000.000" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                            onChange={e => { set('creditLimit', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
+                                            placeholder="50.000.000"
+                                            className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày sao kê (hàng tháng)</p>
+                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày sao kê</p>
                                             <Input type="number" min={1} max={31} value={form.statementDay || ''}
-                                                onChange={e => set('statementDay', Number(e.target.value))}
-                                                placeholder="25" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                onChange={e => { set('statementDay', Number(e.target.value)); setErrors(p => ({ ...p, statementDay: '' })); }}
+                                                placeholder="25"
+                                                className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('statementDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                            {errors.statementDay && <p className="text-xs text-red-500 mt-1">{errors.statementDay}</p>}
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hạn thanh toán</p>
                                             <Input type="number" min={1} max={31} value={form.paymentDueDay || ''}
-                                                onChange={e => set('paymentDueDay', Number(e.target.value))}
-                                                placeholder="10" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                onChange={e => { set('paymentDueDay', Number(e.target.value)); setErrors(p => ({ ...p, paymentDueDay: '' })); }}
+                                                placeholder="10"
+                                                className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('paymentDueDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                            {errors.paymentDueDay && <p className="text-xs text-red-500 mt-1">{errors.paymentDueDay}</p>}
                                         </div>
                                     </div>
                                 </>
                             )}
 
-                            {/* Color picker */}
+                            {/* Color picker — enlarged with white + black options */}
                             {!isSavings && (
                                 <div>
-                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Màu hiển thị</p>
+                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-3">Màu hiển thị</p>
                                     <div className="flex gap-2.5 flex-wrap">
+                                        {/* Standard colors */}
                                         {CARD_COLORS.map(c => (
                                             <button key={c} onClick={() => set('color', c)}
                                                 className={cn('w-8 h-8 rounded-full transition-transform', form.color === c ? 'scale-125 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-[#7f19e6] dark:ring-purple-400' : 'hover:scale-110')}
                                                 style={{ backgroundColor: c }} />
                                         ))}
+                                        {/* Separator */}
+                                        <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 mx-1" />
+                                        {/* Special: white + black */}
+                                        {SPECIAL_COLORS.map(sc => (
+                                            <button key={sc.value} onClick={() => { set('color', sc.value); if (sc.value === '#FFFFFF') set('bankColor', '#FFFFFF'); if (sc.value === '#111111') set('bankColor', '#111111'); }}
+                                                className={cn(
+                                                    'w-8 h-8 rounded-full transition-transform border',
+                                                    form.color === sc.value ? 'scale-125 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 dark:ring-purple-400 ' + sc.ring : 'hover:scale-110',
+                                                    sc.value === '#FFFFFF' ? 'border-slate-300' : 'border-slate-700'
+                                                )}
+                                                style={{ backgroundColor: sc.value }}
+                                                title={sc.label}
+                                            />
+                                        ))}
                                     </div>
+                                    {/* Color hint for special colors */}
+                                    {(isBlack || isWhite) && (
+                                        <p className="text-[11px] text-slate-400 mt-2">
+                                            {isBlack ? '🖤 Thẻ đen — chữ hiển thị màu vàng' : '🤍 Thẻ trắng — chữ hiển thị màu tối'}
+                                        </p>
+                                    )}
                                 </div>
                             )}
 
@@ -476,7 +631,10 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                 </div>
 
                 <div className="shrink-0 w-full p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-                    <button onClick={handleSave} disabled={saving || !form.bankName}
+                    {hasErrors && (
+                        <p className="text-xs text-red-500 text-center mb-2">Vui lòng kiểm tra lại các trường có lỗi</p>
+                    )}
+                    <button onClick={handleSave} disabled={saving}
                         className="w-full bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl py-4 text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <Save className="w-5 h-5" />
                         <span>{saving ? 'Đang lưu...' : (isEdit ? 'Lưu thay đổi' : 'Hoàn tất')}</span>

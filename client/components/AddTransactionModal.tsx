@@ -27,6 +27,7 @@ export default function AddTransactionModal({
     const [selectedCardId, setSelectedCardId] = useState<string>('cash');
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
+    const [errors, setErrors] = useState<{ amount?: string; category?: string }>({});
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     const { cards } = useCards();
@@ -47,6 +48,7 @@ export default function AddTransactionModal({
             setDate(new Date().toISOString().slice(0, 10));
             setPaymentTab('cash');
             setSelectedCardId('cash');
+            setErrors({});
         }
     }, [open, defaultType]);
 
@@ -74,7 +76,11 @@ export default function AddTransactionModal({
     const displayAmount = amount ? parseInt(amount).toLocaleString('vi-VN') : '';
 
     const handleSave = async () => {
-        if (!amount || !category) return;
+        const errs: { amount?: string; category?: string } = {};
+        if (!amount || parseInt(amount) <= 0) errs.amount = 'Vui lòng nhập số tiền hợp lệ';
+        if (!category) errs.category = 'Vui lòng chọn danh mục';
+        setErrors(errs);
+        if (Object.keys(errs).length > 0) return;
         setSaving(true);
         try {
             await transactionsApi.create({
@@ -128,7 +134,12 @@ export default function AddTransactionModal({
 
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-bold text-[#000000] dark:text-white">Số tiền</label>
-                        <div className="flex w-full items-stretch rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden focus-within:border-[#7f19e6] focus-within:ring-1 focus-within:ring-[#7f19e6] transition-colors">
+                        <div className={cn(
+                            'flex w-full items-stretch rounded-xl border bg-white dark:bg-slate-900 overflow-hidden focus-within:ring-1 transition-colors',
+                            errors.amount
+                                ? 'border-red-400 focus-within:border-red-400 focus-within:ring-red-400'
+                                : 'border-slate-200 dark:border-slate-700 focus-within:border-[#7f19e6] focus-within:ring-[#7f19e6]'
+                        )}>
                             <div className="flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                 <Banknote className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                             </div>
@@ -136,7 +147,7 @@ export default function AddTransactionModal({
                                 className="w-full flex-1 border-0 bg-transparent py-4 px-3 text-2xl font-bold text-[#000000] dark:text-white focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 placeholder="0"
                                 value={displayAmount}
-                                onChange={e => handleAmountInput(e.target.value)}
+                                onChange={e => { handleAmountInput(e.target.value); setErrors(p => ({ ...p, amount: '' })); }}
                                 type="text"
                                 style={{ fontVariantNumeric: 'tabular-nums' }}
                             />
@@ -144,17 +155,23 @@ export default function AddTransactionModal({
                                 VND
                             </div>
                         </div>
+                        {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        <h3 className="text-sm font-bold text-[#000000] dark:text-white">Danh mục</h3>
+                        <h3 className="text-sm font-bold text-[#000000] dark:text-white">
+                            Danh mục
+                            {errors.category && <span className="text-red-500 font-normal text-xs ml-2">{errors.category}</span>}
+                        </h3>
                         <div className="grid grid-cols-4 gap-2">
                             {filteredCategories.map(cat => (
-                                <div key={cat.id} onClick={() => setCategory(cat.label)} className="flex flex-col items-center gap-2 group cursor-pointer">
+                                <div key={cat.id} onClick={() => { setCategory(cat.label); setErrors(p => ({ ...p, category: '' })); }} className="flex flex-col items-center gap-2 group cursor-pointer">
                                     <div className={cn('w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all',
                                         category === cat.label
                                             ? 'bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400 border-[#7f19e6]'
-                                            : 'bg-slate-50 dark:bg-slate-800 border-transparent group-hover:bg-slate-100 dark:group-hover:bg-slate-700')}
+                                            : errors.category
+                                                ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 group-hover:border-red-300'
+                                                : 'bg-slate-50 dark:bg-slate-800 border-transparent group-hover:bg-slate-100 dark:group-hover:bg-slate-700')}
                                         style={category === cat.label ? {} : { color: cat.color }}>
                                         <span className="text-2xl">{cat.icon}</span>
                                     </div>
@@ -288,7 +305,7 @@ export default function AddTransactionModal({
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800">
-                    <button onClick={handleSave} disabled={saving || !amount || !category}
+                    <button onClick={handleSave} disabled={saving}
                         className="w-full bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl py-4 text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span>{saving ? 'Đang lưu...' : 'Thêm ngay'}</span>
                         <ArrowRight className="w-5 h-5" />

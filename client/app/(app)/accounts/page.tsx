@@ -41,11 +41,18 @@ const CARD_GRADIENTS = [
     'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
 ];
 
-function getCardGradient(card: Card, idx: number) {
+function getCardGradient(card: Card, idx: number): string {
+    if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
     if (card.bankColor && card.color && card.bankColor !== '#1B4FD8') {
         return `linear-gradient(135deg, ${card.bankColor} 0%, ${card.color} 100%)`;
     }
     return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
+}
+
+function cardTextStyle(color: string) {
+    if (color === '#111111') return { text: '#F59E0B', subtext: '#FCD34D', border: '1px solid #374151' };
+    if (color === '#FFFFFF') return { text: '#1E293B', subtext: '#64748B', border: '1px solid #E2E8F0' };
+    return { text: '#FFFFFF', subtext: 'rgba(255,255,255,0.75)', border: undefined };
 }
 
 // ─── Card Context Menu ─────────────────────────────────────────────────────
@@ -89,8 +96,9 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
     card: Card; idx: number;
     onEdit: () => void; onDelete: () => void; onSetDefault: () => void;
 }) {
-    const usedPct = card.creditLimit > 0 ? (card.balance / card.creditLimit) * 100 : 0;
     const gradient = getCardGradient(card, idx);
+    const ts = cardTextStyle(card.color);
+    const usedPct = card.creditLimit > 0 ? (card.balance / card.creditLimit) * 100 : 0;
     const dueDays = card.paymentDueDay
         ? (() => {
             const now = new Date();
@@ -101,13 +109,15 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
         : null;
 
     return (
-        <div className="snap-center shrink-0 w-[85%] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden"
-            style={{ background: gradient }}>
-            <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
+        <div className="snap-center shrink-0 w-[85%] rounded-2xl p-6 shadow-xl relative overflow-hidden"
+            style={{ background: gradient, border: ts.border }}>
+            {card.color !== '#111111' && card.color !== '#FFFFFF' && (
+                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
+            )}
             <div className="flex justify-between items-start mb-6">
                 <div>
-                    <p className="text-xs opacity-80 font-semibold tracking-wider uppercase">{card.bankName}</p>
-                    <p className="text-xl font-bold mt-1 tracking-widest">•••• {card.cardNumber}</p>
+                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
+                    <p className="text-xl font-bold mt-1 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     {card.isDefault && (
@@ -118,15 +128,15 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
                     <CardMenu onEdit={onEdit} onDelete={onDelete} onSetDefault={onSetDefault} isDefault={card.isDefault} />
                 </div>
             </div>
-            <div className="flex justify-between items-end mb-4">
+            <div className="flex justify-between items-end mb-3">
                 <div>
-                    <p className="text-xs opacity-70 mb-1">Dư nợ hiện tại</p>
-                    <p className="text-2xl font-bold">{fmt(card.balance)}₫</p>
+                    <p className="text-xs mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
+                    <p className="text-2xl font-bold" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
                 </div>
                 {dueDays !== null && (
                     <div className="text-right">
-                        <p className="text-xs opacity-70 mb-1">Hạn thanh toán</p>
-                        <p className={cn('text-sm font-bold', dueDays <= 3 ? 'text-red-200' : 'text-white/90')}>
+                        <p className="text-xs mb-1" style={{ color: ts.subtext }}>Hạn thanh toán</p>
+                        <p className={cn('text-sm font-bold', dueDays <= 3 ? 'text-red-400' : '')} style={dueDays > 3 ? { color: ts.subtext } : undefined}>
                             {dueDays <= 0 ? 'Đã quá hạn!' : `${dueDays} ngày nữa`}
                         </p>
                     </div>
@@ -134,15 +144,15 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
             </div>
             {card.creditLimit > 0 && (
                 <>
-                    <div className="flex justify-between text-[10px] opacity-80 mb-1">
+                    <div className="flex justify-between text-[10px] mb-1" style={{ color: ts.subtext }}>
                         <span>Đã dùng {usedPct.toFixed(0)}%</span>
                         <span>Hạn mức: {fmtShort(card.creditLimit)}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all"
                             style={{
                                 width: `${Math.min(usedPct, 100)}%`,
-                                backgroundColor: usedPct > 80 ? '#FCA5A5' : 'rgba(255,255,255,0.85)',
+                                backgroundColor: usedPct > 80 ? '#FCA5A5' : ts.subtext,
                             }} />
                     </div>
                 </>
@@ -375,10 +385,26 @@ export default function AccountsPage() {
                         <button key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={cn(
-                                'flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all',
+                                'flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-1.5',
                                 activeTab === tab ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-600 hover:text-slate-800'
                             )}>
-                            {tab === 'cards' ? '💳 Thẻ & Ví' : '🐷 Sổ tiết kiệm'}
+                            {tab === 'cards' ? (
+                                <>💳 Thẻ & Ví
+                                    {(creditCards.length + debitCards.length) > 0 && (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-600">
+                                            {creditCards.length + debitCards.length}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <>🐷 Sổ tiết kiệm
+                                    {savingsCards.length > 0 && (
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-600">
+                                            {savingsCards.length}
+                                        </span>
+                                    )}
+                                </>
+                            )}
                         </button>
                     ))}
                 </div>

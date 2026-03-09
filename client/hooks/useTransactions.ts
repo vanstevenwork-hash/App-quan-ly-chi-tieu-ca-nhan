@@ -46,7 +46,21 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
                 loading: false
             });
         } catch {
-            set({ loading: false });
+            // Demo mode fallback
+            const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+            if (token === 'mock-token') {
+                const { mockTransactions } = await import('@/lib/mockData');
+                const income = mockTransactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+                const expense = mockTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+                set({
+                    transactions: mockTransactions as any,
+                    summary: { income, expense, balance: income - expense },
+                    hasFetched: true,
+                    loading: false
+                });
+            } else {
+                set({ loading: false });
+            }
         }
     },
     createTransaction: async (data: object) => {

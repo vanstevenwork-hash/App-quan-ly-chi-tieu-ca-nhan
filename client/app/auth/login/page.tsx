@@ -17,14 +17,21 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
     const router = useRouter();
     const login = useAuthStore(s => s.login);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        const errs: { email?: string; password?: string } = {};
+        if (!email.trim()) errs.email = 'Vui lòng nhập email';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Email không hợp lệ';
+        if (!password) errs.password = 'Vui lòng nhập mật khẩu';
+        else if (password.length < 6) errs.password = 'Mật khẩu ít nhất 6 ký tự';
+        setErrors(errs);
+        if (Object.keys(errs).length > 0) return;
         setLoading(true);
-        setError('');
+        setErrors({});
         try {
             const res = await authApi.login({ email, password });
             login(res.data.user, res.data.token);
@@ -73,9 +80,11 @@ export default function LoginPage() {
                             type="email"
                             placeholder="Số điện thoại / Email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="pl-11 rounded-2xl border-border/50 bg-muted/50 h-14 text-sm focus:ring-2 focus:ring-primary/30"
+                            onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
+                            className={`pl-11 rounded-2xl h-14 text-sm focus:ring-2 focus:ring-primary/30 ${errors.email ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
+                                }`}
                         />
+                        {errors.email && <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>}
                     </div>
 
                     {/* Password */}
@@ -85,8 +94,9 @@ export default function LoginPage() {
                             type={showPass ? 'text' : 'password'}
                             placeholder="Mật khẩu"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="pl-11 pr-12 rounded-2xl border-border/50 bg-muted/50 h-14 text-sm"
+                            onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }}
+                            className={`pl-11 pr-12 rounded-2xl h-14 text-sm ${errors.password ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
+                                }`}
                         />
                         <button
                             type="button"
@@ -95,6 +105,7 @@ export default function LoginPage() {
                         >
                             {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
+                        {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
                     </div>
 
                     <div className="text-right">
@@ -103,12 +114,12 @@ export default function LoginPage() {
                         </Link>
                     </div>
 
-                    {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+                    {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
 
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="w-full gradient-primary text-white rounded-2xl h-14 text-2xl font-bold shadow-glow hover:opacity-90 transition-all border-0 mt-2"
+                        className="w-full gradient-primary text-white rounded-2xl h-14 text-xl font-bold shadow-glow hover:opacity-90 transition-all border-0 mt-2"
                     >
                         {loading ? 'Đang đăng nhập...' : (
                             <>Đăng nhập <ArrowRight className="w-4 h-4 ml-2" /></>
