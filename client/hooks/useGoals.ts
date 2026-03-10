@@ -1,62 +1,124 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { create } from 'zustand';
 import { goalsApi } from '@/lib/api';
+import { registerStoreReset } from '@/store/useStore';
+
+export interface Contribution {
+    _id: string;
+    amount: number;
+    type: 'deposit' | 'withdraw';
+    note: string;
+    date: string;
+}
 
 export interface Goal {
     _id: string;
     name: string;
     targetAmount: number;
     currentAmount: number;
-    deadline: string;
-    category: string;
+    deadline?: string;
     icon: string;
     color: string;
+    category: string;
+    description: string;
     status: 'active' | 'completed' | 'paused';
+    progress: number;
+    contributions: Contribution[];
+    autoSaveAmount?: number;
+    autoSaveFrequency?: 'daily' | 'weekly' | 'monthly' | '';
+    completedAt?: string;
+    createdAt: string;
 }
 
-export function useGoals() {
-    const [goals, setGoals] = useState<Goal[]>([]);
-    const [loading, setLoading] = useState(true);
+export interface GoalFormData {
+    name: string;
+    targetAmount: number;
+    deadline?: string;
+    icon: string;
+    color: string;
+    category: string;
+    description: string;
+    autoSaveAmount?: number;
+    autoSaveFrequency?: string;
+}
 
-    const fetch = useCallback(async () => {
+interface GoalStore {
+    goals: Goal[];
+    loading: boolean;
+    hasFetched: boolean;
+    fetch: (force?: boolean) => Promise<void>;
+    reset: () => void;
+    createGoal: (data: GoalFormData) => Promise<Goal>;
+    updateGoal: (id: string, data: Partial<GoalFormData>) => Promise<Goal>;
+    deleteGoal: (id: string) => Promise<void>;
+    deposit: (id: string, amount: number, note?: string) => Promise<Goal>;
+    withdraw: (id: string, amount: number, note?: string) => Promise<Goal>;
+}
+
+export const useGoalStore = create<GoalStore>((set, get) => ({
+    goals: [],
+    loading: false,
+    hasFetched: false,
+    reset: () => set({ goals: [], loading: false, hasFetched: false }),
+    fetch: async (force = false) => {
+        if (get().loading || (get().hasFetched && !force)) return;
+        set({ loading: true });
         try {
-            setLoading(true);
             const res = await goalsApi.getAll();
-            setGoals(res.data.data || []);
+            set({ goals: res.data?.data || [], hasFetched: true, loading: false });
         } catch {
-            // silent
-        } finally {
-            setLoading(false);
+            set({ loading: false });
         }
+    },
+    createGoal: async (data) => {
+        const res = await goalsApi.create(data);
+        const goal = res.data?.data as Goal;
+        set({ goals: [goal, ...get().goals] });
+        return goal;
+    },
+    updateGoal: async (id, data) => {
+        const res = await goalsApi.update(id, data);
+        const updated = res.data?.data as Goal;
+        set({ goals: get().goals.map(g => g._id === id ? updated : g) });
+        return updated;
+    },
+    deleteGoal: async (id) => {
+        await goalsApi.delete(id);
+        set({ goals: get().goals.filter(g => g._id !== id) });
+    },
+    deposit: async (id, amount, note) => {
+        const res = await goalsApi.deposit(id, amount, note);
+        const updated = res.data?.data as Goal;
+        set({ goals: get().goals.map(g => g._id === id ? updated : g) });
+        return updated;
+    },
+    withdraw: async (id, amount, note) => {
+        const res = await goalsApi.withdraw(id, amount, note);
+        const updated = res.data?.data as Goal;
+        set({ goals: get().goals.map(g => g._id === id ? updated : g) });
+        return updated;
+    },
+}));
+
+registerStoreReset(() => useGoalStore.getState().reset());
+
+export function useGoals() {
+    const store = useGoalStore();
+
+    useEffect(() => {
+        store.fetch();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => { fetch(); }, [fetch]);
-
-    const createGoal = async (data: object) => {
-        const res = await goalsApi.create(data);
-        await fetch();
-        return res.data.data;
+    return {
+        goals: store.goals,
+        loading: store.loading,
+        createGoal: store.createGoal,
+        updateGoal: store.updateGoal,
+        deleteGoal: store.deleteGoal,
+        deposit: store.deposit,
+        withdraw: store.withdraw,
+        refetch: () => store.fetch(true),
     };
-
-    const updateGoal = async (id: string, data: object) => {
-        const res = await goalsApi.update(id, data);
-        setGoals(prev => prev.map(g => g._id === id ? { ...g, ...res.data.data } : g));
-        return res.data.data;
-    };
-
-    const deleteGoal = async (id: string) => {
-        await goalsApi.delete(id);
-        setGoals(prev => prev.filter(g => g._id !== id));
-    };
-
-    const deposit = async (id: string, amount: number) => {
-        await goalsApi.deposit(id, amount);
-        await fetch();
-    };
-
-    const totalSaved = goals.reduce((s, g) => s + g.currentAmount, 0);
-    const totalTarget = goals.reduce((s, g) => s + g.targetAmount, 0);
-    const completedCount = goals.filter(g => g.status === 'completed' || g.currentAmount >= g.targetAmount).length;
-
-    return { goals, totalSaved, totalTarget, completedCount, loading, createGoal, updateGoal, deleteGoal, deposit, refetch: fetch };
 }

@@ -213,6 +213,35 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen pb-28 bg-[#F8F9FF] dark:bg-slate-900 transition-colors duration-200">
+            <style>{`
+                @keyframes arrowSlide {
+                    0%,100% { transform: translateX(0); opacity: 1; }
+                    40%     { transform: translateX(5px); opacity: 0.6; }
+                    60%     { transform: translateX(5px); opacity: 0.6; }
+                }
+                @keyframes fadeUp {
+                    from { opacity: 0; transform: translateY(18px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes scaleIn {
+                    from { opacity: 0; transform: scale(0.93); }
+                    to   { opacity: 1; transform: scale(1); }
+                }
+                @keyframes pulseGlow {
+                    0%,100% { opacity: 1; transform: scale(1); }
+                    50%     { opacity: 0.7; transform: scale(1.15); }
+                }
+                .anim-arrow { animation: arrowSlide 2s ease-in-out infinite; }
+                .anim-arrow-d1 { animation: arrowSlide 2s ease-in-out infinite 0.3s; }
+                .anim-arrow-d2 { animation: arrowSlide 2s ease-in-out infinite 0.6s; }
+                .anim-fade-up { animation: fadeUp 0.5s ease both; }
+                .anim-fade-up-d1 { animation: fadeUp 0.5s ease 0.1s both; }
+                .anim-fade-up-d2 { animation: fadeUp 0.5s ease 0.2s both; }
+                .anim-fade-up-d3 { animation: fadeUp 0.5s ease 0.3s both; }
+                .anim-fade-up-d4 { animation: fadeUp 0.5s ease 0.4s both; }
+                .anim-scale-in  { animation: scaleIn 0.4s ease both; }
+                .anim-pulse-icon { animation: pulseGlow 2.5s ease-in-out infinite; }
+            `}</style>
 
             {/* ── Header ─────────────────────────────────────────────── */}
             <header className="px-5 pt-4 pb-3 flex justify-between items-center">
@@ -239,7 +268,7 @@ export default function DashboardPage() {
             <main className="px-5 space-y-5">
 
                 {/* ── Asset card (light lavender gradient) ─────────── */}
-                <div className="relative overflow-hidden rounded-[20px] p-2.5 pb-2 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] border border-[#E9D5FF] dark:border-purple-900/30 bg-gradient-to-br from-white to-[#F5F3FF] dark:from-slate-800 dark:to-slate-800/80">
+                <div className="anim-scale-in relative overflow-hidden rounded-[20px] p-2.5 pb-2 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] border border-[#E9D5FF] dark:border-purple-900/30 bg-gradient-to-br from-white to-[#F5F3FF] dark:from-slate-800 dark:to-slate-800/80">
                     <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(167,139,250,0.25)' }} />
                     <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(147,197,253,0.2)' }} />
 
@@ -247,8 +276,8 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-center gap-2 mb-1">
                             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Tổng tài sản ròng</p>
                             <Link href="/wealth"
-                                className="w-6 h-6 rounded-full bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 flex items-center justify-center transition-colors">
-                                <ChevronRight className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
+                                className="flex items-center justify-center transition-colors">
+                                <ChevronRight className="anim-arrow w-4 h-4 text-purple-400 dark:text-purple-400" />
                             </Link>
                         </div>
                         <div className="flex items-center justify-center gap-2 mb-1">
@@ -266,14 +295,14 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-center gap-2 mt-3">
 
                             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
-                                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                                <TrendingUp className="anim-pulse-icon w-3.5 h-3.5 text-emerald-500" />
                                 <Link href="/analytics" className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
                                     Thu: +{fmt(summary.income)}
                                 </Link>
                             </div>
 
                             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-500/10 rounded-full border border-red-100 dark:border-red-500/20 shadow-sm">
-                                <TrendingDown className="w-3.5 h-3.5 text-red-500" />
+                                <TrendingDown className="anim-pulse-icon w-3.5 h-3.5 text-red-500" style={{ animationDelay: '1.25s' }} />
                                 <Link href="/analytics" className="text-xs font-bold text-red-600 dark:text-red-400">
                                     Chi: -{fmt(summary.expense)}
                                 </Link>
@@ -285,12 +314,10 @@ export default function DashboardPage() {
                             <Link href="/savings"
                                 className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
                                 <div className="w-full flex justify-between items-start mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
                                         <PiggyBank className="w-5 h-5 text-blue-500 dark:text-blue-400" />
                                     </div>
-                                    <div className="w-6 h-6 rounded-full bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 flex items-center justify-center transition-colors">
-                                        <ChevronRight className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
-                                    </div>
+                                    <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 dark:text-purple-400" />
                                 </div>
                                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
                                 <p className="text-lg font-bold text-slate-800 dark:text-white mt-1 text-money">
@@ -303,12 +330,10 @@ export default function DashboardPage() {
                             <Link href="/cards"
                                 className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
                                 <div className="w-full flex justify-between items-start mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                                    <div className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                                         <CreditCard className="w-5 h-5 text-red-500" />
                                     </div>
-                                    <div className="w-6 h-6 rounded-full bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 flex items-center justify-center transition-colors">
-                                        <ChevronRight className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
-                                    </div>
+                                    <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 dark:text-purple-400" />
                                 </div>
                                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
                                 <p className="text-lg font-bold text-red-500 mt-1 text-money">
@@ -323,7 +348,7 @@ export default function DashboardPage() {
 
                 </div>
                 {/* ── Quick actions ───────────────────────────────────── */}
-                <div className="flex justify-between items-center gap-3">
+                <div className="anim-fade-up-d1 flex justify-between items-center gap-3">
                     {[
                         { icon: <Plus className="w-6 h-6 text-purple-500" />, label: 'Nạp tiền', onClick: () => { setAddType('income'); openAddModal(); } },
                         { icon: <Send className="w-6 h-6 text-purple-500" />, label: 'Chuyển', onClick: () => { } },
@@ -344,7 +369,7 @@ export default function DashboardPage() {
                 {/* ── Important notifications ──────────────────────── */}
                 {
                     (creditAlerts.length > 0 || savingsCards.length > 0) && (
-                        <section>
+                        <section className="anim-fade-up-d2">
                             <div className="flex justify-between items-center mb-3">
                                 <h2 className="text-base font-bold text-slate-800 dark:text-white">Thông báo quan trọng</h2>
                                 <span className="w-6 h-6 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs font-bold">

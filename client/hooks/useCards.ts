@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { cardsApi } from '@/lib/api';
+import { registerStoreReset } from '@/store/useStore';
 
 export interface Card {
     _id: string;
@@ -62,6 +63,7 @@ interface CardStore {
     error: string | null;
     hasFetched: boolean;
     fetch: (force?: boolean) => Promise<void>;
+    reset: () => void;
     createCard: (data: CardFormData) => Promise<any>;
     updateCard: (id: string, data: Partial<CardFormData>) => Promise<any>;
     deleteCard: (id: string) => Promise<void>;
@@ -75,6 +77,7 @@ export const useCardStore = create<CardStore>((set, get) => ({
     loading: false,
     error: null,
     hasFetched: false,
+    reset: () => set({ cards: [], totalBalance: 0, totalDebt: 0, loading: false, error: null, hasFetched: false }),
     fetch: async (force = false) => {
         if (get().loading || (get().hasFetched && !force)) return;
         set({ loading: true, error: null });
@@ -119,6 +122,7 @@ export const useCardStore = create<CardStore>((set, get) => ({
         set({ cards: get().cards.map(c => ({ ...c, isDefault: c._id === id })) });
     }
 }));
+registerStoreReset(() => useCardStore.getState().reset());
 
 export function useCards() {
     const store = useCardStore();

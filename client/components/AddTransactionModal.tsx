@@ -7,7 +7,7 @@ import { useCards } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
 import { transactionsApi } from '@/lib/api';
 import { toast } from 'sonner';
-import { Banknote, ArrowRight, Calendar, Check } from 'lucide-react';
+import { Banknote, ArrowRight, Calendar, Check, RefreshCw } from 'lucide-react';
 
 interface AddTransactionModalProps {
     open: boolean;
@@ -28,6 +28,9 @@ export default function AddTransactionModal({
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState<{ amount?: string; category?: string }>({});
+    // Installment (Trả góp)
+    const [isInstallment, setIsInstallment] = useState(false);
+    const [installmentMonths, setInstallmentMonths] = useState(12);
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     const { cards } = useCards();
@@ -49,6 +52,8 @@ export default function AddTransactionModal({
             setPaymentTab('cash');
             setSelectedCardId('cash');
             setErrors({});
+            setIsInstallment(false);
+            setInstallmentMonths(12);
         }
     }, [open, defaultType]);
 
@@ -74,6 +79,8 @@ export default function AddTransactionModal({
     );
 
     const displayAmount = amount ? parseInt(amount).toLocaleString('vi-VN') : '';
+    const amountNum = parseInt(amount) || 0;
+    const monthlyPayment = isInstallment && installmentMonths > 0 ? Math.ceil(amountNum / installmentMonths) : 0;
 
     const handleSave = async () => {
         const errs: { amount?: string; category?: string } = {};
@@ -91,8 +98,16 @@ export default function AddTransactionModal({
                 date: new Date(date),
                 paymentMethod: paymentTab === 'cash' ? 'cash' : 'card',
                 cardId: paymentTab === 'cash' ? null : selectedCardId,
+                isInstallment: paymentTab === 'credit' && isInstallment,
+                installmentMonths: paymentTab === 'credit' && isInstallment ? installmentMonths : 0,
+                installmentMonthly: paymentTab === 'credit' && isInstallment ? monthlyPayment : 0,
+                installmentStartDate: paymentTab === 'credit' && isInstallment ? new Date(date) : undefined,
             });
-            toast.success(type === 'income' ? '💰 Đã thêm thu nhập!' : '💸 Đã thêm chi tiêu!');
+            if (isInstallment && paymentTab === 'credit') {
+                toast.success(`💳 Đã thêm trả góp! Mỗi tháng: ${monthlyPayment.toLocaleString('vi-VN')}₫`);
+            } else {
+                toast.success(type === 'income' ? '💰 Đã thêm thu nhập!' : '💸 Đã thêm chi tiêu!');
+            }
             onSaved?.();
             onClose();
         } catch (err: unknown) {
@@ -282,6 +297,101 @@ export default function AddTransactionModal({
                             </div>
                         )}
                     </div>
+
+                    {/* ── Installment (Trả góp) — only for credit tab ── */}
+                    {paymentTab === 'credit' && type === 'expense' && (
+                        <div className="flex flex-col gap-3">
+                            {/* Toggle row */}
+                            <button
+                                type="button"
+                                onClick={() => setIsInstallment(v => !v)}
+                                className={cn(
+                                    'flex items-center justify-between w-full rounded-xl p-3 border-2 transition-all',
+                                    isInstallment
+                                        ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20'
+                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                        'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
+                                        isInstallment ? 'bg-[#7f19e6] text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                    )}>
+                                        <RefreshCw className="w-4 h-4" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className={cn('text-sm font-bold', isInstallment ? 'text-[#7f19e6]' : 'text-slate-700 dark:text-slate-300')}>
+                                            Trả góp 0% lãi suất
+                                        </p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500">Chia nhỏ dư nợ hàng tháng</p>
+                                    </div>
+                                </div>
+                                <div className={cn(
+                                    'w-12 h-6 rounded-full transition-colors flex items-center px-1 flex-shrink-0',
+                                    isInstallment ? 'bg-[#7f19e6]' : 'bg-slate-200 dark:bg-slate-700'
+                                )}>
+                                    <div className={cn(
+                                        'w-4 h-4 rounded-full bg-white shadow-sm transition-transform',
+                                        isInstallment ? 'translate-x-6' : 'translate-x-0'
+                                    )} />
+                                </div>
+                            </button>
+
+                            {/* Installment options */}
+                            {isInstallment && (
+                                <div className="space-y-3 px-1">
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">Số kỳ thanh toán</p>
+                                        <div className="grid grid-cols-6 gap-1.5">
+                                            {[3, 6, 12, 18, 24, 36].map(m => (
+                                                <button
+                                                    key={m}
+                                                    type="button"
+                                                    onClick={() => setInstallmentMonths(m)}
+                                                    className={cn(
+                                                        'py-2 rounded-xl text-sm font-bold border-2 transition-all',
+                                                        installmentMonths === m
+                                                            ? 'border-[#7f19e6] bg-[#7f19e6] text-white shadow-md shadow-[#7f19e6]/30'
+                                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-[#7f19e6]/50'
+                                                    )}
+                                                >
+                                                    {m}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 text-right">{installmentMonths} tháng</p>
+                                    </div>
+
+                                    {amountNum > 0 ? (
+                                        <div className="rounded-2xl overflow-hidden border border-[#7f19e6]/20 bg-gradient-to-br from-[#7f19e6]/5 to-purple-50 dark:from-purple-900/20 dark:to-slate-900">
+                                            <div className="flex items-stretch">
+                                                <div className="flex-1 p-3 text-center border-r border-[#7f19e6]/10">
+                                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-0.5">Tổng dư nợ</p>
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                                        {amountNum.toLocaleString('vi-VN')}₫
+                                                    </p>
+                                                </div>
+                                                <div className="flex-1 p-3 text-center border-r border-[#7f19e6]/10">
+                                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-0.5">Số kỳ</p>
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                                                        {installmentMonths} tháng
+                                                    </p>
+                                                </div>
+                                                <div className="flex-1 p-3 text-center bg-[#7f19e6]/10 dark:bg-purple-900/30">
+                                                    <p className="text-[10px] text-[#7f19e6] dark:text-purple-400 font-bold mb-0.5">Mỗi tháng</p>
+                                                    <p className="text-sm font-bold text-[#7f19e6] dark:text-purple-300">
+                                                        {monthlyPayment.toLocaleString('vi-VN')}₫
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-center text-slate-400 italic">Nhập số tiền để xem số tiền mỗi tháng</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-bold text-[#000000] dark:text-white">Ngày giao dịch</label>

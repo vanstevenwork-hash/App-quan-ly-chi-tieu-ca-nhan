@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { wealthApi } from '@/lib/api';
+import { registerStoreReset } from '@/store/useStore';
 
 export interface WealthSource {
     _id: string;
@@ -31,6 +32,7 @@ interface WealthStore {
     error: string | null;
     hasFetched: boolean;
     fetch: (force?: boolean) => Promise<void>;
+    reset: () => void;
     createSource: (data: WealthFormData) => Promise<any>;
     updateSource: (id: string, data: Partial<WealthFormData>) => Promise<any>;
     deleteSource: (id: string) => Promise<void>;
@@ -42,6 +44,7 @@ export const useWealthStore = create<WealthStore>((set, get) => ({
     loading: false,
     error: null,
     hasFetched: false,
+    reset: () => set({ sources: [], total: 0, loading: false, error: null, hasFetched: false }),
     fetch: async (force = false) => {
         if (get().loading || (get().hasFetched && !force)) return;
         set({ loading: true, error: null });
@@ -84,6 +87,7 @@ export const useWealthStore = create<WealthStore>((set, get) => ({
         });
     }
 }));
+registerStoreReset(() => useWealthStore.getState().reset());
 
 export function useWealth() {
     const store = useWealthStore();

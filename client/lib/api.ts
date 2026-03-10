@@ -74,8 +74,10 @@ export const goalsApi = {
     create: (data: object) => api.post('/goals', data),
     update: (id: string, data: object) => api.put(`/goals/${id}`, data),
     delete: (id: string) => api.delete(`/goals/${id}`),
-    deposit: (id: string, amount: number) => api.post(`/goals/${id}/deposit`, { amount }),
+    deposit: (id: string, amount: number, note?: string) => api.post(`/goals/${id}/deposit`, { amount, note }),
+    withdraw: (id: string, amount: number, note?: string) => api.post(`/goals/${id}/withdraw`, { amount, note }),
 };
+
 
 // Cards
 export const cardsApi = {

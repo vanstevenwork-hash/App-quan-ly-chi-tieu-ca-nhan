@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { notificationsApi } from '@/lib/api';
+import { registerStoreReset } from '@/store/useStore';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -26,6 +27,7 @@ interface NotificationStore {
     esConnected: boolean;
     fetch: (force?: boolean) => Promise<void>;
     setupSSE: () => void;
+    reset: () => void;
     markRead: (id: string) => Promise<void>;
     markAllRead: () => Promise<void>;
     deleteOne: (id: string) => Promise<void>;
@@ -40,6 +42,10 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     error: null,
     hasFetched: false,
     esConnected: false,
+    reset: () => {
+        if (esRef) { esRef.close(); esRef = null; }
+        set({ notifications: [], loading: false, error: null, hasFetched: false, esConnected: false });
+    },
     fetch: async (force = false) => {
         if (get().loading || (get().hasFetched && !force)) return;
         set({ loading: true, error: null });
@@ -114,6 +120,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         try { await notificationsApi.clearAll(); } catch { await get().fetch(true); }
     }
 }));
+registerStoreReset(() => useNotificationStore.getState().reset());
 
 export function useNotifications() {
     const store = useNotificationStore();

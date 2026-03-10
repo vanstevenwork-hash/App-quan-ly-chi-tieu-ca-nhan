@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// ── Reset hook: clears all data stores on login/logout ─────────────
+let _resetFns: Array<() => void> = [];
+export function registerStoreReset(fn: () => void) { _resetFns.push(fn); }
+export function resetAllStores() { _resetFns.forEach(fn => fn()); }
+
 interface User {
     _id: string;
     name: string;
@@ -25,6 +30,7 @@ export const useAuthStore = create<AuthStore>()(
             token: null,
             isAuthenticated: false,
             login: (user, token) => {
+                resetAllStores(); // clear stale data from previous account
                 if (typeof window !== 'undefined') localStorage.setItem('token', token);
                 set({ user, token, isAuthenticated: true });
             },

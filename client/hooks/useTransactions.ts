@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { transactionsApi } from '@/lib/api';
+import { registerStoreReset } from '@/store/useStore';
 
 export interface Transaction {
     _id: string;
@@ -10,6 +11,12 @@ export interface Transaction {
     note: string;
     date: string;
     paymentMethod: string;
+    cardId?: string;
+    // Installment
+    isInstallment?: boolean;
+    installmentMonths?: number;
+    installmentMonthly?: number;
+    installmentStartDate?: string;
 }
 
 import { create } from 'zustand';
@@ -20,6 +27,7 @@ interface TransactionStore {
     loading: boolean;
     hasFetched: boolean;
     fetch: (force?: boolean) => Promise<void>;
+    reset: () => void;
     createTransaction: (data: object) => Promise<any>;
     updateTransaction: (id: string, data: object) => Promise<any>;
     deleteTransaction: (id: string) => Promise<void>;
@@ -30,6 +38,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     summary: { income: 0, expense: 0, balance: 0 },
     loading: false,
     hasFetched: false,
+    reset: () => set({ transactions: [], summary: { income: 0, expense: 0, balance: 0 }, loading: false, hasFetched: false }),
     fetch: async (force = false) => {
         if (get().loading || (get().hasFetched && !force)) return;
         set({ loading: true });
@@ -79,6 +88,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
         await get().fetch(true);
     }
 }));
+registerStoreReset(() => useTransactionStore.getState().reset());
 
 export function useTransactions(params?: object) {
     const store = useTransactionStore();
