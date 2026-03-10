@@ -53,7 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${inter.className} antialiased bg-[#F0F2F8] dark:bg-slate-950`}>
         <ThemeProvider />
         <Toaster position="top-center" richColors closeButton />
-        <div id="root" className="min-h-screen max-w-[480px] mx-auto bg-[#F0F2F8] dark:bg-slate-900 transition-colors duration-200">
+        <div id="root" className="min-h-screen max-w-[480px] mx-auto bg-[#F0F2F8] dark:bg-slate-900 transition-colors duration-200"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           {children}
         </div>
       </body>
