@@ -8,6 +8,7 @@ import {
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
 import { cn } from '@/lib/utils';
+import { getBankLogo } from '@/lib/bankLogos';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
@@ -107,6 +108,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
             return Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
         })()
         : null;
+    const logoUrl = getBankLogo(card.bankShortName, card.bankName);
 
     return (
         <div className="snap-center shrink-0 w-[85%] rounded-2xl p-6 shadow-xl relative overflow-hidden"
@@ -115,9 +117,26 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
                 <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
             )}
             <div className="flex justify-between items-start mb-6">
-                <div>
-                    <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
-                    <p className="text-xl font-bold mt-1 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
+                <div className="flex items-center gap-2">
+                    {/* Bank logo */}
+                    {logoUrl ? (
+                        <img
+                            src={logoUrl}
+                            alt={card.bankShortName || card.bankName}
+                            className="w-9 h-9 rounded-xl object-contain bg-white/90 p-0.5 flex-shrink-0 shadow-sm"
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                    ) : (
+                        <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold" style={{ color: ts.text }}>
+                                {(card.bankShortName || card.bankName || '?').substring(0, 3).toUpperCase()}
+                            </span>
+                        </div>
+                    )}
+                    <div>
+                        <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
+                        <p className="text-base font-bold mt-0.5 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {card.isDefault && (

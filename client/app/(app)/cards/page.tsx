@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     Plus, ArrowLeft, TrendingDown, TrendingUp,
     CreditCard, History, BarChart3, Wallet,
@@ -7,8 +7,10 @@ import {
     Star, BadgePercent, CheckCircle2, Clock, RefreshCw, CalendarDays,
     ChevronDown, ChevronUp, ArrowDownLeft, ArrowUpRight,
 } from 'lucide-react';
+import { getBankLogo } from '@/lib/bankLogos';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useBanks } from '@/hooks/useBanks';
 import CardFormModal from '@/components/CardFormModal';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
@@ -74,49 +76,69 @@ function daysUntilPayment(paymentDueDay: number): number | null {
 }
 
 // ── Credit card slide -------------------------------------------------------
-function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
-    card: Card; idx: number;
+function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
+    card: Card; idx: number; bankLogoUrl?: string;
     onEdit: () => void; onDelete: () => void; onPay: () => void;
 }) {
     const usedPct = card.creditLimit > 0 ? Math.min((card.balance / card.creditLimit) * 100, 100) : 0;
     const dueDays = daysUntilPayment(card.paymentDueDay);
     const isUrgent = dueDays !== null && dueDays <= 5;
     const ts = cardTextStyle(card.color);
+    const [logoError, setLogoError] = useState(false);
+    // Use bank API logo first, then static CDN fallback
+    const logoUrl = bankLogoUrl || getBankLogo(card.bankShortName, card.bankName);
+    const showLogo = logoUrl && !logoError;
 
     return (
         <div className="snap-center shrink-0 w-[85%] relative rounded-xl p-3 shadow-xl overflow-hidden
                         transform transition-transform hover:scale-[1.02]"
             style={{ background: getGradient(card, idx), border: ts.border }}>
-            {/* Glow blob */}
+            {/* Default badge — absolute top-right */}
+            {card.isDefault && (
+                <span className="absolute top-0 right-0 z-10 bg-yellow-400/90 text-yellow-900 text-[10px] font-bold px-1 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                    <Star className="w-2.5 h-2.5" />
+                </span>
+            )}
             {card.color !== '#111111' && card.color !== '#FFFFFF' && (
                 <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
             )}
 
-            <div className="flex justify-between items-start mb-3">
-                <div>
-                    <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
-                    <p className="text-xl font-bold mt-1 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
-                </div>
-                <div className="flex gap-2 items-center">
-                    {card.isDefault && (
-                        <span className="bg-yellow-400/80 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Star className="w-2.5 h-2.5" /> Chính
-                        </span>
+            <div className="flex justify-between items-start mb-2.5">
+                <div className="flex items-center gap-2">
+                    {/* Bank logo */}
+                    {showLogo ? (
+                        <img
+                            src={logoUrl!}
+                            alt={card.bankShortName || card.bankName}
+                            className="w-9 h-9 rounded-xl object-contain bg-white/90 p-0.5 flex-shrink-0 shadow-sm"
+                            onError={() => setLogoError(true)}
+                        />
+                    ) : (
+                        <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-bold" style={{ color: ts.text }}>
+                                {(card.bankShortName || card.bankName || '?').substring(0, 3).toUpperCase()}
+                            </span>
+                        </div>
                     )}
-                    <div className="flex gap-1">
-                        <button onClick={onEdit}
-                            className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition">
-                            <Pencil className="w-3 h-3" style={{ color: ts.text }} />
-                        </button>
-                        <button onClick={onDelete}
-                            className="w-7 h-7 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center transition">
-                            <Trash2 className="w-3 h-3 text-red-500" />
-                        </button>
+                    <div>
+                        <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
+                        <p className="text-base font-bold mt-0.5 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
                     </div>
                 </div>
+                <div className="flex gap-1">
+                    <button onClick={onEdit}
+                        className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition">
+                        <Pencil className="w-3 h-3" style={{ color: ts.text }} />
+                    </button>
+                    <button onClick={onDelete}
+                        className="w-7 h-7 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center transition">
+                        <Trash2 className="w-3 h-3 text-red-500" />
+                    </button>
+                </div>
             </div>
+            {/* </div> */}
 
-            <div className="flex justify-between items-end mb-3">
+            <div className="flex justify-between items-end mb-2.5">
                 <div>
                     <p className="text-xs mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
                     <p className="text-xl font-bold tracking-tight" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
@@ -141,31 +163,35 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay }: {
                 )}
             </div>
 
-            {card.creditLimit > 0 && (
-                <>
-                    <div className="flex justify-between text-[10px] mb-1.5" style={{ color: ts.subtext }}>
-                        <span>Đã dùng {usedPct.toFixed(0)}%</span>
-                        <span>Hạn mức:<span className="text-base ml-0.5 font-bold">{fmtShort(card.creditLimit)}</span></span>
-                    </div>
-                    <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-3">
-                        <div className="h-full rounded-full transition-all"
-                            style={{
-                                width: `${usedPct}%`,
-                                backgroundColor: usedPct > 80 ? '#FCA5A5' : ts.subtext,
-                            }} />
-                    </div>
-                </>
-            )}
+            {
+                card.creditLimit > 0 && (
+                    <>
+                        <div className="flex justify-between text-[10px] mb-1.5" style={{ color: ts.subtext }}>
+                            <span>Đã dùng {usedPct.toFixed(0)}%</span>
+                            <span>Hạn mức:<span className="text-base ml-0.5 font-bold">{fmtShort(card.creditLimit)}</span></span>
+                        </div>
+                        <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-2.5">
+                            <div className="h-full rounded-full transition-all"
+                                style={{
+                                    width: `${usedPct}%`,
+                                    backgroundColor: usedPct > 80 ? '#FCA5A5' : ts.subtext,
+                                }} />
+                        </div>
+                    </>
+                )
+            }
 
             {/* Pay button on card */}
-            {card.balance > 0 && (
-                <button onClick={onPay}
-                    className="w-full mt-1 py-2 rounded-xl bg-black/10 hover:bg-black/20 text-xs font-bold transition flex items-center justify-center gap-1.5"
-                    style={{ color: ts.text }}>
-                    <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
-                </button>
-            )}
-        </div>
+            {
+                card.balance > 0 && (
+                    <button onClick={onPay}
+                        className="w-full mt-1 py-2 rounded-xl bg-black/10 hover:bg-black/20 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                        style={{ color: ts.text }}>
+                        <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
+                    </button>
+                )
+            }
+        </div >
     );
 }
 
@@ -205,12 +231,16 @@ export default function CardsPage() {
     const { cards, totalDebt, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch: refetchCards } = useCards();
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const { transactions, refetch: refetchTx } = useTransactions();
+    const { banks: fetchedBanks, fetchBanks } = useBanks();
+
+    useEffect(() => { fetchBanks(); }, [fetchBanks]);
 
     const [showForm, setShowForm] = useState(false);
     const [editCard, setEditCard] = useState<Card | null>(null);
     const [showPayment, setShowPayment] = useState(false);
     const [addType] = useState<'expense'>('expense');
     const [historyExpanded, setHistoryExpanded] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
     const router = useRouter();
 
     const creditCards = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
@@ -360,12 +390,20 @@ export default function CardsPage() {
                         {loading && (
                             <div className="snap-center shrink-0 w-[85%] min-h-[200px] rounded-3xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
                         )}
-                        {!loading && creditCards.map((card, idx) => (
-                            <CreditCardSlide key={card._id} card={card} idx={idx}
-                                onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                onDelete={() => deleteCard(card._id)}
-                                onPay={() => setShowPayment(true)} />
-                        ))}
+                        {!loading && creditCards.map((card, idx) => {
+                            const apiBank = fetchedBanks.find(
+                                (b: any) => b.shortName?.toUpperCase() === (card.bankShortName || '').toUpperCase()
+                                    || b.name?.toUpperCase().includes((card.bankName || '').toUpperCase())
+                            );
+                            const bankLogoUrl = apiBank?.logo || undefined;
+                            return (
+                                <CreditCardSlide key={card._id} card={card} idx={idx}
+                                    bankLogoUrl={bankLogoUrl}
+                                    onEdit={() => { setEditCard(card); setShowForm(true); }}
+                                    onDelete={() => setDeleteConfirmId(card._id)}
+                                    onPay={() => setShowPayment(true)} />
+                            );
+                        })}
                         {/* Add new card slide */}
                         <button
                             onClick={() => { setEditCard(null); setShowForm(true); }}
@@ -401,7 +439,7 @@ export default function CardsPage() {
 
                 {/* ── Payment alerts ───────────────────────────── */}
                 <div className="px-6 mb-5">
-                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">Hạn thanh toán</h3>
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-2.5">Hạn thanh toán</h3>
                     <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800">
                         {paymentAlerts.length > 0 ? paymentAlerts.map(({ card, days }) => {
                             const isUrgent = (days ?? 99) <= 5;
@@ -442,7 +480,7 @@ export default function CardsPage() {
 
                 {/* ── Cashback section ─────────────────────────── */}
                 <div className="px-6 mb-5">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-2.5">
                         <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Hoàn tiền ước tính</h3>
                         <span className="text-xs text-slate-400">{monthLabel}</span>
                     </div>
@@ -500,7 +538,7 @@ export default function CardsPage() {
                 {/* ── Installment plans ─────────────────────────── */}
                 {installmentPlans.length > 0 && (
                     <div className="px-6 mb-5">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between mb-2.5">
                             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Kế hoạch trả góp</h3>
                             <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
                                 {installmentPlans.length} gói
@@ -548,7 +586,7 @@ export default function CardsPage() {
                 {/* ── Credit card transaction history ──────────── */}
                 {creditCardTxs.length > 0 && (
                     <div className="px-6 mb-5">
-                        <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center justify-between mb-2.5">
                             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                 <History className="w-4 h-4 text-indigo-500" />
                                 Lịch sử giao dịch
@@ -651,6 +689,43 @@ export default function CardsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* ── Delete Confirm Sheet ─────────────────────────── */}
+            {deleteConfirmId && (() => {
+                const card = cards.find(c => c._id === deleteConfirmId);
+                return (
+                    <>
+                        <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setDeleteConfirmId(null)} />
+                        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 bg-white dark:bg-slate-800 rounded-t-3xl p-6 shadow-2xl">
+                            <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                                    <Trash2 className="w-6 h-6 text-red-500" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-slate-800 dark:text-slate-100 text-base">Xoá thẻ?</p>
+                                    <p className="text-sm text-slate-400 mt-0.5">{card?.bankName} •••• {card?.cardNumber}</p>
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
+                                Thao tác này không thể hoàn tác. Tất cả dữ liệu liên quan đến thẻ sẽ bị xoá vĩnh viễn.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteConfirmId(null)}
+                                    className="flex-1 py-3 rounded-2xl border border-gray-200 dark:border-slate-600 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition">
+                                    Huỷ
+                                </button>
+                                <button
+                                    onClick={() => { deleteCard(deleteConfirmId); setDeleteConfirmId(null); }}
+                                    className="flex-1 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-sm font-bold text-white transition active:scale-95">
+                                    Xoá thẻ
+                                </button>
+                            </div>
+                        </div>
+                    </>
+                );
+            })()}
 
             {/* ── FAB ─────────────────────────────────────────── */}
             <button
