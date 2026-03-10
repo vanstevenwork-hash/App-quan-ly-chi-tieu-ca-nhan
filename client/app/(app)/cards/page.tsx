@@ -90,8 +90,8 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
     const showLogo = logoUrl && !logoError;
 
     return (
-        <div className="snap-center shrink-0 w-[85%] relative rounded-xl p-3 shadow-xl overflow-hidden
-                        transform transition-transform hover:scale-[1.02]"
+        <div className="snap-center shrink-0 w-[85%] relative rounded-xl p-3 pb-2 pt-2.5 shadow-xl overflow-hidden
+                        transform transition-transform hover:scale-[1.02] flex flex-col h-[190px]"
             style={{ background: getGradient(card, idx), border: ts.border }}>
             {/* Default badge — absolute top-right */}
             {card.isDefault && (
@@ -170,7 +170,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                             <span>Đã dùng {usedPct.toFixed(0)}%</span>
                             <span>Hạn mức:<span className="text-base ml-0.5 font-bold">{fmtShort(card.creditLimit)}</span></span>
                         </div>
-                        <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-2.5">
+                        <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-2">
                             <div className="h-full rounded-full transition-all"
                                 style={{
                                     width: `${usedPct}%`,
@@ -185,7 +185,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
             {
                 card.balance > 0 && (
                     <button onClick={onPay}
-                        className="w-full mt-1 py-2 rounded-xl bg-black/10 hover:bg-black/20 text-xs font-bold transition flex items-center justify-center gap-1.5"
+                        className="w-full mt-auto py-2 rounded-xl bg-black/10 hover:bg-black/20 text-xs font-bold transition flex items-center justify-center gap-1.5"
                         style={{ color: ts.text }}>
                         <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
                     </button>
