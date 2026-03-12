@@ -57,7 +57,7 @@ export default function LoginPage() {
             <div className="absolute top-40 left-0 w-48 h-48 rounded-full bg-purple-300/20 blur-3xl -translate-x-1/4" />
 
             {/* Logo area */}
-            <div className="px-6 pt-16 pb-8 text-center">
+            <div className="px-6 pt-12 pb-8 text-center">
                 <div
                     className="w-full h-[180px] bg-cover bg-center rounded-2xl mb-6"
                     style={{

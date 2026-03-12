@@ -90,8 +90,8 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
     const showLogo = logoUrl && !logoError;
 
     return (
-        <div className="snap-center shrink-0 w-[85%] relative rounded-xl p-3 pb-2 pt-2.5 shadow-xl overflow-hidden
-                        transform transition-transform hover:scale-[1.02] flex flex-col h-[190px]"
+        <div className="snap-center shrink-0 w-[85%] relative rounded-xl p-3 pb-2.5 pt-2.5 shadow-xl overflow-hidden
+                        transform transition-transform hover:scale-[1.02] flex flex-col h-[192px]"
             style={{ background: getGradient(card, idx), border: ts.border }}>
             {/* Default badge — absolute top-right */}
             {card.isDefault && (
@@ -358,7 +358,7 @@ export default function CardsPage() {
                         {fmt(totalDebt)}₫
                     </h1>
                     {totalDebt > 0 ? (
-                        <div className="flex items-center justify-center gap-1 mt-2 text-amber-500 dark:text-amber-400 text-sm font-medium">
+                        <div className="flex items-center justify-center gap-1 mt-2 text-indigo-600 dark:text-indigo-400 text-sm font-medium">
                             <BadgePercent className="w-4 h-4" />
                             <span>Hoàn tiền cả năm: <strong>{fmt(yearlyCashback)}₫</strong></span>
                         </div>

@@ -250,7 +250,7 @@ export default function DashboardPage() {
                         {(user?.name || 'N').charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Xin chào 👋</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Hello 👋</p>
                         <p className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">{user?.name || 'Bạn'}</p>
                     </div>
                 </div>
@@ -313,32 +313,41 @@ export default function DashboardPage() {
                         <div className="grid grid-cols-2 gap-3 relative z-10 pt-4">
                             <Link href="/savings"
                                 className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
-                                <div className="w-full flex justify-between items-start mb-2">
-                                    <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                                <div className="w-full flex justify-between items-start mb-1">
+                                    {/* <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
+                                    
                                         <PiggyBank className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                                    </div> */}
+                                    <div>
+                                        {/* <PiggyBank className="w-5 h-5 text-blue-500 dark:text-blue-400" /> */}
+                                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
+                                        <p className="text-lg font-bold text-slate-800 dark:text-white mt-1 text-money text-left">
+                                            {hideBalance ? '••' : fmt(totalSavings)}
+                                        </p>
                                     </div>
                                     <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 dark:text-purple-400" />
                                 </div>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
-                                <p className="text-lg font-bold text-slate-800 dark:text-white mt-1 text-money">
-                                    {hideBalance ? '••' : fmt(totalSavings)}
-                                </p>
-                                {cards.filter(c => c.cardType === 'savings').length > 0 && (
+
+                                {cards.filter(c => c.cardType === 'savings').length > 0 ?
                                     <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'savings').length} sổ tiết kiệm</p>
-                                )}
+                                    : <p className="text-[10px] text-slate-400 mt-0.5">Bạn chưa có sổ tiết kiệm</p>}
                             </Link>
                             <Link href="/cards"
                                 className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
-                                <div className="w-full flex justify-between items-start mb-2">
-                                    <div className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                                <div className="w-full flex justify-between items-start mb-1">
+                                    {/* <div className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                                         <CreditCard className="w-5 h-5 text-red-500" />
+                                    </div> */}
+                                    <div>
+                                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
+                                        <p className="text-lg font-bold text-red-500 mt-1 text-money text-left">
+                                            {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
+                                        </p>
                                     </div>
                                     <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 dark:text-purple-400" />
                                 </div>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
-                                <p className="text-lg font-bold text-red-500 mt-1 text-money">
-                                    {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
-                                </p>
+
+
                                 {cards.filter(c => c.cardType === 'credit').length > 0 && (
                                     <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng</p>
                                 )}

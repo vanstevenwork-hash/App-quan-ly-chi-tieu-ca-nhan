@@ -225,7 +225,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                 <button className="flex h-6 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
                     <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                 </button>
-                <div className="flex items-center px-4 py-3 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center px-4 py-1 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
                     <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">
                         {isEdit ? 'Chỉnh sửa' : isSavings ? 'Thêm sổ tiết kiệm' : 'Thêm thẻ / tài khoản'}
                     </h2>
@@ -404,27 +404,54 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                 </div>
                             )}
 
-                            {/* Card number */}
-                            {!isSavings && (
-                                <div>
-                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">4 số cuối</p>
-                                    <Input value={form.cardNumber} onChange={e => set('cardNumber', e.target.value.replace(/\D/g, '').slice(0, 4))}
-                                        placeholder="1234" maxLength={4} className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold tracking-widest text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
-                                </div>
-                            )}
 
-                            {/* Balance */}
                             {!isSavings && (
-                                <div>
-                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">
-                                        {isCredit ? 'Dư nợ hiện tại (VND)' : 'Số dư hiện tại (VND)'}
-                                    </p>
-                                    <Input type="text"
-                                        value={form.balance ? new Intl.NumberFormat('vi-VN').format(form.balance) : ''}
-                                        onChange={e => { set('balance', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
-                                        placeholder="0"
-                                        className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
-                                    {errors.balance && <p className="text-xs text-red-500 mt-1">{errors.balance}</p>}
+                                <div className="grid grid-cols-12 gap-3">
+
+                                    {/* 4 số cuối */}
+                                    <div className="col-span-4">
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">
+                                            4 số cuối
+                                        </p>
+                                        <Input
+                                            value={form.cardNumber}
+                                            onChange={(e) =>
+                                                set("cardNumber", e.target.value.replace(/\D/g, "").slice(0, 4))
+                                            }
+                                            placeholder="1234"
+                                            maxLength={4}
+                                            className="w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold tracking-widest text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
+                                        />
+                                    </div>
+
+                                    {/* Balance */}
+                                    <div className="col-span-8">
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">
+                                            {isCredit ? "Dư nợ hiện tại (VND)" : "Số dư hiện tại (VND)"}
+                                        </p>
+                                        <Input
+                                            type="text"
+                                            value={
+                                                form.balance
+                                                    ? new Intl.NumberFormat("vi-VN").format(form.balance)
+                                                    : ""
+                                            }
+                                            onChange={(e) => {
+                                                set("balance", Number(e.target.value.replace(/\D/g, "")));
+                                                setErrors((p) => ({ ...p, balance: "" }));
+                                            }}
+                                            placeholder="0"
+                                            className={cn(
+                                                "w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1",
+                                                errCls("balance") ||
+                                                "focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]"
+                                            )}
+                                        />
+
+                                        {errors.balance && (
+                                            <p className="text-xs text-red-500 mt-1">{errors.balance}</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
@@ -473,32 +500,34 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                     </div>
 
                                     {/* Deposit date — full width */}
-                                    <div>
-                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày gửi <span className="text-red-500">*</span></p>
-                                        <Input type="date" value={form.depositDate}
-                                            onChange={e => {
-                                                const dep = e.target.value;
-                                                set('depositDate', dep);
-                                                setErrors(p => ({ ...p, depositDate: '' }));
-                                                // Auto-calc maturity
-                                                if (dep && form.term) {
-                                                    const d = new Date(dep);
-                                                    d.setMonth(d.getMonth() + form.term);
-                                                    set('maturityDate', d.toISOString().slice(0, 10));
-                                                }
-                                            }}
-                                            className={cn('w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:ring-1', errCls('depositDate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
-                                        {errors.depositDate && <p className="text-xs text-red-500 mt-1">{errors.depositDate}</p>}
-                                    </div>
-
-                                    {/* Maturity date — full width, read-only */}
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <p className="text-sm font-bold text-[#000000] dark:text-white">Ngày đáo hạn</p>
-                                            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">Tự tính</span>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="w-full">
+                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày gửi <span className="text-red-500">*</span></p>
+                                            <Input type="date" value={form.depositDate}
+                                                onChange={e => {
+                                                    const dep = e.target.value;
+                                                    set('depositDate', dep);
+                                                    setErrors(p => ({ ...p, depositDate: '' }));
+                                                    // Auto-calc maturity
+                                                    if (dep && form.term) {
+                                                        const d = new Date(dep);
+                                                        d.setMonth(d.getMonth() + form.term);
+                                                        set('maturityDate', d.toISOString().slice(0, 10));
+                                                    }
+                                                }}
+                                                className={cn('w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:ring-1', errCls('depositDate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                            {errors.depositDate && <p className="text-xs text-red-500 mt-1">{errors.depositDate}</p>}
                                         </div>
-                                        <Input type="date" value={form.maturityDate} readOnly disabled
-                                            className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-12 px-3 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-70" />
+
+                                        {/* Maturity date — full width, read-only */}
+                                        <div className="w-full">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <p className="text-sm font-bold text-[#000000] dark:text-white">Ngày đáo hạn</p>
+                                                {/* <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full">Tự tính</span> */}
+                                            </div>
+                                            <Input type="date" value={form.maturityDate} readOnly disabled
+                                                className="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 h-12 px-3 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-70" />
+                                        </div>
                                     </div>
                                 </>
                             )}
