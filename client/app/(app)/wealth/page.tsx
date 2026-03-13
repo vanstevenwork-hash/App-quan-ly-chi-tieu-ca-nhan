@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, RefreshCw, Wallet, CreditCard, Landmark, PiggyBank, Smartphone, Bitcoin, Briefcase, Calendar, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useWealth, type WealthSource } from '@/hooks/useWealth';
-import { useCards } from '@/hooks/useCards';
+import { useCards, type Card } from '@/hooks/useCards';
 
 export type WealthSourceUI = Omit<WealthSource, 'icon'> & { icon: React.ReactNode; isExternal?: boolean; };
 import WealthSourceModal from '@/components/WealthSourceModal';
@@ -52,11 +52,9 @@ function WealthCard({ source, onEdit, onDelete }: {
                 <div className="font-bold text-slate-800 dark:text-white text-base">{fmtFull(source.balance)}đ</div>
                 {source.note && <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[100px]">{source.note}</div>}
             </div>
-            {!source.isExternal && (
-                <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 w-7 h-7 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm">
-                    <Trash2 className="w-3.5 h-3.5" />
-                </button>
-            )}
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 w-7 h-7 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-red-100 dark:border-red-900/50">
+                <Trash2 className="w-3.5 h-3.5" />
+            </button>
         </div>
     );
 }
@@ -64,10 +62,11 @@ function WealthCard({ source, onEdit, onDelete }: {
 export default function WealthPage() {
     const router = useRouter();
     const { sources, total, loading, createSource, updateSource, deleteSource, refetch } = useWealth();
-    const { cards, loading: cardsLoading } = useCards();
+    const { cards, loading: cardsLoading, deleteCard } = useCards();
     const [showModal, setShowModal] = useState(false);
     const [showCardModal, setShowCardModal] = useState(false);
     const [editSource, setEditSource] = useState<WealthSource | null>(null);
+    const [editCard, setEditCard] = useState<Card | null>(null);
     const [isVisible, setIsVisible] = useState(true);
     const [activeTab, setActiveTab] = useState<'accounts' | 'savings' | 'other'>('accounts');
 
@@ -156,10 +155,15 @@ export default function WealthPage() {
         setEditSource(null);
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        if (!confirm(`Xoá "${name}"?`)) return;
-        await deleteSource(id);
-        toast.success('Đã xoá');
+    const handleDelete = async (source: WealthSourceUI) => {
+        if (!confirm(`Xoá "${source.name}"?`)) return;
+        if (source.isExternal) {
+            await deleteCard(source._id);
+            toast.success('Đã xoá thẻ/tài khoản');
+        } else {
+            await deleteSource(source._id);
+            toast.success('Đã xoá tài sản');
+        }
     };
 
     const handleAddClick = () => {
@@ -174,7 +178,7 @@ export default function WealthPage() {
     return (
         <div className="min-h-screen pb-32 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
             {/* Header Gradient */}
-            <div className="pt-12 pb-6 px-6 rounded-b-[2.5rem] relative z-10 shadow-sm transition-colors duration-200"
+            <div className="pt-4 pb-6 px-6 rounded-b-[2.5rem] relative z-10 shadow-sm transition-colors duration-200"
                 style={{
                     background: 'linear-gradient(135deg, #E0C3FC 0%, #8EC5FC 100%)',
                 }}
@@ -269,8 +273,16 @@ export default function WealthPage() {
                             )}
                             {activeTab === 'accounts' && accountSources.map(s => (
                                 <WealthCard key={s._id} source={s}
-                                    onEdit={() => { if (!s.isExternal) { setEditSource(s as unknown as WealthSource); setShowModal(true); } }}
-                                    onDelete={() => handleDelete(s._id, s.name)} />
+                                    onEdit={() => {
+                                        if (s.isExternal) {
+                                            const card = cards.find(c => c._id === s._id);
+                                            if (card) { setEditCard(card); setShowCardModal(true); }
+                                        } else {
+                                            setEditSource(s as unknown as WealthSource);
+                                            setShowModal(true);
+                                        }
+                                    }}
+                                    onDelete={() => handleDelete(s)} />
                             ))}
 
                             {activeTab === 'savings' && savingsSources.length === 0 && (
@@ -278,8 +290,16 @@ export default function WealthPage() {
                             )}
                             {activeTab === 'savings' && savingsSources.map(s => (
                                 <WealthCard key={s._id} source={s}
-                                    onEdit={() => { if (!s.isExternal) { setEditSource(s as unknown as WealthSource); setShowModal(true); } }}
-                                    onDelete={() => handleDelete(s._id, s.name)} />
+                                    onEdit={() => {
+                                        if (s.isExternal) {
+                                            const card = cards.find(c => c._id === s._id);
+                                            if (card) { setEditCard(card); setShowCardModal(true); }
+                                        } else {
+                                            setEditSource(s as unknown as WealthSource);
+                                            setShowModal(true);
+                                        }
+                                    }}
+                                    onDelete={() => handleDelete(s)} />
                             ))}
 
                             {activeTab === 'other' && otherSources.length === 0 && (
@@ -288,7 +308,7 @@ export default function WealthPage() {
                             {activeTab === 'other' && otherSources.map(s => (
                                 <WealthCard key={s._id} source={s}
                                     onEdit={() => { setEditSource(s as unknown as WealthSource); setShowModal(true); }}
-                                    onDelete={() => handleDelete(s._id, s.name)} />
+                                    onDelete={() => handleDelete(s)} />
                             ))}
                         </div>
                     </div>
@@ -305,8 +325,9 @@ export default function WealthPage() {
 
             <CardFormModal
                 open={showCardModal}
-                onClose={() => setShowCardModal(false)}
-                onSave={refetch}
+                onClose={() => { setShowCardModal(false); setEditCard(null); }}
+                onSave={async () => { await refetch(); setShowCardModal(false); }}
+                editCard={editCard}
                 initialType={activeTab === 'savings' ? 'savings' : 'debit'}
             />
 

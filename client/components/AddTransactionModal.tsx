@@ -131,11 +131,11 @@ export default function AddTransactionModal({
                 <button className="flex h-6 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
                     <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                 </button>
-                <div className="flex items-center px-4 py-3 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
                     <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">Thêm giao dịch</h2>
                 </div>
 
-                <div className="flex-1 overflow-y-auto hide-scrollbar pb-24 bg-white dark:bg-slate-900 px-4 pt-4 space-y-6">
+                <div className="flex-1 overflow-y-auto hide-scrollbar pb-24 bg-white dark:bg-slate-900 px-4 space-y-6">
                     {/* Toggle Type */}
                     <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
                         {(['expense', 'income'] as const).map(t => (
@@ -150,14 +150,14 @@ export default function AddTransactionModal({
                     <div className="flex flex-col gap-2">
                         <label className="text-sm font-bold text-[#000000] dark:text-white">Số tiền</label>
                         <div className={cn(
-                            'flex w-full items-stretch rounded-xl border bg-white dark:bg-slate-900 overflow-hidden focus-within:ring-1 transition-colors',
+                            'flex w-full items-stretch rounded-xl bg-white dark:bg-slate-900 overflow-hidden focus-within:ring-1 transition-colors',
                             errors.amount
                                 ? 'border-red-400 focus-within:border-red-400 focus-within:ring-red-400'
                                 : 'border-slate-200 dark:border-slate-700 focus-within:border-[#7f19e6] focus-within:ring-[#7f19e6]'
                         )}>
-                            <div className="flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                            {/* <div className="flex items-center justify-center px-4 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
                                 <Banknote className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-                            </div>
+                            </div> */}
                             <input
                                 className="w-full flex-1 border-0 bg-transparent py-4 px-3 text-2xl font-bold text-[#000000] dark:text-white focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 placeholder="0"
@@ -166,9 +166,9 @@ export default function AddTransactionModal({
                                 type="text"
                                 style={{ fontVariantNumeric: 'tabular-nums' }}
                             />
-                            <div className="flex items-center justify-center px-4 text-[#000000] dark:text-white font-bold">
+                            {/* <div className="flex items-center justify-center px-4 text-[#000000] dark:text-white font-bold">
                                 VND
-                            </div>
+                            </div> */}
                         </div>
                         {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                     </div>

@@ -6,6 +6,7 @@ import {
     AlertCircle, Calendar, Gift, Pencil, Trash2,
     Star, BadgePercent, CheckCircle2, Clock, RefreshCw, CalendarDays,
     ChevronDown, ChevronUp, ArrowDownLeft, ArrowUpRight,
+    Bitcoin, Smartphone,
 } from 'lucide-react';
 import { getBankLogo } from '@/lib/bankLogos';
 import { useCards, type Card } from '@/hooks/useCards';
@@ -226,6 +227,48 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
     );
 }
 
+// ── Account row for debit/wallet/crypto ──
+function AccountRow({ card, onEdit, onDelete }: {
+    card: Card; onEdit: () => void; onDelete: () => void;
+}) {
+    const TypeIcon = card.cardType === 'crypto' ? Bitcoin
+        : card.cardType === 'eWallet' ? Smartphone
+            : Wallet;
+    const iconBg = card.cardType === 'crypto' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+        : card.cardType === 'eWallet' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
+            : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400';
+
+    return (
+        <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm transition-all hover:border-indigo-200 dark:hover:border-indigo-900/50 group">
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', iconBg)}>
+                <TypeIcon className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{card.bankName}</p>
+                    {card.isDefault && <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />}
+                </div>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-tight">
+                    ••{card.cardNumber} · {card.cardHolder}
+                </p>
+            </div>
+            <div className="text-right flex items-center gap-2">
+                <div>
+                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{fmt(card.balance)}₫</p>
+                </div>
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 transition">
+                        <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 transition">
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CardsPage() {
     const { cards, totalDebt, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch: refetchCards } = useCards();
@@ -244,7 +287,7 @@ export default function CardsPage() {
     const router = useRouter();
 
     const creditCards = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
-    const accounts = useMemo(() => cards.filter(c => ['debit', 'eWallet'].includes(c.cardType)), [cards]);
+    const accounts = useMemo(() => cards.filter(c => ['debit', 'eWallet', 'crypto'].includes(c.cardType)), [cards]);
 
     // ── Cashback breakdown per card ─────────────────────────────────────────
     const now = new Date();
@@ -408,7 +451,7 @@ export default function CardsPage() {
                         <button
                             onClick={() => { setEditCard(null); setShowForm(true); }}
                             className="snap-center shrink-0 w-[60%] min-h-[180px] rounded-3xl border-2 border-dashed border-gray-300 bg-white flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition">
-                            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                                 <Plus className="w-6 h-6" />
                             </div>
                             <span className="font-semibold text-sm">Thêm thẻ mới</span>
@@ -434,6 +477,25 @@ export default function CardsPage() {
                                 <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
                             </button>
                         ))}
+                    </div>
+                </div>
+
+                {/* ── Payment accounts list ───────────────────── */}
+                <div className="px-6 mb-6">
+                    <div className="flex items-center justify-between mb-2.5">
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 uppercase tracking-wider text-[11px] opacity-70">Tài khoản & Ví</h3>
+                        <button onClick={() => { setEditCard(null); setShowForm(true); }} className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">Thêm mới</button>
+                    </div>
+                    <div className="space-y-2.5">
+                        {accounts.length > 0 ? accounts.map(acc => (
+                            <AccountRow key={acc._id} card={acc}
+                                onEdit={() => { setEditCard(acc); setShowForm(true); }}
+                                onDelete={() => setDeleteConfirmId(acc._id)} />
+                        )) : (
+                            <div className="bg-white/50 dark:bg-slate-800/50 rounded-2xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-700">
+                                <p className="text-xs text-slate-400">Chưa có tài khoản thanh toán hoặc ví</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

@@ -274,9 +274,10 @@ export default function DashboardPage() {
 
                     <div className="text-center mb-2 relative z-10">
                         <div className="flex items-center justify-center gap-2 mb-1">
-                            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">Tổng tài sản ròng</p>
+
                             <Link href="/wealth"
                                 className="flex items-center justify-center transition-colors">
+                                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest pr-2">Tổng tài sản ròng</p>
                                 <ChevronRight className="anim-arrow w-4 h-4 text-purple-400 dark:text-purple-400" />
                             </Link>
                         </div>
@@ -284,7 +285,7 @@ export default function DashboardPage() {
                             <span className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight leading-none text-money">
                                 {hideBalance ? '• • • • • •' : fmtFull(netWorth)}
                             </span>
-                            <span className="text-lg text-slate-400 font-medium align-top mt-0.5">VND</span>
+                            <span className="text-lg text-slate-400 font-medium align-top mt-0.5">đ</span>
                             <button
                                 onClick={() => setHideBalance(v => !v)}
                                 className="p-1 rounded-full text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
@@ -321,7 +322,7 @@ export default function DashboardPage() {
                                     <div>
                                         {/* <PiggyBank className="w-5 h-5 text-blue-500 dark:text-blue-400" /> */}
                                         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
-                                        <p className="text-lg font-bold text-slate-800 dark:text-white mt-1 text-money text-left">
+                                        <p className="text-lg font-bold mt-1 text-money text-left text-emerald-600 dark:text-emerald-400">
                                             {hideBalance ? '••' : fmt(totalSavings)}
                                         </p>
                                     </div>
