@@ -59,7 +59,7 @@ function TransactionRow({ t }: { t: { type: string; amount: number; category: st
                     </p>
                 </div>
             </div>
-            <span className={cn('text-sm font-bold flex-shrink-0', isIncome ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-100')}>
+            <span className={cn('text-sm font-bold flex-shrink-0', isIncome ? 'text-emerald-500' : 'text-red-500')}>
                 {isIncome ? '+' : '-'}{fmt(t.amount)}
             </span>
         </div>

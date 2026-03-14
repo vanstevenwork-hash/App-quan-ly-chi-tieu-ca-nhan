@@ -8,6 +8,7 @@ import { useBanks } from '@/hooks/useBanks';
 import { transactionsApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Banknote, ArrowRight, Calendar, Check, RefreshCw } from 'lucide-react';
+import { getBankLogo } from '@/lib/bankLogos';
 
 interface AddTransactionModalProps {
     open: boolean;
@@ -224,6 +225,7 @@ export default function AddTransactionModal({
                                     };
 
                                     const selectedBankObj = fetchedBanks.find(b => b.shortName === card.bankShortName);
+                                    const logoUrl = selectedBankObj?.logo || getBankLogo(card.bankShortName, card.bankName);
 
                                     if (paymentTab === 'credit') {
                                         return (
@@ -234,9 +236,9 @@ export default function AddTransactionModal({
                                                 {/* Top Row: Bank Badge & Checkmark */}
                                                 <div className="flex justify-between items-start mb-2">
                                                     <div className="flex items-center gap-2">
-                                                        {selectedBankObj?.logo ? (
-                                                            <div className="w-8 h-8 p-1 bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-center">
-                                                                <img src={selectedBankObj.logo} className="w-full h-full object-contain" alt="logo" />
+                                                        {logoUrl ? (
+                                                            <div className="w-8 h-8 p-1 bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
+                                                                <img src={logoUrl} className="w-full h-full object-contain" alt="logo" />
                                                             </div>
                                                         ) : (
                                                             <div className="px-2.5 py-1 rounded-md text-white text-[11px] font-bold shadow-sm" style={{ backgroundColor: cBg }}>
@@ -281,12 +283,16 @@ export default function AddTransactionModal({
                                                     </div>
                                                 </div>
                                             )}
-                                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: cBg }}>
-                                                {card.bankShortName?.slice(0, 4) || card.cardType}
+                                            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm overflow-hidden", !logoUrl ? '' : 'bg-white border border-slate-100')} style={{ backgroundColor: !logoUrl ? cBg : undefined }}>
+                                                {logoUrl ? (
+                                                    <img src={logoUrl} className="w-full h-full object-contain p-1.5" alt="logo" />
+                                                ) : (
+                                                    card.bankShortName?.slice(0, 4) || card.cardType
+                                                )}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-[#000000] dark:text-white truncate">{card.bankName}</p>
-                                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{card.cardType === 'eWallet' ? 'Ví điện tử' : card.cardType === 'savings' ? 'Sổ tiết kiệm' : 'Ngân hàng'}</p>
+                                                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400truncate">{card.balance.toLocaleString('vi-VN')}₫</p>
+                                                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">{card.bankName}</p>
                                             </div>
                                         </div>
                                     )

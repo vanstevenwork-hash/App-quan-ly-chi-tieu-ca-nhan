@@ -49,7 +49,7 @@ function WealthCard({ source, onEdit, onDelete }: {
                 </div>
             </div>
             <div className="text-right">
-                <div className="font-bold text-slate-800 dark:text-white text-base">{fmtFull(source.balance)}đ</div>
+                <div className={`font-bold text-base ${source.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{fmtFull(source.balance)}đ</div>
                 {source.note && <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[100px]">{source.note}</div>}
             </div>
             <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 w-7 h-7 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-red-100 dark:border-red-900/50">
