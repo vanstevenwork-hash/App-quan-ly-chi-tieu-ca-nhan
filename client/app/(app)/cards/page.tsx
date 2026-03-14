@@ -755,22 +755,28 @@ export default function CardsPage() {
             {/* ── Delete Confirm Sheet ─────────────────────────── */}
             {deleteConfirmId && (() => {
                 const card = cards.find(c => c._id === deleteConfirmId);
+                const typeText = card?.cardType === 'credit' ? 'thẻ' :
+                    card?.cardType === 'eWallet' ? 'ví' :
+                        card?.cardType === 'crypto' ? 'tài khoản crypto'
+                            // :card?.cardType === 'savings' ? 'sổ tiết kiệm' 
+                            : 'tài khoản';
+
                 return (
                     <>
                         <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setDeleteConfirmId(null)} />
-                        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 bg-white dark:bg-slate-800 rounded-t-3xl p-6 shadow-2xl">
+                        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 bg-white dark:bg-slate-800 rounded-t-3xl p-6 shadow-2xl">
                             <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
                                     <Trash2 className="w-6 h-6 text-red-500" />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-slate-800 dark:text-slate-100 text-base">Xoá thẻ?</p>
-                                    <p className="text-sm text-slate-400 mt-0.5">{card?.bankName} •••• {card?.cardNumber}</p>
+                                    <p className="font-bold text-slate-800 dark:text-slate-100 text-base uppercase">Xoá {typeText}?</p>
+                                    <p className="text-sm text-slate-400 mt-0.5">{card?.bankName} {card?.cardNumber ? `••• ${card.cardNumber}` : ''}</p>
                                 </div>
                             </div>
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-5 leading-relaxed">
-                                Thao tác này không thể hoàn tác. Tất cả dữ liệu liên quan đến thẻ sẽ bị xoá vĩnh viễn.
+                                Thao tác này không thể hoàn tác. Tất cả dữ liệu liên quan đến {typeText} này sẽ bị xoá vĩnh viễn.
                             </p>
                             <div className="flex gap-3">
                                 <button
@@ -781,7 +787,7 @@ export default function CardsPage() {
                                 <button
                                     onClick={() => { deleteCard(deleteConfirmId); setDeleteConfirmId(null); }}
                                     className="flex-1 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-sm font-bold text-white transition active:scale-95">
-                                    Xoá thẻ
+                                    Xoá {typeText}
                                 </button>
                             </div>
                         </div>

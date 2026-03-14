@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Search, Save, Check } from 'lucide-react';
+import { Search, Save, Check, Trash2 } from 'lucide-react';
 import type { Card, CardFormData } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
 import { useAuthStore } from '@/store/useStore';
+import { useCards } from '@/hooks/useCards';
+import { toast } from 'sonner';
 
 const CARD_TYPES = [
     { value: 'credit', label: 'Thẻ tín dụng', icon: '💳', desc: 'Thanh toán sau, có hạn mức' },
@@ -79,6 +81,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const { banks: fetchedBanks, fetchBanks } = useBanks();
+    const { deleteCard } = useCards();
     const [searchBank, setSearchBank] = useState('');
 
     useEffect(() => {
@@ -178,6 +181,28 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
     const isEdit = !!editCard;
     const isSavings = form.cardType === 'savings';
     const isCredit = form.cardType === 'credit';
+
+    const handleDelete = async () => {
+        if (!editCard) return;
+        const typeText = editCard.cardType === 'credit' ? 'thẻ' :
+            editCard.cardType === 'eWallet' ? 'ví' :
+                editCard.cardType === 'crypto' ? 'tài khoản crypto' :
+                    editCard.cardType === 'savings' ? 'sổ tiết kiệm' : 'tài khoản';
+
+        if (!confirm(`Bạn có chắc chắn muốn xoá ${typeText} này vĩnh viễn không?`)) return;
+
+        try {
+            setSaving(true);
+            await deleteCard(editCard._id);
+            toast.success(`Đã xoá ${typeText}`);
+            onClose();
+            if (onSave) onSave({} as any); // Trigger refetch in parent
+        } catch (err) {
+            toast.error('Không thể xoá. Vui lòng thử lại.');
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const isBankSelected = !!form.bankShortName || !!cardLabel.trim();
     const hasErrors = Object.keys(errors).length > 0;
@@ -659,15 +684,23 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
 
                 </div>
 
-                <div className="shrink-0 w-full p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-                    {hasErrors && (
-                        <p className="text-xs text-red-500 text-center mb-2">Vui lòng kiểm tra lại các trường có lỗi</p>
+                <div className="shrink-0 w-full p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-3">
+                    {isEdit && (
+                        <button onClick={handleDelete} disabled={saving}
+                            className="w-14 h-14 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 transition flex items-center justify-center flex-shrink-0 disabled:opacity-50">
+                            <Trash2 className="w-5 h-5" />
+                        </button>
                     )}
-                    <button onClick={handleSave} disabled={saving}
-                        className="w-full bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl py-4 text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <Save className="w-5 h-5" />
-                        <span>{saving ? 'Đang lưu...' : (isEdit ? 'Lưu thay đổi' : 'Hoàn tất')}</span>
-                    </button>
+                    <div className="flex-1">
+                        {hasErrors && (
+                            <p className="text-[10px] text-red-500 text-center mb-1">Vui lòng kiểm tra lại thông tin</p>
+                        )}
+                        <button onClick={handleSave} disabled={saving}
+                            className="w-full h-14 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <Save className="w-5 h-5" />
+                            <span>{saving ? 'Đang lưu...' : (isEdit ? 'Lưu thay đổi' : 'Hoàn tất')}</span>
+                        </button>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
