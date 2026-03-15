@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useWealth, type WealthSource } from '@/hooks/useWealth';
 import { useCards, type Card } from '@/hooks/useCards';
 
-export type WealthSourceUI = Omit<WealthSource, 'icon'> & { icon: React.ReactNode; isExternal?: boolean; };
+export type WealthSourceUI = Omit<WealthSource, 'icon'> & {
+    icon: React.ReactNode;
+    isExternal?: boolean;
+    bankShortName?: string;
+    cardType?: string;
+};
 import WealthSourceModal from '@/components/WealthSourceModal';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -28,15 +33,15 @@ const CATEGORY_LABELS: Record<string, string> = {
     credit: 'Thẻ tín dụng', bank: 'Tài khoản ngân hàng', eWallet: 'Ví điện tử'
 };
 
-function WealthCard({ source, onEdit, onDelete }: {
-    source: WealthSourceUI; onEdit: () => void; onDelete: () => void;
+function WealthCard({ source, onEdit, onDelete, className }: {
+    source: WealthSourceUI; onEdit: () => void; onDelete: () => void; className?: string;
 }) {
     return (
-        <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-2xl p-4 flex items-center justify-between group hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors cursor-pointer relative" onClick={onEdit}>
+        <div className={cn("bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-2xl p-4 flex items-center justify-between group hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors cursor-pointer relative", className)} onClick={onEdit}>
             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${source.color}15`, border: `1px solid ${source.color}30`, color: source.color }}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${source.color}15`, border: `1px solid ${source.color}30`, color: source.color }}>
                     {typeof source.icon === 'string' && source.icon.length <= 2 ? (
-                        <span className="text-2xl">{source.icon}</span>
+                        <span className="text-xl">{source.icon}</span>
                     ) : (
                         source.icon
                     )}
@@ -49,12 +54,70 @@ function WealthCard({ source, onEdit, onDelete }: {
                 </div>
             </div>
             <div className="text-right">
-                <div className={`font-bold text-base ${source.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{fmtFull(source.balance)}đ</div>
-                {source.note && <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[100px]">{source.note}</div>}
+                <div className={`font-bold text-sm ${source.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{fmtFull(source.balance)}đ</div>
+                {source.note && <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[100px]">{source.note}</div>}
             </div>
             <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 w-7 h-7 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-red-100 dark:border-red-900/50">
                 <Trash2 className="w-3.5 h-3.5" />
             </button>
+        </div>
+    );
+}
+
+function GroupedWealthCard({ title, icon, color, items, onEdit, onDelete }: {
+    title: string; icon: React.ReactNode; color: string; items: WealthSourceUI[];
+    onEdit: (s: WealthSourceUI) => void; onDelete: (s: WealthSourceUI) => void;
+}) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const totalBalance = items.reduce((sum, item) => sum + item.balance, 0);
+
+    if (items.length === 1) {
+        return <WealthCard source={items[0]} onEdit={() => onEdit(items[0])} onDelete={() => onDelete(items[0])} />;
+    }
+
+    return (
+        <div className="space-y-2">
+            <div
+                className={cn(
+                    "bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm rounded-2xl p-4 flex items-center justify-between group transition-all cursor-pointer relative",
+                    isExpanded ? "border-purple-200 dark:border-purple-500/50 ring-1 ring-purple-100 dark:ring-purple-900/30" : "hover:border-purple-100 dark:hover:border-purple-800"
+                )}
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}15`, border: `1px solid ${color}30`, color: color }}>
+                        {icon}
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{title}</h4>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{items.length} tài khoản</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="text-right">
+                        <div className={`font-bold text-base ${totalBalance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            {fmtFull(totalBalance)}đ
+                        </div>
+                    </div>
+                    <div className={cn("transition-transform duration-200", isExpanded ? "rotate-180" : "")}>
+                        <TrendingUp className="w-4 h-4 text-slate-400" rotate={isExpanded ? 180 : 0} />
+                    </div>
+                </div>
+            </div>
+
+            {isExpanded && (
+                <div className="pl-6 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {items.map(s => (
+                        <WealthCard
+                            key={s._id}
+                            source={s}
+                            onEdit={() => onEdit(s)}
+                            onDelete={() => onDelete(s)}
+                            className="scale-[0.98] origin-left border-dashed"
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
@@ -107,7 +170,9 @@ export default function WealthPage() {
                 icon: b?.logo ? <img src={b.logo} className="w-8 h-8 object-contain bg-white p-1 rounded-md" alt="logo" /> : getFallbackIcon(c.cardType),
                 color: c.bankColor || '#3B82F6',
                 note: c.cardType === 'credit' ? 'Thẻ tín dụng' : c.cardType === 'savings' ? 'Sổ tiết kiệm' : 'Tài khoản',
-                isExternal: true
+                isExternal: true,
+                bankShortName: c.bankShortName,
+                cardType: c.cardType
             } as WealthSourceUI;
         });
 
@@ -133,6 +198,61 @@ export default function WealthPage() {
     const accountSources = allSources.filter(s => ['bank', 'credit', 'eWallet'].includes(s.category));
     const savingsSources = allSources.filter(s => s.category === 'savings');
     const otherSources = allSources.filter(s => !['bank', 'credit', 'eWallet', 'savings'].includes(s.category));
+
+    // Grouping helper
+    const getGroupedItems = (sourceList: WealthSourceUI[]) => {
+        const groups: Record<string, WealthSourceUI[]> = {};
+        const standalone: WealthSourceUI[] = [];
+
+        sourceList.forEach(s => {
+            if (s.bankShortName && s.cardType) {
+                const key = `${s.bankShortName}_${s.cardType}`;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(s);
+            } else {
+                standalone.push(s);
+            }
+        });
+
+        const result: { isGroup: boolean; title: string; items: WealthSourceUI[]; color: string; icon: React.ReactNode; standaloneItem?: WealthSourceUI; }[] = [];
+
+        Object.entries(groups).forEach(([key, items]) => {
+            if (items.length > 1) {
+                result.push({
+                    isGroup: true,
+                    title: items[0].bankShortName || 'Unknown Bank',
+                    items,
+                    color: items[0].color,
+                    icon: items[0].icon
+                });
+            } else {
+                result.push({
+                    isGroup: false,
+                    title: items[0].name,
+                    items: [items[0]],
+                    color: items[0].color,
+                    icon: items[0].icon,
+                    standaloneItem: items[0]
+                });
+            }
+        });
+
+        standalone.forEach(s => {
+            result.push({
+                isGroup: false,
+                title: s.name,
+                items: [s],
+                color: s.color,
+                icon: s.icon,
+                standaloneItem: s
+            });
+        });
+
+        return result;
+    };
+
+    const groupedAccounts = useMemo(() => getGroupedItems(accountSources), [accountSources]);
+    const groupedSavings = useMemo(() => getGroupedItems(savingsSources), [savingsSources]);
 
     // Group by category (for statistics)
     const byCategory = useMemo(() => {
@@ -271,9 +391,14 @@ export default function WealthPage() {
                             {activeTab === 'accounts' && accountSources.length === 0 && (
                                 <p className="text-slate-500 text-sm text-center py-6">Chưa có thẻ hoặc tài khoản nào.</p>
                             )}
-                            {activeTab === 'accounts' && accountSources.map(s => (
-                                <WealthCard key={s._id} source={s}
-                                    onEdit={() => {
+                            {activeTab === 'accounts' && groupedAccounts.map((g, idx) => (
+                                <GroupedWealthCard
+                                    key={idx}
+                                    title={g.title}
+                                    color={g.color}
+                                    icon={g.icon}
+                                    items={g.items}
+                                    onEdit={(s) => {
                                         if (s.isExternal) {
                                             const card = cards.find(c => c._id === s._id);
                                             if (card) { setEditCard(card); setShowCardModal(true); }
@@ -282,15 +407,21 @@ export default function WealthPage() {
                                             setShowModal(true);
                                         }
                                     }}
-                                    onDelete={() => handleDelete(s)} />
+                                    onDelete={(s) => handleDelete(s)}
+                                />
                             ))}
 
                             {activeTab === 'savings' && savingsSources.length === 0 && (
                                 <p className="text-slate-500 text-sm text-center py-6">Chưa có sổ tiết kiệm nào.</p>
                             )}
-                            {activeTab === 'savings' && savingsSources.map(s => (
-                                <WealthCard key={s._id} source={s}
-                                    onEdit={() => {
+                            {activeTab === 'savings' && groupedSavings.map((g, idx) => (
+                                <GroupedWealthCard
+                                    key={idx}
+                                    title={g.title}
+                                    color={g.color}
+                                    icon={g.icon}
+                                    items={g.items}
+                                    onEdit={(s) => {
                                         if (s.isExternal) {
                                             const card = cards.find(c => c._id === s._id);
                                             if (card) { setEditCard(card); setShowCardModal(true); }
@@ -299,7 +430,8 @@ export default function WealthPage() {
                                             setShowModal(true);
                                         }
                                     }}
-                                    onDelete={() => handleDelete(s)} />
+                                    onDelete={(s) => handleDelete(s)}
+                                />
                             ))}
 
                             {activeTab === 'other' && otherSources.length === 0 && (
