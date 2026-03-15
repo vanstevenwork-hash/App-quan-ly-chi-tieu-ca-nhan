@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, RefreshCw, Wallet, CreditCard, Landmark, PiggyBank, Smartphone, Bitcoin, Briefcase, Calendar, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Trash2, TrendingUp, RefreshCw, Wallet, CreditCard, Landmark, PiggyBank, Smartphone, Bitcoin, Briefcase, Calendar, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useWealth, type WealthSource } from '@/hooks/useWealth';
 import { useCards, type Card } from '@/hooks/useCards';
@@ -37,7 +37,7 @@ function WealthCard({ source, onEdit, onDelete, className }: {
     source: WealthSourceUI; onEdit: () => void; onDelete: () => void; className?: string;
 }) {
     return (
-        <div className={cn("bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-2xl p-4 flex items-center justify-between group hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors cursor-pointer relative", className)} onClick={onEdit}>
+        <div className={cn("bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-2xl p-4 flex items-center justify-between group hover:border-purple-200 dark:hover:border-purple-500/50 transition-all cursor-pointer relative", className)}>
             <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${source.color}15`, border: `1px solid ${source.color}30`, color: source.color }}>
                     {typeof source.icon === 'string' && source.icon.length <= 2 ? (
@@ -46,20 +46,37 @@ function WealthCard({ source, onEdit, onDelete, className }: {
                         source.icon
                     )}
                 </div>
-                <div>
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">{source.name}</h4>
+                <div className="min-w-0">
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{source.name}</h4>
                     <div className="flex items-center gap-1 mt-0.5">
-                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">{CATEGORY_LABELS[source.category] || 'Khác'}</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{CATEGORY_LABELS[source.category] || 'Khác'}</span>
                     </div>
                 </div>
             </div>
-            <div className="text-right">
-                <div className={`font-bold text-sm ${source.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{fmtFull(source.balance)}đ</div>
-                {source.note && <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[100px]">{source.note}</div>}
+
+            <div className="relative h-10 min-w-[100px] overflow-hidden flex items-center justify-end">
+                {/* Balance View */}
+                <div className="flex flex-col items-end transition-all duration-300 group-hover:-translate-y-full group-hover:opacity-0">
+                    <div className={`font-bold text-sm ${source.balance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{fmtFull(source.balance)}đ</div>
+                    {source.note && <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 truncate max-w-[100px] leading-tight text-right">{source.note}</div>}
+                </div>
+
+                {/* Hover Actions */}
+                <div className="absolute inset-0 flex items-center justify-end gap-2 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-purple-100 hover:text-purple-600 dark:hover:bg-purple-900/40 transition-colors shadow-sm"
+                    >
+                        <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40 transition-colors shadow-sm"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                </div>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 w-7 h-7 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-sm border border-red-100 dark:border-red-900/50">
-                <Trash2 className="w-3.5 h-3.5" />
-            </button>
         </div>
     );
 }
@@ -95,12 +112,12 @@ function GroupedWealthCard({ title, icon, color, items, onEdit, onDelete }: {
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="text-right">
-                        <div className={`font-bold text-base ${totalBalance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                        <div className={`font-bold text-sm ${totalBalance < 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                             {fmtFull(totalBalance)}đ
                         </div>
                     </div>
-                    <div className={cn("transition-transform duration-200", isExpanded ? "rotate-180" : "")}>
-                        <TrendingUp className="w-4 h-4 text-slate-400" rotate={isExpanded ? 180 : 0} />
+                    <div className={cn("transition-transform duration-300 mr-1 p-1 rounded-full bg-slate-50 dark:bg-slate-700/50", isExpanded ? "rotate-180" : "")}>
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
                     </div>
                 </div>
             </div>

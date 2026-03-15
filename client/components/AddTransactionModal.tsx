@@ -9,6 +9,7 @@ import { transactionsApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Banknote, ArrowRight, Calendar, Check, RefreshCw } from 'lucide-react';
 import { getBankLogo } from '@/lib/bankLogos';
+import PaymentCard from './cards/PaymentCard';
 
 interface AddTransactionModalProps {
     open: boolean;
@@ -128,15 +129,29 @@ export default function AddTransactionModal({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden p-0 border-0">
-                <button className="flex h-6 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
+            <DialogContent className="
+  fixed inset-x-0 bottom-0 top-[20vh] z-50
+  w-full max-w-md mx-auto gap-2
+  !translate-x-0 !translate-y-0
+  bg-white dark:bg-slate-900
+  rounded-t-3xl sm:rounded-3xl
+  shadow-xl flex flex-col
+  overflow-hidden
+  p-0 border-0
+  data-[state=open]:animate-in
+  data-[state=closed]:animate-out
+  data-[state=open]:slide-in-from-bottom
+  data-[state=closed]:slide-out-to-bottom
+  duration-200
+">
+                <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
                     <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                 </button>
                 <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
                     <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">Thêm giao dịch</h2>
                 </div>
 
-                <div className="flex-1 overflow-y-auto hide-scrollbar pb-24 bg-white dark:bg-slate-900 px-4 space-y-6">
+                <div className="flex-1 overflow-y-auto pt-1 hide-scrollbar pb-20 bg-white dark:bg-slate-900 px-4 space-y-3">
                     {/* Toggle Type */}
                     <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
                         {(['expense', 'income'] as const).map(t => (
@@ -160,7 +175,7 @@ export default function AddTransactionModal({
                                 <Banknote className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                             </div> */}
                             <input
-                                className="w-full flex-1 border-0 bg-transparent py-4 px-3 text-2xl font-bold text-[#000000] dark:text-white focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                                className="w-full flex-1 border-0 bg-transparent py-3 px-3 text-2xl font-bold text-[#000000] dark:text-white focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-600"
                                 placeholder="0"
                                 value={displayAmount}
                                 onChange={e => { handleAmountInput(e.target.value); setErrors(p => ({ ...p, amount: '' })); }}
@@ -174,12 +189,12 @@ export default function AddTransactionModal({
                         {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                         <h3 className="text-sm font-bold text-[#000000] dark:text-white">
                             Danh mục
                             {errors.category && <span className="text-red-500 font-normal text-xs ml-2">{errors.category}</span>}
                         </h3>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-5 gap-2">
                             {filteredCategories.map(cat => (
                                 <div key={cat.id} onClick={() => { setCategory(cat.label); setErrors(p => ({ ...p, category: '' })); }} className="flex flex-col items-center gap-2 group cursor-pointer">
                                     <div className={cn('w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all',
@@ -199,7 +214,7 @@ export default function AddTransactionModal({
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                         <h3 className="text-sm font-bold text-[#000000] dark:text-white">Phương thức thanh toán</h3>
                         <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
                             <button onClick={() => setPaymentTab('cash')} className={cn('flex-1 py-2 px-3 text-sm font-bold rounded-md transition-colors', paymentTab === 'cash' ? 'bg-white dark:bg-slate-700 text-[#7f19e6] dark:text-purple-400 shadow-sm ring-1 ring-black/5 dark:ring-white/5' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200')}>Tiền mặt</button>
@@ -208,7 +223,7 @@ export default function AddTransactionModal({
                         </div>
 
                         {(paymentTab === 'account' || paymentTab === 'credit') && (
-                            <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x py-1 mt-2 -mx-4 px-4">
+                            <div className="flex gap-2 overflow-x-auto hide-scrollbar snap-x py-1 pt-1.5 mt-1 -mx-4 px-4">
                                 {(paymentTab === 'account' ? debitCards : creditCards).map(card => {
                                     const isSelected = selectedCardId === card._id;
                                     const cBg = card.bankColor || '#3B82F6';
@@ -229,76 +244,35 @@ export default function AddTransactionModal({
 
                                     if (paymentTab === 'credit') {
                                         return (
-                                            <div key={card._id} onClick={() => setSelectedCardId(card._id)}
-                                                className={cn("snap-start shrink-0 w-44 p-3 rounded-2xl border-2 relative cursor-pointer flex flex-col justify-between transition-colors min-h-[100px]",
-                                                    isSelected ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600')}>
-
-                                                {/* Top Row: Bank Badge & Checkmark */}
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        {logoUrl ? (
-                                                            <div className="w-8 h-8 p-1 bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden">
-                                                                <img src={logoUrl} className="w-full h-full object-contain" alt="logo" />
-                                                            </div>
-                                                        ) : (
-                                                            <div className="px-2.5 py-1 rounded-md text-white text-[11px] font-bold shadow-sm" style={{ backgroundColor: cBg }}>
-                                                                {card.bankShortName?.slice(0, 6) || card.cardType.toUpperCase()}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {isSelected && (
-                                                        <div className="w-4 h-4 rounded-full border border-[#7f19e6] flex items-center justify-center bg-white dark:bg-slate-900">
-                                                            <Check className="w-2.5 h-2.5 text-[#7f19e6] dark:text-purple-400 stroke-[3]" />
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Middle: Card Name */}
-                                                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 leading-tight mb-3">
-                                                    {card.bankName}
-                                                </p>
-
-                                                {/* Bottom Row: Card Mask & Network */}
-                                                <div className="flex justify-between items-end mt-auto">
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200 tracking-widest">
-                                                        **** {card.cardNumber || '....'}
-                                                    </p>
-                                                    <div>
-                                                        {renderNetworkLogo(card.cardNetwork)}
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <PaymentCard
+                                                key={card._id}
+                                                card={card}
+                                                isSelected={selectedCardId === card._id}
+                                                onSelect={setSelectedCardId}
+                                                logoUrl={logoUrl}
+                                                cBg={cBg}
+                                                type="credit"
+                                                renderNetworkLogo={renderNetworkLogo}
+                                            />
                                         );
                                     }
 
                                     // Render for Debit / E-Wallet
                                     return (
-                                        <div key={card._id} onClick={() => setSelectedCardId(card._id)}
-                                            className={cn("snap-start shrink-0 w-36 p-3 rounded-xl border-2 relative overflow-hidden cursor-pointer flex flex-col gap-3 transition-colors",
-                                                isSelected ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600')}>
-                                            {isSelected && (
-                                                <div className="absolute top-0 right-0 p-1">
-                                                    <div className="w-5 h-5 rounded-full bg-[#7f19e6] flex items-center justify-center">
-                                                        <Check className="w-3 h-3 text-white stroke-[3]" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-sm overflow-hidden", !logoUrl ? '' : 'bg-white border border-slate-100')} style={{ backgroundColor: !logoUrl ? cBg : undefined }}>
-                                                {logoUrl ? (
-                                                    <img src={logoUrl} className="w-full h-full object-contain p-1.5" alt="logo" />
-                                                ) : (
-                                                    card.bankShortName?.slice(0, 4) || card.cardType
-                                                )}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400truncate">{card.balance.toLocaleString('vi-VN')}₫</p>
-                                                <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">{card.bankName}</p>
-                                            </div>
-                                        </div>
+
+                                        <PaymentCard
+                                            key={card._id}
+                                            card={card}
+                                            isSelected={selectedCardId === card._id}
+                                            onSelect={setSelectedCardId}
+                                            logoUrl={logoUrl}
+                                            cBg={cBg}
+                                            type="account"
+                                        />
                                     )
                                 })}
                                 {(paymentTab === 'account' ? debitCards : creditCards).length === 0 && (
-                                    <div className="text-sm text-slate-500 italic px-2 py-4">Không có thẻ nào</div>
+                                    <div className="text-sm text-slate-500 italic px-2 py-3">Không có thẻ nào</div>
                                 )}
                             </div>
                         )}
@@ -306,7 +280,7 @@ export default function AddTransactionModal({
 
                     {/* ── Installment (Trả góp) — only for credit tab ── */}
                     {paymentTab === 'credit' && type === 'expense' && (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2">
                             {/* Toggle row */}
                             <button
                                 type="button"
@@ -318,7 +292,7 @@ export default function AddTransactionModal({
                                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
                                 )}
                             >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     <div className={cn(
                                         'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
                                         isInstallment ? 'bg-[#7f19e6] text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
@@ -422,7 +396,7 @@ export default function AddTransactionModal({
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800">
                     <button onClick={handleSave} disabled={saving}
-                        className="w-full bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl py-4 text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        className="w-full bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl py-3 text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span>{saving ? 'Đang lưu...' : 'Thêm ngay'}</span>
                         <ArrowRight className="w-5 h-5" />
                     </button>

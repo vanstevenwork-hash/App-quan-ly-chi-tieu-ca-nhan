@@ -246,22 +246,39 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col max-h-[90vh] overflow-hidden p-0 border-0">
-                <button className="flex h-6 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
+            <DialogContent
+                className="
+fixed inset-x-0 bottom-0 top-[20vh] z-50
+gap-2
+w-full max-w-md mx-auto
+!translate-x-0 !translate-y-0
+bg-white dark:bg-slate-900
+rounded-t-3xl sm:rounded-3xl
+shadow-xl flex flex-col
+overflow-hidden
+p-0 border-0
+data-[state=open]:animate-in
+data-[state=closed]:animate-out
+data-[state=open]:slide-in-from-bottom
+data-[state=closed]:slide-out-to-bottom
+duration-200
+"
+            >
+                <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
                     <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                 </button>
-                <div className="flex items-center px-4 py-1 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
                     <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">
                         {isEdit ? 'Chỉnh sửa' : isSavings ? 'Thêm sổ tiết kiệm' : 'Thêm thẻ / tài khoản'}
                     </h2>
                 </div>
 
-                <div className="flex-1 overflow-y-auto hide-scrollbar pb-6 bg-white dark:bg-slate-900 px-5 pt-5 space-y-6">
+                <div className="flex-1 overflow-y-auto hide-scrollbar pb-6 bg-white dark:bg-slate-900 px-4 pt-1 space-y-3">
 
                     {/* PREVIEW CARD */}
                     {!isSavings && (
                         (isCredit || form.cardType === 'debit') ? (
-                            <div className="w-full h-44 p-5 rounded-3xl relative flex flex-col justify-between transition-colors shadow-sm overflow-hidden"
+                            <div className="w-full h-35 p-2 rounded-xl relative flex flex-col justify-between transition-colors shadow-sm overflow-hidden"
                                 style={{
                                     background: cardBg,
                                     border: isWhite ? '1px solid #E2E8F0' : undefined,
@@ -347,7 +364,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                 {CARD_TYPES.filter(t => ['debit', 'credit', 'eWallet'].includes(t.value)).map(t => (
                                     <button key={t.value} onClick={() => { set('cardType', t.value); setSearchBank(''); }}
                                         className={cn(
-                                            'flex gap-2 p-2 rounded-2xl border transition-all text-left items-center justify-center flex-col',
+                                            'flex gap-2 p-1 rounded-xl border transition-all text-left items-center justify-center flex-col',
                                             form.cardType === t.value ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
                                         )}>
                                         <span className="text-xl">{t.icon}</span>
@@ -377,7 +394,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                             {form.cardType === 'eWallet' ? (
                                 E_WALLETS.map(bank => (
                                     <button key={bank.short} onClick={() => selectBank({ name: bank.name, shortName: bank.short, color: bank.color, logo: bank.logo })}
-                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all', form.bankShortName === bank.short ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
+                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.short ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
                                         {bank.logo ? <img src={bank.logo} alt={bank.name} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" /> : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: bank.color }}>{bank.short.slice(0, 3)}</div>}
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.name}</span>
                                     </button>
@@ -385,7 +402,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                             ) : form.cardType === 'crypto' ? (
                                 CRYPTOS.map(bank => (
                                     <button key={bank.short} onClick={() => selectBank({ name: bank.name, shortName: bank.short, color: bank.color, logo: bank.logo })}
-                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all', form.bankShortName === bank.short ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
+                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.short ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
                                         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: bank.color }}>{bank.short.slice(0, 3)}</div>
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.name}</span>
                                     </button>
@@ -393,7 +410,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                             ) : (
                                 fetchedBanks.filter(b => b.name.toLowerCase().includes(searchBank.toLowerCase()) || b.shortName.toLowerCase().includes(searchBank.toLowerCase())).map(bank => (
                                     <button key={bank.bin || bank.shortName} onClick={() => selectBank(bank)}
-                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all', form.bankShortName === bank.shortName ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
+                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.shortName ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
                                         <img src={bank.logo} alt={bank.shortName} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" />
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.shortName}</span>
                                     </button>
@@ -572,7 +589,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                                                     { value: 'napas', label: 'Napas', logo: <span className="font-bold text-green-500 text-sm">NAPAS</span> },
                                                 ].map(net => (
                                                     <button key={net.value} type="button" onClick={() => set('cardNetwork', net.value)}
-                                                        className={cn('flex-1 h-12 min-w-[70px] rounded-xl border flex items-center justify-center bg-white dark:bg-slate-100 transition-all', form.cardNetwork === net.value ? 'border-[#7f19e6] shadow-sm ring-1 ring-[#7f19e6]' : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
+                                                        className={cn('flex-1 h-9 min-w-[60px] rounded-xl border flex items-center justify-center bg-white dark:bg-slate-100 transition-all', form.cardNetwork === net.value ? 'border-[#7f19e6] shadow-sm ring-1 ring-[#7f19e6]' : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
                                                         {net.logo}
                                                     </button>
                                                 ))}
@@ -696,7 +713,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                             <p className="text-[10px] text-red-500 text-center mb-1">Vui lòng kiểm tra lại thông tin</p>
                         )}
                         <button onClick={handleSave} disabled={saving}
-                            className="w-full h-14 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            className="w-full h-12 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <Save className="w-5 h-5" />
                             <span>{saving ? 'Đang lưu...' : (isEdit ? 'Lưu thay đổi' : 'Hoàn tất')}</span>
                         </button>
