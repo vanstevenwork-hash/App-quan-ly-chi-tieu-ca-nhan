@@ -3,12 +3,15 @@ import { useEffect, useState } from 'react';
 import {
     Bell, Plus, Eye, EyeOff, TrendingUp, TrendingDown,
     PiggyBank, CreditCard, Wallet, Bitcoin, Smartphone,
-    Send, ScanLine, MoreHorizontal, ChevronRight, ArrowDownLeft, ArrowDownRight
+    Send, ScanLine, MoreHorizontal, ChevronRight, ArrowDownLeft, ArrowDownRight,
+    Copy, Edit2, Trash2, X, Calendar, FileText, CheckCircle2, Clock
 } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
+import TransactionDetailModal from '@/components/TransactionDetailModal';
 import NotificationPanel from '@/components/NotificationPanel';
 import { useAuthStore, useUIStore } from '@/store/useStore';
 import { useTransactions } from '@/hooks/useTransactions';
+import { toast } from 'sonner';
 import { useCards } from '@/hooks/useCards';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
@@ -21,9 +24,6 @@ import {
 import Link from 'next/link';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
-// const fmt = (n: number) => {
-//     return `${n.toLocaleString('vi-VN')} đ`;
-// };
 const fmt = (n: number) => {
     if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} tỷ`;
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
@@ -42,11 +42,14 @@ function CardTypeIcon({ type }: { type: string }) {
 }
 
 // ─── Transaction row ──────────────────────────────────────────────────────────
-function TransactionRow({ t }: { t: { type: string; amount: number; category: string; note?: string; date: string } }) {
+function TransactionRow({ t, onClick }: { t: any; onClick: () => void }) {
     const cat = CATEGORIES.find(c => c.label === t.category) || CATEGORIES[CATEGORIES.length - 1];
     const isIncome = t.type === 'income';
     return (
-        <div className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors cursor-pointer group">
+        <div
+            onClick={onClick}
+            className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors cursor-pointer group"
+        >
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 group-hover:scale-105 transition-transform"
                     style={{ backgroundColor: `${cat.color}18` }}>
@@ -145,6 +148,9 @@ export default function DashboardPage() {
     const [addType, setAddType] = useState<'expense' | 'income'>('expense');
     const [hideBalance, setHideBalance] = useState(false);
     const [showAddMenu, setShowAddMenu] = useState(false);
+    const [selectedTx, setSelectedTx] = useState<any>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [editingTx, setEditingTx] = useState<any>(null);
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     useEffect(() => {
@@ -152,7 +158,7 @@ export default function DashboardPage() {
     }, [fetchBanks]);
 
     // ── Real data ──
-    const { transactions, summary, refetch } = useTransactions();
+    const { transactions, summary, refetch, deleteTransaction } = useTransactions();
     const { cards, totalBalance, totalDebt } = useCards();
     const { unreadCount, notifications } = useNotifications();
     const { sources: wealthSources, total: wealthTotal } = useWealth();
@@ -198,17 +204,23 @@ export default function DashboardPage() {
         { name: 'Bybit', short: 'BBT', color: '#F7A600', logo: '' },
     ];
 
-    // ── mini card gradient ──
-    const miniGrad = (card: typeof cards[0], idx: number) => {
-        const GRADS = [
-            'linear-gradient(135deg,#667eea,#764ba2)',
-            'linear-gradient(135deg,#f093fb,#f5576c)',
-            'linear-gradient(135deg,#4facfe,#00f2fe)',
-            'linear-gradient(135deg,#43e97b,#38f9d7)',
-        ];
-        if (card.bankColor && card.color && card.bankColor !== '#1B4FD8')
-            return `linear-gradient(135deg,${card.bankColor},${card.color})`;
-        return GRADS[idx % GRADS.length];
+    const handleEditTx = (tx: any) => {
+        setIsDetailOpen(false);
+        setEditingTx(tx);
+        openAddModal();
+    };
+
+    const handleDeleteTx = async (id: string) => {
+        if (window.confirm('Bạn có chắc chắn muốn xóa giao dịch này?')) {
+            try {
+                await deleteTransaction(id);
+                toast.success('Đã xóa giao dịch');
+                setIsDetailOpen(false);
+                setSelectedTx(null);
+            } catch (err) {
+                toast.error('Xóa giao dịch thất bại');
+            }
+        }
     };
 
     return (
@@ -315,12 +327,7 @@ export default function DashboardPage() {
                             <Link href="/savings"
                                 className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
                                 <div className="w-full flex justify-between items-start mb-1">
-                                    {/* <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-                                    
-                                        <PiggyBank className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-                                    </div> */}
                                     <div>
-                                        {/* <PiggyBank className="w-5 h-5 text-blue-500 dark:text-blue-400" /> */}
                                         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
                                         <p className="text-lg font-bold mt-1 text-money text-left text-emerald-600 dark:text-emerald-400">
                                             {hideBalance ? '••' : fmt(totalSavings)}
@@ -336,9 +343,6 @@ export default function DashboardPage() {
                             <Link href="/cards"
                                 className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
                                 <div className="w-full flex justify-between items-start mb-1">
-                                    {/* <div className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                                        <CreditCard className="w-5 h-5 text-red-500" />
-                                    </div> */}
                                     <div>
                                         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
                                         <p className="text-lg font-bold text-red-500 mt-1 text-money text-left">
@@ -347,7 +351,6 @@ export default function DashboardPage() {
                                     </div>
                                     <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 dark:text-purple-400" />
                                 </div>
-
 
                                 {cards.filter(c => c.cardType === 'credit').length > 0 && (
                                     <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng</p>
@@ -514,7 +517,7 @@ export default function DashboardPage() {
                             transactions.slice(0, 5).map((t, i) => (
                                 <div key={t._id}>
                                     {i > 0 && <div className="mx-3 border-t border-dashed border-gray-100" />}
-                                    <TransactionRow t={t} />
+                                    <TransactionRow t={t} onClick={() => { setSelectedTx(t); setIsDetailOpen(true); }} />
                                 </div>
                             ))
                         )}
@@ -524,23 +527,31 @@ export default function DashboardPage() {
             </main >
 
             {/* ── FAB ──────────────────────────────────────────────── */}
-            < button
-                onClick={() => { setAddType('expense'); openAddModal(); }
-                }
+            <button
+                onClick={() => { setAddType('expense'); openAddModal(); }}
                 className="fixed bottom-24 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all duration-200"
                 style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
             >
                 <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
-            </button >
+            </button>
 
             {/* ── Modals ───────────────────────────────────────────── */}
-            < AddTransactionModal
+            <AddTransactionModal
                 open={isAddModalOpen}
-                onClose={closeAddModal}
+                onClose={() => { closeAddModal(); setEditingTx(null); }}
                 onSaved={refetch}
                 defaultType={addType}
+                initialData={editingTx}
             />
             <NotificationPanel open={showNoti} onClose={() => setShowNoti(false)} />
-        </div >
+            <TransactionDetailModal
+                open={isDetailOpen}
+                onClose={() => setIsDetailOpen(false)}
+                transaction={selectedTx}
+                onEdit={handleEditTx}
+                onDelete={handleDeleteTx}
+            />
+        </div>
     );
 }
+

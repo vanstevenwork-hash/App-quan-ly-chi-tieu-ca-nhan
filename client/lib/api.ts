@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
 const api = axios.create({
     baseURL: API_URL,
@@ -47,7 +47,10 @@ export const transactionsApi = {
     getAll: (params?: object) => api.get('/transactions', { params }),
     getSummary: (params?: object) => api.get('/transactions/summary', { params }),
     getCategoryBreakdown: (params?: object) => api.get('/transactions/category-breakdown', { params }),
-    create: (data: object) => api.post('/transactions', data),
+    create: (data: object) => {
+        console.log('🚀 CLIENT: transactionsApi.create called with:', data);
+        return api.post('/transactions', data);
+    },
     update: (id: string, data: object) => api.put(`/transactions/${id}`, data),
     delete: (id: string) => api.delete(`/transactions/${id}`),
 };

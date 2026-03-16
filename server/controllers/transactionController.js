@@ -1,4 +1,5 @@
 const Transaction = require('../models/Transaction');
+const Card = require('../models/Card');
 const Budget = require('../models/Budget');
 const { createNotification } = require('./notificationController');
 
@@ -69,6 +70,7 @@ exports.getTransactions = async (req, res) => {
             filter.date = { $gte: startDate, $lte: endDate };
         }
         const transactions = await Transaction.find(filter)
+            .populate('cardId')
             .sort({ date: -1 })
             .skip((page - 1) * limit)
             .limit(Number(limit));
@@ -93,13 +95,47 @@ exports.getTransaction = async (req, res) => {
 // POST /api/transactions
 exports.createTransaction = async (req, res) => {
     try {
-        const { type, amount, category, note, date, accountId, paymentMethod } = req.body;
+        console.log('🚀 SERVER: createTransaction REACHED!');
+        const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate } = req.body;
+
         const t = await Transaction.create({
             userId: req.user._id,
             type, amount, category, note,
             date: date ? new Date(date) : new Date(),
-            accountId, paymentMethod,
+            cardId, paymentMethod,
+            isInstallment, installmentMonths, installmentMonthly, installmentStartDate
         });
+
+        console.log('--- CREATE TRANSACTION DEBUG ---');
+        console.log('Body:', req.body);
+        console.log('Payment Method:', paymentMethod);
+        console.log('Card ID:', cardId);
+
+        // Update Card Balance
+        if (paymentMethod === 'card' && cardId) {
+            console.log('Attempting to find card with ID:', cardId);
+            const card = await Card.findOne({ _id: cardId, userId: req.user._id });
+            if (card) {
+                console.log('Card found:', card.bankShortName, 'Type:', card.cardType, 'Current Balance:', card.balance);
+                const isCredit = card.cardType === 'credit';
+                if (type === 'income') {
+                    // Income: Asset increases (+), Debt decreases (-)
+                    if (isCredit) card.balance -= Number(amount);
+                    else card.balance += Number(amount);
+                } else {
+                    // Expense: Asset decreases (-), Debt increases (+)
+                    if (isCredit) card.balance += Number(amount);
+                    else card.balance -= Number(amount);
+                }
+                console.log('New Balance to save:', card.balance);
+                await card.save();
+                console.log('Card balance saved successfully');
+            } else {
+                console.log('❌ Card NOT FOUND for ID:', cardId, 'and User:', req.user._id);
+            }
+        } else {
+            console.log('Skipping card balance update: paymentMethod is', paymentMethod, 'and cardId is', cardId);
+        }
 
         // Auto-sync budget spent for expense transactions
         if (type === 'expense' && category) {
@@ -130,11 +166,47 @@ exports.updateTransaction = async (req, res) => {
     try {
         const old = await Transaction.findOne({ _id: req.params.id, userId: req.user._id });
         if (!old) return res.status(404).json({ success: false, message: 'Không tìm thấy giao dịch' });
+
         const updated = await Transaction.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-        // Re-sync budget for old category and new category
+
+        // Reconciliation: Revert OLD impact and apply NEW impact
+        // 1. Revert Old
+        if (old.paymentMethod === 'card' && old.cardId) {
+            const oldCard = await Card.findOne({ _id: old.cardId, userId: req.user._id });
+            if (oldCard) {
+                const isCredit = oldCard.cardType === 'credit';
+                if (old.type === 'income') {
+                    if (isCredit) oldCard.balance += old.amount;
+                    else oldCard.balance -= old.amount;
+                } else {
+                    if (isCredit) oldCard.balance -= old.amount;
+                    else oldCard.balance += old.amount;
+                }
+                await oldCard.save();
+            }
+        }
+
+        // 2. Apply New
+        if (updated.paymentMethod === 'card' && updated.cardId) {
+            const newCard = await Card.findOne({ _id: updated.cardId, userId: req.user._id });
+            if (newCard) {
+                const isCredit = newCard.cardType === 'credit';
+                if (updated.type === 'income') {
+                    if (isCredit) newCard.balance -= updated.amount;
+                    else newCard.balance += updated.amount;
+                } else {
+                    if (isCredit) newCard.balance += updated.amount;
+                    else newCard.balance -= updated.amount;
+                }
+                await newCard.save();
+            }
+        }
+
+        // 3. Re-sync budget for old category and new category
         const d = updated.date;
         if (old.type === 'expense') await syncBudgetSpent(req.user._id, old.category, d.getMonth() + 1, d.getFullYear());
         if (updated.type === 'expense') await syncBudgetSpent(req.user._id, updated.category, d.getMonth() + 1, d.getFullYear());
+
         res.json({ success: true, data: updated });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -144,8 +216,27 @@ exports.updateTransaction = async (req, res) => {
 // DELETE /api/transactions/:id
 exports.deleteTransaction = async (req, res) => {
     try {
-        const t = await Transaction.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+        const t = await Transaction.findOne({ _id: req.params.id, userId: req.user._id });
         if (!t) return res.status(404).json({ success: false, message: 'Không tìm thấy giao dịch' });
+
+        // Revert balance before deleting
+        if (t.paymentMethod === 'card' && t.cardId) {
+            const card = await Card.findOne({ _id: t.cardId, userId: req.user._id });
+            if (card) {
+                const isCredit = card.cardType === 'credit';
+                if (t.type === 'income') {
+                    if (isCredit) card.balance += t.amount;
+                    else card.balance -= t.amount;
+                } else {
+                    if (isCredit) card.balance -= t.amount;
+                    else card.balance += t.amount;
+                }
+                await card.save();
+            }
+        }
+
+        await Transaction.findByIdAndDelete(req.params.id);
+
         // Re-sync budget
         if (t.type === 'expense') {
             const d = t.date;

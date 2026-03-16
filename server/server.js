@@ -12,6 +12,12 @@ const app = express();
 // ===== SSE — realtime notification push =====
 const { sseClients, pushSSE } = require('./sse');
 
+// Global Logger for debugging
+app.use((req, res, next) => {
+  console.log(`📡 [${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // CORS — allow all localhost origins (frontend on any port + Swagger UI)
 app.use(cors({
   origin: true,          // reflect any origin
@@ -94,8 +100,9 @@ const connectDB = async () => {
 connectDB();
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 Local Access: http://localhost:${PORT}`);
   console.log(`📚 Swagger UI: http://localhost:${PORT}/api-docs`);
 });
 

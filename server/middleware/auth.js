@@ -9,13 +9,21 @@ const protect = async (req, res, next) => {
         // Fallback for SSE connections (EventSource cannot set custom headers)
         token = req.query.token;
     }
-    if (!token) return res.status(401).json({ success: false, message: 'Not authorized, no token' });
+    if (!token) {
+        console.log('❌ AUTH: No token provided');
+        return res.status(401).json({ success: false, message: 'Not authorized, no token' });
+    }
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log('✅ AUTH: Token verified for user ID:', decoded.id);
         req.user = await User.findById(decoded.id).select('-password');
-        if (!req.user) return res.status(401).json({ success: false, message: 'User not found' });
+        if (!req.user) {
+            console.log('❌ AUTH: User not found in DB');
+            return res.status(401).json({ success: false, message: 'User not found' });
+        }
         next();
     } catch (err) {
+        console.log('❌ AUTH: Token verification failed:', err.message);
         return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
 };

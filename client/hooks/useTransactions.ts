@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { transactionsApi } from '@/lib/api';
 import { registerStoreReset } from '@/store/useStore';
+import { useCardStore } from './useCards';
+import { useWealthStore } from './useWealth';
 
 export interface Transaction {
     _id: string;
@@ -74,18 +76,30 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
     },
     createTransaction: async (data: object) => {
         const res = await transactionsApi.create(data);
-        await get().fetch(true);
+        await Promise.all([
+            get().fetch(true),
+            useCardStore.getState().fetch(true),
+            useWealthStore.getState().fetch(true)
+        ]);
         return res.data?.data;
     },
     updateTransaction: async (id: string, data: object) => {
         const res = await transactionsApi.update(id, data);
-        await get().fetch(true);
+        await Promise.all([
+            get().fetch(true),
+            useCardStore.getState().fetch(true),
+            useWealthStore.getState().fetch(true)
+        ]);
         return res.data?.data;
     },
     deleteTransaction: async (id: string) => {
         await transactionsApi.delete(id);
         set({ transactions: get().transactions.filter(t => t._id !== id) });
-        await get().fetch(true);
+        await Promise.all([
+            get().fetch(true),
+            useCardStore.getState().fetch(true),
+            useWealthStore.getState().fetch(true)
+        ]);
     }
 }));
 registerStoreReset(() => useTransactionStore.getState().reset());

@@ -16,10 +16,11 @@ interface AddTransactionModalProps {
     onClose: () => void;
     onSaved?: () => void;
     defaultType?: 'expense' | 'income';
+    initialData?: any;
 }
 
 export default function AddTransactionModal({
-    open, onClose, onSaved, defaultType = 'expense',
+    open, onClose, onSaved, defaultType = 'expense', initialData
 }: AddTransactionModalProps) {
     const [type, setType] = useState<'expense' | 'income'>(defaultType);
     const [amount, setAmount] = useState('');
@@ -41,33 +42,59 @@ export default function AddTransactionModal({
         fetchBanks();
     }, [fetchBanks]);
 
-    const debitCards = cards.filter(c => c.cardType === 'debit' || c.cardType === 'eWallet');
+    const debitCards = cards.filter(c => c.cardType === 'debit' || c.cardType === 'eWallet' || c.cardType === 'savings');
     const creditCards = cards.filter(c => c.cardType === 'credit');
 
     useEffect(() => {
         if (open) {
-            setType(defaultType);
-            setAmount('');
-            setCategory('');
-            setNote('');
-            setDate(new Date().toISOString().slice(0, 10));
-            setPaymentTab('cash');
-            setSelectedCardId('cash');
-            setErrors({});
-            setIsInstallment(false);
-            setInstallmentMonths(12);
-        }
-    }, [open, defaultType]);
+            if (initialData) {
+                setType(initialData.type);
+                setAmount(initialData.amount.toString());
+                setCategory(initialData.category);
+                setNote(initialData.note || '');
+                setDate(new Date(initialData.date).toISOString().slice(0, 10));
 
-    // Update selected card automatically when tab changes
-    useEffect(() => {
-        if (paymentTab === 'cash') setSelectedCardId('cash');
-        else if (paymentTab === 'account') {
-            setSelectedCardId(debitCards.length > 0 ? debitCards[0]._id : '');
-        } else if (paymentTab === 'credit') {
-            setSelectedCardId(creditCards.length > 0 ? creditCards[0]._id : '');
+                if (initialData.paymentMethod === 'cash') {
+                    setPaymentTab('cash');
+                } else {
+                    const cardIdStr = initialData.cardId?._id || initialData.cardId;
+                    // Try to find if it's debit or credit
+                    const isCredit = creditCards.find(c => c._id === cardIdStr);
+                    setPaymentTab(isCredit ? 'credit' : 'account');
+                    setSelectedCardId(cardIdStr);
+                }
+
+                setIsInstallment(initialData.isInstallment || false);
+                setInstallmentMonths(initialData.installmentMonths || 12);
+            } else {
+                setType(defaultType);
+                setAmount('');
+                setCategory('');
+                setNote('');
+                setDate(new Date().toISOString().slice(0, 10));
+                setPaymentTab('cash');
+                setSelectedCardId('cash');
+                setIsInstallment(false);
+                setInstallmentMonths(12);
+            }
+            setErrors({});
         }
-    }, [paymentTab]);
+    }, [open, defaultType, initialData, creditCards]);
+
+    // Update selected card automatically when tab changes or card lists update
+    useEffect(() => {
+        if (paymentTab === 'cash') {
+            setSelectedCardId('cash');
+        } else if (paymentTab === 'account') {
+            if (debitCards.length > 0 && (selectedCardId === 'cash' || !debitCards.find(c => c._id === selectedCardId))) {
+                setSelectedCardId(debitCards[0]._id);
+            }
+        } else if (paymentTab === 'credit') {
+            if (creditCards.length > 0 && (selectedCardId === 'cash' || !creditCards.find(c => c._id === selectedCardId))) {
+                setSelectedCardId(creditCards[0]._id);
+            }
+        }
+    }, [paymentTab, debitCards, creditCards]);
 
     const handleAmountInput = (v: string) => {
         setAmount(v.replace(/\D/g, ''));
@@ -92,23 +119,32 @@ export default function AddTransactionModal({
         if (Object.keys(errs).length > 0) return;
         setSaving(true);
         try {
-            await transactionsApi.create({
+            const payload = {
                 type,
                 amount: parseInt(amount),
                 category,
                 note,
                 date: new Date(date),
                 paymentMethod: paymentTab === 'cash' ? 'cash' : 'card',
-                cardId: paymentTab === 'cash' ? null : selectedCardId,
+                cardId: paymentTab === 'cash' ? null : (selectedCardId === 'cash' ? null : selectedCardId),
                 isInstallment: paymentTab === 'credit' && isInstallment,
                 installmentMonths: paymentTab === 'credit' && isInstallment ? installmentMonths : 0,
                 installmentMonthly: paymentTab === 'credit' && isInstallment ? monthlyPayment : 0,
                 installmentStartDate: paymentTab === 'credit' && isInstallment ? new Date(date) : undefined,
-            });
-            if (isInstallment && paymentTab === 'credit') {
-                toast.success(`💳 Đã thêm trả góp! Mỗi tháng: ${monthlyPayment.toLocaleString('vi-VN')}₫`);
+            };
+
+            console.log('Saving transaction payload:', payload);
+
+            if (initialData?._id) {
+                await transactionsApi.update(initialData._id, payload);
+                toast.success('Đã cập nhật giao dịch!');
             } else {
-                toast.success(type === 'income' ? '💰 Đã thêm thu nhập!' : '💸 Đã thêm chi tiêu!');
+                await transactionsApi.create(payload);
+                if (isInstallment && paymentTab === 'credit') {
+                    toast.success(`💳 Đã thêm trả góp! Mỗi tháng: ${monthlyPayment.toLocaleString('vi-VN')}₫`);
+                } else {
+                    toast.success(type === 'income' ? '💰 Đã thêm thu nhập!' : '💸 Đã thêm chi tiêu!');
+                }
             }
             onSaved?.();
             onClose();
@@ -148,7 +184,9 @@ export default function AddTransactionModal({
                     <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                 </button>
                 <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
-                    <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">Thêm giao dịch</h2>
+                    <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">
+                        {initialData ? 'Sửa giao dịch' : 'Thêm giao dịch'}
+                    </h2>
                 </div>
 
                 <div className="flex-1 overflow-y-auto pt-1 hide-scrollbar pb-20 bg-white dark:bg-slate-900 px-4 space-y-3">
@@ -397,7 +435,7 @@ export default function AddTransactionModal({
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800">
                     <button onClick={handleSave} disabled={saving}
                         className="w-full bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl py-3 text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span>{saving ? 'Đang lưu...' : 'Thêm ngay'}</span>
+                        <span>{saving ? 'Đang lưu...' : (initialData ? 'Cập nhật' : 'Thêm ngay')}</span>
                         <ArrowRight className="w-5 h-5" />
                     </button>
                 </div>
