@@ -48,6 +48,8 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
             const [txRes, sumRes] = await Promise.all([
                 transactionsApi.getAll(),
                 transactionsApi.getSummary(),
+                force ? useCardStore.getState().fetch(true) : Promise.resolve(),
+                force ? useWealthStore.getState().fetch(true) : Promise.resolve(),
             ]);
             const s = sumRes.data?.data || {};
             set({

@@ -5,7 +5,7 @@ import { CATEGORIES } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 import { useCards } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
-import { transactionsApi } from '@/lib/api';
+import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
 import { Banknote, ArrowRight, Calendar, Check, RefreshCw } from 'lucide-react';
 import { getBankLogo } from '@/lib/bankLogos';
@@ -30,6 +30,7 @@ export default function AddTransactionModal({
     const [selectedCardId, setSelectedCardId] = useState<string>('cash');
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
+    const { createTransaction, updateTransaction } = useTransactions();
     const [errors, setErrors] = useState<{ amount?: string; category?: string }>({});
     // Installment (Trả góp)
     const [isInstallment, setIsInstallment] = useState(false);
@@ -44,6 +45,11 @@ export default function AddTransactionModal({
 
     const debitCards = cards.filter(c => c.cardType === 'debit' || c.cardType === 'eWallet' || c.cardType === 'savings');
     const creditCards = cards.filter(c => c.cardType === 'credit');
+    const cashCards = cards.filter(c =>
+        c.bankName.toLowerCase().includes('tiền mặt') ||
+        c.bankName.toLowerCase().includes('ví') ||
+        c.cardType === 'eWallet'
+    );
 
     useEffect(() => {
         if (open) {
@@ -79,12 +85,20 @@ export default function AddTransactionModal({
             }
             setErrors({});
         }
-    }, [open, defaultType, initialData, creditCards]);
+    }, [open, defaultType, initialData]);
 
     // Update selected card automatically when tab changes or card lists update
     useEffect(() => {
         if (paymentTab === 'cash') {
-            setSelectedCardId('cash');
+            // Try to find a card representing Cash/Wallet
+            const cashCard = cards.find(c =>
+                c.bankName.toLowerCase().includes('tiền mặt') ||
+                c.bankName.toLowerCase().includes('ví') ||
+                c.cardType === 'eWallet'
+            );
+            if (cashCard && (selectedCardId === 'cash' || !cards.find(c => c._id === selectedCardId))) {
+                setSelectedCardId(cashCard._id);
+            }
         } else if (paymentTab === 'account') {
             if (debitCards.length > 0 && (selectedCardId === 'cash' || !debitCards.find(c => c._id === selectedCardId))) {
                 setSelectedCardId(debitCards[0]._id);
@@ -94,7 +108,7 @@ export default function AddTransactionModal({
                 setSelectedCardId(creditCards[0]._id);
             }
         }
-    }, [paymentTab, debitCards, creditCards]);
+    }, [paymentTab, debitCards, creditCards, cards]);
 
     const handleAmountInput = (v: string) => {
         setAmount(v.replace(/\D/g, ''));
@@ -125,8 +139,8 @@ export default function AddTransactionModal({
                 category,
                 note,
                 date: new Date(date),
-                paymentMethod: paymentTab === 'cash' ? 'cash' : 'card',
-                cardId: paymentTab === 'cash' ? null : (selectedCardId === 'cash' ? null : selectedCardId),
+                paymentMethod: selectedCardId === 'cash' ? 'cash' : 'card',
+                cardId: selectedCardId === 'cash' ? null : selectedCardId,
                 isInstallment: paymentTab === 'credit' && isInstallment,
                 installmentMonths: paymentTab === 'credit' && isInstallment ? installmentMonths : 0,
                 installmentMonthly: paymentTab === 'credit' && isInstallment ? monthlyPayment : 0,
@@ -136,10 +150,10 @@ export default function AddTransactionModal({
             console.log('Saving transaction payload:', payload);
 
             if (initialData?._id) {
-                await transactionsApi.update(initialData._id, payload);
+                await updateTransaction(initialData._id, payload);
                 toast.success('Đã cập nhật giao dịch!');
             } else {
-                await transactionsApi.create(payload);
+                await createTransaction(payload);
                 if (isInstallment && paymentTab === 'credit') {
                     toast.success(`💳 Đã thêm trả góp! Mỗi tháng: ${monthlyPayment.toLocaleString('vi-VN')}₫`);
                 } else {
@@ -260,44 +274,27 @@ export default function AddTransactionModal({
                             <button onClick={() => setPaymentTab('credit')} className={cn('flex-1 py-2 px-3 text-sm font-bold rounded-md transition-colors', paymentTab === 'credit' ? 'bg-white dark:bg-slate-700 text-[#7f19e6] dark:text-purple-400 shadow-sm ring-1 ring-black/5 dark:ring-white/5' : 'text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200')}>Thẻ tín dụng</button>
                         </div>
 
-                        {(paymentTab === 'account' || paymentTab === 'credit') && (
-                            <div className="flex gap-2 overflow-x-auto hide-scrollbar snap-x py-1 pt-1.5 mt-1 -mx-4 px-4">
-                                {(paymentTab === 'account' ? debitCards : creditCards).map(card => {
-                                    const isSelected = selectedCardId === card._id;
-                                    const cBg = card.bankColor || '#3B82F6';
+                        <div className="flex gap-2 overflow-x-auto hide-scrollbar snap-x py-1 pt-1.5 mt-1 -mx-4 px-4">
+                            {(paymentTab === 'cash' ? cashCards : paymentTab === 'account' ? debitCards : creditCards).map(card => {
+                                const isSelected = selectedCardId === card._id;
+                                const cBg = card.bankColor || '#3B82F6';
 
-                                    const renderNetworkLogo = (network?: string) => {
-                                        switch (network) {
-                                            case 'visa': return <span className="font-bold italic text-blue-900 text-sm tracking-tighter">VISA</span>;
-                                            case 'mastercard': return <div className="flex -space-x-1.5 opacity-90"><div className="w-4 h-4 rounded-full bg-red-500 mix-blend-multiply"></div><div className="w-4 h-4 rounded-full bg-amber-400 mix-blend-multiply"></div></div>;
-                                            case 'jcb': return <span className="font-bold text-green-600 text-xs">JCB</span>;
-                                            case 'amex': return <span className="font-bold text-blue-600 text-[10px] bg-blue-50 px-1 py-0.5 rounded border border-blue-200">AMEX</span>;
-                                            case 'napas': return <span className="font-bold text-green-500 text-xs">NAPAS</span>;
-                                            default: return null;
-                                        }
-                                    };
-
-                                    const selectedBankObj = fetchedBanks.find(b => b.shortName === card.bankShortName);
-                                    const logoUrl = selectedBankObj?.logo || getBankLogo(card.bankShortName, card.bankName);
-
-                                    if (paymentTab === 'credit') {
-                                        return (
-                                            <PaymentCard
-                                                key={card._id}
-                                                card={card}
-                                                isSelected={selectedCardId === card._id}
-                                                onSelect={setSelectedCardId}
-                                                logoUrl={logoUrl}
-                                                cBg={cBg}
-                                                type="credit"
-                                                renderNetworkLogo={renderNetworkLogo}
-                                            />
-                                        );
+                                const renderNetworkLogo = (network?: string) => {
+                                    switch (network) {
+                                        case 'visa': return <span className="font-bold italic text-blue-900 text-sm tracking-tighter">VISA</span>;
+                                        case 'mastercard': return <div className="flex -space-x-1.5 opacity-90"><div className="w-4 h-4 rounded-full bg-red-500 mix-blend-multiply"></div><div className="w-4 h-4 rounded-full bg-amber-400 mix-blend-multiply"></div></div>;
+                                        case 'jcb': return <span className="font-bold text-green-600 text-xs">JCB</span>;
+                                        case 'amex': return <span className="font-bold text-blue-600 text-[10px] bg-blue-50 px-1 py-0.5 rounded border border-blue-200">AMEX</span>;
+                                        case 'napas': return <span className="font-bold text-green-500 text-xs">NAPAS</span>;
+                                        default: return null;
                                     }
+                                };
 
-                                    // Render for Debit / E-Wallet
+                                const selectedBankObj = fetchedBanks.find(b => b.shortName === card.bankShortName);
+                                const logoUrl = selectedBankObj?.logo || getBankLogo(card.bankShortName, card.bankName);
+
+                                if (paymentTab === 'credit') {
                                     return (
-
                                         <PaymentCard
                                             key={card._id}
                                             card={card}
@@ -305,15 +302,30 @@ export default function AddTransactionModal({
                                             onSelect={setSelectedCardId}
                                             logoUrl={logoUrl}
                                             cBg={cBg}
-                                            type="account"
+                                            type="credit"
+                                            renderNetworkLogo={renderNetworkLogo}
                                         />
-                                    )
-                                })}
-                                {(paymentTab === 'account' ? debitCards : creditCards).length === 0 && (
-                                    <div className="text-sm text-slate-500 italic px-2 py-3">Không có thẻ nào</div>
-                                )}
-                            </div>
-                        )}
+                                    );
+                                }
+
+                                // Render for Debit / E-Wallet / Cash
+                                return (
+
+                                    <PaymentCard
+                                        key={card._id}
+                                        card={card}
+                                        isSelected={selectedCardId === card._id}
+                                        onSelect={setSelectedCardId}
+                                        logoUrl={logoUrl}
+                                        cBg={cBg}
+                                        type={paymentTab === 'cash' ? 'account' : 'account'}
+                                    />
+                                )
+                            })}
+                            {/* {(paymentTab === 'cash' ? cashCards : paymentTab === 'account' ? debitCards : creditCards).length === 0 && (
+                                <div className="text-sm text-slate-500 italic px-2 py-3">Không có thẻ nào</div>
+                            )} */}
+                        </div>
                     </div>
 
                     {/* ── Installment (Trả góp) — only for credit tab ── */}

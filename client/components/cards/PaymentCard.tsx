@@ -59,13 +59,21 @@ export default function PaymentCard({
 
             {/* Bottom */}
             {type === "credit" ? (
-                <div className="mt-auto flex items-end justify-between">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 tracking-widest">
-                        **** {card.cardNumber || "...."}
-                    </p>
+                <div className="mt-auto flex items-end justify-between gap-1">
+                    <div className="flex items-center justify-between w-full min-w-0">
+
+                        <p className="text-[11px] font-bold text-red-500 dark:text-red-400">
+                            {(card.balance / 1000000).toFixed(1).replace('.0', '')}tr
+                        </p>
+
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+                            ** {card.cardNumber || "...."}
+                        </p>
+
+                    </div>
 
                     {renderNetworkLogo && (
-                        <div className="flex items-center">
+                        <div className="flex items-center shrink-0">
                             {renderNetworkLogo(card.cardNetwork)}
                         </div>
                     )}

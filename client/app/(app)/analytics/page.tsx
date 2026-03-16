@@ -42,7 +42,7 @@ export default function AnalyticsPage() {
         return {}; // Tuần này — no month filter, let hook handle
     };
 
-    const { transactions, summary, loading, refetch } = useTransactions(paramsForPeriod());
+    const { transactions, summary, loading, refetch, deleteTransaction } = useTransactions(paramsForPeriod());
 
     // Category breakdown (client-computed from transactions)
     const categoryBreakdown = (() => {
@@ -76,9 +76,8 @@ export default function AnalyticsPage() {
 
     const handleDelete = async (id: string) => {
         try {
-            await transactionsApi.delete(id);
+            await deleteTransaction(id);
             toast.success('Đã xoá giao dịch');
-            refetch();
         } catch { toast.error('Xoá thất bại'); }
     };
 
