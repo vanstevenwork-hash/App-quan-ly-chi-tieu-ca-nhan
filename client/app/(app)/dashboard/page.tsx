@@ -146,7 +146,7 @@ export default function DashboardPage() {
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const [showNoti, setShowNoti] = useState(false);
     const [addType, setAddType] = useState<'expense' | 'income'>('expense');
-    const [hideBalance, setHideBalance] = useState(false);
+    const [hideBalance, setHideBalance] = useState(true);
     const [showAddMenu, setShowAddMenu] = useState(false);
     const [selectedTx, setSelectedTx] = useState<any>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -363,8 +363,8 @@ export default function DashboardPage() {
                 {/* ── Quick actions ───────────────────────────────────── */}
                 <div className="anim-fade-up-d1 flex justify-between items-center gap-3">
                     {[
-                        { icon: <Plus className="w-6 h-6 text-purple-500" />, label: 'Nạp tiền', onClick: () => { setAddType('income'); openAddModal(); } },
-                        { icon: <Send className="w-6 h-6 text-purple-500" />, label: 'Chuyển', onClick: () => { } },
+                        { icon: <Plus className="w-6 h-6 text-purple-500" />, label: 'Thêm giao dịch', onClick: () => { setAddType('expense'); openAddModal(); } },
+                        { icon: <Send className="w-6 h-6 text-purple-500" />, label: 'Chuyển tiền', onClick: () => { setAddType('income'); openAddModal(); } },
                         { icon: <ScanLine className="w-6 h-6 text-purple-500" />, label: 'Quét QR', onClick: () => { } },
                         { icon: <MoreHorizontal className="w-6 h-6 text-purple-500" />, label: 'Thêm', onClick: () => setAddType('expense') },
                     ].map(item => (

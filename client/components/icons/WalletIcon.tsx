@@ -1,7 +1,7 @@
 
 import { IconProps } from "@/types/IconProps";
 
-export default function HomeIcon({
+export default function WalletIcon({
     width = 24,
     height = 24,
     className = "",
@@ -16,21 +16,20 @@ export default function HomeIcon({
             className={className}
         >
             <path
-                d="M9.07874 16.1354H14.8937"
+                d="M19 8.5V17C19 19.2091 17.2091 21 15 21H6C3.79086 21 2 19.2091 2 17V7C2 4.79086 3.79086 3 6 3H14M19 8.5C20.6569 8.5 22 9.84315 22 11.5V14C22 15.6569 20.6569 17 19 17M19 8.5V17"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
             <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M2.40002 13.713C2.40002 8.082 3.01402 8.475 6.31902 5.41C7.76502 4.246 10.015 2 11.958 2C13.9 2 16.195 4.235 17.654 5.41C20.959 8.475 21.572 8.082 21.572 13.713C21.572 22 19.613 22 11.986 22C4.35903 22 2.40002 22 2.40002 13.713Z"
+                d="M14 3L19 8.5"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
+            <circle cx="17.5" cy="12.5" r="1.5" fill="currentColor" />
         </svg>
     )
 }
