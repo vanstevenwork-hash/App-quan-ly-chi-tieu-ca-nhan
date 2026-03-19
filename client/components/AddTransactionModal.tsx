@@ -43,7 +43,7 @@ export default function AddTransactionModal({
         fetchBanks();
     }, [fetchBanks]);
 
-    const debitCards = cards.filter(c => c.cardType === 'debit' || c.cardType === 'eWallet' || c.cardType === 'savings');
+    const debitCards = cards.filter(c => c.cardType === 'debit' || c.cardType === 'eWallet');
     const creditCards = cards.filter(c => c.cardType === 'credit');
     const cashCards = cards.filter(c =>
         c.bankName.toLowerCase().includes('tiền mặt') ||

@@ -140,6 +140,62 @@ const renderCustomTick = (props: any) => {
     );
 };
 
+// ─── Custom Tooltip ──────────────────────────────────────────────────────────
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
+        const expense = payload.find((p: any) => p.dataKey === 'expense')?.value || 0;
+        const diff = income + expense; // expense is negative
+        const isPositive = diff >= 0;
+
+        return (
+            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 shadow-xl min-w-[180px] anim-scale-in">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{label}</p>
+
+                <div className="space-y-2.5 mb-4">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1 h-4 rounded-full bg-[#8B5CF6]" />
+                            <span className="text-xs font-medium text-slate-400">Thu nhập</span>
+                        </div>
+                        <span className="text-xs font-bold text-white">+{fmtFull(Math.abs(income))}đ</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1 h-4 rounded-full bg-[#EF4444]" />
+                            <span className="text-xs font-medium text-slate-400">Chi tiêu</span>
+                        </div>
+                        <span className="text-xs font-bold text-white">-{fmtFull(Math.abs(expense))}đ</span>
+                    </div>
+                </div>
+
+                <div className="pt-3 border-t border-white/5 border-slate-700/50 flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className={cn(
+                            "w-6 h-6 rounded-full flex items-center justify-center transition-colors",
+                            isPositive ? "bg-emerald-500/20 text-emerald-500" : "bg-rose-500/20 text-rose-500"
+                        )}>
+                            {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                        </div>
+                        <span className={cn(
+                            "text-sm font-black",
+                            isPositive ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                            {isPositive ? '+' : ''}{fmtFull(diff)}đ
+                        </span>
+                    </div>
+                    {isPositive && (
+                        <div className="px-1.5 py-0.5 rounded-lg bg-emerald-500/10 text-[8px] font-bold text-emerald-500 uppercase tracking-tighter">
+                            Thặng dư
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
     const { user } = useAuthStore();
@@ -471,11 +527,7 @@ export default function DashboardPage() {
                                 <YAxis tick={{ fontSize: 8, fill: '#94A3B8' }} axisLine={false} tickLine={false}
                                     tickFormatter={v => `${Math.round(v / 1000)}k`} />
                                 <Tooltip
-                                    formatter={(v?: number | string, name?: string) => v != null ? [`${fmt(Math.abs(Number(v)))}đ`, name === 'income' ? 'Thu nhập' : 'Chi tiêu'] : ['-', '']}
-                                    contentStyle={{
-                                        borderRadius: 16, border: 'none',
-                                        boxShadow: '0 4px 20px rgba(139,92,246,0.15)', fontSize: 11,
-                                    }}
+                                    content={<CustomTooltip />}
                                     cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
                                 />
                                 <Area type="monotone" dataKey="expense"

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
     Plus, ArrowLeft, TrendingDown, TrendingUp,
     CreditCard, History, BarChart3, Wallet,
@@ -296,6 +296,8 @@ export default function CardsPage() {
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const { transactions, refetch: refetchTx } = useTransactions();
     const { banks: fetchedBanks, fetchBanks } = useBanks();
+    const router = useRouter();
+    const historyRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => { fetchBanks(); }, [fetchBanks]);
 
@@ -305,7 +307,7 @@ export default function CardsPage() {
     const [addType] = useState<'expense'>('expense');
     const [historyExpanded, setHistoryExpanded] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-    const router = useRouter();
+
 
     const creditCards = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
     const accounts = useMemo(() => cards.filter(c => ['debit', 'eWallet', 'crypto'].includes(c.cardType)), [cards]);
@@ -397,7 +399,7 @@ export default function CardsPage() {
 
             <div className="relative z-10 pb-8">
                 {/* ── Header ─────────────────────────────────────── */}
-                <header className="pt-4 px-5 pb-2 flex items-center gap-4">
+                <header className="pt-4 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
                     <button onClick={() => router.push('/dashboard')}
                         className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
                         <ArrowLeft className="w-5 h-5" />
@@ -486,7 +488,7 @@ export default function CardsPage() {
                         {[
                             { icon: <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />, label: 'Thanh toán', bg: '#EEF2FF', bgDark: '#312E81', onClick: () => setShowPayment(true) },
                             { icon: <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, label: 'Giao dịch', bg: '#D1FAE5', bgDark: '#064E3B', onClick: openAddModal },
-                            { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, label: 'Lịch sử', bg: '#FEF3C7', bgDark: '#78350F', onClick: () => router.push('/dashboard') },
+                            { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, label: 'Lịch sử', bg: '#FEF3C7', bgDark: '#78350F', onClick: () => historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
                             { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, label: 'Báo cáo', bg: '#EDE9FE', bgDark: '#4C1D95', onClick: () => router.push('/analytics') },
                         ].map((item: any) => (
                             <button key={item.label} onClick={item.onClick}
@@ -676,7 +678,7 @@ export default function CardsPage() {
 
                 {/* ── Credit card transaction history ──────────── */}
                 {creditCardTxs.length > 0 && (
-                    <div className="px-6 mb-5">
+                    <div className="px-6 mb-5 scroll-mt-24" ref={historyRef}>
                         <div className="flex items-center justify-between mb-2.5">
                             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                                 <History className="w-4 h-4 text-indigo-500" />

@@ -147,7 +147,7 @@ export default function WealthPage() {
     const [showCardModal, setShowCardModal] = useState(false);
     const [editSource, setEditSource] = useState<WealthSource | null>(null);
     const [editCard, setEditCard] = useState<Card | null>(null);
-    const [isVisible, setIsVisible] = useState(true);
+    const [isVisible, setIsVisible] = useState(false);
     const [activeTab, setActiveTab] = useState<'accounts' | 'savings' | 'other'>('accounts');
 
     const { banks: fetchedBanks, fetchBanks } = useBanks();
