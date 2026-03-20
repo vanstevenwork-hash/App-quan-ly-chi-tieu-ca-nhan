@@ -236,7 +236,7 @@ export default function SavingsPage() {
 
             <div className="relative z-10 pb-8">
                 {/* ── Header ─────────────────────────────────────── */}
-                <header className="pt-4 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
+                <header className="pt-14 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
                     <button onClick={() => router.push('/dashboard')}
                         className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
                         <ArrowLeft className="w-5 h-5" />
@@ -276,7 +276,7 @@ export default function SavingsPage() {
                     <div className="flex items-center justify-between pr-6 mb-4">
                         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Sổ của tôi</h2>
                         <Link href="/accounts?tab=savings"
-                            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:opacity-80">
+                            className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all uppercase tracking-tight">
                             Xem tất cả
                         </Link>
                     </div>
@@ -431,7 +431,7 @@ export default function SavingsPage() {
             {/* ── FAB ─────────────────────────────────────────── */}
             <button
                 onClick={() => { setEditCard(null); setShowForm(true); }}
-                className="fixed bottom-24 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
+                className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
                 style={{ background: 'linear-gradient(135deg, #34D399, #059669)' }}>
                 <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
             </button>

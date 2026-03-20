@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
                 style={{ background: 'linear-gradient(to bottom, rgba(139,92,246,0.05), transparent)' }} />
 
             {/* ── Sticky Header ─────────────────────────────────────── */}
-            <header className="pt-4 px-5 pb-2 flex items-center gap-4 sticky top-0 z-30 bg-[#F8F9FF]/80 dark:bg-slate-950/80 backdrop-blur-lg">
+            <header className="pt-14 px-5 pb-2 flex items-center gap-4 sticky top-0 z-30 bg-[#F8F9FF]/80 dark:bg-slate-950/80 backdrop-blur-lg">
                 <button onClick={() => router.push('/dashboard')}
                     className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
                     <ArrowLeft className="w-5 h-5" />

@@ -2,7 +2,7 @@
  * Vietnamese bank logo URLs from public CDN.
  * Keys are bank short names (uppercase) as stored in bankShortName field.
  */
-const CDN = 'https://api.vietqr.io/img';
+const CDN = 'https://cdn.vietqr.io/img';
 
 export const BANK_LOGOS: Record<string, string> = {
     'VCB': `${CDN}/vcb.png`,
@@ -17,7 +17,7 @@ export const BANK_LOGOS: Record<string, string> = {
     'MB': `${CDN}/mb.png`,
     'VPB': `${CDN}/vpbank.png`,
     'VPBANK': `${CDN}/vpbank.png`,
-    'VIB': `${CDN}/vib.png`,
+    'VIB': `${CDN}/VIB.png`,
     'STB': `${CDN}/sacombank.png`,
     'SACOMBANK': `${CDN}/sacombank.png`,
     'MSB': `${CDN}/msb.png`,

@@ -239,6 +239,43 @@ export default function AddTransactionModal({
                             </div> */}
                         </div>
                         {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
+
+                        {/* Quick Amount Buttons */}
+                        <div className="flex gap-1.5 overflow-x-auto hide-scrollbar py-0.5">
+                            {[
+                                { label: 'C', value: '', type: 'clear' },
+                                { label: '000', value: '000', type: 'append' },
+                                { label: '+50k', value: 50000, type: 'add' },
+                                { label: '+100k', value: 100000, type: 'add' },
+                                { label: '+200k', value: 200000, type: 'add' },
+                                { label: '+500k', value: 500000, type: 'add' },
+                                { label: '+1M', value: 1000000, type: 'add' },
+                            ].map((btn, i) => (
+                                <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => {
+                                        if (btn.type === 'clear') {
+                                            setAmount('');
+                                        } else if (btn.type === 'append') {
+                                            if (amount) setAmount(curr => curr + btn.value);
+                                        } else {
+                                            const curr = parseInt(amount) || 0;
+                                            setAmount((curr + (btn.value as number)).toString());
+                                        }
+                                        setErrors(p => ({ ...p, amount: '' }));
+                                    }}
+                                    className={cn(
+                                        "flex-shrink-0 px-3 py-1.5 rounded-lg text-[11px] font-bold active:scale-95 transition-all border",
+                                        btn.type === 'clear'
+                                            ? "bg-red-50 dark:bg-red-900/20 text-red-500 border-red-100 dark:border-red-900/30"
+                                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                    )}
+                                >
+                                    {btn.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="flex flex-col gap-2">

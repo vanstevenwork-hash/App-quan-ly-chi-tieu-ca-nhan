@@ -37,7 +37,7 @@ function WealthCard({ source, onEdit, onDelete, className }: {
     source: WealthSourceUI; onEdit: () => void; onDelete: () => void; className?: string;
 }) {
     return (
-        <div className={cn("bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-2xl p-4 flex items-center justify-between group hover:border-purple-200 dark:hover:border-purple-500/50 transition-all cursor-pointer relative", className)}>
+        <div className={cn("bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] rounded-xl p-2.5 flex items-center justify-between group hover:border-purple-200 dark:hover:border-purple-500/50 transition-all cursor-pointer relative", className)}>
             <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${source.color}15`, border: `1px solid ${source.color}30`, color: source.color }}>
                     {typeof source.icon === 'string' && source.icon.length <= 2 ? (
@@ -47,7 +47,7 @@ function WealthCard({ source, onEdit, onDelete, className }: {
                     )}
                 </div>
                 <div className="min-w-0">
-                    <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">{source.name}</h4>
+                    <h4 className="font-bold text-slate-800 dark:text-white text-xs truncate">{source.name}</h4>
                     <div className="flex items-center gap-1 mt-0.5">
                         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{CATEGORY_LABELS[source.category] || 'Khác'}</span>
                     </div>
@@ -96,7 +96,7 @@ function GroupedWealthCard({ title, icon, color, items, onEdit, onDelete }: {
         <div className="space-y-2">
             <div
                 className={cn(
-                    "bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm rounded-2xl p-4 flex items-center justify-between group transition-all cursor-pointer relative",
+                    "bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm rounded-xl p-2.5 flex items-center justify-between group transition-all cursor-pointer relative",
                     isExpanded ? "border-purple-200 dark:border-purple-500/50 ring-1 ring-purple-100 dark:ring-purple-900/30" : "hover:border-purple-100 dark:hover:border-purple-800"
                 )}
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -106,7 +106,7 @@ function GroupedWealthCard({ title, icon, color, items, onEdit, onDelete }: {
                         {icon}
                     </div>
                     <div>
-                        <h4 className="font-bold text-slate-800 dark:text-white text-sm">{title}</h4>
+                        <h4 className="font-bold text-slate-800 dark:text-white text-xs">{title}</h4>
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">{items.length} tài khoản</p>
                     </div>
                 </div>
@@ -398,9 +398,7 @@ export default function WealthPage() {
                             <h2 className="font-bold text-lg text-gray-800 dark:text-white">
                                 {activeTab === 'accounts' ? 'Danh sách tài khoản' : activeTab === 'savings' ? 'Sổ tiết kiệm' : 'Tài sản khác'}
                             </h2>
-                            <button onClick={handleAddClick} className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/40 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:bg-purple-200 transition-colors">
-                                <Plus className="w-5 h-5" />
-                            </button>
+                            <button onClick={handleAddClick} className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">Thêm mới</button>
                         </div>
 
                         {/* List rendering */}

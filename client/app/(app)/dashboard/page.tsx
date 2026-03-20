@@ -48,7 +48,7 @@ function TransactionRow({ t, onClick }: { t: any; onClick: () => void }) {
     return (
         <div
             onClick={onClick}
-            className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-2xl transition-colors cursor-pointer group"
+            className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors cursor-pointer group"
         >
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 group-hover:scale-105 transition-transform"
@@ -77,23 +77,58 @@ function AlertCard({
     amount: string; badge: string; badgeColor: string; accentColor: string;
 }) {
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700/50 shadow-[0_2px_10px_rgba(0,0,0,0.03)] relative group hover:shadow-md transition-all duration-300">
-            <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ backgroundColor: accentColor }} />
-            <div className="p-4 pl-5 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl flex-shrink-0 flex items-center justify-center border"
-                    style={{ backgroundColor: iconBg, borderColor: `${accentColor}22` }}>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 relative group">
+
+            {/* Accent bar (mảnh hơn + mềm hơn) */}
+            <div
+                className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
+                style={{ backgroundColor: accentColor }}
+            />
+
+            <div className="px-3 py-1.5 pl-4 flex items-center gap-3">
+
+                {/* Icon */}
+                <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center border flex-shrink-0"
+                    style={{ backgroundColor: iconBg, borderColor: `${accentColor}22` }}
+                >
                     {icon}
                 </div>
+
+                {/* Content */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start gap-2">
-                        <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{title}</p>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg whitespace-nowrap flex-shrink-0"
-                            style={{ backgroundColor: `${badgeColor}15`, color: badgeColor }}>
+
+                    {/* Title + badge */}
+                    <div className="flex justify-between items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                            {title}
+                        </p>
+
+                        <span
+                            className="text-[10px] font-medium px-2 py-[2px] rounded-md whitespace-nowrap"
+                            style={{
+                                backgroundColor: `${badgeColor}12`,
+                                color: badgeColor
+                            }}
+                        >
                             {badge}
                         </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">{sub}</p>
-                    <p className="font-bold text-base mt-1" style={{ color: accentColor }}>{amount}</p>
+
+                    {/* Sub + Amount */}
+                    {/* <div className="flex items-end justify-between mt-1"> */}
+                    <p className="text-[11px] text-slate-400 truncate">
+                        {sub}
+                    </p>
+
+                    <p
+                        className="text-xs font-bold tracking-tight"
+                        style={{ color: accentColor }}
+                    >
+                        {amount}
+                    </p>
+                    {/* </div> */}
+
                 </div>
             </div>
         </div>
@@ -149,7 +184,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         const isPositive = diff >= 0;
 
         return (
-            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 shadow-xl min-w-[180px] anim-scale-in">
+            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-xl min-w-[180px] anim-scale-in">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{label}</p>
 
                 <div className="space-y-2.5 mb-4">
@@ -451,7 +486,7 @@ export default function DashboardPage() {
                                     return (
                                         <AlertCard
                                             key={card._id}
-                                            icon={b?.logo ? <img src={b.logo} className="w-8 h-8 object-contain bg-white p-1 rounded-md shadow-sm" alt="logo" /> : <span className="font-black text-red-600 text-xs">{card.bankShortName}</span>}
+                                            icon={b?.logo ? <img src={b.logo} className="w-9 h-9 object-contain bg-white p-1 rounded-xl shadow-sm" alt="logo" /> : <span className="font-black text-red-600 text-xs">{card.bankShortName}</span>}
                                             iconBg="#FEF2F2"
                                             title={`Sao kê ${card.bankName}`}
                                             sub="Dư nợ thẻ tín dụng"
@@ -487,8 +522,8 @@ export default function DashboardPage() {
                 {
                     unreadCount > 0 && notifications.slice(0, 2).map(n => (
                         <div key={n._id}
-                            className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-purple-100 dark:border-purple-900/30 flex items-center gap-3 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-lg flex-shrink-0"
+                            className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-purple-100 dark:border-purple-900/30 flex items-center gap-3 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                                 style={{ backgroundColor: n.iconBg || '#EDE9FE' }}>
                                 {n.icon || '🔔'}
                             </div>
@@ -506,11 +541,11 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-center mb-3">
                         <h2 className="text-base font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
                         <Link href="/analytics"
-                            className="text-xs font-semibold text-purple-600 px-3 py-1 bg-purple-50 rounded-lg hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 transition-colors">
+                            className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
                             Xem chi tiết
                         </Link>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                         <ResponsiveContainer width="100%" height={180}>
                             <AreaChart data={chartData} margin={{ top: 45, right: 30, bottom: 0, left: -30 }}>
                                 <defs>
@@ -550,11 +585,11 @@ export default function DashboardPage() {
                     <div className="flex justify-between items-center mb-3">
                         <h2 className="text-base font-bold text-slate-800 dark:text-white">Giao dịch gần đây</h2>
                         <Link href="/analytics"
-                            className="text-xs font-semibold text-purple-600 px-3 py-1 bg-purple-50 rounded-lg hover:bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400 transition-colors">
+                            className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
                             Lịch sử
                         </Link>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-2 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] max-h-[300px] overflow-y-auto hide-scrollbar">
+                    <div className="bg-white dark:bg-slate-800 rounded-xl p-1 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] max-h-[300px] overflow-y-auto hide-scrollbar">
                         {transactions.length === 0 ? (
                             <div className="py-10 text-center">
                                 <p className="text-slate-400 text-sm">Chưa có giao dịch nào</p>
@@ -581,7 +616,7 @@ export default function DashboardPage() {
             {/* ── FAB ──────────────────────────────────────────────── */}
             <button
                 onClick={() => { setAddType('expense'); openAddModal(); }}
-                className="fixed bottom-24 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all duration-200"
+                className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all duration-200"
                 style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
             >
                 <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />

@@ -71,7 +71,7 @@ function CardMenu({ onEdit, onDelete, onSetDefault, isDefault }: {
             {open && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-                    <div className="absolute top-9 right-0 z-20 bg-white dark:bg-slate-800 rounded-2xl shadow-xl py-1 min-w-[150px] overflow-hidden border border-gray-100 dark:border-slate-700">
+                    <div className="absolute top-9 right-0 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-xl py-1 min-w-[150px] overflow-hidden border border-gray-100 dark:border-slate-700">
                         {!isDefault && (
                             <button onClick={() => { setOpen(false); onSetDefault(); }}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
@@ -112,7 +112,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
     const logoUrl = getBankLogo(card.bankShortName, card.bankName);
 
     return (
-        <div className="snap-center shrink-0 w-[85%] rounded-2xl p-6 shadow-xl relative overflow-hidden"
+        <div className="snap-center shrink-0 w-[85%] rounded-xl p-6 shadow-xl relative overflow-hidden"
             style={{ background: gradient, border: ts.border }}>
             {card.color !== '#111111' && card.color !== '#FFFFFF' && (
                 <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
@@ -151,7 +151,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
             <div className="flex justify-between items-end mb-3">
                 <div>
                     <p className="text-xs mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
-                    <p className="text-2xl font-bold" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
+                    <p className="text-2xl font-bold" style={{ color: ts.text }}>{fmt(card.balance)}</p>
                 </div>
                 {dueDays !== null && (
                     <div className="text-right">
@@ -196,14 +196,26 @@ function SavingsCard({ card, onEdit, onDelete }: {
         : '—';
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 rounded-full -mr-10 -mt-10 blur-2xl pointer-events-none"
                 style={{ backgroundColor: '#8B5CF620' }} />
             <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center">
-                        <PiggyBank className="w-5 h-5 text-purple-500" />
-                    </div>
+                    {(() => {
+                        const logoUrl = getBankLogo(card.bankShortName, card.bankName);
+                        return logoUrl ? (
+                            <img
+                                src={logoUrl}
+                                alt={card.bankShortName || card.bankName}
+                                className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-white/90 p-1 border border-gray-100 dark:border-slate-700 shadow-sm flex-shrink-0"
+                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
+                        ) : (
+                            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/50 flex items-center justify-center flex-shrink-0">
+                                <PiggyBank className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+                            </div>
+                        );
+                    })()}
                     <div>
                         <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{card.bankName}</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500">
@@ -233,7 +245,7 @@ function SavingsCard({ card, onEdit, onDelete }: {
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 font-medium">Số tiền gốc</p>
-                    <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{fmt(card.balance)}₫</p>
+                    <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{fmt(card.balance)}</p>
                 </div>
                 <div className="text-right">
                     <p className="text-xs text-slate-400 mb-1">Lãi tạm tính</p>
@@ -277,11 +289,23 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
             : 'bg-green-50 text-green-600';
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
             <div className="flex items-center gap-3">
-                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center', iconBg)}>
-                    <TypeIcon className="w-5 h-5" />
-                </div>
+                {(() => {
+                    const logoUrl = getBankLogo(card.bankShortName, card.bankName);
+                    return logoUrl ? (
+                        <img
+                            src={logoUrl}
+                            alt={card.bankShortName || card.bankName}
+                            className="w-12 h-12 rounded-xl object-contain bg-white dark:bg-white/90 p-1.5 border border-gray-100 dark:border-slate-800 shadow-sm flex-shrink-0"
+                            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                    ) : (
+                        <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', iconBg)}>
+                            <TypeIcon className="w-5 h-5" />
+                        </div>
+                    );
+                })()}
                 <div>
                     <div className="flex items-center gap-1.5">
                         <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{card.bankName}</p>
@@ -292,7 +316,7 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
             </div>
             <div className="flex items-center gap-3">
                 <div className="text-right">
-                    <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{fmt(card.balance)}₫</p>
+                    <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{fmt(card.balance)}</p>
                 </div>
                 <CardMenu onEdit={onEdit} onDelete={onDelete} onSetDefault={onSetDefault} isDefault={card.isDefault} />
             </div>
@@ -305,7 +329,7 @@ function DeleteConfirm({ card, onConfirm, onCancel }: { card: Card; onConfirm: (
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4" onClick={onCancel}>
             <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl pb-10" onClick={e => e.stopPropagation()}>
-                <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto">
                     <Trash2 className="w-6 h-6 text-red-500" />
                 </div>
                 <div className="text-center">
@@ -315,8 +339,8 @@ function DeleteConfirm({ card, onConfirm, onCancel }: { card: Card; onConfirm: (
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <button onClick={onCancel} className="flex-1 py-3 rounded-2xl border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Huỷ</button>
-                    <button onClick={onConfirm} className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all">Xoá</button>
+                    <button onClick={onCancel} className="flex-1 py-3 rounded-xl border border-gray-200 dark:border-slate-800 text-gray-700 dark:text-slate-300 font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Huỷ</button>
+                    <button onClick={onConfirm} className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-lg shadow-red-500/20 transition-all">Xoá</button>
                 </div>
             </div>
         </div>
@@ -368,7 +392,7 @@ export default function AccountsPage() {
                 style={{ background: 'linear-gradient(to bottom, rgba(139,92,246,0.1), transparent)' }} />
 
             {/* ── Header ─────────────────────────────────────── */}
-            <header className="pt-4 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
+            <header className="pt-14 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
                 <button onClick={() => router.push('/dashboard')}
                     className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
                     <ArrowLeft className="w-5 h-5" />
@@ -390,10 +414,10 @@ export default function AccountsPage() {
                         {/* Net worth */}
                         <div className="text-center mb-6">
                             <p className="text-sm text-slate-500 dark:text-slate-400 mb-1 font-medium">Tổng tài sản ròng</p>
-                            <p className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">{fmt(netWorth)}₫</p>
+                            <p className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">{fmt(netWorth)} đ</p>
                             <div className="flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">
                                 <TrendingDown className="w-4 h-4" />
-                                <span>Dư nợ: {fmtShort(totalDebt)}₫</span>
+                                <span>Dư nợ: {fmtShort(totalDebt)}</span>
                             </div>
                         </div>
 
@@ -404,21 +428,21 @@ export default function AccountsPage() {
                                 { label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50/50 dark:bg-blue-900/20' },
                                 { label: 'Dư nợ thẻ', value: `-${fmtShort(totalDebt)}`, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50/50 dark:bg-red-900/20' },
                             ].map(item => (
-                                <div key={item.label} className={cn('rounded-2xl p-2.5 text-center transition-all', item.bg)}>
+                                <div key={item.label} className={cn('rounded-xl p-2.5 text-center transition-all', item.bg)}>
                                     <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-0.5">{item.label}</p>
-                                    <p className={cn('font-bold text-sm leading-none', item.color)}>{item.value}₫</p>
+                                    <p className={cn('font-bold text-sm leading-none', item.color)}>{item.value}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
 
                     {/* Tabs */}
-                    <div className="mt-5 bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-2xl p-1.5 flex gap-1.5 border border-slate-200/50 dark:border-slate-800/50">
+                    <div className="mt-5 bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-xl p-1.5 flex gap-1.5 border border-slate-200/50 dark:border-slate-800/50">
                         {(['cards', 'savings'] as const).map(tab => (
                             <button key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
-                                    'flex-1 py-2.5 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2',
+                                    'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2',
                                     activeTab === tab
                                         ? 'bg-white dark:bg-slate-800 text-[#7f19e6] dark:text-purple-400 shadow-md scale-[1.02]'
                                         : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -453,14 +477,14 @@ export default function AccountsPage() {
 
                     {/* ── Maturity alert ───────────────────────────────── */}
                     {maturityAlerts.map(card => (
-                        <div key={card._id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-orange-100 dark:border-orange-900/20 flex items-start gap-3 shadow-sm shadow-orange-500/5">
+                        <div key={card._id} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-orange-100 dark:border-orange-900/20 flex items-start gap-3 shadow-sm shadow-orange-500/5">
                             <div className="bg-orange-100 dark:bg-orange-900/20 p-2 rounded-full text-orange-600 dark:text-orange-400 flex-shrink-0">
                                 <AlertTriangle className="w-5 h-5" />
                             </div>
                             <div className="flex-1">
                                 <p className="font-bold text-sm text-slate-800 dark:text-slate-200">Sổ tiết kiệm sắp đáo hạn</p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium leading-relaxed">
-                                    {card.bankName} — {fmt(card.balance)}₫ · còn {daysUntil(card.maturityDate)} ngày. Tất toán hoặc tái tục.
+                                    {card.bankName} — {fmt(card.balance)} · còn {daysUntil(card.maturityDate)} ngày. Tất toán hoặc tái tục.
                                 </p>
                             </div>
                         </div>
@@ -474,7 +498,7 @@ export default function AccountsPage() {
                                 <section>
                                     <div className="flex items-center justify-between mb-3 px-1">
                                         <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Thẻ tín dụng</h2>
-                                        <button onClick={() => refetch()} className="text-xs text-purple-600 dark:text-purple-400 font-bold hover:underline transition-all">Cập nhật</button>
+                                        <button onClick={() => refetch()} className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">Cập nhật</button>
                                     </div>
                                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar -mx-5 px-5">
                                         {creditCards.map((card, idx) => (
@@ -485,7 +509,7 @@ export default function AccountsPage() {
                                         ))}
                                         {/* Add credit card slide */}
                                         <button onClick={() => openAdd('credit')}
-                                            className="snap-center shrink-0 w-40 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
+                                            className="snap-center shrink-0 w-40 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
                                             <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
                                                 <Plus className="w-6 h-6" />
                                             </div>
@@ -500,8 +524,8 @@ export default function AccountsPage() {
                                 <div className="flex items-center justify-between mb-3 px-1">
                                     <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tài khoản thanh toán</h2>
                                     <button onClick={() => openAdd('debit')}
-                                        className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-all shadow-sm">
-                                        <Plus className="w-4 h-4" />
+                                        className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
+                                        Thêm mới
                                     </button>
                                 </div>
                                 {debitCards.length > 0 ? (
@@ -524,7 +548,7 @@ export default function AccountsPage() {
                             {creditCards.length === 0 && (
                                 <button onClick={() => openAdd('credit')}
                                     className="w-full flex items-center gap-4 p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-purple-300 dark:hover:border-purple-900 transition-all group">
-                                    <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <CreditCard className="w-6 h-6 text-purple-500" />
                                     </div>
                                     <div className="text-left flex-1 min-w-0">
@@ -567,7 +591,7 @@ export default function AccountsPage() {
                                         </p>
                                     </div>
                                     <button onClick={() => openAdd('savings')}
-                                        className="bg-[#7f19e6] dark:bg-purple-600 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
+                                        className="bg-[#7f19e6] dark:bg-purple-600 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
                                         + Thêm sổ tiết kiệm
                                     </button>
                                 </div>
