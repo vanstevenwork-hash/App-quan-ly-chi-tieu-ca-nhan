@@ -183,7 +183,7 @@ export default function WealthPage() {
                 _id: c._id,
                 name: `${c.bankShortName} ${c.cardNumber ? '••' + c.cardNumber : ''}`.trim(),
                 category: c.cardType === 'savings' ? 'savings' : c.cardType === 'credit' ? 'credit' : c.cardType === 'eWallet' ? 'eWallet' : 'bank',
-                balance: c.cardType === 'credit' ? -(c.balance || c.creditLimit || 0) : c.balance,
+                balance: c.cardType === 'credit' ? -(c.balance || 0) : c.balance,
                 icon: b?.logo ? <img src={b.logo} className="w-8 h-8 object-contain bg-white p-1 rounded-md" alt="logo" /> : getFallbackIcon(c.cardType),
                 color: c.bankColor || '#3B82F6',
                 note: c.cardType === 'credit' ? 'Thẻ tín dụng' : c.cardType === 'savings' ? 'Sổ tiết kiệm' : 'Tài khoản',
