@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, CreditCard, PiggyBank, Target, BarChart3, Settings } from 'lucide-react';
+import { CalendarDays, PieChart, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import HomeIcon from './icons/HomeIcon';
 import WalletIcon from './icons/WalletIcon';
@@ -12,10 +12,9 @@ type NavItem = {
 };
 const navItems: NavItem[] = [
     { href: '/dashboard', icon: HomeIcon, label: 'Tổng quan' },
-    { href: '/cards', icon: WalletIcon, label: 'Thẻ' },
-    { href: '/savings', icon: PiggyBank, label: 'Tiết kiệm' },
-    { href: '/goals', icon: Target, label: 'Mục tiêu' },
-    { href: '/analytics', icon: BarChart3, label: 'Báo cáo' },
+    { href: '/calendar', icon: CalendarDays, label: 'Lịch' },
+    { href: '/accounts', icon: WalletIcon, label: 'Tài khoản' },
+    { href: '/budget', icon: PieChart, label: 'Ngân sách' },
     { href: '/settings', icon: Settings, label: 'Cài đặt' },
 ];
 

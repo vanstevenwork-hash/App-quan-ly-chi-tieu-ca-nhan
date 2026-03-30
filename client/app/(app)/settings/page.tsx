@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Switch } from '@/components/ui/switch';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useAuthStore, useUIStore } from '@/store/useStore';
 import {
     ChevronRight, Moon, Bell,
@@ -9,6 +9,9 @@ import {
     HelpCircle, LogOut, Smartphone, DollarSign, RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ImageUpload from '@/components/ImageUpload';
+import { authApi } from '@/lib/api';
+import { toast } from 'sonner';
 
 const SettingItem = ({
     icon,
@@ -47,13 +50,25 @@ const SettingItem = ({
 );
 
 export default function SettingsPage() {
-    const { user, logout } = useAuthStore();
+    const { user, logout, updateUser } = useAuthStore();
     const { isDarkMode, toggleDarkMode } = useUIStore();
     const router = useRouter();
+    const [avatarUrl, setAvatarUrl] = useState<string>(user?.avatar || '');
 
     const handleLogout = () => {
         logout();
         router.push('/auth/login');
+    };
+
+    const handleAvatarUpload = async (url: string) => {
+        setAvatarUrl(url);
+        try {
+            await authApi.updateProfile({ avatar: url });
+            updateUser({ avatar: url });
+            toast.success('Đã cập nhật ảnh đại diện!');
+        } catch {
+            toast.error('Lưu ảnh thất bại');
+        }
     };
 
     const initials = user?.name
@@ -70,13 +85,30 @@ export default function SettingsPage() {
             {/* Profile card */}
             <div className="px-5 -mt-10 mb-5">
                 <div className="bg-card rounded-3xl shadow-card p-5 flex items-center gap-4">
-                    <div className="relative">
-                        <Avatar className="w-16 h-16">
-                            <AvatarFallback className="gradient-primary text-white text-xl font-bold">
-                                {initials}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -bottom-1 -right-1 w-5 h-5 gradient-income rounded-full border-2 border-card" />
+                    <div className="relative flex-shrink-0">
+                        {avatarUrl ? (
+                            <ImageUpload
+                                currentUrl={avatarUrl}
+                                onUpload={handleAvatarUpload}
+                                folder="chi_tieu/avatars"
+                                shape="circle"
+                                size={64}
+                            />
+                        ) : (
+                            <div className="relative">
+                                <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center text-white text-xl font-bold">
+                                    {initials}
+                                </div>
+                                <ImageUpload
+                                    onUpload={handleAvatarUpload}
+                                    folder="chi_tieu/avatars"
+                                    shape="circle"
+                                    size={64}
+                                    className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity"
+                                />
+                                <div className="absolute -bottom-1 -right-1 w-5 h-5 gradient-income rounded-full border-2 border-card" />
+                            </div>
+                        )}
                     </div>
                     <div className="flex-1">
                         <p className="font-bold text-foreground text-base">{user?.name || 'Nguyễn Văn A'}</p>

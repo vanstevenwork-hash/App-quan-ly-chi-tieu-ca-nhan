@@ -115,4 +115,39 @@ export const banksApi = {
     getAll: () => api.get('/banks'),
 };
 
+// Upload (Cloudinary)
+export const uploadApi = {
+    uploadImage: async (file: File, folder = 'chi_tieu'): Promise<{ url: string; publicId: string }> => {
+        if (typeof window !== 'undefined' && localStorage.getItem('token') === 'mock-token') {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve({ url: URL.createObjectURL(file), publicId: 'mock_' + Date.now() });
+                }, 1000);
+            });
+        }
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await api.post(`/upload?folder=${folder}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return res.data;
+    },
+    deleteImage: (publicId: string) => {
+        if (typeof window !== 'undefined' && localStorage.getItem('token') === 'mock-token') {
+            return Promise.resolve({ success: true });
+        }
+        return api.delete(`/upload/${encodeURIComponent(publicId)}`);
+    }
+};
+
+// Day Notes (calendar images)
+export const dayNotesApi = {
+    getByMonth: (month: number, year: number) =>
+        api.get('/day-notes', { params: { month, year } }),
+    addImage: (date: string, imageUrl: string) =>
+        api.post('/day-notes/add-image', { date, imageUrl }),
+    removeImage: (date: string, imageUrl: string) =>
+        api.delete('/day-notes/remove-image', { data: { date, imageUrl } }),
+};
+
 export default api;

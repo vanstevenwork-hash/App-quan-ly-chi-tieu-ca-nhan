@@ -55,7 +55,7 @@ export default function AddTransactionModal({
         if (open) {
             if (initialData) {
                 setType(initialData.type);
-                setAmount(initialData.amount.toString());
+                setAmount(initialData.amount?.toString());
                 setCategory(initialData.category);
                 setNote(initialData.note || '');
                 setDate(new Date(initialData.date).toISOString().slice(0, 10));

@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { Toaster } from 'sonner';
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin", "vietnamese"] });
+const manrope = Manrope({ subsets: ["latin", "vietnamese"] });
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/icon-512.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
       </head>
-      <body className={`${inter.className} antialiased bg-[#F0F2F8] dark:bg-slate-950`}>
+      <body className={`${manrope.className} antialiased bg-[#F0F2F8] dark:bg-slate-950`}>
         <ThemeProvider />
         <Toaster position="top-center" richColors closeButton />
         <div id="root" className="min-h-screen max-w-[480px] mx-auto bg-[#F0F2F8] dark:bg-slate-900 transition-colors duration-200"
