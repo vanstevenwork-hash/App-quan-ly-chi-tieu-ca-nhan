@@ -1,7 +1,6 @@
 const DayNote = require('../models/DayNote');
 
 // GET /api/day-notes?month=3&year=2026
-// Returns all notes for the user in a given month
 exports.getByMonth = async (req, res) => {
     try {
         const { month, year } = req.query;
@@ -22,16 +21,17 @@ exports.getByMonth = async (req, res) => {
 };
 
 // POST /api/day-notes/add-image
-// Body: { date: "2026-03-27", imageUrl: "https://..." }
-// Adds an image URL to the day's note (upserts)
+// Body: { date: "2026-03-27", imageUrl: "https://...", amount: 50000, label: "Cà phê" }
 exports.addImage = async (req, res) => {
     try {
-        const { date, imageUrl } = req.body;
+        const { date, imageUrl, amount = 0, label = '' } = req.body;
         if (!date || !imageUrl) return res.status(400).json({ success: false, message: 'Cần date và imageUrl' });
+
+        const entry = { url: imageUrl, amount: Number(amount) || 0, label };
 
         const note = await DayNote.findOneAndUpdate(
             { user: req.user._id, date },
-            { $push: { images: imageUrl } },
+            { $push: { images: entry } },
             { new: true, upsert: true }
         );
 
@@ -50,7 +50,7 @@ exports.removeImage = async (req, res) => {
 
         const note = await DayNote.findOneAndUpdate(
             { user: req.user._id, date },
-            { $pull: { images: imageUrl } },
+            { $pull: { images: { url: imageUrl } } },
             { new: true }
         );
 

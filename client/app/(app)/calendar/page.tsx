@@ -135,14 +135,20 @@ export default function CalendarPage() {
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !uploadingDate) return;
+
+        // Ask for amount and label
+        const amountStr = prompt('Nhập số tiền (đ) cho ảnh này:', '0');
+        const amount = parseInt(amountStr || '0', 10);
+        const label = prompt('Ghi chú ngắn cho ảnh này:', '') || '';
+
         e.target.value = '';
         try {
             toast.loading('Đang upload ảnh...');
             const { url } = await uploadApi.uploadImage(file, 'chi_tieu/calendar');
-            await addImage(uploadingDate, url);
+            await addImage(uploadingDate, url, amount, label);
             toast.dismiss();
-            toast.success('Đã thêm ảnh!');
-        } catch {
+            toast.success('Đã thêm thành công!');
+        } catch (err) {
             toast.dismiss();
             toast.error('Upload thất bại');
         } finally {
@@ -256,12 +262,16 @@ export default function CalendarPage() {
                             const isSunday = (i + 1) % 7 === 0;
                             const today = isToday(day);
 
-                            // For filtered view: decide what balance to show
-                            const showExpense = (filterType === 'all' || filterType === 'expense') && expense > 0;
-                            const showIncome = (filterType === 'all' || filterType === 'income') && income > 0;
-
                             const dayNote = notesByDate[dayToDateStr(day)];
                             const dayImages = dayNote?.images || [];
+
+                            // Calculate totals including image amounts
+                            const totalExpense = expense + dayImages.reduce((sum, img) => sum + (img.amount > 0 ? img.amount : 0), 0);
+                            const totalIncome = income + dayImages.reduce((sum, img) => sum + (img.amount < 0 ? Math.abs(img.amount) : 0), 0);
+
+                            // For filtered view: decide what balance to show
+                            const showExpense = (filterType === 'all' || filterType === 'expense') && totalExpense > 0;
+                            const showIncome = (filterType === 'all' || filterType === 'income') && totalIncome > 0;
 
                             return (
                                 <button
@@ -283,49 +293,56 @@ export default function CalendarPage() {
                                         {day}
                                     </span>
 
-                                    {/* Day content area - Centered */}
-                                    <div className="flex-1 w-full flex flex-col justify-center items-center gap-1">
-                                        {/* Image thumbnails */}
+                                    {/* Day content area */}
+                                    <div className="flex-1 w-full flex flex-col justify-center items-center gap-0.5">
+                                        {/* Image thumbnails — overlapping circles */}
                                         {dayImages.length > 0 && (
-                                            <div className="flex flex-wrap gap-0.5 justify-center mb-0.5">
-                                                {dayImages.slice(0, 2).map((url, idx) => (
+                                            <div className="flex items-center justify-center -space-x-3 mb-1">
+                                                {dayImages.slice(0, 2).map((img, idx) => (
                                                     <img
                                                         key={idx}
-                                                        src={url}
+                                                        src={img.url}
                                                         alt=""
-                                                        className="w-5 h-5 rounded-full object-cover shadow-sm flex-shrink-0"
+                                                        className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm bg-slate-100"
                                                     />
                                                 ))}
+                                                {dayImages.length > 2 && (
+                                                    <div className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm z-10">
+                                                        +{dayImages.length - 2}
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
                                         {/* Transaction amounts */}
                                         {showExpense && (
-                                            <div className="text-[9px] font-bold text-primary truncate px-1 bg-secondary-container dark:bg-primary-container/20 rounded-sm w-fit mx-auto leading-tight">
-                                                -{fmt(expense)}k
-                                            </div>
+                                            <span className="text-[9px] font-bold text-red-500 leading-tight truncate">
+                                                -{fmt(totalExpense)}
+                                            </span>
                                         )}
                                         {showIncome && (
-                                            <div className="text-[9px] font-bold text-emerald-600 truncate px-1 bg-emerald-50 dark:bg-emerald-900/10 rounded-sm w-fit mx-auto leading-tight">
-                                                +{fmt(income)}k
-                                            </div>
+                                            <span className="text-[9px] font-bold text-emerald-500 leading-tight truncate">
+                                                +{fmt(totalIncome)}
+                                            </span>
                                         )}
 
-                                        {/* + button centered */}
-                                        {!hasTx && dayImages.length === 0 && (
-                                            <div className="flex justify-center items-center">
-                                                <div
-                                                    className="w-6 h-6 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-all shadow-sm"
-                                                    onClick={(e) => handleDayPlus(day, e)}
-                                                >
-                                                    <Plus className="w-4 h-4" strokeWidth={2.5} />
+                                        {/* Show + button or content indicators */}
+                                        {(!hasTx && dayImages.length === 0) ? (
+                                            <div
+                                                className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/day:bg-purple-100 group-hover/day:text-purple-600 transition-all shadow-sm border border-dashed border-slate-200 dark:border-slate-700"
+                                                onClick={(e) => handleDayPlus(day, e)}
+                                            >
+                                                <Plus className="w-5 h-5" strokeWidth={3} />
+                                            </div>
+                                        ) : (
+                                            <div
+                                                className="absolute bottom-1 right-1 opacity-0 group-hover/day:opacity-100 transition-opacity"
+                                                onClick={(e) => handleDayPlus(day, e)}
+                                            >
+                                                <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-purple-600 shadow-lg border border-purple-100 dark:border-purple-900/50">
+                                                    <Plus className="w-4 h-4" strokeWidth={3} />
                                                 </div>
                                             </div>
-                                        )}
-
-                                        {/* Extra indicator for hidden items */}
-                                        {dayImages.length > 2 && (
-                                            <span className="text-[7px] font-bold text-slate-400">+{dayImages.length - 2} ảnh</span>
                                         )}
                                     </div>
                                 </button>
@@ -346,13 +363,22 @@ export default function CalendarPage() {
                                     </span>
                                 )}
                             </h3>
-                            <button
-                                onClick={() => openAddModal()}
-                                className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors active:scale-95"
-                            >
-                                <Plus className="w-3 h-3" />
-                                Thêm
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => triggerImageUpload(dayToDateStr(selectedDay))}
+                                    className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors active:scale-95"
+                                >
+                                    <ImageIcon className="w-3 h-3" />
+                                    Thêm ảnh
+                                </button>
+                                <button
+                                    onClick={() => openAddModal()}
+                                    className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors active:scale-95"
+                                >
+                                    <Plus className="w-3 h-3" />
+                                    Giao dịch
+                                </button>
+                            </div>
                         </div>
 
                         {/* Images section for selected day */}
@@ -365,17 +391,22 @@ export default function CalendarPage() {
                                         <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-gray-100 dark:border-slate-700 shadow-sm">
                                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Ảnh ngày này</p>
                                             <div className="flex flex-wrap gap-2">
-                                                {imgs.map((url, idx) => (
+                                                {imgs.map((img, idx) => (
                                                     <div key={idx} className="relative group/img">
                                                         <img
-                                                            src={url}
+                                                            src={img.url}
                                                             alt=""
-                                                            onClick={() => setLightboxImg(url)}
+                                                            onClick={() => setLightboxImg(img.url)}
                                                             className="w-16 h-16 rounded-xl object-cover cursor-pointer hover:scale-105 transition-transform shadow-sm"
                                                         />
+                                                        {img.amount > 0 && (
+                                                            <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 px-1 rounded-md shadow-sm">
+                                                                <span className="text-[8px] font-bold text-red-500">-{fmt(img.amount)}</span>
+                                                            </div>
+                                                        )}
                                                         <button
-                                                            onClick={() => removeImage(dateStr, url)}
-                                                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group/img:opacity-100 hover:bg-red-600 transition-all shadow"
+                                                            onClick={() => removeImage(dateStr, img.url)}
+                                                            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group/img:opacity-100 hover:bg-red-600 transition-all shadow"
                                                         >
                                                             <X className="w-3 h-3" />
                                                         </button>
@@ -524,7 +555,7 @@ export default function CalendarPage() {
                                 </h2>
                             </div>
 
-                            <div className="p-6 pb-24 grid grid-cols-2 gap-4">
+                            <div className="p-6 pb-28 grid grid-cols-2 gap-4">
                                 <button
                                     onClick={(e) => { setActionDay(null); openModalForDay(actionDay, e as any); }}
                                     className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all active:scale-95 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-700"

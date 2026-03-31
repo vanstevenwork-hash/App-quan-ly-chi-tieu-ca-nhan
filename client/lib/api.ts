@@ -144,8 +144,8 @@ export const uploadApi = {
 export const dayNotesApi = {
     getByMonth: (month: number, year: number) =>
         api.get('/day-notes', { params: { month, year } }),
-    addImage: (date: string, imageUrl: string) =>
-        api.post('/day-notes/add-image', { date, imageUrl }),
+    addImage: (date: string, imageUrl: string, amount = 0, label = '') =>
+        api.post('/day-notes/add-image', { date, imageUrl, amount, label }),
     removeImage: (date: string, imageUrl: string) =>
         api.delete('/day-notes/remove-image', { data: { date, imageUrl } }),
 };

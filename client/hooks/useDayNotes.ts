@@ -2,10 +2,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { dayNotesApi } from '@/lib/api';
 
+export interface DayImage {
+    url: string;
+    amount: number; // expense amount for this photo (positive = expense)
+    label: string;
+}
+
 export interface DayNote {
     _id: string;
     date: string; // YYYY-MM-DD
-    images: string[];
+    images: DayImage[];
     note: string;
 }
 
@@ -17,11 +23,10 @@ export function useDayNotes(month: number, year: number) {
     const fetch = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await dayNotesApi.getByMonth(month + 1, year); // month is 0-indexed
+            const res = await dayNotesApi.getByMonth(month + 1, year);
             setNotes(res.data?.data || []);
             setIsMock(false);
         } catch {
-            // Demo mode — ignore errors and keep current mock notes
             setIsMock(true);
         } finally {
             setLoading(false);
@@ -34,19 +39,20 @@ export function useDayNotes(month: number, year: number) {
     const notesByDate: Record<string, DayNote> = {};
     notes.forEach(n => { notesByDate[n.date] = n; });
 
-    const addImage = async (date: string, imageUrl: string) => {
+    const addImage = async (date: string, imageUrl: string, amount = 0, label = '') => {
         if (isMock) {
+            const entry: DayImage = { url: imageUrl, amount, label };
             setNotes(prev => {
                 const existing = prev.find(n => n.date === date);
                 if (existing) {
-                    return prev.map(n => n.date === date ? { ...n, images: [...n.images, imageUrl] } : n);
+                    return prev.map(n => n.date === date ? { ...n, images: [...n.images, entry] } : n);
                 }
-                return [...prev, { _id: Date.now().toString(), date, images: [imageUrl], note: '' }];
+                return [...prev, { _id: Date.now().toString(), date, images: [entry], note: '' }];
             });
             return;
         }
         try {
-            await dayNotesApi.addImage(date, imageUrl);
+            await dayNotesApi.addImage(date, imageUrl, amount, label);
             await fetch();
         } catch (err) {
             throw err;
@@ -55,7 +61,9 @@ export function useDayNotes(month: number, year: number) {
 
     const removeImage = async (date: string, imageUrl: string) => {
         if (isMock) {
-            setNotes(prev => prev.map(n => n.date === date ? { ...n, images: n.images.filter(i => i !== imageUrl) } : n));
+            setNotes(prev => prev.map(n =>
+                n.date === date ? { ...n, images: n.images.filter(i => i.url !== imageUrl) } : n
+            ));
             return;
         }
         try {
