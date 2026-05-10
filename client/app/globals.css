@@ -187,4 +187,20 @@
   .shadow-bottom-nav {
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
   }
+
+  /* Bill Scanner — scan line animation */
+  .animate-scan-line {
+    animation: scanLine 2s ease-in-out infinite;
+  }
+
+  @keyframes scanLine {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+  }
+
+  .border-3 {
+    border-width: 3px;
+  }
 }

@@ -10,6 +10,8 @@ const transactionSchema = new mongoose.Schema({
     accountId: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
     cardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card' },
     paymentMethod: { type: String, default: 'cash' },
+    // Receipt image (ảnh bill/hóa đơn)
+    receiptImage: { type: String, default: '' },
     // Installment (trả góp)
     isInstallment: { type: Boolean, default: false },
     installmentMonths: { type: Number, default: 0 },

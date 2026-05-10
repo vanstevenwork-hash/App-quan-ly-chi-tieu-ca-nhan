@@ -48,6 +48,7 @@ app.use('/api/wealth', require('./routes/wealth'));
 app.use('/api/banks', require('./routes/banks'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/day-notes', require('./routes/dayNotes'));
+app.use('/api/ocr', require('./routes/ocr'));
 
 // ===== SSE Stream endpoint =====
 // GET /api/notifications/stream  (auth via ?token=... query param)

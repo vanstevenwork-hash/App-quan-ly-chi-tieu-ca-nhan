@@ -7,9 +7,10 @@ import { useCards } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
-import { Banknote, ArrowRight, Calendar, Check, RefreshCw } from 'lucide-react';
+import { Banknote, ArrowRight, Calendar, Check, RefreshCw, ScanLine, X, Image as ImageIcon } from 'lucide-react';
 import { getBankLogo } from '@/lib/bankLogos';
 import PaymentCard from './cards/PaymentCard';
+import BillScanner from './BillScanner';
 
 interface AddTransactionModalProps {
     open: boolean;
@@ -32,6 +33,9 @@ export default function AddTransactionModal({
     const [saving, setSaving] = useState(false);
     const { createTransaction, updateTransaction } = useTransactions();
     const [errors, setErrors] = useState<{ amount?: string; category?: string }>({});
+    // Bill Scanner
+    const [showScanner, setShowScanner] = useState(false);
+    const [receiptImage, setReceiptImage] = useState('');
     // Installment (Trả góp)
     const [isInstallment, setIsInstallment] = useState(false);
     const [installmentMonths, setInstallmentMonths] = useState(12);
@@ -82,6 +86,8 @@ export default function AddTransactionModal({
                 setSelectedCardId('cash');
                 setIsInstallment(false);
                 setInstallmentMonths(12);
+                setReceiptImage('');
+                setShowScanner(false);
             }
             setErrors({});
         }
@@ -141,6 +147,7 @@ export default function AddTransactionModal({
                 date: new Date(date),
                 paymentMethod: selectedCardId === 'cash' ? 'cash' : 'card',
                 cardId: selectedCardId === 'cash' ? null : selectedCardId,
+                receiptImage: receiptImage || undefined,
                 isInstallment: paymentTab === 'credit' && isInstallment,
                 installmentMonths: paymentTab === 'credit' && isInstallment ? installmentMonths : 0,
                 installmentMonthly: paymentTab === 'credit' && isInstallment ? monthlyPayment : 0,
@@ -201,9 +208,72 @@ export default function AddTransactionModal({
                     <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">
                         {initialData ? 'Sửa giao dịch' : 'Thêm giao dịch'}
                     </h2>
+                    {!initialData && (
+                        <button
+                            onClick={() => setShowScanner(s => !s)}
+                            className={cn(
+                                'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95',
+                                showScanner
+                                    ? 'bg-[#7f19e6] text-white shadow-md shadow-purple-500/25'
+                                    : 'bg-purple-50 dark:bg-purple-900/30 text-[#7f19e6] dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+                            )}
+                        >
+                            <ScanLine className="w-4 h-4" />
+                            <span className="hidden sm:inline">Scan Bill</span>
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex-1 overflow-y-auto pt-1 hide-scrollbar pb-20 bg-white dark:bg-slate-900 px-4 space-y-3">
+                    {/* ── Bill Scanner Panel ── */}
+                    {showScanner && (
+                        <div className="rounded-2xl border-2 border-[#7f19e6]/20 bg-gradient-to-b from-purple-50/50 to-white dark:from-purple-900/10 dark:to-slate-900 p-4 -mx-0.5">
+                            <BillScanner
+                                onResult={(result) => {
+                                    // Fill form with OCR results
+                                    if (result.amount > 0) {
+                                        setAmount(result.amount.toString());
+                                    }
+                                    if (result.date) {
+                                        setDate(result.date);
+                                    }
+                                    if (result.note) {
+                                        setNote(result.note);
+                                    }
+                                    if (result.suggestedCategory) {
+                                        setCategory(result.suggestedCategory);
+                                    }
+                                    if (result.imageUrl) {
+                                        setReceiptImage(result.imageUrl);
+                                    }
+                                    setShowScanner(false);
+                                    setErrors({});
+                                    toast.success('✅ Đã điền thông tin từ bill!');
+                                }}
+                                onClose={() => setShowScanner(false)}
+                            />
+                        </div>
+                    )}
+
+                    {/* Receipt image thumbnail (shown when scanned) */}
+                    {receiptImage && !showScanner && (
+                        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30">
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 border border-purple-200 dark:border-purple-700">
+                                <img src={receiptImage} alt="Receipt" className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-purple-700 dark:text-purple-300">📋 Ảnh bill đính kèm</p>
+                                <p className="text-[10px] text-purple-500 dark:text-purple-400">Đã scan và nhận diện</p>
+                            </div>
+                            <button
+                                onClick={() => setReceiptImage('')}
+                                className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex-shrink-0"
+                            >
+                                <X className="w-3.5 h-3.5 text-red-500" />
+                            </button>
+                        </div>
+                    )}
+
                     {/* Toggle Type */}
                     <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
                         {(['expense', 'income'] as const).map(t => (

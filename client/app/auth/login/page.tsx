@@ -4,7 +4,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuthStore } from '@/store/useStore';
 import { authApi } from '@/lib/api';
 import { mockUser } from '@/lib/mockData';
@@ -18,6 +20,13 @@ export default function LoginPage() {
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+    
+    // Forgot Password State
+    const [showForgotPwd, setShowForgotPwd] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
+    const [forgotSuccess, setForgotSuccess] = useState(false);
+
     const router = useRouter();
     const login = useAuthStore(s => s.login);
 
@@ -36,10 +45,9 @@ export default function LoginPage() {
             const res = await authApi.login({ email, password });
             login(res.data.user, res.data.token);
             router.push('/dashboard');
-        } catch {
-            // Demo mode: login with any credentials
-            login(mockUser, 'mock-token');
-            router.push('/dashboard');
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || 'Email hoặc mật khẩu không đúng';
+            setErrors({ general: msg });
         } finally {
             setLoading(false);
         }
@@ -48,6 +56,24 @@ export default function LoginPage() {
     const handleDemoLogin = () => {
         login(mockUser, 'mock-token');
         router.push('/dashboard');
+    };
+
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!forgotEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotEmail)) {
+            toast.error('Vui lòng nhập email hợp lệ');
+            return;
+        }
+
+        setForgotLoading(true);
+        try {
+            await authApi.forgotPassword(forgotEmail);
+            setForgotSuccess(true);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại sau');
+        } finally {
+            setForgotLoading(false);
+        }
     };
 
     return (
@@ -109,9 +135,17 @@ export default function LoginPage() {
                     </div>
 
                     <div className="text-right">
-                        <Link href="#" className="text-primary text-sm font-medium hover:underline">
+                        <button 
+                            type="button"
+                            onClick={() => {
+                                setShowForgotPwd(true);
+                                setForgotEmail('');
+                                setForgotSuccess(false);
+                            }} 
+                            className="text-primary text-sm font-medium hover:underline"
+                        >
                             Quên mật khẩu?
-                        </Link>
+                        </button>
                     </div>
 
                     {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
@@ -170,6 +204,68 @@ export default function LoginPage() {
                     Đăng ký ngay
                 </Link>
             </div>
+
+            {/* Forgot Password Dialog */}
+            <Dialog open={showForgotPwd} onOpenChange={setShowForgotPwd}>
+                <DialogContent className="sm:max-w-md rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl">Quên mật khẩu?</DialogTitle>
+                        <DialogDescription>
+                            Nhập email của bạn và chúng tôi sẽ gửi một mật khẩu mới.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    {forgotSuccess ? (
+                        <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
+                            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                            </div>
+                            <h3 className="font-bold text-lg">Đã gửi thành công!</h3>
+                            <p className="text-sm text-muted-foreground">
+                                Vui lòng kiểm tra hộp thư đến (và thư mục rác) của <b>{forgotEmail}</b> để nhận mật khẩu mới.
+                            </p>
+                            <Button 
+                                className="mt-4 w-full rounded-xl" 
+                                onClick={() => setShowForgotPwd(false)}
+                            >
+                                Đóng
+                            </Button>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                    type="email"
+                                    placeholder="Nhập email của bạn"
+                                    value={forgotEmail}
+                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                    className="pl-10 rounded-xl h-12"
+                                    required
+                                />
+                            </div>
+                            <DialogFooter>
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    onClick={() => setShowForgotPwd(false)}
+                                    className="rounded-xl"
+                                >
+                                    Hủy
+                                </Button>
+                                <Button 
+                                    type="submit" 
+                                    disabled={forgotLoading}
+                                    className="rounded-xl bg-primary hover:bg-primary/90"
+                                >
+                                    {forgotLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Gửi mật khẩu mới
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

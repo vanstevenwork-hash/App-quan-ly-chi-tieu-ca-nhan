@@ -96,13 +96,14 @@ exports.getTransaction = async (req, res) => {
 exports.createTransaction = async (req, res) => {
     try {
         console.log('🚀 SERVER: createTransaction REACHED!');
-        const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate } = req.body;
+        const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate, receiptImage } = req.body;
 
         const t = await Transaction.create({
             userId: req.user._id,
             type, amount, category, note,
             date: date ? new Date(date) : new Date(),
             cardId, paymentMethod,
+            receiptImage,
             isInstallment, installmentMonths, installmentMonthly, installmentStartDate
         });
 

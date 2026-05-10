@@ -21,11 +21,16 @@ api.interceptors.response.use(
     (res) => res,
     (err) => {
         if (err.response?.status === 401 && typeof window !== 'undefined') {
-            const token = localStorage.getItem('token');
-            // Don't redirect if using demo/mock mode
-            if (token !== 'mock-token') {
-                localStorage.removeItem('token');
-                window.location.href = '/auth/login';
+            // Skip redirect for auth endpoints (login/register) — let the page handle the error
+            const url = err.config?.url || '';
+            const isAuthRequest = url.includes('/auth/login') || url.includes('/auth/register');
+            if (!isAuthRequest) {
+                const token = localStorage.getItem('token');
+                // Don't redirect if using demo/mock mode
+                if (token !== 'mock-token') {
+                    localStorage.removeItem('token');
+                    window.location.href = '/auth/login';
+                }
             }
         }
         return Promise.reject(err);
@@ -40,6 +45,7 @@ export const authApi = {
         api.post('/auth/login', data),
     getProfile: () => api.get('/auth/profile'),
     updateProfile: (data: object) => api.put('/auth/profile', data),
+    forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
 };
 
 // Transactions
@@ -138,6 +144,27 @@ export const uploadApi = {
         }
         return api.delete(`/upload/${encodeURIComponent(publicId)}`);
     }
+};
+
+// OCR (Receipt Scanning)
+export const ocrApi = {
+    scanReceipt: async (file: File): Promise<{
+        amount: number;
+        date: string;
+        note: string;
+        suggestedCategory: string;
+        imageUrl: string;
+        rawText: string;
+        confidence: number;
+    }> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await api.post('/ocr/scan-receipt', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: 60000, // OCR can take time
+        });
+        return res.data.data;
+    },
 };
 
 // Day Notes (calendar images)
