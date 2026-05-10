@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, TrendingUp, TrendingDown, PieChartIcon, X, ImageIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, TrendingUp, TrendingDown, PieChartIcon, X, ImageIcon, Target } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useUIStore } from '@/store/useStore';
 import { useDayNotes } from '@/hooks/useDayNotes';
@@ -504,13 +504,13 @@ export default function CalendarPage() {
                 {/* ── Insights Bento ── */}
                 <section className="grid grid-cols-2 gap-3 pb-4">
                     <Link
-                        href="/budget"
+                        href="/goals"
                         className="bg-violet-50 dark:bg-violet-900/20 p-4 rounded-2xl space-y-3 border border-violet-100 dark:border-violet-900/30 hover:border-violet-200 active:scale-95 transition-all"
                     >
                         <div className="w-9 h-9 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
-                            <PieChartIcon className="w-5 h-5 text-purple-500" />
+                            <Target className="w-5 h-5 text-purple-500" />
                         </div>
-                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Ngân sách</p>
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Mục tiêu</p>
                         {monthSummary.expense > 0 ? (
                             <div className="space-y-1">
                                 <div className="w-full bg-white dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">

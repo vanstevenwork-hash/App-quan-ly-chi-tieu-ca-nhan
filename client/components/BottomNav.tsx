@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CalendarDays, PieChart, Settings } from 'lucide-react';
+import { CalendarDays, Target, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import HomeIcon from './icons/HomeIcon';
 import WalletIcon from './icons/WalletIcon';
@@ -14,7 +14,7 @@ const navItems: NavItem[] = [
     { href: '/dashboard', icon: HomeIcon, label: 'Tổng quan' },
     { href: '/calendar', icon: CalendarDays, label: 'Lịch' },
     { href: '/accounts', icon: WalletIcon, label: 'Tài khoản' },
-    { href: '/budget', icon: PieChart, label: 'Ngân sách' },
+    { href: '/goals', icon: Target, label: 'Mục tiêu' },
     { href: '/settings', icon: Settings, label: 'Cài đặt' },
 ];
 
