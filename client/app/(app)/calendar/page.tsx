@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, TrendingUp, TrendingDown, PieChartIcon, X, ImageIcon, Target } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, TrendingUp, TrendingDown, PieChartIcon, X, ImageIcon, Target, Wallet } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useUIStore } from '@/store/useStore';
 import { useDayNotes } from '@/hooks/useDayNotes';
@@ -32,6 +32,48 @@ function getMonOffset(dayOfWeek: number) {
     return (dayOfWeek + 6) % 7;
 }
 
+/* ── Donut Chart Component ── */
+const DonutChart = ({ expensePct }: { expensePct: number }) => {
+    const radius = 40;
+    const strokeW = 9;
+    const circumference = 2 * Math.PI * radius;
+    const expenseLen = (expensePct / 100) * circumference;
+    const incomeLen = circumference - expenseLen;
+    const gap = 6;
+
+    return (
+        <div className="relative w-[100px] h-[100px] flex items-center justify-center">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="expGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#EC4899" />
+                        <stop offset="100%" stopColor="#8B5CF6" />
+                    </linearGradient>
+                    <linearGradient id="incGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#06B6D4" />
+                        <stop offset="100%" stopColor="#10B981" />
+                    </linearGradient>
+                </defs>
+                {/* Background track */}
+                <circle cx="50" cy="50" r={radius} fill="transparent" stroke="#1E1B31" strokeWidth={strokeW} />
+                {/* Expense arc */}
+                <circle cx="50" cy="50" r={radius} fill="transparent" stroke="url(#expGrad)" strokeWidth={strokeW}
+                    strokeDasharray={`${Math.max(expenseLen - gap, 0)} ${circumference - Math.max(expenseLen - gap, 0)}`}
+                    strokeLinecap="round" />
+                {/* Income arc */}
+                <circle cx="50" cy="50" r={radius} fill="transparent" stroke="url(#incGrad)" strokeWidth={strokeW}
+                    strokeDasharray={`${Math.max(incomeLen - gap, 0)} ${circumference - Math.max(incomeLen - gap, 0)}`}
+                    strokeDashoffset={`${-expenseLen}`}
+                    strokeLinecap="round" />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="text-[15px] font-black text-white leading-none">{expensePct.toFixed(0)}%</span>
+                <span className="text-[9px] font-semibold text-slate-400 mt-0.5">Chi tiêu</span>
+            </div>
+        </div>
+    );
+};
+
 export default function CalendarPage() {
     const now = new Date();
     const [viewDate, setViewDate] = useState({ month: now.getMonth(), year: now.getFullYear() });
@@ -52,6 +94,7 @@ export default function CalendarPage() {
     const [uploadPreview, setUploadPreview] = useState<string | null>(null);
     const [uploadAmount, setUploadAmount] = useState('');
     const [uploadNote, setUploadNote] = useState('');
+    const [uploadCategory, setUploadCategory] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
@@ -152,6 +195,7 @@ export default function CalendarPage() {
         setUploadPreview(URL.createObjectURL(file));
         setUploadAmount('');
         setUploadNote('');
+        setUploadCategory('');
         setUploadModalOpen(true);
         e.target.value = ''; // Reset input so same file can be selected again
         setActionDay(null); // Close action sheet if open
@@ -163,11 +207,11 @@ export default function CalendarPage() {
         if (!uploadFile || !uploadingDate) return;
 
         const amount = parseInt(uploadAmount.replace(/\D/g, '') || '0', 10);
-        
+
         try {
             setIsUploading(true);
             const { url } = await uploadApi.uploadImage(uploadFile, 'chi_tieu/calendar');
-            await addImage(uploadingDate, url, amount, uploadNote);
+            await addImage(uploadingDate, url, amount, uploadCategory || uploadNote);
             toast.success('Đã thêm ảnh thành công!');
             setUploadModalOpen(false);
             setUploadingDate(null);
@@ -213,26 +257,44 @@ export default function CalendarPage() {
             </header>
 
             <main className="px-6 space-y-8">
-                {/* ── Summary Card: Tonal Layering ── */}
-                <section className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-[0_32px_32px_-4px_rgba(98,69,208,0.08)] border border-slate-50 dark:border-slate-700/50">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-[10px] font-bold uppercase tracking-widest text-on-surface/40 dark:text-slate-500">Tổng quan tháng {viewDate.month + 1}</h2>
-                        <span className="w-5 h-5 flex items-center justify-center text-on-surface/20 dark:text-slate-600">
-                            <ImageIcon className="w-4 h-4 opacity-0" /> {/* Placeholder for material symbol */}
-                            <ChevronRight className="w-4 h-4 opacity-20 rotate-90" />
-                        </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-8">
-                        <div className="space-y-1 border-r border-slate-100 dark:border-slate-700">
-                            <p className="text-xs font-medium text-on-surface/60 dark:text-slate-400">Chi (Expenses)</p>
-                            <p className="text-2xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
-                                {fmtFull(monthSummary.expense)}đ
+                {/* ── Summary Card: Dark Gradient + Donut ── */}
+                <section className="bg-gradient-to-br from-[#1A1730] via-[#161328] to-[#121020] rounded-3xl p-5 shadow-2xl border border-slate-700/40 relative overflow-hidden">
+                    {/* Subtle glow */}
+                    <div className="absolute -top-20 -right-20 w-52 h-52 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-4 relative z-10">Tổng quan tháng {viewDate.month + 1}</p>
+
+                    <div className="flex items-center justify-between relative z-10">
+                        {/* Left: Chi tiêu */}
+                        <div className="flex-1 space-y-1">
+                            <p className="text-[11px] font-semibold text-slate-400">Chi tiêu</p>
+                            <p className="text-[18px] font-black text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.expense)}</p>
+                            <p className="text-[9px] font-bold text-red-400 flex items-center gap-0.5 mt-1">
+                                <TrendingDown className="w-3 h-3" /> 12.5% <span className="text-slate-500 font-medium">so với tháng {viewDate.month === 0 ? 12 : viewDate.month}</span>
                             </p>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-xs font-medium text-on-surface/60 dark:text-slate-400">Thu (Income)</p>
-                            <p className="text-2xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
-                                {fmtFull(monthSummary.income)}đ
+
+                        {/* Center: Donut */}
+                        <div className="mx-2 shrink-0">
+                            <DonutChart expensePct={
+                                monthSummary.expense + monthSummary.income > 0
+                                    ? Math.round((monthSummary.expense / (monthSummary.expense + monthSummary.income)) * 100)
+                                    : 0
+                            } />
+                        </div>
+
+                        {/* Right: Thu nhập */}
+                        <div className="flex-1 space-y-1 text-right">
+                            <div className="flex items-center justify-end gap-2 mb-1">
+                                <p className="text-[11px] font-semibold text-slate-400">Thu nhập</p>
+                                <div className="w-7 h-7 rounded-lg bg-[#1A2A2D] flex items-center justify-center border border-[#243A3E]">
+                                    <Wallet className="w-3.5 h-3.5 text-emerald-400" />
+                                </div>
+                            </div>
+                            <p className="text-[18px] font-black text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.income)}</p>
+                            <p className="text-[9px] font-bold text-emerald-400 flex items-center justify-end gap-0.5 mt-1">
+                                <TrendingUp className="w-3 h-3" /> 8.4% <span className="text-slate-500 font-medium">so với tháng {viewDate.month === 0 ? 12 : viewDate.month}</span>
                             </p>
                         </div>
                     </div>
@@ -286,6 +348,10 @@ export default function CalendarPage() {
                             const dayNote = notesByDate[dayToDateStr(day)];
                             const dayImages = dayNote?.images || [];
 
+                            // Combine day note images and transaction receipt images
+                            const txImages = (dayData?.txs || []).filter(t => t.receiptImage).map(t => ({ url: t.receiptImage, amount: 0 }));
+                            const combinedImages = [...dayImages, ...txImages];
+
                             // Calculate totals including image amounts
                             const totalExpense = expense + dayImages.reduce((sum, img) => sum + (img.amount > 0 ? img.amount : 0), 0);
                             const totalIncome = income + dayImages.reduce((sum, img) => sum + (img.amount < 0 ? Math.abs(img.amount) : 0), 0);
@@ -317,9 +383,9 @@ export default function CalendarPage() {
                                     {/* Day content area */}
                                     <div className="flex-1 w-full flex flex-col justify-center items-center gap-0.5">
                                         {/* Image thumbnails — overlapping circles */}
-                                        {dayImages.length > 0 && (
+                                        {combinedImages.length > 0 && (
                                             <div className="flex items-center justify-center -space-x-3 mb-1">
-                                                {dayImages.slice(0, 2).map((img, idx) => (
+                                                {combinedImages.slice(0, 2).map((img, idx) => (
                                                     <img
                                                         key={idx}
                                                         src={img.url}
@@ -327,9 +393,9 @@ export default function CalendarPage() {
                                                         className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm bg-slate-100"
                                                     />
                                                 ))}
-                                                {dayImages.length > 2 && (
+                                                {combinedImages.length > 2 && (
                                                     <div className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm z-10">
-                                                        +{dayImages.length - 2}
+                                                        +{combinedImages.length - 2}
                                                     </div>
                                                 )}
                                             </div>
@@ -350,10 +416,10 @@ export default function CalendarPage() {
                                         {/* Show + button or content indicators */}
                                         {(!hasTx && dayImages.length === 0) ? (
                                             <div
-                                                className="w-7 h-7 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/day:bg-purple-100 group-hover/day:text-purple-600 transition-all shadow-sm border border-dashed border-slate-200 dark:border-slate-700"
+                                                className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/day:bg-purple-100 group-hover/day:text-purple-600 transition-all shadow-sm border border-dashed border-slate-200 dark:border-slate-700"
                                                 onClick={(e) => handleDayPlus(day, e)}
                                             >
-                                                <Plus className="w-5 h-5" strokeWidth={3} />
+                                                <Plus className="w-3 h-3" strokeWidth={3} />
                                             </div>
                                         ) : (
                                             <div
@@ -409,36 +475,47 @@ export default function CalendarPage() {
                             return (
                                 <div className="space-y-2">
                                     {imgs.length > 0 && (
-                                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-gray-100 dark:border-slate-700 shadow-sm">
-                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Ảnh ngày này</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {imgs.map((img, idx) => (
-                                                    <div key={idx} className="relative group/img">
-                                                        <img
-                                                            src={img.url}
-                                                            alt=""
-                                                            onClick={() => setLightboxImg(img.url)}
-                                                            className="w-16 h-16 rounded-xl object-cover cursor-pointer hover:scale-105 transition-transform shadow-sm"
-                                                        />
-                                                        {img.amount > 0 && (
-                                                            <div className="absolute -bottom-1 -right-1 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 px-1 rounded-md shadow-sm">
-                                                                <span className="text-[8px] font-bold text-red-500">-{fmt(img.amount)}</span>
-                                                            </div>
-                                                        )}
-                                                        <button
-                                                            onClick={() => removeImage(dateStr, img.url)}
-                                                            className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group/img:opacity-100 hover:bg-red-600 transition-all shadow"
-                                                        >
-                                                            <X className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-sm">
+                                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">ẢNH NGÀY NÀY</p>
+                                            <div className="flex flex-wrap gap-3">
+                                                {imgs.map((img, idx) => {
+                                                    const imgCat = img.label ? CATEGORIES.find(c => c.label === img.label) : null;
+                                                    return (
+                                                        <div key={idx} className="relative group/img">
+                                                            <img
+                                                                src={img.url}
+                                                                alt=""
+                                                                onClick={() => setLightboxImg(img.url)}
+                                                                className="w-16 h-16 rounded-xl object-cover cursor-pointer hover:scale-105 transition-transform shadow-md ring-1 ring-black/5"
+                                                            />
+                                                            {/* Category icon - bottom left */}
+                                                            {imgCat && (
+                                                                <div className="absolute -bottom-1.5 -left-1.5 w-7 h-7 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center text-sm z-10">
+                                                                    {imgCat.icon}
+                                                                </div>
+                                                            )}
+                                                            {/* Amount badge - bottom right */}
+                                                            {img.amount > 0 && (
+                                                                <div className="absolute -bottom-1.5 -right-1.5 bg-slate-900 dark:bg-slate-700 px-1.5 py-0.5 rounded-sm shadow-lg z-10">
+                                                                    <span className="text-[9px] font-black text-red-400">-{fmt(img.amount)}</span>
+                                                                </div>
+                                                            )}
+                                                            {/* Delete button */}
+                                                            <button
+                                                                onClick={() => removeImage(dateStr, img.url)}
+                                                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 hover:bg-red-600 transition-all shadow-lg z-20"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
                                                 {/* Add more images */}
                                                 <button
                                                     onClick={() => triggerImageUpload(dateStr)}
-                                                    className="w-16 h-16 rounded-xl border-2 border-dashed border-purple-200 dark:border-purple-900/40 flex items-center justify-center text-purple-400 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
+                                                    className="w-16 h-16  rounded-2xl border-2 border-dashed border-purple-300 dark:border-purple-800 flex items-center justify-center text-purple-400 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
                                                 >
-                                                    <Plus className="w-5 h-5" />
+                                                    <Plus className="w-6 h-6" />
                                                 </button>
                                             </div>
                                         </div>
@@ -653,7 +730,7 @@ export default function CalendarPage() {
                             )}
                             {/* Gradient Overlay */}
                             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent" />
-                            
+
                             <h2 className="absolute bottom-4 left-5 text-xl font-bold text-white shadow-sm">
                                 Thêm Ghi Chú Ngày
                             </h2>
@@ -661,6 +738,31 @@ export default function CalendarPage() {
 
                         {/* Form Body */}
                         <div className="p-5 space-y-4 overflow-y-auto">
+                            {/* Category Selector */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                    Danh mục <span className="text-red-400">*</span>
+                                </label>
+                                <div className="flex flex-wrap gap-2">
+                                    {CATEGORIES.filter(c => !['Lương', 'Freelance', 'Đầu tư', 'Thưởng', 'Tiền lãi'].includes(c.label)).slice(0, 12).map(cat => (
+                                        <button
+                                            key={cat.label}
+                                            type="button"
+                                            onClick={() => setUploadCategory(cat.label)}
+                                            className={cn(
+                                                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border',
+                                                uploadCategory === cat.label
+                                                    ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-400 text-purple-700 dark:text-purple-300 scale-105 shadow-sm'
+                                                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
+                                            )}
+                                        >
+                                            <span className="text-sm">{cat.icon}</span>
+                                            {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="space-y-1.5">
                                 <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
                                     Số tiền <span className="text-slate-400 font-normal">(không bắt buộc)</span>
