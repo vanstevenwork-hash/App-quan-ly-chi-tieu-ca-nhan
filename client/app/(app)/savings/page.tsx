@@ -1,16 +1,16 @@
 'use client';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
-    Plus, ArrowLeft, TrendingUp,
+    Plus, TrendingUp,
     PiggyBank, History, BarChart3, RefreshCw,
     AlertTriangle, CalendarCheck, Percent, CheckCircle2,
     Pencil, Trash2, Gift,
 } from 'lucide-react';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
+import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -198,7 +198,6 @@ export default function SavingsPage() {
 
     const [showForm, setShowForm] = useState(false);
     const [editCard, setEditCard] = useState<Card | null>(null);
-    const router = useRouter();
 
     const savingsCards = useMemo(() => cards.filter(c => c.cardType === 'savings'), [cards]);
 
@@ -236,23 +235,19 @@ export default function SavingsPage() {
 
             <div className="relative z-10 pb-8">
                 {/* ── Header ─────────────────────────────────────── */}
-                <header className="pt-14 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
-                    <button onClick={() => router.push('/dashboard')}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div className="flex-1">
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Tài chính</p>
-                        <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">Tiết kiệm 🐷</h1>
-                    </div>
-                    <button onClick={refresh}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
-                        <RefreshCw className="w-4 h-4" />
-                        {maturingSoon.length > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-white dark:border-slate-800" />
-                        )}
-                    </button>
-                </header>
+                <PageHeader
+                    title="Tiết kiệm 🐷"
+                    subtitle="Tài chính"
+                    rightActions={
+                        <button onClick={refresh}
+                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
+                            <RefreshCw className="w-4 h-4" />
+                            {maturingSoon.length > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-white dark:border-slate-800" />
+                            )}
+                        </button>
+                    }
+                />
 
                 {/* ── Hero ─────────────────────────────────────── */}
                 <div className="text-center px-6 mb-8">

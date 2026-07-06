@@ -9,6 +9,8 @@ import { useBanks } from '@/hooks/useBanks';
 import { useAuthStore } from '@/store/useStore';
 import { useCards } from '@/hooks/useCards';
 import { toast } from 'sonner';
+import { E_WALLETS, CRYPTOS } from '@/lib/constants';
+import Image from 'next/image';
 
 const CARD_TYPES = [
     { value: 'credit', label: 'Thẻ tín dụng', icon: '💳', desc: 'Thanh toán sau, có hạn mức' },
@@ -17,18 +19,6 @@ const CARD_TYPES = [
     { value: 'eWallet', label: 'Ví điện tử', icon: '📱', desc: 'MoMo, ZaloPay...' },
     { value: 'crypto', label: 'Crypto', icon: '₿', desc: 'Bitcoin, ETH, USDT...' },
 ] as const;
-
-const E_WALLETS = [
-    { name: 'MoMo', short: 'MoMo', color: '#A21CAF', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Transparent.png' },
-    { name: 'ZaloPay', short: 'ZLP', color: '#0284C7', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-Square.png' },
-    { name: 'Khác', short: '???', color: '#6C63FF', logo: '' },
-];
-
-const CRYPTOS = [
-    { name: 'Binance', short: 'BNB', color: '#F0B90B', logo: '' },
-    { name: 'OKX', short: 'OKX', color: '#1C1C1E', logo: '' },
-    { name: 'Bybit', short: 'BBT', color: '#F7A600', logo: '' },
-];
 
 // Standard color palette — black & white are special
 const CARD_COLORS = [
@@ -395,7 +385,7 @@ duration-200
                                 E_WALLETS.map(bank => (
                                     <button key={bank.short} onClick={() => selectBank({ name: bank.name, shortName: bank.short, color: bank.color, logo: bank.logo })}
                                         className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.short ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
-                                        {bank.logo ? <img src={bank.logo} alt={bank.name} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" /> : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: bank.color }}>{bank.short.slice(0, 3)}</div>}
+                                        {bank.logo ? <Image src={bank.logo} width={40} height={40} alt={bank.name} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" /> : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: bank.color }}>{bank.short.slice(0, 3)}</div>}
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.name}</span>
                                     </button>
                                 ))
@@ -411,7 +401,7 @@ duration-200
                                 fetchedBanks.filter(b => b.name.toLowerCase().includes(searchBank.toLowerCase()) || b.shortName.toLowerCase().includes(searchBank.toLowerCase())).map(bank => (
                                     <button key={bank.bin || bank.shortName} onClick={() => selectBank(bank)}
                                         className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.shortName ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
-                                        <img src={bank.logo} alt={bank.shortName} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" />
+                                        {bank.logo ? <Image src={bank.logo} width={40} height={40} alt={bank.shortName} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" /> : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm bg-slate-300">{bank.shortName?.slice(0, 3)}</div>}
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.shortName}</span>
                                     </button>
                                 ))

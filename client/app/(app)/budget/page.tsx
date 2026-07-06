@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Calendar, Plus, Lightbulb, Pencil, Trash2, X } from 'lucide-react';
 import { useBudgets, type Budget } from '@/hooks/useBudgets';
-import { formatShortCurrency, CATEGORIES } from '@/lib/mockData';
+import { formatShortCurrency, CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 
 // ===== Donut chart =====
@@ -56,7 +56,7 @@ function BudgetFormModal({
     const [amount, setAmount] = useState(editBudget?.amount || 2000000);
     const [saving, setSaving] = useState(false);
 
-    const catInfo = CATEGORIES.find(c => c.label === category);
+    const catInfo = CATEGORIES_MAP.get(category);
 
     const handleSave = async () => {
         setSaving(true);
@@ -126,7 +126,7 @@ export default function BudgetPage() {
     return (
         <div className="min-h-screen bg-[#F0F2F8]">
             {/* Header */}
-            <div className="gradient-primary px-5 pt-14 pb-5 flex items-center justify-between">
+            <div className="gradient-primary px-5 pb-5 flex items-center justify-between" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3.5rem)' }}>
                 <h1 className="text-white font-bold text-xl">Ngân sách</h1>
                 <button onClick={() => { setEditBudget(null); setShowForm(true); }}
                     className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
@@ -185,7 +185,7 @@ export default function BudgetPage() {
                                     const pct = budget.amount > 0 ? Math.min(budget.spent / budget.amount, 1) : 0;
                                     const status = getStatus(budget.spent, budget.amount);
                                     const remaining = budget.amount - budget.spent;
-                                    const cat = CATEGORIES.find(c => c.label === budget.category);
+                                    const cat = CATEGORIES_MAP.get(budget.category);
                                     const icon = cat?.icon || '💰';
                                     return (
                                         <div key={budget._id} className="px-4 py-4">

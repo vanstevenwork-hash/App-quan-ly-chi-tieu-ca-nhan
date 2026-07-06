@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Camera, Upload, X, Loader2, Sparkles, Check, AlertCircle, RotateCcw, ScanLine, Receipt, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ocrApi } from '@/lib/api';
@@ -29,6 +29,12 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
     const [result, setResult] = useState<ScanResult | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [dragOver, setDragOver] = useState(false);
+    const localBlobUrlRef = useRef<string | null>(null);
+
+    // Revoke any outstanding local preview blob URL on unmount
+    useEffect(() => () => {
+        if (localBlobUrlRef.current) URL.revokeObjectURL(localBlobUrlRef.current);
+    }, []);
 
     const handleFile = useCallback(async (file: File) => {
         if (!file) return;
@@ -43,7 +49,9 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
         setScanProgress(0);
 
         // Show preview
+        if (localBlobUrlRef.current) URL.revokeObjectURL(localBlobUrlRef.current);
         const localUrl = URL.createObjectURL(file);
+        localBlobUrlRef.current = localUrl;
         setPreview(localUrl);
         setScanning(true);
 
@@ -67,6 +75,10 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
             await new Promise(r => setTimeout(r, 400));
             setResult(data);
             setPreview(data.imageUrl || localUrl);
+            if (data.imageUrl && localBlobUrlRef.current) {
+                URL.revokeObjectURL(localBlobUrlRef.current);
+                localBlobUrlRef.current = null;
+            }
 
             if (data.amount > 0) {
                 toast.success('🎉 Nhận diện thành công!');
@@ -97,6 +109,10 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
     };
 
     const reset = () => {
+        if (localBlobUrlRef.current) {
+            URL.revokeObjectURL(localBlobUrlRef.current);
+            localBlobUrlRef.current = null;
+        }
         setPreview(null);
         setResult(null);
         setError(null);

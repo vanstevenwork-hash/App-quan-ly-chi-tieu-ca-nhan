@@ -35,6 +35,7 @@ interface NotificationStore {
 }
 
 let esRef: EventSource | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
     notifications: [],
@@ -43,6 +44,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     hasFetched: false,
     esConnected: false,
     reset: () => {
+        if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
         if (esRef) { esRef.close(); esRef = null; }
         set({ notifications: [], loading: false, error: null, hasFetched: false, esConnected: false });
     },
@@ -73,6 +75,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         set({ esConnected: true });
 
         const connect = () => {
+            // Bail out if reset() ran while a reconnect was pending (e.g. logout)
+            if (!get().esConnected) return;
+
             if (esRef) esRef.close();
             const es = new EventSource(`${API_URL}/notifications/stream?token=${token}`);
             esRef = es;
@@ -91,7 +96,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
             es.onerror = () => {
                 es.close();
-                setTimeout(connect, 5000);
+                if (get().esConnected) {
+                    reconnectTimer = setTimeout(connect, 5000);
+                }
             };
         };
 

@@ -1,6 +1,6 @@
 'use client';
 import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
-import { formatCurrency, formatDate, CATEGORIES } from '@/lib/mockData';
+import { formatCurrency, formatDate, CATEGORIES_MAP } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
 
 interface TransactionItemProps {
@@ -17,7 +17,7 @@ interface TransactionItemProps {
 }
 
 export default function TransactionItem({ transaction, onClick }: TransactionItemProps) {
-    const cat = CATEGORIES.find(c => c.label === transaction.category) || CATEGORIES[CATEGORIES.length - 1];
+    const cat = CATEGORIES_MAP.get(transaction.category) || CATEGORIES_MAP.get('Khác')!;
     const isIncome = transaction.type === 'income';
 
     return (

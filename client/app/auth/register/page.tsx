@@ -46,7 +46,7 @@ export default function RegisterPage() {
         <div className="min-h-screen flex flex-col bg-background">
             <div className="absolute top-0 left-0 w-64 h-64 rounded-full bg-primary/10 blur-3xl -translate-y-1/3 -translate-x-1/4" />
 
-            <div className="px-6 pt-16 pb-8 text-center">
+            <div className="px-6 pb-8 text-center" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 4rem)' }}>
                 <div className="w-16 h-16 gradient-primary rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-glow animate-float">
                     <span className="text-3xl">💰</span>
                 </div>

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { wealthApi } from '@/lib/api';
 import { registerStoreReset } from '@/store/useStore';
 
@@ -22,6 +23,15 @@ export interface WealthFormData {
     category: string;
     note: string;
 }
+
+// UI-augmented wealth source: merges user-created sources and linked cards/accounts
+// into one shape for rendering (icon becomes a rendered node, plus card-linking metadata).
+export type WealthSourceUI = Omit<WealthSource, 'icon'> & {
+    icon: ReactNode;
+    isExternal?: boolean;
+    bankShortName?: string;
+    cardType?: string;
+};
 
 import { create } from 'zustand';
 

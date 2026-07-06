@@ -1,6 +1,6 @@
 'use client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { CATEGORIES } from '@/lib/mockData';
+import { CATEGORIES_MAP } from '@/lib/mockData';
 import { getBankLogo } from '@/lib/bankLogos';
 import {
     Copy,
@@ -43,7 +43,7 @@ interface TransactionDetailModalProps {
 export default function TransactionDetailModal({ transaction, open, onClose, onEdit, onDelete }: TransactionDetailModalProps) {
     if (!transaction) return null;
 
-    const cat = CATEGORIES.find(c => c.label === transaction.category) || CATEGORIES[CATEGORIES.length - 1];
+    const cat = CATEGORIES_MAP.get(transaction.category) || CATEGORIES_MAP.get('Khác')!;
     const isIncome = transaction.type === 'income';
     const date = new Date(transaction.date);
 

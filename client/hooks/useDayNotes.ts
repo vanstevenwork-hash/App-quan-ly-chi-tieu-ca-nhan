@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { dayNotesApi } from '@/lib/api';
 
 export interface DayImage {
@@ -36,8 +36,11 @@ export function useDayNotes(month: number, year: number) {
     useEffect(() => { fetch(); }, [fetch]);
 
     // Returns a map: { "2026-03-27": DayNote, ... }
-    const notesByDate: Record<string, DayNote> = {};
-    notes.forEach(n => { notesByDate[n.date] = n; });
+    const notesByDate: Record<string, DayNote> = useMemo(() => {
+        const map: Record<string, DayNote> = {};
+        notes.forEach(n => { map[n.date] = n; });
+        return map;
+    }, [notes]);
 
     const addImage = async (date: string, imageUrl: string, amount = 0, label = '') => {
         if (isMock) {

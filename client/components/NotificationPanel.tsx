@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, Settings, History, ChevronRight, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -52,17 +52,7 @@ const formatDateTime = (dateStr: string) => {
 };
 
 import { useBanks } from '@/hooks/useBanks';
-
-const E_WALLETS = [
-    { name: 'MoMo', short: 'MoMo', color: '#A21CAF', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Transparent.png' },
-    { name: 'ZaloPay', short: 'ZLP', color: '#0284C7', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-Square.png' },
-    { name: 'Khác', short: '???', color: '#6C63FF', logo: '' },
-];
-const CRYPTOS = [
-    { name: 'Binance', short: 'BNB', color: '#F0B90B', logo: '' },
-    { name: 'OKX', short: 'OKX', color: '#1C1C1E', logo: '' },
-    { name: 'Bybit', short: 'BBT', color: '#F7A600', logo: '' },
-];
+import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 
 function PanelContent({ onClose }: { onClose: () => void }) {
     const { isAuthenticated } = useAuthStore();
@@ -98,18 +88,18 @@ function PanelContent({ onClose }: { onClose: () => void }) {
         );
     }
 
-    const filtered = notifications.filter(n => {
+    const filtered = useMemo(() => notifications.filter(n => {
         const types = TABS.find(t => t.key === activeTab)?.types || ([] as readonly string[]);
         return (types as readonly string[]).includes(n.type) || (activeTab === 'transaction' && !(TABS.flatMap(x => x.types) as readonly string[]).includes(n.type));
-    });
+    }), [notifications, activeTab]);
 
-    const grouped = filtered.reduce((acc, n) => {
+    const grouped = useMemo(() => filtered.reduce((acc, n) => {
         const date = new Date(n.createdAt);
         if (isToday(date)) acc.today.push(n);
         else if (isYesterday(date)) acc.yesterday.push(n);
         else acc.older.push(n);
         return acc;
-    }, { today: [], yesterday: [], older: [] } as Record<'today' | 'yesterday' | 'older', any[]>);
+    }, { today: [], yesterday: [], older: [] } as Record<'today' | 'yesterday' | 'older', any[]>), [filtered]);
 
     const renderGroup = (title: string, items: typeof notifications) => {
         if (items.length === 0) return null;

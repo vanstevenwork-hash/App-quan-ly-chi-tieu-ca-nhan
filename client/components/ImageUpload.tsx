@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera, X, Loader2, ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { uploadApi } from '@/lib/api';
@@ -28,6 +28,12 @@ export default function ImageUpload({
     const [preview, setPreview] = useState<string | null>(currentUrl || null);
     const [loading, setLoading] = useState(false);
     const [dragging, setDragging] = useState(false);
+    const localBlobUrlRef = useRef<string | null>(null);
+
+    // Revoke any outstanding local preview blob URL on unmount
+    useEffect(() => () => {
+        if (localBlobUrlRef.current) URL.revokeObjectURL(localBlobUrlRef.current);
+    }, []);
 
     const handleFile = async (file: File) => {
         if (!file) return;
@@ -37,7 +43,9 @@ export default function ImageUpload({
         }
 
         // Show local preview immediately
+        if (localBlobUrlRef.current) URL.revokeObjectURL(localBlobUrlRef.current);
         const localUrl = URL.createObjectURL(file);
+        localBlobUrlRef.current = localUrl;
         setPreview(localUrl);
         setLoading(true);
 
@@ -50,6 +58,10 @@ export default function ImageUpload({
             toast.error(err?.response?.data?.message || 'Upload thất bại');
             setPreview(currentUrl || null);
         } finally {
+            if (localBlobUrlRef.current) {
+                URL.revokeObjectURL(localBlobUrlRef.current);
+                localBlobUrlRef.current = null;
+            }
             setLoading(false);
         }
     };

@@ -46,7 +46,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
         set({ loading: true });
         try {
             const [txRes, sumRes] = await Promise.all([
-                transactionsApi.getAll(),
+                transactionsApi.getAll({ limit: 2000 }),
                 transactionsApi.getSummary(),
                 force ? useCardStore.getState().fetch(true) : Promise.resolve(),
                 force ? useWealthStore.getState().fetch(true) : Promise.resolve(),
@@ -106,7 +106,7 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 }));
 registerStoreReset(() => useTransactionStore.getState().reset());
 
-export function useTransactions(params?: object) {
+export function useTransactions() {
     const store = useTransactionStore();
 
     useEffect(() => {

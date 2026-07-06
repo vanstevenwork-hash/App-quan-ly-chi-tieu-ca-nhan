@@ -1,12 +1,13 @@
 'use client';
 import { useState, useMemo } from 'react';
 import {
-    Plus, ArrowLeft, RefreshCw, Trash2, Pencil, Star, MoreHorizontal,
-    TrendingDown, AlertTriangle, PiggyBank, CreditCard,
-    Wallet, Smartphone, Bitcoin, ChevronRight, BadgeCheck,
+    Plus, RefreshCw, Trash2, Pencil, Star, MoreHorizontal, Info,
+    AlertTriangle, PiggyBank, CreditCard,
+    Wallet, Smartphone, Bitcoin, ChevronRight, ChevronDown, BadgeCheck,
 } from 'lucide-react';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
+import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import { getBankLogo } from '@/lib/bankLogos';
 import { useRouter } from 'next/navigation';
@@ -58,8 +59,8 @@ function cardTextStyle(color: string) {
 }
 
 // ─── Card Context Menu ─────────────────────────────────────────────────────
-function CardMenu({ onEdit, onDelete, onSetDefault, isDefault }: {
-    onEdit: () => void; onDelete: () => void; onSetDefault: () => void; isDefault: boolean;
+function CardMenu({ onEdit, onDelete, onSetDefault, onViewDetail, isDefault }: {
+    onEdit: () => void; onDelete: () => void; onSetDefault: () => void; onViewDetail?: () => void; isDefault: boolean;
 }) {
     const [open, setOpen] = useState(false);
     return (
@@ -72,6 +73,12 @@ function CardMenu({ onEdit, onDelete, onSetDefault, isDefault }: {
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
                     <div className="absolute top-9 right-0 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-xl py-1 min-w-[150px] overflow-hidden border border-gray-100 dark:border-slate-700">
+                        {onViewDetail && (
+                            <button onClick={() => { setOpen(false); onViewDetail(); }}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
+                                <Info className="w-4 h-4 text-purple-500" /> Chi tiết
+                            </button>
+                        )}
                         {!isDefault && (
                             <button onClick={() => { setOpen(false); onSetDefault(); }}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
@@ -94,9 +101,9 @@ function CardMenu({ onEdit, onDelete, onSetDefault, isDefault }: {
 }
 
 // ─── Credit Card Slide ─────────────────────────────────────────────────────
-function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
+function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDetail }: {
     card: Card; idx: number;
-    onEdit: () => void; onDelete: () => void; onSetDefault: () => void;
+    onEdit: () => void; onDelete: () => void; onSetDefault: () => void; onViewDetail: () => void;
 }) {
     const gradient = getCardGradient(card, idx);
     const ts = cardTextStyle(card.color);
@@ -145,7 +152,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault }: {
                             <Star className="w-2.5 h-2.5" /> Mặc định
                         </span>
                     )}
-                    <CardMenu onEdit={onEdit} onDelete={onDelete} onSetDefault={onSetDefault} isDefault={card.isDefault} />
+                    <CardMenu onEdit={onEdit} onDelete={onDelete} onSetDefault={onSetDefault} onViewDetail={onViewDetail} isDefault={card.isDefault} />
                 </div>
             </div>
             <div className="flex justify-between items-end mb-3">
@@ -349,13 +356,15 @@ function DeleteConfirm({ card, onConfirm, onCancel }: { card: Card; onConfirm: (
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
 export default function AccountsPage() {
-    const { cards, totalBalance, totalDebt, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch } = useCards();
     const router = useRouter();
+    const { cards, totalBalance, totalDebt, loading, error, createCard, updateCard, deleteCard, setDefaultCard, refetch } = useCards();
     const [activeTab, setActiveTab] = useState<'cards' | 'savings'>('cards');
     const [showForm, setShowForm] = useState(false);
     const [editCard, setEditCard] = useState<Card | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Card | null>(null);
     const [defaultType, setDefaultType] = useState<typeof cards[0]['cardType']>('debit');
+    const [creditCardsExpanded, setCreditCardsExpanded] = useState(true);
+    const [paymentAccountsExpanded, setPaymentAccountsExpanded] = useState(true);
 
     const netWorth = totalBalance - totalDebt;
     const totalSavings = useMemo(() => cards.filter(c => c.cardType === 'savings').reduce((s, c) => s + c.balance, 0), [cards]);
@@ -392,45 +401,54 @@ export default function AccountsPage() {
                 style={{ background: 'linear-gradient(to bottom, rgba(139,92,246,0.1), transparent)' }} />
 
             {/* ── Header ─────────────────────────────────────── */}
-            <header className="pt-14 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
-                <button onClick={() => router.push('/dashboard')}
-                    className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
-                    <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex-1">
-                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium tracking-tight">Tài chính</p>
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">Tài khoản & Tài sản</h1>
-                </div>
-                <button onClick={refetch}
-                    className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all relative flex-shrink-0">
-                    <RefreshCw className="w-4 h-4" />
-                </button>
-            </header>
+            <PageHeader
+                title="Tài khoản & Tài sản"
+                subtitle="Tài chính"
+                rightActions={
+                    <button onClick={refetch}
+                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all relative flex-shrink-0">
+                        <RefreshCw className="w-4 h-4" />
+                    </button>
+                }
+            />
 
             <div className="relative z-10">
-                {/* ── Summary & Net Worth ──────────────────────────── */}
-                <div className="px-5 pb-6">
-                    <div className="relative overflow-hidden rounded-3xl p-6 shadow-sm border border-white/50 dark:border-slate-800/50 bg-gradient-to-br from-[#E0C3FC]/20 to-[#8EC5FC]/20 dark:from-purple-900/10 dark:to-blue-900/10">
-                        {/* Net worth */}
-                        <div className="text-center mb-6">
-                            <p className="text-sm text-slate-500 dark:text-slate-400 mb-1 font-medium">Tổng tài sản ròng</p>
-                            <p className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-none mb-2">{fmt(netWorth)} đ</p>
-                            <div className="flex items-center justify-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                                <TrendingDown className="w-4 h-4" />
-                                <span>Dư nợ: {fmtShort(totalDebt)}</span>
+                {/* ── Fetch error banner ───────────────────────────── */}
+                {!loading && error && (
+                    <div className="px-5 pb-4">
+                        <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-4">
+                            <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <p className="font-bold text-sm text-red-700 dark:text-red-300">Không tải được dữ liệu</p>
+                                <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{error}</p>
                             </div>
+                            <button onClick={() => refetch()}
+                                className="text-xs font-bold text-red-600 dark:text-red-300 bg-white dark:bg-red-900/40 border border-red-200 dark:border-red-800 px-3 py-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/60 transition-colors flex-shrink-0">
+                                Thử lại
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Summary & Net Worth ──────────────────────────── */}
+                <div className="px-5 pb-5">
+                    <div className="relative overflow-hidden rounded-3xl p-5 shadow-sm border border-white/50 dark:border-slate-800/50 bg-gradient-to-br from-[#E0C3FC]/20 to-[#8EC5FC]/20 dark:from-purple-900/10 dark:to-blue-900/10">
+                        {/* Net worth */}
+                        <div className="text-center mb-4">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5 font-medium">Tổng tài sản ròng</p>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{fmt(netWorth)} đ</p>
                         </div>
 
-                        {/* Summary pills */}
+                        {/* Summary pills — same figures as above, no need to repeat "Dư nợ" separately */}
                         <div className="grid grid-cols-3 gap-2">
                             {[
                                 { label: 'Tài sản', value: fmtShort(totalBalance), color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50/50 dark:bg-emerald-900/20' },
                                 { label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50/50 dark:bg-blue-900/20' },
                                 { label: 'Dư nợ thẻ', value: `-${fmtShort(totalDebt)}`, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50/50 dark:bg-red-900/20' },
                             ].map(item => (
-                                <div key={item.label} className={cn('rounded-xl p-2.5 text-center transition-all', item.bg)}>
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-0.5">{item.label}</p>
-                                    <p className={cn('font-bold text-sm leading-none', item.color)}>{item.value}</p>
+                                <div key={item.label} className={cn('rounded-xl py-2 px-1.5 text-center', item.bg)}>
+                                    <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-0.5 truncate">{item.label}</p>
+                                    <p className={cn('font-bold text-xs leading-none', item.color)}>{item.value}</p>
                                 </div>
                             ))}
                         </div>
@@ -493,50 +511,112 @@ export default function AccountsPage() {
                     {/* ════════ TAB: CARDS ════════ */}
                     {activeTab === 'cards' && (
                         <>
-                            {/* Credit card horizontal scroll */}
+                            {/* Credit card horizontal scroll — collapsible */}
                             {creditCards.length > 0 && (
                                 <section>
                                     <div className="flex items-center justify-between mb-3 px-1">
-                                        <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Thẻ tín dụng</h2>
-                                        <button onClick={() => refetch()} className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">Cập nhật</button>
-                                    </div>
-                                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar -mx-5 px-5">
-                                        {creditCards.map((card, idx) => (
-                                            <CreditCardSlide key={card._id} card={card} idx={idx}
-                                                onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                                onDelete={() => setDeleteTarget(card)}
-                                                onSetDefault={() => setDefaultCard(card._id)} />
-                                        ))}
-                                        {/* Add credit card slide */}
-                                        <button onClick={() => openAdd('credit')}
-                                            className="snap-center shrink-0 w-40 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
-                                            <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
-                                                <Plus className="w-6 h-6" />
-                                            </div>
-                                            <span className="text-xs font-bold uppercase tracking-tight">Thêm thẻ</span>
+                                        <button
+                                            onClick={() => setCreditCardsExpanded(v => !v)}
+                                            className="flex items-center gap-1.5 group"
+                                        >
+                                            <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Thẻ tín dụng</h2>
+                                            <ChevronDown className={cn(
+                                                'w-3.5 h-3.5 text-slate-400 transition-transform',
+                                                !creditCardsExpanded && '-rotate-90'
+                                            )} />
                                         </button>
+                                        <button onClick={() => router.push("/cards")} className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">Xem tất cả</button>
                                     </div>
+
+                                    {creditCardsExpanded ? (
+                                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar -mx-5 px-5">
+                                            {creditCards.map((card, idx) => (
+                                                <CreditCardSlide key={card._id} card={card} idx={idx}
+                                                    onEdit={() => { setEditCard(card); setShowForm(true); }}
+                                                    onDelete={() => setDeleteTarget(card)}
+                                                    onSetDefault={() => setDefaultCard(card._id)}
+                                                    onViewDetail={() => router.push(`/cards/${card._id}`)} />
+                                            ))}
+                                            {/* Add credit card slide */}
+                                            <button onClick={() => openAdd('credit')}
+                                                className="snap-center shrink-0 w-40 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
+                                                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+                                                    <Plus className="w-6 h-6" />
+                                                </div>
+                                                <span className="text-xs font-bold uppercase tracking-tight">Thêm thẻ</span>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setCreditCardsExpanded(true)}
+                                            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+                                                    <CreditCard className="w-5 h-5 text-purple-500" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{creditCards.length} thẻ tín dụng</p>
+                                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Tổng dư nợ: {fmt(totalDebt)}đ</p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                                        </button>
+                                    )}
                                 </section>
                             )}
 
-                            {/* Debit / eWallet / Crypto accounts */}
+                            {/* Debit / eWallet / Crypto accounts — collapsible */}
                             <section>
                                 <div className="flex items-center justify-between mb-3 px-1">
-                                    <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tài khoản thanh toán</h2>
+                                    {debitCards.length > 0 ? (
+                                        <button
+                                            onClick={() => setPaymentAccountsExpanded(v => !v)}
+                                            className="flex items-center gap-1.5 group"
+                                        >
+                                            <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Tài khoản thanh toán</h2>
+                                            <ChevronDown className={cn(
+                                                'w-3.5 h-3.5 text-slate-400 transition-transform',
+                                                !paymentAccountsExpanded && '-rotate-90'
+                                            )} />
+                                        </button>
+                                    ) : (
+                                        <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tài khoản thanh toán</h2>
+                                    )}
                                     <button onClick={() => openAdd('debit')}
                                         className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
                                         Thêm mới
                                     </button>
                                 </div>
                                 {debitCards.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {debitCards.map(card => (
-                                            <AccountRow key={card._id} card={card}
-                                                onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                                onDelete={() => setDeleteTarget(card)}
-                                                onSetDefault={() => setDefaultCard(card._id)} />
-                                        ))}
-                                    </div>
+                                    paymentAccountsExpanded ? (
+                                        <div className="space-y-3">
+                                            {debitCards.map(card => (
+                                                <AccountRow key={card._id} card={card}
+                                                    onEdit={() => { setEditCard(card); setShowForm(true); }}
+                                                    onDelete={() => setDeleteTarget(card)}
+                                                    onSetDefault={() => setDefaultCard(card._id)} />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => setPaymentAccountsExpanded(true)}
+                                            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
+                                                    <Wallet className="w-5 h-5 text-emerald-500" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{debitCards.length} tài khoản & ví</p>
+                                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                                        Tổng số dư: {fmt(debitCards.reduce((s, c) => s + c.balance, 0))}đ
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                                        </button>
+                                    )
                                 ) : (
                                     <div className="text-center py-12 bg-white dark:bg-slate-900/30 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
                                         <p className="text-sm text-slate-400 dark:text-slate-500 font-medium italic">Chưa có tài khoản thanh toán</p>

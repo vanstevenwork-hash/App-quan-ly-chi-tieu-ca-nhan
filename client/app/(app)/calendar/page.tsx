@@ -1,20 +1,18 @@
 'use client';
-import { useState, useMemo, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, TrendingUp, TrendingDown, PieChartIcon, X, ImageIcon, Target, Wallet } from 'lucide-react';
+import { useState, useMemo, useCallback, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Plus, TrendingUp, TrendingDown, X, ImageIcon, Target, Wallet } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useUIStore } from '@/store/useStore';
 import { useDayNotes } from '@/hooks/useDayNotes';
-import { uploadApi } from '@/lib/api';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { CATEGORIES } from '@/lib/mockData';
+import DayCell from '@/components/calendar/DayCell';
+import DayActionSheet from '@/components/calendar/DayActionSheet';
+import ImageNoteUploadModal, { type ImageNoteUploadModalHandle } from '@/components/calendar/ImageNoteUploadModal';
+import PageHeader from '@/components/PageHeader';
+import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 import Link from 'next/link';
-import { Loader2 } from 'lucide-react';
 
 const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 const MONTHS = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
@@ -85,17 +83,7 @@ export default function CalendarPage() {
     const [presetDate, setPresetDate] = useState<string | null>(null);
     const [actionDay, setActionDay] = useState<number | null>(null); // for action sheet
     const [lightboxImg, setLightboxImg] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [uploadingDate, setUploadingDate] = useState<string | null>(null);
-
-    // Upload Modal State
-    const [uploadModalOpen, setUploadModalOpen] = useState(false);
-    const [uploadFile, setUploadFile] = useState<File | null>(null);
-    const [uploadPreview, setUploadPreview] = useState<string | null>(null);
-    const [uploadAmount, setUploadAmount] = useState('');
-    const [uploadNote, setUploadNote] = useState('');
-    const [uploadCategory, setUploadCategory] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
+    const imageUploadRef = useRef<ImageNoteUploadModalHandle>(null);
 
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const { transactions, summary, refetch, deleteTransaction } = useTransactions();
@@ -106,21 +94,44 @@ export default function CalendarPage() {
     const daysInMonth = new Date(viewDate.year, viewDate.month + 1, 0).getDate();
     const startOffset = getMonOffset(firstDay.getDay()); // 0 = Mon, ..., 6 = Sun
 
-    /* ── Build per-day aggregation ── */
+    /* ── Build per-day aggregation (transactions + day-note images + totals), once per month/data change ── */
     const txByDay = useMemo(() => {
-        const map: Record<number, { expense: number; income: number; txs: any[] }> = {};
+        const base: Record<number, { expense: number; income: number; txs: any[] }> = {};
         transactions.forEach(t => {
             const d = new Date(t.date);
             if (d.getMonth() === viewDate.month && d.getFullYear() === viewDate.year) {
                 const day = d.getDate();
-                if (!map[day]) map[day] = { expense: 0, income: 0, txs: [] };
-                if (t.type === 'expense') map[day].expense += t.amount;
-                if (t.type === 'income') map[day].income += t.amount;
-                map[day].txs.push(t);
+                if (!base[day]) base[day] = { expense: 0, income: 0, txs: [] };
+                if (t.type === 'expense') base[day].expense += t.amount;
+                if (t.type === 'income') base[day].income += t.amount;
+                base[day].txs.push(t);
             }
         });
+
+        const map: Record<number, {
+            expense: number; income: number; txs: any[]; hasTx: boolean;
+            combinedImages: { url: string; amount: number }[]; totalExpense: number; totalIncome: number;
+        }> = {};
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const entry = base[day];
+            const expense = entry?.expense || 0;
+            const income = entry?.income || 0;
+            const txs = entry?.txs || [];
+
+            const dateStr = `${viewDate.year}-${String(viewDate.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayImages = notesByDate[dateStr]?.images || [];
+            const txImages = txs.filter(t => t.receiptImage).map(t => ({ url: t.receiptImage, amount: 0 }));
+
+            map[day] = {
+                expense, income, txs, hasTx: !!entry,
+                combinedImages: [...dayImages, ...txImages],
+                totalExpense: expense + dayImages.reduce((sum, img) => sum + (img.amount > 0 ? img.amount : 0), 0),
+                totalIncome: income + dayImages.reduce((sum, img) => sum + (img.amount < 0 ? Math.abs(img.amount) : 0), 0),
+            };
+        }
         return map;
-    }, [transactions, viewDate]);
+    }, [transactions, viewDate, notesByDate, daysInMonth]);
 
     /* ── Month summary ── */
     const monthSummary = useMemo(() => {
@@ -179,82 +190,48 @@ export default function CalendarPage() {
     const dayToDateStr = (day: number) =>
         `${viewDate.year}-${String(viewDate.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
+    // Tap a day cell -> select it and close any open action sheet
+    const handleSelectDay = useCallback((day: number) => {
+        setSelectedDay(day);
+        setActionDay(null);
+    }, []);
+
     // Handle + tap on empty day -> show action sheet
-    const handleDayPlus = (day: number, e: React.MouseEvent) => {
+    const handleDayPlus = useCallback((day: number, e: React.MouseEvent) => {
         e.stopPropagation();
         setSelectedDay(day);
         setActionDay(day);
-    };
-
-    // Open upload modal with selected file
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file || !uploadingDate) return;
-
-        setUploadFile(file);
-        setUploadPreview(URL.createObjectURL(file));
-        setUploadAmount('');
-        setUploadNote('');
-        setUploadCategory('');
-        setUploadModalOpen(true);
-        e.target.value = ''; // Reset input so same file can be selected again
-        setActionDay(null); // Close action sheet if open
-    };
-
-    // Submit upload from modal
-    const submitUpload = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!uploadFile || !uploadingDate) return;
-
-        const amount = parseInt(uploadAmount.replace(/\D/g, '') || '0', 10);
-
-        try {
-            setIsUploading(true);
-            const { url } = await uploadApi.uploadImage(uploadFile, 'chi_tieu/calendar');
-            await addImage(uploadingDate, url, amount, uploadCategory || uploadNote);
-            toast.success('Đã thêm ảnh thành công!');
-            setUploadModalOpen(false);
-            setUploadingDate(null);
-        } catch (err) {
-            toast.error('Upload thất bại, vui lòng thử lại');
-        } finally {
-            setIsUploading(false);
-        }
-    };
+    }, []);
 
     const triggerImageUpload = (dateStr: string) => {
-        setUploadingDate(dateStr);
         setActionDay(null);
-        fileInputRef.current?.click();
+        imageUploadRef.current?.open(dateStr);
     };
 
     return (
         <div className="min-h-screen bg-[#F8F9FF] dark:bg-slate-900 pb-32">
-            {/* Hidden file input for image upload */}
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
             {/* ── Header ── */}
-            <header className="px-6 py-5 flex justify-between items-center">
-                <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">LỊCH GIAO DỊCH</p>
-                    <h2 className="text-xl font-extrabold tracking-tight text-slate-800 dark:text-slate-100">
-                        {MONTHS[viewDate.month]}, {viewDate.year}
-                    </h2>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={prevMonth}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                    >
-                        <ChevronLeft className="w-5 h-5 text-slate-500" />
-                    </button>
-                    <button
-                        onClick={nextMonth}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                    >
-                        <ChevronRight className="w-5 h-5 text-slate-500" />
-                    </button>
-                </div>
-            </header>
+            <PageHeader
+                title={`${MONTHS[viewDate.month]}, ${viewDate.year}`}
+                subtitle="LỊCH GIAO DỊCH"
+                showBackButton={false}
+                rightActions={
+                    <div className="flex gap-2">
+                        <button
+                            onClick={prevMonth}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            <ChevronLeft className="w-5 h-5 text-slate-500" />
+                        </button>
+                        <button
+                            onClick={nextMonth}
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                        >
+                            <ChevronRight className="w-5 h-5 text-slate-500" />
+                        </button>
+                    </div>
+                }
+            />
 
             <main className="px-6 space-y-8">
                 {/* ── Summary Card: Dark Gradient + Donut ── */}
@@ -336,103 +313,17 @@ export default function CalendarPage() {
                             if (!day) {
                                 return <div key={`empty-${i}`} className="h-24 p-2 bg-white dark:bg-slate-950 opacity-20" />;
                             }
-
-                            const dayData = txByDay[day];
-                            const hasTx = !!dayData;
-                            const expense = dayData?.expense || 0;
-                            const income = dayData?.income || 0;
-                            const isSelected = selectedDay === day;
-                            const isSunday = (i + 1) % 7 === 0;
-                            const today = isToday(day);
-
-                            const dayNote = notesByDate[dayToDateStr(day)];
-                            const dayImages = dayNote?.images || [];
-
-                            // Combine day note images and transaction receipt images
-                            const txImages = (dayData?.txs || []).filter(t => t.receiptImage).map(t => ({ url: t.receiptImage, amount: 0 }));
-                            const combinedImages = [...dayImages, ...txImages];
-
-                            // Calculate totals including image amounts
-                            const totalExpense = expense + dayImages.reduce((sum, img) => sum + (img.amount > 0 ? img.amount : 0), 0);
-                            const totalIncome = income + dayImages.reduce((sum, img) => sum + (img.amount < 0 ? Math.abs(img.amount) : 0), 0);
-
-                            // For filtered view: decide what balance to show
-                            const showExpense = (filterType === 'all' || filterType === 'expense') && totalExpense > 0;
-                            const showIncome = (filterType === 'all' || filterType === 'income') && totalIncome > 0;
-
                             return (
-                                <button
+                                <DayCell
                                     key={day}
-                                    onClick={() => { setSelectedDay(day); setActionDay(null); }}
-                                    className={cn(
-                                        'h-24 p-2 flex flex-col transition-all active:scale-95 group/day outline-none focus:outline-none relative w-full text-left',
-                                        isSelected
-                                            ? 'bg-white dark:bg-slate-900 border-2 border-primary/20 z-10 shadow-lg rounded-md scale-[1.02]'
-                                            : 'bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900/50'
-                                    )}
-                                >
-                                    {/* Day number - Top Left */}
-                                    <span className={cn(
-                                        'text-xs transition-all block',
-                                        isSelected ? 'font-extrabold text-primary' : 'font-bold text-on-surface/40',
-                                        !isSelected && today ? 'font-extrabold text-primary' : ''
-                                    )}>
-                                        {day}
-                                    </span>
-
-                                    {/* Day content area */}
-                                    <div className="flex-1 w-full flex flex-col justify-center items-center gap-0.5">
-                                        {/* Image thumbnails — overlapping circles */}
-                                        {combinedImages.length > 0 && (
-                                            <div className="flex items-center justify-center -space-x-3 mb-1">
-                                                {combinedImages.slice(0, 2).map((img, idx) => (
-                                                    <img
-                                                        key={idx}
-                                                        src={img.url}
-                                                        alt=""
-                                                        className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm bg-slate-100"
-                                                    />
-                                                ))}
-                                                {combinedImages.length > 2 && (
-                                                    <div className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm z-10">
-                                                        +{combinedImages.length - 2}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Transaction amounts */}
-                                        {showExpense && (
-                                            <span className="text-[9px] font-bold text-red-500 leading-tight truncate">
-                                                -{fmt(totalExpense)}
-                                            </span>
-                                        )}
-                                        {showIncome && (
-                                            <span className="text-[9px] font-bold text-emerald-500 leading-tight truncate">
-                                                +{fmt(totalIncome)}
-                                            </span>
-                                        )}
-
-                                        {/* Show + button or content indicators */}
-                                        {(!hasTx && dayImages.length === 0) ? (
-                                            <div
-                                                className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/day:bg-purple-100 group-hover/day:text-purple-600 transition-all shadow-sm border border-dashed border-slate-200 dark:border-slate-700"
-                                                onClick={(e) => handleDayPlus(day, e)}
-                                            >
-                                                <Plus className="w-3 h-3" strokeWidth={3} />
-                                            </div>
-                                        ) : (
-                                            <div
-                                                className="absolute bottom-1 right-1 opacity-0 group-hover/day:opacity-100 transition-opacity"
-                                                onClick={(e) => handleDayPlus(day, e)}
-                                            >
-                                                <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-purple-600 shadow-lg border border-purple-100 dark:border-purple-900/50">
-                                                    <Plus className="w-4 h-4" strokeWidth={3} />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </button>
+                                    day={day}
+                                    dayData={txByDay[day]}
+                                    isSelected={selectedDay === day}
+                                    isToday={isToday(day)}
+                                    filterType={filterType}
+                                    onSelect={handleSelectDay}
+                                    onPlus={handleDayPlus}
+                                />
                             );
                         })}
                     </div>
@@ -444,7 +335,7 @@ export default function CalendarPage() {
                         <div className="flex items-center justify-between px-1">
                             <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
                                 Ngày {selectedDay}/{viewDate.month + 1}/{viewDate.year}
-                                {txByDay[selectedDay] && (
+                                {txByDay[selectedDay]?.hasTx && (
                                     <span className="ml-2 text-[10px] font-semibold text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full">
                                         {txByDay[selectedDay].txs.length} giao dịch
                                     </span>
@@ -478,10 +369,10 @@ export default function CalendarPage() {
                                         <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-sm">
                                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">ẢNH NGÀY NÀY</p>
                                             <div className="flex flex-wrap gap-3">
-                                                {imgs.map((img, idx) => {
-                                                    const imgCat = img.label ? CATEGORIES.find(c => c.label === img.label) : null;
+                                                {imgs.map((img) => {
+                                                    const imgCat = img.label ? CATEGORIES_MAP.get(img.label) : null;
                                                     return (
-                                                        <div key={idx} className="relative group/img">
+                                                        <div key={img.url} className="relative group/img">
                                                             <img
                                                                 src={img.url}
                                                                 alt=""
@@ -544,7 +435,7 @@ export default function CalendarPage() {
                         ) : (
                             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm divide-y divide-slate-50 dark:divide-slate-700/50 overflow-hidden">
                                 {selectedDayTxs.map((t: any) => {
-                                    const cat = CATEGORIES.find(c => c.label === t.category) || CATEGORIES[CATEGORIES.length - 1];
+                                    const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES[CATEGORIES.length - 1];
                                     const isIncome = t.type === 'income';
                                     return (
                                         <button
@@ -632,51 +523,14 @@ export default function CalendarPage() {
             </button>
 
             {/* ── Action Sheet (+ button tapped on a day) ── */}
-            {actionDay !== null && (
-                <>
-                    {/* Backdrop */}
-                    <div
-                        className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
-                        onClick={() => setActionDay(null)}
-                    />
-                    <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center animate-in slide-in-from-bottom duration-300">
-                        <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden">
-                            {/* Handle */}
-                            <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={() => setActionDay(null)}>
-                                <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
-                            </button>
-
-                            {/* Header */}
-                            <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
-                                <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">
-                                    Ngày {actionDay}/{viewDate.month + 1}/{viewDate.year}
-                                </h2>
-                            </div>
-
-                            <div className="p-6 pb-28 grid grid-cols-2 gap-4">
-                                <button
-                                    onClick={(e) => { setActionDay(null); openModalForDay(actionDay, e as any); }}
-                                    className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all active:scale-95 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-700"
-                                >
-                                    <div className="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                                        <Plus className="w-6 h-6 text-white" />
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Giao dịch</span>
-                                </button>
-                                <button
-                                    onClick={() => triggerImageUpload(dayToDateStr(actionDay))}
-                                    className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all active:scale-95 border-2 border-transparent hover:border-emerald-200 dark:hover:border-emerald-700"
-                                >
-                                    <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                                        <ImageIcon className="w-6 h-6 text-white" />
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Ảnh / Ghi chú</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
+            <DayActionSheet
+                day={actionDay}
+                dateLabel={actionDay !== null ? `${actionDay}/${viewDate.month + 1}/${viewDate.year}` : ''}
+                dateStr={actionDay !== null ? dayToDateStr(actionDay) : ''}
+                onClose={() => setActionDay(null)}
+                onAddTransaction={(day, e) => { setActionDay(null); openModalForDay(day, e); }}
+                onAddImage={triggerImageUpload}
+            />
 
             {/* ── Lightbox ── */}
             {lightboxImg && (
@@ -714,107 +568,7 @@ export default function CalendarPage() {
             />
 
             {/* ── Image Upload Modal ── */}
-            <Dialog open={uploadModalOpen} onOpenChange={(open) => {
-                if (!isUploading) setUploadModalOpen(open);
-            }}>
-                <DialogContent className="sm:max-w-md rounded-3xl p-0 overflow-hidden bg-white dark:bg-slate-900 border-0">
-                    <form onSubmit={submitUpload} className="flex flex-col max-h-[85vh]">
-                        {/* Header Image Preview */}
-                        <div className="relative w-full h-48 bg-slate-100 dark:bg-slate-800 flex-shrink-0">
-                            {uploadPreview ? (
-                                <img src={uploadPreview} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <ImageIcon className="w-8 h-8 text-slate-300" />
-                                </div>
-                            )}
-                            {/* Gradient Overlay */}
-                            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent" />
-
-                            <h2 className="absolute bottom-4 left-5 text-xl font-bold text-white shadow-sm">
-                                Thêm Ghi Chú Ngày
-                            </h2>
-                        </div>
-
-                        {/* Form Body */}
-                        <div className="p-5 space-y-4 overflow-y-auto">
-                            {/* Category Selector */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                    Danh mục <span className="text-red-400">*</span>
-                                </label>
-                                <div className="flex flex-wrap gap-2">
-                                    {CATEGORIES.filter(c => !['Lương', 'Freelance', 'Đầu tư', 'Thưởng', 'Tiền lãi'].includes(c.label)).slice(0, 12).map(cat => (
-                                        <button
-                                            key={cat.label}
-                                            type="button"
-                                            onClick={() => setUploadCategory(cat.label)}
-                                            className={cn(
-                                                'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border',
-                                                uploadCategory === cat.label
-                                                    ? 'bg-purple-100 dark:bg-purple-900/30 border-purple-400 text-purple-700 dark:text-purple-300 scale-105 shadow-sm'
-                                                    : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
-                                            )}
-                                        >
-                                            <span className="text-sm">{cat.icon}</span>
-                                            {cat.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                    Số tiền <span className="text-slate-400 font-normal">(không bắt buộc)</span>
-                                </label>
-                                <div className="relative">
-                                    <Input
-                                        type="text"
-                                        inputMode="numeric"
-                                        placeholder="0"
-                                        value={uploadAmount ? parseInt(uploadAmount.replace(/\D/g, '') || '0').toLocaleString('vi-VN') : ''}
-                                        onChange={(e) => setUploadAmount(e.target.value)}
-                                        className="h-12 rounded-xl pl-4 pr-12 text-lg font-bold bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus-visible:ring-emerald-500"
-                                    />
-                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">đ</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                    Ghi chú ngắn <span className="text-slate-400 font-normal">(không bắt buộc)</span>
-                                </label>
-                                <Input
-                                    placeholder="Ví dụ: Tiền ăn trưa, Mua sắm..."
-                                    value={uploadNote}
-                                    onChange={(e) => setUploadNote(e.target.value)}
-                                    className="h-12 rounded-xl px-4 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus-visible:ring-emerald-500"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="p-5 pt-0 mt-2 flex gap-3 shrink-0">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setUploadModalOpen(false)}
-                                disabled={isUploading}
-                                className="flex-1 h-12 rounded-xl border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-                            >
-                                Hủy
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={isUploading}
-                                className="flex-1 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
-                            >
-                                {isUploading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Lưu Ghi Chú'}
-                            </Button>
-                        </div>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <ImageNoteUploadModal ref={imageUploadRef} addImage={addImage} />
         </div>
     );
 }

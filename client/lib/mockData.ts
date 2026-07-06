@@ -76,6 +76,11 @@ export const CATEGORIES = [
     { id: 'other', label: 'Khác', icon: '📦', color: '#6B7280' },
 ];
 
+// O(1) lookup by category label — avoids CATEGORIES.find(...) inside render loops
+export const CATEGORIES_MAP: Map<string, typeof CATEGORIES[number]> = new Map(
+    CATEGORIES.map(c => [c.label, c])
+);
+
 export const formatCurrency = (amount: number, currency = 'VND') => {
     if (currency === 'VND') {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);

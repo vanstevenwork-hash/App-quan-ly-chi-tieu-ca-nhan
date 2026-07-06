@@ -78,7 +78,7 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-background">
             {/* Header */}
-            <div className="gradient-primary px-5 pt-12 pb-16">
+            <div className="gradient-primary px-5 pb-16" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3rem)' }}>
                 <h1 className="text-xl font-bold text-white mb-6">Cài đặt hệ thống</h1>
             </div>
 
@@ -133,10 +133,7 @@ export default function SettingsPage() {
                             right={
                                 <Switch
                                     checked={isDarkMode}
-                                    onCheckedChange={() => {
-                                        toggleDarkMode();
-                                        document.documentElement.classList.toggle('dark');
-                                    }}
+                                    onCheckedChange={() => toggleDarkMode()}
                                 />
                             }
                         />

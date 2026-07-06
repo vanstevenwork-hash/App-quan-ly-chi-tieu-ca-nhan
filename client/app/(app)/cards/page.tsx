@@ -1,23 +1,23 @@
 'use client';
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
-    Plus, ArrowLeft, TrendingDown, TrendingUp,
-    CreditCard, History, BarChart3, Wallet,
-    AlertCircle, Calendar, Gift, Pencil, Trash2,
-    Star, BadgePercent, CheckCircle2, Clock, RefreshCw, CalendarDays,
-    ChevronDown, ChevronUp, ArrowDownLeft, ArrowUpRight,
-    Bitcoin, Smartphone,
+    Plus, CreditCard,
+    History, BarChart3, Wallet, Trash2,
+    Gift,
+    BadgePercent, CheckCircle2, RefreshCw, CalendarDays,
 } from 'lucide-react';
-import { getBankLogo } from '@/lib/bankLogos';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBanks } from '@/hooks/useBanks';
 import CardFormModal from '@/components/CardFormModal';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
+import CreditCardCarousel from '@/components/cards/CreditCardCarousel';
+import PaymentAccountsList from '@/components/cards/PaymentAccountsList';
+import PaymentAlertsCard from '@/components/cards/PaymentAlertsCard';
+import CreditCardHistoryList from '@/components/cards/CreditCardHistoryList';
+import PageHeader from '@/components/PageHeader';
 import { useUIStore } from '@/store/useStore';
-import { cn } from '@/lib/utils';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -28,28 +28,6 @@ const fmtShort = (n: number) => {
     if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
     return `${Math.round(n / 1_000)}k`;
 };
-
-const CARD_GRADIENTS = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)',
-];
-
-function getGradient(card: Card, idx: number): string {
-    if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
-    if (card.bankColor && card.color && card.bankColor !== '#1B4FD8')
-        return `linear-gradient(135deg, ${card.bankColor} 0%, ${card.color} 100%)`;
-    return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
-}
-
-function cardTextStyle(color: string) {
-    if (color === '#111111') return { text: '#F59E0B', subtext: '#FCD34D', border: '1px solid #374151' };
-    if (color === '#FFFFFF') return { text: '#1E293B', subtext: '#64748B', border: '1px solid #E2E8F0' };
-    return { text: '#FFFFFF', subtext: 'rgba(255,255,255,0.85)', border: undefined };
-}
 
 // ── Cashback rate by category ──────────────────────────────────────────────
 const CASHBACK_RATES: Record<string, number> = {
@@ -76,220 +54,6 @@ function daysUntilPayment(paymentDueDay: number): number | null {
     return Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
 }
 
-// ── Credit card slide -------------------------------------------------------
-function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
-    card: Card; idx: number; bankLogoUrl?: string;
-    onEdit: () => void; onDelete: () => void; onPay: () => void;
-}) {
-    const usedPct = card.creditLimit > 0 ? Math.min((card.balance / card.creditLimit) * 100, 100) : 0;
-    const dueDays = daysUntilPayment(card.paymentDueDay);
-    const isUrgent = dueDays !== null && dueDays <= 5;
-    const ts = cardTextStyle(card.color);
-    const [logoError, setLogoError] = useState(false);
-    // Use bank API logo first, then static CDN fallback
-    const logoUrl = bankLogoUrl || getBankLogo(card.bankShortName, card.bankName);
-    const showLogo = logoUrl && !logoError;
-
-    return (
-        <div className="snap-center shrink-0 w-[85%] relative rounded-xl p-3 pb-2.5 pt-2.5 shadow-xl overflow-hidden
-                        transform transition-transform hover:scale-[1.02] flex flex-col h-[192px]"
-            style={{ background: getGradient(card, idx), border: ts.border }}>
-            {/* Default badge — absolute top-right */}
-            {card.isDefault && (
-                <span className="absolute top-0 right-0 z-10 bg-yellow-400/90 text-yellow-900 text-[10px] font-bold px-1 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                    <Star className="w-2.5 h-2.5" />
-                </span>
-            )}
-            {card.color !== '#111111' && card.color !== '#FFFFFF' && (
-                <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
-            )}
-
-            <div className="flex justify-between items-start mb-2.5">
-                <div className="flex items-center gap-2">
-                    {/* Bank logo */}
-                    {showLogo ? (
-                        <img
-                            src={logoUrl!}
-                            alt={card.bankShortName || card.bankName}
-                            className="w-9 h-9 rounded-xl object-contain bg-white/90 p-0.5 flex-shrink-0 shadow-sm"
-                            onError={() => setLogoError(true)}
-                        />
-                    ) : (
-                        <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold" style={{ color: ts.text }}>
-                                {(card.bankShortName || card.bankName || '?').substring(0, 3).toUpperCase()}
-                            </span>
-                        </div>
-                    )}
-                    <div>
-                        <p className="text-xs font-semibold tracking-widest uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
-                        <p className="text-base font-bold mt-0.5 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
-                    </div>
-                </div>
-                <div className="flex gap-1">
-                    <button onClick={onEdit}
-                        className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition">
-                        <Pencil className="w-3 h-3" style={{ color: ts.text }} />
-                    </button>
-                    <button onClick={onDelete}
-                        className="w-7 h-7 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center transition">
-                        <Trash2 className="w-3 h-3 text-red-500" />
-                    </button>
-                </div>
-            </div>
-            {/* </div> */}
-
-            <div className="flex justify-between items-end mb-2.5">
-                <div>
-                    <p className="text-xs mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
-                    <p className="text-xl font-bold tracking-tight" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
-                </div>
-                {dueDays !== null ? (
-                    <div className="text-right">
-                        <p className="text-xs mb-1" style={{ color: ts.subtext }}>Hạn thanh toán</p>
-                        <div className="flex items-center gap-1 justify-end">
-                            {isUrgent && <AlertCircle className="w-4 h-4 text-red-400" />}
-                            <p className={cn('text-sm font-bold', isUrgent ? 'text-red-400' : '')} style={isUrgent ? undefined : { color: ts.subtext }}>
-                                {dueDays <= 0 ? 'Đã quá hạn!' : `${dueDays} ngày nữa`}
-                            </p>
-                        </div>
-                    </div>
-                ) : (
-                    card.statementDay > 0 && (
-                        <div className="text-right">
-                            <p className="text-xs mb-1" style={{ color: ts.subtext }}>Sao kê ngày</p>
-                            <p className="text-sm font-bold" style={{ color: ts.text }}>{card.statementDay}/{new Date().getMonth() + 1}</p>
-                        </div>
-                    )
-                )}
-            </div>
-
-            {
-                card.creditLimit > 0 && (
-                    <>
-                        <div className="flex justify-between text-[10px] mb-1.5" style={{ color: ts.subtext }}>
-                            <span>Đã dùng {usedPct.toFixed(0)}%</span>
-                            <span>Hạn mức:<span className="text-base ml-0.5 font-bold">{fmtShort(card.creditLimit)}</span></span>
-                        </div>
-                        <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-2">
-                            <div className="h-full rounded-full transition-all"
-                                style={{
-                                    width: `${usedPct}%`,
-                                    backgroundColor: usedPct > 80 ? '#FCA5A5' : ts.subtext,
-                                }} />
-                        </div>
-                    </>
-                )
-            }
-
-            {/* Pay button on card */}
-            {
-                card.balance > 0 && (
-                    <button onClick={onPay}
-                        className="w-full mt-auto py-2 rounded-xl bg-black/10 hover:bg-black/20 text-xs font-bold transition flex items-center justify-center gap-1.5"
-                        style={{ color: ts.text }}>
-                        <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
-                    </button>
-                )
-            }
-        </div >
-    );
-}
-
-// ── Detail info row ---------------------------------------------------------
-function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
-    icon: React.ReactNode; iconBg: string;
-    title: string; sub: string; value: string;
-    badge?: string; badgeColor?: string;
-}) {
-    return (
-        <div className="flex items-center px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-xl transition group cursor-pointer">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0"
-                style={{ backgroundColor: iconBg }}>
-                {icon}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start gap-2">
-                    <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">{title}</h4>
-                    {badge && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg flex-shrink-0"
-                            style={{ backgroundColor: `${badgeColor}18`, color: badgeColor }}>
-                            {badge}
-                        </span>
-                    )}
-                </div>
-                <div className="flex justify-between items-end mt-0.5">
-                    <p className="text-xs text-slate-400 dark:text-slate-500">{sub}</p>
-                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{value}</p>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ── Account row for debit/wallet/crypto ──
-function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
-    card: Card; onEdit: () => void; onDelete: () => void; bankLogoUrl?: string;
-}) {
-    const TypeIcon = card.cardType === 'crypto' ? Bitcoin
-        : card.cardType === 'eWallet' ? Smartphone
-            : Wallet;
-    const iconBg = card.cardType === 'crypto' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-        : card.cardType === 'eWallet' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
-            : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400';
-    const logoUrl = bankLogoUrl || getBankLogo(card.bankShortName, card.bankName);
-    const balanceColor = card.balance < 0 ? 'text-red-500' : 'text-emerald-500 dark:text-emerald-400';
-
-    return (
-        <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm transition-all hover:border-indigo-200 dark:hover:border-indigo-900/50 group">
-            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 overflow-hidden', !logoUrl ? iconBg : 'bg-white shadow-sm border border-gray-100')}>
-                {logoUrl ? (
-                    <img src={logoUrl} alt={card.bankName} className="w-full h-full object-contain p-1.5" />
-                ) : (
-                    <TypeIcon className="w-5 h-5" />
-                )}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{card.bankName}</p>
-                    {card.isDefault && <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />}
-                </div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-tight uppercase">
-                    {card.cardHolder} {card.cardNumber ? `• ${card.cardNumber}` : ''}
-                </p>
-            </div>
-
-            <div className="relative h-10 min-w-[80px] overflow-hidden flex items-center justify-end">
-                {/* Balance View */}
-                <div className="flex flex-col items-end transition-all duration-300 group-hover:-translate-y-full group-hover:opacity-0">
-                    <p className={cn('text-sm font-bold leading-none', balanceColor)}>
-                        {fmt(card.balance)}₫
-                    </p>
-                    {/* <p className="text-[9px] font-bold text-slate-300 dark:text-slate-600 mt-1 uppercase">Số dư</p> */}
-                </div>
-
-                {/* Hover Actions */}
-                <div className="absolute inset-0 flex items-center justify-end gap-1.5 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 transition-colors shadow-sm"
-                        title="Chỉnh sửa"
-                    >
-                        <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40 transition-colors shadow-sm"
-                        title="Xóa"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CardsPage() {
     const { cards, totalDebt, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch: refetchCards } = useCards();
@@ -305,13 +69,27 @@ export default function CardsPage() {
     const [editCard, setEditCard] = useState<Card | null>(null);
     const [showPayment, setShowPayment] = useState(false);
     const [addType] = useState<'expense'>('expense');
-    const [historyExpanded, setHistoryExpanded] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-    const [alertsExpanded, setAlertsExpanded] = useState(false);
 
 
     const creditCards = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
     const accounts = useMemo(() => cards.filter(c => ['debit', 'eWallet', 'crypto'].includes(c.cardType)), [cards]);
+
+    // O(1) fast path for the common exact-shortName match; falls back to the
+    // original substring scan only for the rare case a card's shortName doesn't match.
+    const banksByShortName = useMemo(() => {
+        const map = new Map<string, any>();
+        fetchedBanks.forEach((b: any) => {
+            if (b.shortName) map.set(b.shortName.toUpperCase(), b);
+        });
+        return map;
+    }, [fetchedBanks]);
+
+    const findApiBank = useCallback((bankShortName?: string, bankName?: string) => {
+        const direct = banksByShortName.get((bankShortName || '').toUpperCase());
+        if (direct) return direct;
+        return fetchedBanks.find((b: any) => b.name?.toUpperCase().includes((bankName || '').toUpperCase()));
+    }, [banksByShortName, fetchedBanks]);
 
     // ── Cashback breakdown per card ─────────────────────────────────────────
     const now = new Date();
@@ -390,6 +168,11 @@ export default function CardsPage() {
         setEditCard(null);
     };
 
+    const handleEditCard = useCallback((card: Card) => { setEditCard(card); setShowForm(true); }, []);
+    const handleDeleteCardClick = useCallback((id: string) => setDeleteConfirmId(id), []);
+    const handlePayClick = useCallback(() => setShowPayment(true), []);
+    const handleAddNewCard = useCallback(() => { setEditCard(null); setShowForm(true); }, []);
+
     return (
         <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
             {/* Background gradient blob */}
@@ -400,23 +183,19 @@ export default function CardsPage() {
 
             <div className="relative z-10 pb-8">
                 {/* ── Header ─────────────────────────────────────── */}
-                <header className="pt-14 px-5 pb-2 flex items-center gap-4 sticky top-0 z-20 backdrop-blur-lg">
-                    <button onClick={() => router.push('/dashboard')}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div className="flex-1">
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Tài chính</p>
-                        <h1 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">Quản lý Thẻ 💳</h1>
-                    </div>
-                    <button onClick={refetchCards}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
-                        <RefreshCw className="w-4 h-4" />
-                        {paymentAlerts.length > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800" />
-                        )}
-                    </button>
-                </header>
+                <PageHeader
+                    title="Quản lý Thẻ 💳"
+                    subtitle="Tài chính"
+                    rightActions={
+                        <button onClick={refetchCards}
+                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
+                            <RefreshCw className="w-4 h-4" />
+                            {paymentAlerts.length > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800" />
+                            )}
+                        </button>
+                    }
+                />
 
                 {/* ── Hero: Total debt ─────────────────────────── */}
                 <div className="text-center px-6 mb-8">
@@ -438,50 +217,15 @@ export default function CardsPage() {
                 </div>
 
                 {/* ── Card carousel ───────────────────────────── */}
-                <div className="pl-6 mb-2 overflow-hidden">
-                    <div className="flex items-center justify-between pr-6 mb-4">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Thẻ của tôi</h2>
-                            {creditCards.length > 0 && (
-                                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
-                                    {creditCards.length} thẻ
-                                </span>
-                            )}
-                        </div>
-                        <Link href="/accounts" className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all tracking-tight">
-                            Xem tất cả
-                        </Link>
-                    </div>
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x pr-6"
-                        style={{ scrollbarWidth: 'none' }}>
-                        {loading && (
-                            <div className="snap-center shrink-0 w-[85%] min-h-[200px] rounded-xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
-                        )}
-                        {!loading && creditCards.map((card, idx) => {
-                            const apiBank = fetchedBanks.find(
-                                (b: any) => b.shortName?.toUpperCase() === (card.bankShortName || '').toUpperCase()
-                                    || b.name?.toUpperCase().includes((card.bankName || '').toUpperCase())
-                            );
-                            const bankLogoUrl = apiBank?.logo || undefined;
-                            return (
-                                <CreditCardSlide key={card._id} card={card} idx={idx}
-                                    bankLogoUrl={bankLogoUrl}
-                                    onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                    onDelete={() => setDeleteConfirmId(card._id)}
-                                    onPay={() => setShowPayment(true)} />
-                            );
-                        })}
-                        {/* Add new card slide */}
-                        <button
-                            onClick={() => { setEditCard(null); setShowForm(true); }}
-                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
-                            <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                                <Plus className="w-6 h-6" />
-                            </div>
-                            <span className="font-semibold text-sm">Thêm thẻ mới</span>
-                        </button>
-                    </div>
-                </div>
+                <CreditCardCarousel
+                    loading={loading}
+                    creditCards={creditCards}
+                    findApiBank={findApiBank}
+                    onEdit={handleEditCard}
+                    onDelete={handleDeleteCardClick}
+                    onPay={handlePayClick}
+                    onAddNew={handleAddNewCard}
+                />
 
                 {/* ── Quick actions ────────────────────────────── */}
                 <div className="px-6 mb-6">
@@ -505,92 +249,20 @@ export default function CardsPage() {
                 </div>
 
                 {/* ── Payment accounts list ───────────────────── */}
-                <div className="px-6 mb-6">
-                    <div className="flex items-center justify-between mb-2.5">
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Tài khoản & Ví</h3>
-                        <button onClick={() => { setEditCard(null); setShowForm(true); }} className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all">Thêm mới</button>
-                    </div>
-                    <div className="space-y-2.5">
-                        {accounts.length > 0 ? accounts.map(acc => {
-                            const apiBank = fetchedBanks.find(
-                                (b: any) => b.shortName?.toUpperCase() === (acc.bankShortName || '').toUpperCase()
-                                    || b.name?.toUpperCase().includes((acc.bankName || '').toUpperCase())
-                            );
-                            const bankLogoUrl = apiBank?.logo || undefined;
-                            return (
-                                <AccountRow key={acc._id} card={acc}
-                                    bankLogoUrl={bankLogoUrl}
-                                    onEdit={() => { setEditCard(acc); setShowForm(true); }}
-                                    onDelete={() => setDeleteConfirmId(acc._id)} />
-                            );
-                        }) : (
-                            <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-4 text-center border border-dashed border-slate-200 dark:border-slate-700">
-                                <p className="text-xs text-slate-400">Chưa có tài khoản thanh toán hoặc ví</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                <PaymentAccountsList
+                    accounts={accounts}
+                    findApiBank={findApiBank}
+                    onEdit={handleEditCard}
+                    onDelete={handleDeleteCardClick}
+                    onAddNew={handleAddNewCard}
+                />
 
                 {/* ── Payment alerts ───────────────────────────── */}
-                <div className="px-6 mb-5">
-                    <div className="flex items-center justify-between mb-2.5">
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Hạn thanh toán</h3>
-                        {paymentAlerts.length > 0 && (
-                            <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-                                {paymentAlerts.length} thẻ
-                            </span>
-                        )}
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-700/50">
-                        {paymentAlerts.length > 0 ? (alertsExpanded ? paymentAlerts : paymentAlerts.slice(0, 2)).map(({ card, days }) => {
-                            const isUrgent = (days ?? 99) <= 5;
-                            const minPay = card.balance * 0.05;
-                            return (
-                                <DetailRow
-                                    key={card._id}
-                                    icon={<Clock className={cn('w-5 h-5', isUrgent ? 'text-red-500' : 'text-orange-500')} />}
-                                    iconBg={isUrgent ? '#FEE2E2' : '#FEF3C7'}
-                                    title={`${card.bankShortName} — Hạn thanh toán`}
-                                    sub={`Tối thiểu: ${fmtShort(minPay)}₫`}
-                                    value={`${card.paymentDueDay}/${new Date().getMonth() + 1 > 12 ? 1 : new Date().getMonth() + 1}`}
-                                    badge={isUrgent ? 'Gấp' : `${days}N nữa`}
-                                    badgeColor={isUrgent ? '#EF4444' : '#F59E0B'}
-                                />
-                            );
-                        }) : (
-                            <DetailRow
-                                icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                                iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#064E3B' : '#D1FAE5'}
-                                title="Không có hạn thanh toán gần"
-                                sub="Tất cả thẻ đều ổn"
-                                value="Tốt 👍"
-                            />
-                        )}
-
-                        {/* Show more / less button for alerts */}
-                        {paymentAlerts.length > 2 && (
-                            <div className="p-2 border-t border-gray-50 dark:border-slate-700/50">
-                                <button
-                                    onClick={() => setAlertsExpanded(prev => !prev)}
-                                    className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold text-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
-                                    {alertsExpanded ? (
-                                        <><ChevronUp className="w-3.5 h-3.5" /> Thu gọn</>
-                                    ) : (
-                                        <><ChevronDown className="w-3.5 h-3.5" /> Xem thêm {paymentAlerts.length - 2} thông báo</>
-                                    )}
-                                </button>
-                            </div>
-                        )}
-
-                        <DetailRow
-                            icon={<TrendingUp className="w-5 h-5 text-indigo-500" />}
-                            iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#312E81' : '#EEF2FF'}
-                            title="Tổng hạn mức tín dụng"
-                            sub={`${creditCards.length} thẻ tín dụng`}
-                            value={`${fmtShort(creditCards.reduce((s, c) => s + c.creditLimit, 0))}₫`}
-                        />
-                    </div>
-                </div>
+                <PaymentAlertsCard
+                    paymentAlerts={paymentAlerts}
+                    creditCardsCount={creditCards.length}
+                    totalCreditLimit={creditCards.reduce((s, c) => s + c.creditLimit, 0)}
+                />
 
                 {/* ── Cashback section ─────────────────────────── */}
                 <div className="px-6 mb-5">
@@ -700,87 +372,7 @@ export default function CardsPage() {
                 {/* ── Credit card transaction history ──────────── */}
                 {creditCardTxs.length > 0 && (
                     <div className="px-6 mb-5 scroll-mt-24" ref={historyRef}>
-                        <div className="flex items-center justify-between mb-2.5">
-                            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                                <History className="w-4 h-4 text-indigo-500" />
-                                Lịch sử giao dịch
-                            </h3>
-                            <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-                                {creditCardTxs.length} giao dịch
-                            </span>
-                        </div>
-                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700/50">
-                            {(historyExpanded ? creditCardTxs : creditCardTxs.slice(0, 5)).map(t => {
-                                const isExpense = t.type === 'expense';
-                                const isInstallment = (t as any).isInstallment;
-                                const cb = isExpense ? t.amount * getCashbackRate(t.category) : 0;
-                                const txDate = new Date(t.date);
-                                const isToday = txDate.toDateString() === new Date().toDateString();
-                                const isYesterday = txDate.toDateString() === new Date(Date.now() - 86400000).toDateString();
-                                const dateLabel = isToday ? 'Hôm nay' : isYesterday ? 'Hôm qua' :
-                                    txDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-                                return (
-                                    <div key={t._id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition">
-                                        {/* Icon */}
-                                        <div className={cn(
-                                            'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
-                                            isExpense
-                                                ? 'bg-red-50 dark:bg-red-900/30'
-                                                : 'bg-emerald-50 dark:bg-emerald-900/30'
-                                        )}>
-                                            {isExpense
-                                                ? <ArrowUpRight className="w-4 h-4 text-red-500" />
-                                                : <ArrowDownLeft className="w-4 h-4 text-emerald-600" />}
-                                        </div>
-
-                                        {/* Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-1.5 mb-0.5">
-                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{t.category}</p>
-                                                {isInstallment && (
-                                                    <span className="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400">
-                                                        TG {(t as any).installmentMonths}th
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {t.note && <p className="text-xs text-slate-400 truncate max-w-[120px]">{t.note}</p>}
-                                                <span className="text-[10px] text-slate-300 dark:text-slate-600 flex-shrink-0">{dateLabel}</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Amount + cashback */}
-                                        <div className="text-right flex-shrink-0">
-                                            <p className={cn('text-sm font-bold',
-                                                isExpense ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400')}>
-                                                {isExpense ? '-' : '+'}{fmt(t.amount)}₫
-                                            </p>
-                                            {isExpense && cb > 0 && (
-                                                <p className="text-[10px] text-amber-500 font-semibold">+{Math.round(cb).toLocaleString('vi-VN')}₫ CB</p>
-                                            )}
-                                            {isInstallment && (
-                                                <p className="text-[10px] text-indigo-400 font-semibold">{fmtShort((t as any).installmentMonthly || 0)}/th</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-
-                            {/* Show more / less */}
-                            {creditCardTxs.length > 5 && (
-                                <div className="p-2 border-t border-gray-50 dark:border-slate-700/50">
-                                    <button
-                                        onClick={() => setHistoryExpanded(prev => !prev)}
-                                        className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold text-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
-                                        {historyExpanded ? (
-                                            <><ChevronUp className="w-3.5 h-3.5" /> Thu gọn</>
-                                        ) : (
-                                            <><ChevronDown className="w-3.5 h-3.5" /> Xem thêm {creditCardTxs.length - 5} giao dịch</>
-                                        )}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        <CreditCardHistoryList transactions={creditCardTxs} />
                     </div>
                 )}
 

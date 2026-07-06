@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Card } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
+import Image from 'next/image';
 
 const E_WALLETS = [
     { name: 'MoMo', short: 'MoMo', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Square.png', color: '#A50064' },
@@ -157,11 +158,14 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                                                     isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700' :
                                                         selectedId === card._id ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-600')}>
                                                 <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center flex-shrink-0">
-                                                    {banks.find(x => x.shortName === card.bankShortName)?.logo ? (
-                                                        <img src={banks.find(x => x.shortName === card.bankShortName)?.logo} className="w-6 h-6 object-contain grayscale-0 group-disabled:grayscale" alt="" />
-                                                    ) : (
-                                                        <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                                                    )}
+                                                    {(() => {
+                                                        const cardBankLogo = banks.find(x => x.shortName === card.bankShortName)?.logo;
+                                                        return cardBankLogo ? (
+                                                            <Image src={cardBankLogo} width={24} height={24} className="w-6 h-6 object-contain grayscale-0 group-disabled:grayscale" alt="" />
+                                                        ) : (
+                                                            <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold text-sm text-gray-900 dark:text-white">{card.bankName} ••{card.cardNumber}</p>
@@ -224,10 +228,10 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                                                     const isSelected = sourceId === acc._id;
                                                     const getIcon = () => {
                                                         const bInfo = banks.find(x => x.shortName === acc.bankShortName);
-                                                        if (bInfo?.logo) return <img src={bInfo.logo} className="w-5 h-5 rounded-sm object-contain" alt="" />;
+                                                        if (bInfo?.logo) return <Image src={bInfo.logo} width={20} height={20} className="w-5 h-5 rounded-sm object-contain" alt="" />;
                                                         if (acc.cardType === 'eWallet') {
                                                             const ew = E_WALLETS.find(x => x.short === acc.bankShortName);
-                                                            if (ew?.logo) return <img src={ew.logo} className="w-5 h-5 rounded-sm object-cover" alt="" />;
+                                                            if (ew?.logo) return <Image src={ew.logo} width={20} height={20} className="w-5 h-5 rounded-sm object-cover" alt="" />;
                                                             return '📱';
                                                         }
                                                         return '🏦';

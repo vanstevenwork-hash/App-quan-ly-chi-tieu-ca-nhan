@@ -1,17 +1,17 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { transactionsApi } from '@/lib/api';
-import { CATEGORIES } from '@/lib/mockData';
+import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
     ChevronLeft, Plus, Trash2, Pencil, Filter,
-    ArrowLeft, RefreshCw, Calendar, TrendingUp, TrendingDown,
+    RefreshCw, TrendingUp, TrendingDown,
     Activity, PieChart as PieIcon, ListFilter, ChevronRight
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import AddTransactionModal from '@/components/AddTransactionModal';
+import PageHeader from '@/components/PageHeader';
 import { toast } from 'sonner';
 
 const RADIAN = Math.PI / 180;
@@ -112,55 +112,109 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 const PERIOD_TABS = ['Tháng này', 'Tuần này', 'Tháng trước'] as const;
 
 export default function AnalyticsPage() {
-    const router = useRouter();
     const [periodTab, setPeriodTab] = useState<typeof PERIOD_TABS[number]>('Tháng này');
     const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingTx, setEditingTx] = useState<any>(null);
 
-    const now = new Date();
-    const paramsForPeriod = () => {
-        if (periodTab === 'Tháng này') return { month: now.getMonth() + 1, year: now.getFullYear() };
-        if (periodTab === 'Tháng trước') return { month: now.getMonth() === 0 ? 12 : now.getMonth(), year: now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear() };
-        return {}; // Tuần này — no month filter, let hook handle
-    };
+    // Global store: only used for the always-recent 14-day trend chart and CRUD (create/update/delete).
+    const { transactions: recentTransactions, deleteTransaction } = useTransactions();
 
-    const { transactions, summary, loading, refetch, deleteTransaction } = useTransactions(paramsForPeriod());
+    // Period-scoped data (summary/category-breakdown/list), fetched straight from the
+    // backend's already-existing month/year-aware endpoints so each tab reflects its own period.
+    const [periodTx, setPeriodTx] = useState<any[]>([]);
+    const [summary, setSummary] = useState({ income: 0, expense: 0 });
+    const [categoryBreakdown, setCategoryBreakdown] = useState<{ category: string; total: number; color: string; icon: string }[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Category breakdown (client-computed from transactions)
-    const categoryBreakdown = (() => {
-        const arr = transactions.filter(t => t.type === 'expense');
-        const map: Record<string, number> = {};
-        arr.forEach(t => { map[t.category] = (map[t.category] || 0) + t.amount; });
-        return Object.entries(map)
-            .map(([cat, total]) => {
-                const cfg = CATEGORIES.find(c => c.label === cat);
-                return { category: cat, total, color: cfg?.color || '#6C63FF', icon: cfg?.icon || '💰' };
-            })
-            .sort((a, b) => b.total - a.total);
-    })();
+    const monthYearForPeriod = useCallback(() => {
+        const now = new Date();
+        if (periodTab === 'Tháng trước') {
+            return {
+                month: now.getMonth() === 0 ? 12 : now.getMonth(),
+                year: now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear(),
+            };
+        }
+        // 'Tháng này' and 'Tuần này' both scope to the current month; the week tab
+        // narrows further client-side since the backend only filters by month/year.
+        return { month: now.getMonth() + 1, year: now.getFullYear() };
+    }, [periodTab]);
 
-    // Chart data — last 14 days
-    const chartData = (() => {
+    const fetchPeriodData = useCallback(async () => {
+        setLoading(true);
+        const monthYear = monthYearForPeriod();
+        try {
+            const [txRes, sumRes, catRes] = await Promise.all([
+                transactionsApi.getAll({ ...monthYear, limit: 1000 }),
+                transactionsApi.getSummary(monthYear),
+                transactionsApi.getCategoryBreakdown({ ...monthYear, type: 'expense' }),
+            ]);
+            let tx = txRes.data?.data || [];
+            let sum = sumRes.data?.data || { income: 0, expense: 0 };
+            let catBreakdown = (catRes.data?.data || []).map((c: any) => {
+                const cfg = CATEGORIES_MAP.get(c.category);
+                return { category: c.category, total: c.total, color: cfg?.color || '#6C63FF', icon: cfg?.icon || '💰' };
+            });
+
+            if (periodTab === 'Tuần này') {
+                const weekAgo = Date.now() - 6 * 86400000;
+                tx = tx.filter((t: any) => new Date(t.date).getTime() >= weekAgo);
+                const catMap: Record<string, number> = {};
+                let income = 0, expense = 0;
+                tx.forEach((t: any) => {
+                    if (t.type === 'income') income += t.amount;
+                    else { expense += t.amount; catMap[t.category] = (catMap[t.category] || 0) + t.amount; }
+                });
+                sum = { income, expense };
+                catBreakdown = Object.entries(catMap)
+                    .map(([category, total]) => {
+                        const cfg = CATEGORIES_MAP.get(category);
+                        return { category, total: total as number, color: cfg?.color || '#6C63FF', icon: cfg?.icon || '💰' };
+                    })
+                    .sort((a, b) => b.total - a.total);
+            }
+
+            setPeriodTx(tx);
+            setSummary({ income: sum.income || 0, expense: sum.expense || 0 });
+            setCategoryBreakdown(catBreakdown);
+        } catch {
+            setPeriodTx([]);
+            setSummary({ income: 0, expense: 0 });
+            setCategoryBreakdown([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [periodTab, monthYearForPeriod]);
+
+    useEffect(() => { fetchPeriodData(); }, [fetchPeriodData]);
+
+    // Chart data — last 14 real calendar days, independent of the selected period tab
+    const chartData = useMemo(() => {
         const days: Record<string, { income: number; expense: number }> = {};
         for (let i = 13; i >= 0; i--) {
             const d = new Date(Date.now() - i * 86400000);
             days[`${d.getDate()}/${d.getMonth() + 1}`] = { income: 0, expense: 0 };
         }
-        transactions.forEach(t => {
+        recentTransactions.forEach(t => {
             const d = new Date(t.date);
             const key = `${d.getDate()}/${d.getMonth() + 1}`;
             if (key in days) days[key][t.type as 'income' | 'expense'] += t.amount;
         });
         return Object.entries(days).map(([name, v]) => ({ name, ...v }));
-    })();
+    }, [recentTransactions]);
 
-    const filteredTx = transactions.filter(t => filterType === 'all' || t.type === filterType);
+    const filteredTx = useMemo(
+        () => periodTx.filter(t => filterType === 'all' || t.type === filterType),
+        [periodTx, filterType]
+    );
+
+    const refetch = fetchPeriodData;
 
     const handleDelete = async (id: string) => {
         if (!confirm('Xoá giao dịch này?')) return;
         try {
             await deleteTransaction(id);
+            await fetchPeriodData();
             toast.success('Đã xoá giao dịch');
         } catch { toast.error('Xoá thất bại'); }
     };
@@ -190,26 +244,24 @@ export default function AnalyticsPage() {
                 style={{ background: 'linear-gradient(to bottom, rgba(139,92,246,0.05), transparent)' }} />
 
             {/* ── Sticky Header ─────────────────────────────────────── */}
-            <header className="pt-14 px-5 pb-2 flex items-center gap-4 sticky top-0 z-30 bg-[#F8F9FF]/80 dark:bg-slate-950/80 backdrop-blur-lg">
-                <button onClick={() => router.push('/dashboard')}
-                    className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
-                    <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="flex-1 min-w-0">
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Thống kê</p>
-                    <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight truncate">Báo cáo chi tiêu</h1>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={refetch}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
-                        <RefreshCw className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => setShowAddModal(true)}
-                        className="w-10 h-10 rounded-full gradient-primary text-white shadow-lg shadow-purple-500/20 flex items-center justify-center active:scale-95 transition-all">
-                        <Plus className="w-5 h-5" />
-                    </button>
-                </div>
-            </header>
+            <PageHeader
+                title="Báo cáo chi tiêu"
+                subtitle="Thống kê"
+                className="bg-[#F8F9FF]/80 dark:bg-slate-950/80"
+                zIndexClassName="z-30"
+                rightActions={
+                    <div className="flex items-center gap-2">
+                        <button onClick={refetch}
+                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
+                            <RefreshCw className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setShowAddModal(true)}
+                            className="w-10 h-10 rounded-full gradient-primary text-white shadow-lg shadow-purple-500/20 flex items-center justify-center active:scale-95 transition-all">
+                            <Plus className="w-5 h-5" />
+                        </button>
+                    </div>
+                }
+            />
 
             <div className="relative z-10 px-5 pb-32">
                 {/* ── Period Selector Hero ────────────────────────────── */}
@@ -349,7 +401,7 @@ export default function AnalyticsPage() {
                                 </div>
                             ) : (
                                 filteredTx.map(t => {
-                                    const cat = CATEGORIES.find(c => c.label === t.category) || CATEGORIES[CATEGORIES.length - 1];
+                                    const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES[CATEGORIES.length - 1];
                                     const isIncome = t.type === 'income';
                                     return (
                                         <div key={t._id} className="bg-white dark:bg-slate-900 rounded-2xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">

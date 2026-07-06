@@ -1,14 +1,15 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import {
     Bell, Plus, Eye, EyeOff, TrendingUp, TrendingDown,
-    PiggyBank, CreditCard, Wallet, Bitcoin, Smartphone,
-    Send, ScanLine, MoreHorizontal, ChevronRight, ArrowDownLeft, ArrowDownRight,
-    Copy, Edit2, Trash2, X, Calendar, FileText, CheckCircle2, Clock
+    Send, ScanLine, MoreHorizontal, ChevronRight,
 } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
 import NotificationPanel from '@/components/NotificationPanel';
+import SpendingTrendChart from '@/components/dashboard/SpendingTrendChart';
+import RecentTransactionsList from '@/components/dashboard/RecentTransactionsList';
+import ImportantAlertsSection from '@/components/dashboard/ImportantAlertsSection';
 import { useAuthStore, useUIStore } from '@/store/useStore';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
@@ -16,11 +17,7 @@ import { useCards } from '@/hooks/useCards';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
 import { useBanks } from '@/hooks/useBanks';
-import { CATEGORIES } from '@/lib/mockData';
-import { cn } from '@/lib/utils';
-import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts';
+import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 import Link from 'next/link';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -31,205 +28,6 @@ const fmt = (n: number) => {
     return `${n}`;
 };
 const fmtFull = (n: number) => n.toLocaleString('vi-VN');
-
-// ─── Card type icon ───────────────────────────────────────────────────────────
-function CardTypeIcon({ type }: { type: string }) {
-    if (type === 'credit') return <CreditCard className="w-3.5 h-3.5" />;
-    if (type === 'savings') return <PiggyBank className="w-3.5 h-3.5" />;
-    if (type === 'crypto') return <Bitcoin className="w-3.5 h-3.5" />;
-    if (type === 'eWallet') return <Smartphone className="w-3.5 h-3.5" />;
-    return <Wallet className="w-3.5 h-3.5" />;
-}
-
-// ─── Transaction row ──────────────────────────────────────────────────────────
-function TransactionRow({ t, onClick }: { t: any; onClick: () => void }) {
-    const cat = CATEGORIES.find(c => c.label === t.category) || CATEGORIES[CATEGORIES.length - 1];
-    const isIncome = t.type === 'income';
-    return (
-        <div
-            onClick={onClick}
-            className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-xl transition-colors cursor-pointer group"
-        >
-            <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg flex-shrink-0 group-hover:scale-105 transition-transform"
-                    style={{ backgroundColor: `${cat.color}18` }}>
-                    {cat.icon}
-                </div>
-                <div>
-                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">{t.note || t.category}</p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">
-                        {t.category} · {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
-                    </p>
-                </div>
-            </div>
-            <span className={cn('text-sm font-bold flex-shrink-0', isIncome ? 'text-emerald-500' : 'text-red-500')}>
-                {isIncome ? '+' : '-'}{fmt(t.amount)}
-            </span>
-        </div>
-    );
-}
-
-// ─── Alert card ───────────────────────────────────────────────────────────────
-function AlertCard({
-    icon, iconBg, title, sub, amount, badge, badgeColor, accentColor,
-}: {
-    icon: React.ReactNode; iconBg: string; title: string; sub: string;
-    amount: string; badge: string; badgeColor: string; accentColor: string;
-}) {
-    return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 relative group">
-
-            {/* Accent bar (mảnh hơn + mềm hơn) */}
-            <div
-                className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
-                style={{ backgroundColor: accentColor }}
-            />
-
-            <div className="px-3 py-1.5 pl-4 flex items-center gap-3">
-
-                {/* Icon */}
-                <div
-                    className="w-9 h-9 rounded-xl flex items-center justify-center border flex-shrink-0"
-                    style={{ backgroundColor: iconBg, borderColor: `${accentColor}22` }}
-                >
-                    {icon}
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-
-                    {/* Title + badge */}
-                    <div className="flex justify-between items-center gap-2">
-                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
-                            {title}
-                        </p>
-
-                        <span
-                            className="text-[10px] font-medium px-2 py-[2px] rounded-md whitespace-nowrap"
-                            style={{
-                                backgroundColor: `${badgeColor}12`,
-                                color: badgeColor
-                            }}
-                        >
-                            {badge}
-                        </span>
-                    </div>
-
-                    {/* Sub + Amount */}
-                    {/* <div className="flex items-end justify-between mt-1"> */}
-                    <p className="text-[11px] text-slate-400 truncate">
-                        {sub}
-                    </p>
-
-                    <p
-                        className="text-xs font-bold tracking-tight"
-                        style={{ color: accentColor }}
-                    >
-                        {amount}
-                    </p>
-                    {/* </div> */}
-
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── Custom Chart Details ──────────────────────────────────────────────────────────
-const createCustomDot = (color: string, dataKey: string) => {
-    return (props: any) => {
-        const { cx, cy, payload, index } = props;
-        const val = payload[dataKey] || 0;
-        if (index === 6) { // Last item (today)
-            const absVal = Math.abs(val);
-            const sign = val < 0 ? '-' : '';
-            const valStr = absVal >= 1000000
-                ? `${sign}${(absVal / 1000000).toFixed(1).replace('.0', '')}tr`
-                : `${sign}${absVal >= 1000 ? Math.round(absVal / 1000) + 'k' : absVal}`;
-            const rectW = valStr.length > 3 ? 46 : 38;
-            return (
-                <g key={`dot-${index}-${dataKey}`}>
-                    <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.15} />
-                    <circle cx={cx} cy={cy} r={7} className="fill-white dark:fill-slate-800" />
-                    <circle cx={cx} cy={cy} r={4.5} fill={color} />
-                    <rect x={cx - rectW / 2} y={cy - 38} width={rectW} height={22} rx={10} fill={color} />
-                    <text x={cx} y={cy - 27} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight="bold">
-                        {valStr}
-                    </text>
-                </g>
-            );
-        }
-        return (
-            <circle key={`dot-${index}-${dataKey}`} cx={cx} cy={cy} r={4.5} className="fill-white dark:fill-slate-800" stroke={color} strokeWidth={2.5} />
-        );
-    };
-};
-
-const renderCustomTick = (props: any) => {
-    const { x, y, payload } = props;
-    const isToday = payload.value === 'Hôm nay';
-    return (
-        <text x={x} y={y + 12} className={isToday ? "fill-purple-600 dark:fill-purple-400 font-bold" : "fill-slate-400 dark:fill-slate-500"} fontSize={isToday ? 11 : 9} textAnchor="middle">
-            {payload.value}
-        </text>
-    );
-};
-
-// ─── Custom Tooltip ──────────────────────────────────────────────────────────
-const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-        const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
-        const expense = payload.find((p: any) => p.dataKey === 'expense')?.value || 0;
-        const diff = income + expense; // expense is negative
-        const isPositive = diff >= 0;
-
-        return (
-            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-xl min-w-[180px] anim-scale-in">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{label}</p>
-
-                <div className="space-y-2.5 mb-4">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1 h-4 rounded-full bg-[#8B5CF6]" />
-                            <span className="text-xs font-medium text-slate-400">Thu nhập</span>
-                        </div>
-                        <span className="text-xs font-bold text-white">+{fmtFull(Math.abs(income))}đ</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1 h-4 rounded-full bg-[#EF4444]" />
-                            <span className="text-xs font-medium text-slate-400">Chi tiêu</span>
-                        </div>
-                        <span className="text-xs font-bold text-white">-{fmtFull(Math.abs(expense))}đ</span>
-                    </div>
-                </div>
-
-                <div className="pt-3 border-t border-white/5 border-slate-700/50 flex justify-between items-center gap-2">
-                    <div className="flex items-center gap-2">
-                        <div className={cn(
-                            "w-6 h-6 rounded-full flex items-center justify-center transition-colors",
-                            isPositive ? "bg-emerald-500/20 text-emerald-500" : "bg-rose-500/20 text-rose-500"
-                        )}>
-                            {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                        </div>
-                        <span className={cn(
-                            "text-sm font-black",
-                            isPositive ? "text-emerald-500" : "text-rose-500"
-                        )}>
-                            {isPositive ? '+' : ''}{fmtFull(diff)}đ
-                        </span>
-                    </div>
-                    {isPositive && (
-                        <div className="px-1.5 py-0.5 rounded-lg bg-emerald-500/10 text-[8px] font-bold text-emerald-500 uppercase tracking-tighter">
-                            Thặng dư
-                        </div>
-                    )}
-                </div>
-            </div>
-        );
-    }
-    return null;
-};
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
@@ -256,13 +54,32 @@ export default function DashboardPage() {
 
     // ── Derived values ──
     const netWorth = totalBalance + wealthTotal - totalDebt;
-    const totalSavings = cards.filter(c => c.cardType === 'savings').reduce((s, c) => s + c.balance, 0);
+    const totalSavings = useMemo(
+        () => cards.filter(c => c.cardType === 'savings').reduce((s, c) => s + c.balance, 0),
+        [cards]
+    );
 
-    const creditAlerts = cards.filter(c => c.cardType === 'credit' && c.balance > 0).slice(0, 2);
-    const savingsCards = cards.filter(c => c.cardType === 'savings').slice(0, 1);
+    const creditAlerts = useMemo(
+        () => cards.filter(c => c.cardType === 'credit' && c.balance > 0).slice(0, 2),
+        [cards]
+    );
+    const savingsCards = useMemo(
+        () => cards.filter(c => c.cardType === 'savings').slice(0, 1),
+        [cards]
+    );
+
+    // O(1) bank/e-wallet/crypto lookup by short name, instead of 3 chained .find() per card row
+    const banksByShortName = useMemo(() => {
+        const map = new Map<string, { logo?: string }>();
+        [...fetchedBanks, ...E_WALLETS, ...CRYPTOS].forEach((b: any) => {
+            const key = b.shortName ?? b.short;
+            if (key && !map.has(key)) map.set(key, b);
+        });
+        return map;
+    }, [fetchedBanks]);
 
     // ── Chart data: last 7 days expenses & income ──
-    const chartData = (() => {
+    const chartData = useMemo(() => {
         const days: Record<string, { expense: number, income: number }> = {};
         for (let i = 6; i >= 0; i--) {
             const d = new Date(Date.now() - i * 86_400_000);
@@ -281,19 +98,7 @@ export default function DashboardPage() {
             expense: data.expense,
             income: data.income,
         }));
-    })();
-
-    const E_WALLETS = [
-        { name: 'MoMo', short: 'MoMo', color: '#A21CAF', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Transparent.png' },
-        { name: 'ZaloPay', short: 'ZLP', color: '#0284C7', logo: 'https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-Square.png' },
-        { name: 'Khác', short: '???', color: '#6C63FF', logo: '' },
-    ];
-
-    const CRYPTOS = [
-        { name: 'Binance', short: 'BNB', color: '#F0B90B', logo: '' },
-        { name: 'OKX', short: 'OKX', color: '#1C1C1E', logo: '' },
-        { name: 'Bybit', short: 'BBT', color: '#F7A600', logo: '' },
-    ];
+    }, [transactions]);
 
     const handleEditTx = (tx: any) => {
         setIsDetailOpen(false);
@@ -313,6 +118,9 @@ export default function DashboardPage() {
             }
         }
     };
+
+    const handleSelectTx = useCallback((t: any) => { setSelectedTx(t); setIsDetailOpen(true); }, []);
+    const handleAddFirstTx = useCallback(() => { setAddType('expense'); openAddModal(); }, [openAddModal]);
 
     return (
         <div className="min-h-screen pb-28 bg-[#F8F9FF] dark:bg-slate-900 transition-colors duration-200">
@@ -347,7 +155,7 @@ export default function DashboardPage() {
             `}</style>
 
             {/* ── Header ─────────────────────────────────────────────── */}
-            <header className="px-5 pt-4 pb-3 flex justify-between items-center">
+            <header className="px-5 pb-3 flex justify-between items-center" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-sm">
                         {(user?.name || 'N').charAt(0).toUpperCase()}
@@ -471,52 +279,11 @@ export default function DashboardPage() {
 
 
                 {/* ── Important notifications ──────────────────────── */}
-                {
-                    (creditAlerts.length > 0 || savingsCards.length > 0) && (
-                        <section className="anim-fade-up-d2">
-                            <div className="flex justify-between items-center mb-3">
-                                <h2 className="text-base font-bold text-slate-800 dark:text-white">Thông báo quan trọng</h2>
-                                <span className="w-6 h-6 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs font-bold">
-                                    {creditAlerts.length + savingsCards.length}
-                                </span>
-                            </div>
-                            <div className="space-y-2.5 max-h-[280px] overflow-y-auto hide-scrollbar pb-2">
-                                {creditAlerts.map(card => {
-                                    const b = fetchedBanks.find(x => x.shortName === card.bankShortName) || E_WALLETS.find(x => x.short === card.bankShortName) || CRYPTOS.find(x => x.short === card.bankShortName) as any;
-                                    return (
-                                        <AlertCard
-                                            key={card._id}
-                                            icon={b?.logo ? <img src={b.logo} className="w-9 h-9 object-contain bg-white p-1 rounded-xl shadow-sm" alt="logo" /> : <span className="font-black text-red-600 text-xs">{card.bankShortName}</span>}
-                                            iconBg="#FEF2F2"
-                                            title={`Sao kê ${card.bankName}`}
-                                            sub="Dư nợ thẻ tín dụng"
-                                            amount={`${fmtFull(card.balance)}đ`}
-                                            badge="Cần thanh toán"
-                                            badgeColor="#EF4444"
-                                            accentColor="#EF4444"
-                                        />
-                                    );
-                                })}
-                                {savingsCards.map(card => {
-                                    const b = fetchedBanks.find(x => x.shortName === card.bankShortName) || E_WALLETS.find(x => x.short === card.bankShortName) || CRYPTOS.find(x => x.short === card.bankShortName) as any;
-                                    return (
-                                        <AlertCard
-                                            key={card._id}
-                                            icon={b?.logo ? <img src={b.logo} className="w-8 h-8 object-contain bg-white p-1 rounded-md shadow-sm" alt="logo" /> : <PiggyBank className="w-5 h-5 text-amber-600" />}
-                                            iconBg="#FFFBEB"
-                                            title={`Sổ tiết kiệm ${card.bankShortName}`}
-                                            sub="Kiểm tra kỳ hạn"
-                                            amount={`${fmtFull(card.balance)}đ`}
-                                            badge="Xem chi tiết"
-                                            badgeColor="#F59E0B"
-                                            accentColor="#F59E0B"
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </section>
-                    )
-                }
+                <ImportantAlertsSection
+                    creditAlerts={creditAlerts}
+                    savingsCards={savingsCards}
+                    banksByShortName={banksByShortName}
+                />
 
                 {/* ── Unread app notifications ─────────────────────── */}
                 {
@@ -537,79 +304,14 @@ export default function DashboardPage() {
                 }
 
                 {/* ── Spending trend chart ─────────────────────────── */}
-                <section>
-                    <div className="flex justify-between items-center mb-3">
-                        <h2 className="text-base font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
-                        <Link href="/analytics"
-                            className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
-                            Xem chi tiết
-                        </Link>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                        <ResponsiveContainer width="100%" height={180}>
-                            <AreaChart data={chartData} margin={{ top: 45, right: 30, bottom: 0, left: -30 }}>
-                                <defs>
-                                    <linearGradient id="lavGrad" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.25} />
-                                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="redGrad" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.25} />
-                                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="name" tick={renderCustomTick} axisLine={false} tickLine={false} />
-                                <YAxis tick={{ fontSize: 8, fill: '#94A3B8' }} axisLine={false} tickLine={false}
-                                    tickFormatter={v => `${Math.round(v / 1000)}k`} />
-                                <Tooltip
-                                    content={<CustomTooltip />}
-                                    cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }}
-                                />
-                                <Area type="monotone" dataKey="expense"
-                                    stroke="#EF4444" strokeWidth={3} fill="url(#redGrad)"
-                                    dot={createCustomDot('#EF4444', 'expense')}
-                                    activeDot={false}
-                                />
-                                <Area type="monotone" dataKey="income"
-                                    stroke="#8B5CF6" strokeWidth={3} fill="url(#lavGrad)"
-                                    dot={createCustomDot('#8B5CF6', 'income')}
-                                    activeDot={false}
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </section>
+                <SpendingTrendChart chartData={chartData} />
 
                 {/* ── Recent transactions ──────────────────────────── */}
-                <section>
-                    <div className="flex justify-between items-center mb-3">
-                        <h2 className="text-base font-bold text-slate-800 dark:text-white">Giao dịch gần đây</h2>
-                        <Link href="/analytics"
-                            className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
-                            Lịch sử
-                        </Link>
-                    </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl p-1 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)] max-h-[300px] overflow-y-auto hide-scrollbar">
-                        {transactions.length === 0 ? (
-                            <div className="py-10 text-center">
-                                <p className="text-slate-400 text-sm">Chưa có giao dịch nào</p>
-                                <button
-                                    onClick={() => { setAddType('expense'); openAddModal(); }}
-                                    className="mt-3 text-xs font-bold text-purple-600 bg-purple-50 px-4 py-2 rounded-xl hover:bg-purple-100 transition-colors"
-                                >
-                                    + Thêm giao dịch đầu tiên
-                                </button>
-                            </div>
-                        ) : (
-                            transactions.slice(0, 5).map((t, i) => (
-                                <div key={t._id}>
-                                    {i > 0 && <div className="mx-3 border-t border-dashed border-gray-100" />}
-                                    <TransactionRow t={t} onClick={() => { setSelectedTx(t); setIsDetailOpen(true); }} />
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </section>
+                <RecentTransactionsList
+                    transactions={transactions}
+                    onSelectTx={handleSelectTx}
+                    onAddFirst={handleAddFirstTx}
+                />
 
             </main >
 

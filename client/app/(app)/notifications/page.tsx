@@ -103,7 +103,7 @@ export default function NotificationsPage() {
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950">
             {/* Header */}
-            <div className="px-5 pt-14 pb-3">
+            <div className="px-5 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3.5rem)' }}>
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <h1 className="text-xl font-bold text-foreground">Thông báo</h1>
