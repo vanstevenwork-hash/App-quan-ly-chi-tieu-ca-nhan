@@ -1,7 +1,9 @@
 'use client';
-import { memo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, History } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Card } from '@/hooks/useCards';
+import { resolveCardId, getCashbackAmount } from '@/lib/cashback';
 
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
@@ -11,26 +13,19 @@ const fmtShort = (n: number) => {
     return `${Math.round(n / 1_000)}k`;
 };
 
-const CASHBACK_RATES: Record<string, number> = {
-    'Ăn uống': 0.03,
-    'Siêu thị': 0.025,
-    'Di chuyển': 0.02,
-    'Mua sắm': 0.015,
-    'Giải trí': 0.015,
-    'Sức khỏe': 0.01,
-    'Giáo dục': 0.01,
-};
-const DEFAULT_RATE = 0.005;
-function getCashbackRate(category: string) {
-    return CASHBACK_RATES[category] || DEFAULT_RATE;
-}
-
 interface CreditCardHistoryListProps {
     transactions: any[];
+    cards: Card[];
 }
 
-function CreditCardHistoryListBase({ transactions }: CreditCardHistoryListProps) {
+function CreditCardHistoryListBase({ transactions, cards }: CreditCardHistoryListProps) {
     const [historyExpanded, setHistoryExpanded] = useState(false);
+
+    const rateByCardId = useMemo(() => {
+        const map = new Map<string, number>();
+        cards.forEach(c => map.set(c._id, c.cashbackRate));
+        return map;
+    }, [cards]);
 
     if (transactions.length === 0) return null;
 
@@ -49,7 +44,7 @@ function CreditCardHistoryListBase({ transactions }: CreditCardHistoryListProps)
                 {(historyExpanded ? transactions : transactions.slice(0, 5)).map(t => {
                     const isExpense = t.type === 'expense';
                     const isInstallment = (t as any).isInstallment;
-                    const cb = isExpense ? t.amount * getCashbackRate(t.category) : 0;
+                    const cb = isExpense ? getCashbackAmount(rateByCardId.get(resolveCardId(t)), t.amount) : 0;
                     const txDate = new Date(t.date);
                     const isToday = txDate.toDateString() === new Date().toDateString();
                     const isYesterday = txDate.toDateString() === new Date(Date.now() - 86400000).toDateString();

@@ -28,7 +28,7 @@ exports.create = async (req, res) => {
             // Savings fields
             interestRate, depositDate, maturityDate, term,
             // Credit fields
-            paymentDueDay, statementDay,
+            paymentDueDay, statementDay, cashbackRate, cashbackCap,
             note,
         } = req.body;
 
@@ -51,6 +51,8 @@ exports.create = async (req, res) => {
             term: term || 0,
             paymentDueDay: paymentDueDay || 0,
             statementDay: statementDay || 0,
+            cashbackRate: cashbackRate || 0,
+            cashbackCap: cashbackCap || 0,
             note: note || '',
         });
         // Notification for card/savings creation
@@ -91,7 +93,7 @@ exports.update = async (req, res) => {
             'bankName', 'bankShortName', 'cardType', 'cardHolder',
             'balance', 'creditLimit', 'color', 'bankColor',
             'interestRate', 'depositDate', 'maturityDate', 'term',
-            'paymentDueDay', 'statementDay', 'note',
+            'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'note',
         ];
         fields.forEach(f => { if (req.body[f] !== undefined) card[f] = req.body[f]; });
         if (req.body.cardNumber) card.cardNumber = String(req.body.cardNumber).slice(-4);

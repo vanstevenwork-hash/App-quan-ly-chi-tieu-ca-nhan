@@ -60,7 +60,7 @@ const EMPTY: CardFormData = {
     cardNumber: '', cardHolder: '', cardNetwork: '', balance: 0, creditLimit: 0,
     color: '#6C63FF', bankColor: '#1B4FD8', isDefault: false,
     interestRate: 0, depositDate: '', maturityDate: '', term: 12,
-    paymentDueDay: 0, statementDay: 0, expirationDate: '', note: '',
+    paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, expirationDate: '', note: '',
 };
 
 export default function CardFormModal({ open, onClose, onSave, editCard, initialType }: CardFormModalProps) {
@@ -99,6 +99,8 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                     term: editCard.term || 12,
                     paymentDueDay: editCard.paymentDueDay || 0,
                     statementDay: editCard.statementDay || 0,
+                    cashbackRate: editCard.cashbackRate || 0,
+                    cashbackCap: editCard.cashbackCap || 0,
                     expirationDate: (editCard as any).expirationDate || '',
                     note: editCard.note || '',
                 });
@@ -629,6 +631,24 @@ duration-200
                                             {errors.paymentDueDay && <p className="text-xs text-red-500 mt-1">{errors.paymentDueDay}</p>}
                                         </div>
                                     </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Tỷ lệ hoàn tiền (%)</p>
+                                            <Input type="number" min={0} max={100} step={0.1} value={form.cashbackRate || ''}
+                                                onChange={e => set('cashbackRate', Number(e.target.value))}
+                                                placeholder="vd: 1.5"
+                                                className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hoàn tiền tối đa/tháng</p>
+                                            <Input type="text"
+                                                value={form.cashbackCap ? new Intl.NumberFormat('vi-VN').format(form.cashbackCap) : ''}
+                                                onChange={e => set('cashbackCap', Number(e.target.value.replace(/\D/g, '')))}
+                                                placeholder="Không giới hạn"
+                                                className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-400 -mt-2">Theo chính sách hoàn tiền thật của thẻ này, dùng để tính "Hoàn tiền" trên trang Thẻ. Để trống mục tối đa nếu thẻ không giới hạn.</p>
                                 </>
                             )}
 

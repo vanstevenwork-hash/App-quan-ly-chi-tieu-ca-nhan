@@ -19,7 +19,7 @@ const fmtFull = (n: number) => Math.round(n).toLocaleString('vi-VN');
 export default function WealthPage() {
     const router = useRouter();
     const { sources, total, loading, createSource, updateSource, deleteSource, refetch } = useWealth();
-    const { cards, loading: cardsLoading, deleteCard } = useCards();
+    const { cards, loading: cardsLoading, createCard, updateCard, deleteCard } = useCards();
     const [showModal, setShowModal] = useState(false);
     const [showCardModal, setShowCardModal] = useState(false);
     const [editSource, setEditSource] = useState<WealthSource | null>(null);
@@ -87,8 +87,12 @@ export default function WealthPage() {
     }, [allSources]);
 
     // Group by category for the new tabs
-    const accountSources = useMemo(
-        () => allSources.filter(s => ['bank', 'credit', 'eWallet'].includes(s.category)),
+    const creditCardSources = useMemo(
+        () => allSources.filter(s => s.category === 'credit'),
+        [allSources]
+    );
+    const bankEwalletSources = useMemo(
+        () => allSources.filter(s => ['bank', 'eWallet'].includes(s.category)),
         [allSources]
     );
     const savingsSources = useMemo(
@@ -101,7 +105,7 @@ export default function WealthPage() {
     );
 
     // Grouping helper
-    const getGroupedItems = (sourceList: WealthSourceUI[]) => {
+    const getGroupedItems = (sourceList: WealthSourceUI[], sortAsc = false) => {
         const groups: Record<string, WealthSourceUI[]> = {};
         const standalone: WealthSourceUI[] = [];
 
@@ -152,10 +156,19 @@ export default function WealthPage() {
             });
         });
 
+        if (sortAsc) {
+            result.sort((a, b) => {
+                const balA = a.items.reduce((sum, i) => sum + i.balance, 0);
+                const balB = b.items.reduce((sum, i) => sum + i.balance, 0);
+                return balA - balB;
+            });
+        }
+
         return result;
     };
 
-    const groupedAccounts = useMemo(() => getGroupedItems(accountSources), [accountSources]);
+    const groupedCreditCards = useMemo(() => getGroupedItems(creditCardSources, true), [creditCardSources]);
+    const groupedBankAccounts = useMemo(() => getGroupedItems(bankEwalletSources, true), [bankEwalletSources]);
     const groupedSavings = useMemo(() => getGroupedItems(savingsSources), [savingsSources]);
 
     // Group by category (for statistics)
@@ -177,6 +190,18 @@ export default function WealthPage() {
             toast.success('Đã thêm nguồn tài sản mới!');
         }
         setEditSource(null);
+    };
+
+    const handleSaveCard = async (data: Parameters<typeof createCard>[0]) => {
+        if (editCard) {
+            await updateCard(editCard._id, data);
+            toast.success('Đã cập nhật thẻ/tài khoản');
+        } else {
+            await createCard(data);
+            toast.success('Đã thêm thẻ/tài khoản mới!');
+        }
+        setShowCardModal(false);
+        setEditCard(null);
     };
 
     const handleDelete = useCallback(async (source: WealthSourceUI) => {
@@ -286,10 +311,10 @@ export default function WealthPage() {
                 <WealthTabContent
                     loading={loading || cardsLoading}
                     activeTab={activeTab}
-                    accountSources={accountSources}
                     savingsSources={savingsSources}
                     otherSources={otherSources}
-                    groupedAccounts={groupedAccounts}
+                    groupedCreditCards={groupedCreditCards}
+                    groupedBankAccounts={groupedBankAccounts}
                     groupedSavings={groupedSavings}
                     onAddClick={handleAddClick}
                     onEditSource={handleEditSource}
@@ -308,7 +333,7 @@ export default function WealthPage() {
             <CardFormModal
                 open={showCardModal}
                 onClose={() => { setShowCardModal(false); setEditCard(null); }}
-                onSave={async () => { await refetch(); setShowCardModal(false); }}
+                onSave={handleSaveCard}
                 editCard={editCard}
                 initialType={activeTab === 'savings' ? 'savings' : 'debit'}
             />

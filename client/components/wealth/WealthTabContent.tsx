@@ -127,10 +127,10 @@ type GroupedItem = {
 interface WealthTabContentProps {
     loading: boolean;
     activeTab: 'accounts' | 'savings' | 'other';
-    accountSources: WealthSourceUI[];
     savingsSources: WealthSourceUI[];
     otherSources: WealthSourceUI[];
-    groupedAccounts: GroupedItem[];
+    groupedCreditCards: GroupedItem[];
+    groupedBankAccounts: GroupedItem[];
     groupedSavings: GroupedItem[];
     onAddClick: () => void;
     onEditSource: (s: WealthSourceUI) => void;
@@ -138,8 +138,8 @@ interface WealthTabContentProps {
 }
 
 function WealthTabContentBase({
-    loading, activeTab, accountSources, savingsSources, otherSources,
-    groupedAccounts, groupedSavings, onAddClick, onEditSource, onDeleteSource,
+    loading, activeTab, savingsSources, otherSources,
+    groupedCreditCards, groupedBankAccounts, groupedSavings, onAddClick, onEditSource, onDeleteSource,
 }: WealthTabContentProps) {
     if (loading) {
         return (
@@ -163,20 +163,43 @@ function WealthTabContentBase({
 
             {/* List rendering */}
             <div className="space-y-3">
-                {activeTab === 'accounts' && accountSources.length === 0 && (
+                {activeTab === 'accounts' && groupedCreditCards.length === 0 && groupedBankAccounts.length === 0 && (
                     <p className="text-slate-500 text-sm text-center py-6">Chưa có thẻ hoặc tài khoản nào.</p>
                 )}
-                {activeTab === 'accounts' && groupedAccounts.map((g) => (
-                    <GroupedWealthCard
-                        key={g.key}
-                        title={g.title}
-                        color={g.color}
-                        icon={g.icon}
-                        items={g.items}
-                        onEdit={onEditSource}
-                        onDelete={onDeleteSource}
-                    />
-                ))}
+
+                {activeTab === 'accounts' && groupedCreditCards.length > 0 && (
+                    <div className="space-y-2">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1">Thẻ tín dụng</h3>
+                        {groupedCreditCards.map((g) => (
+                            <GroupedWealthCard
+                                key={g.key}
+                                title={g.title}
+                                color={g.color}
+                                icon={g.icon}
+                                items={g.items}
+                                onEdit={onEditSource}
+                                onDelete={onDeleteSource}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {activeTab === 'accounts' && groupedBankAccounts.length > 0 && (
+                    <div className="space-y-2 mt-4">
+                        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-1">Tài khoản</h3>
+                        {groupedBankAccounts.map((g) => (
+                            <GroupedWealthCard
+                                key={g.key}
+                                title={g.title}
+                                color={g.color}
+                                icon={g.icon}
+                                items={g.items}
+                                onEdit={onEditSource}
+                                onDelete={onDeleteSource}
+                            />
+                        ))}
+                    </div>
+                )}
 
                 {activeTab === 'savings' && savingsSources.length === 0 && (
                     <p className="text-slate-500 text-sm text-center py-6">Chưa có sổ tiết kiệm nào.</p>

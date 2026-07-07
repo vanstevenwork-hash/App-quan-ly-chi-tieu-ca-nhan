@@ -23,8 +23,15 @@ export default function BottomNav() {
     const activeIndex = navItems.findIndex(item => pathname === item.href || pathname.startsWith(item.href + '/'));
 
     return (
-        <nav className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none">
-            <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)] pointer-events-auto transition-all duration-300 will-change-transform rounded-t-[32px]" style={{ transform: 'translateZ(0)' }}>
+        <nav
+            className="fixed bottom-0 inset-x-0 z-50 flex justify-center pointer-events-none will-change-transform"
+            style={{
+                transform: 'translate3d(0,0,0)',
+                WebkitTransform: 'translate3d(0,0,0)',
+                WebkitBackfaceVisibility: 'hidden',
+            }}
+        >
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom)] pointer-events-auto transition-all duration-300 rounded-t-[32px]">
                 <div className="flex items-center justify-around px-2 pb-2 pt-3 relative">
                     {/* Sliding Indicator Background */}
                     <div

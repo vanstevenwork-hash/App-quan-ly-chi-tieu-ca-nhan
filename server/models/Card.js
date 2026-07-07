@@ -26,6 +26,8 @@ const cardSchema = new mongoose.Schema({
     // === Credit-specific fields ===
     paymentDueDay: { type: Number, default: 0 },       // day of month, e.g. 25
     statementDay: { type: Number, default: 0 },        // statement cut day
+    cashbackRate: { type: Number, default: 0 },        // % hoàn tiền, e.g. 1.5 = 1.5%
+    cashbackCap: { type: Number, default: 0 },         // hoàn tiền tối đa/tháng (VNĐ), 0 = không giới hạn
     // === General ===
     expirationDate: { type: String, default: '' }, // MM/YY or similar
     note: { type: String, default: '' },

@@ -19,6 +19,7 @@ import CreditCardHistoryList from '@/components/cards/CreditCardHistoryList';
 import PageHeader from '@/components/PageHeader';
 import { useUIStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
+import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
@@ -28,22 +29,6 @@ const fmtShort = (n: number) => {
     if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
     return `${Math.round(n / 1_000)}k`;
 };
-
-// ── Cashback rate by category ──────────────────────────────────────────────
-const CASHBACK_RATES: Record<string, number> = {
-    'Ăn uống': 0.03,
-    'Siêu thị': 0.025,
-    'Di chuyển': 0.02,
-    'Mua sắm': 0.015,
-    'Giải trí': 0.015,
-    'Sức khỏe': 0.01,
-    'Giáo dục': 0.01,
-};
-const DEFAULT_RATE = 0.005;
-
-function getCashbackRate(category: string) {
-    return CASHBACK_RATES[category] || DEFAULT_RATE;
-}
 
 // ── Days until next payment -------------------------------------------------
 function daysUntilPayment(paymentDueDay: number): number | null {
@@ -91,45 +76,24 @@ export default function CardsPage() {
         return fetchedBanks.find((b: any) => b.name?.toUpperCase().includes((bankName || '').toUpperCase()));
     }, [banksByShortName, fetchedBanks]);
 
-    // ── Cashback breakdown per card ─────────────────────────────────────────
+    // ── Cashback per card, using each card's own real cashbackRate ──────────
     const now = new Date();
-    const monthLabel = `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`;
 
-    const thisMonthTx = useMemo(() =>
-        transactions.filter(t => {
-            const d = new Date(t.date);
-            return d.getMonth() === now.getMonth() &&
-                d.getFullYear() === now.getFullYear() &&
-                t.type === 'expense' &&
-                t.category !== 'Thanh toán thẻ';
-        }), [transactions]);
+    const cardCashbacks = useMemo(() => {
+        return creditCards.map(card => {
+            const cardTxs = transactions.filter(t =>
+                t.type === 'expense' && t.paymentMethod === 'card' && resolveCardId(t) === card._id
+            );
+            const monthTxs = cardTxs.filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+            const yearTxs = cardTxs.filter(t => new Date(t.date).getFullYear() === now.getFullYear());
+            const monthTotal = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap);
+            const yearTotal = getCappedCashbackTotal(yearTxs, card.cashbackRate, card.cashbackCap);
+            return { card, monthTotal, yearTotal };
+        }).sort((a, b) => b.monthTotal - a.monthTotal);
+    }, [creditCards, transactions]);
 
-    // Total cashback estimated
-    const cashbackTotal = useMemo(() =>
-        thisMonthTx.reduce((sum, t) => sum + t.amount * getCashbackRate(t.category), 0),
-        [thisMonthTx]);
-
-    // Cashback by category
-    const cashbackByCategory = useMemo(() => {
-        const map: Record<string, number> = {};
-        thisMonthTx.forEach(t => {
-            const cb = t.amount * getCashbackRate(t.category);
-            map[t.category] = (map[t.category] || 0) + cb;
-        });
-        return Object.entries(map)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 4);
-    }, [thisMonthTx]);
-
-    // Yearly cashback
-    const yearlyCashback = useMemo(() =>
-        transactions
-            .filter(t => {
-                const d = new Date(t.date);
-                return d.getFullYear() === now.getFullYear() && t.type === 'expense' && t.category !== 'Thanh toán thẻ';
-            })
-            .reduce((sum, t) => sum + t.amount * getCashbackRate(t.category), 0),
-        [transactions]);
+    const cashbackTotal = useMemo(() => cardCashbacks.reduce((sum, c) => sum + c.monthTotal, 0), [cardCashbacks]);
+    const yearlyCashback = useMemo(() => cardCashbacks.reduce((sum, c) => sum + c.yearTotal, 0), [cardCashbacks]);
 
     // Installment plans
     const installmentPlans = useMemo(() =>
@@ -267,8 +231,11 @@ export default function CardsPage() {
                 {/* ── Cashback section ─────────────────────────── */}
                 <div className="px-6 mb-5">
                     <div className="flex items-center justify-between mb-2.5">
-                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Hoàn tiền ước tính</h3>
-                        <span className="text-xs text-slate-400">{monthLabel}</span>
+                        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Hoàn tiền theo thẻ</h3>
+                        <button onClick={() => router.push('/cashback')}
+                            className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
+                            Quản lý
+                        </button>
                     </div>
                     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
                         {/* Total cashback hero — two cols: monthly + yearly */}
@@ -291,31 +258,40 @@ export default function CardsPage() {
                             </div>
                         </div>
 
-                        {/* Per-category breakdown */}
-                        {cashbackByCategory.length > 0 ? (
+                        {/* Per-card breakdown */}
+                        {cardCashbacks.length > 0 ? (
                             <div className="divide-y divide-gray-100 dark:divide-slate-700">
-                                {cashbackByCategory.map(([cat, cb]) => (
-                                    <div key={cat} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 transition">
+                                {cardCashbacks.map(({ card, monthTotal }) => (
+                                    <button
+                                        key={card._id}
+                                        onClick={() => router.push(`/cards/${card._id}`)}
+                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 transition text-left"
+                                    >
+                                        <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                                            <CreditCard className="w-4 h-4 text-indigo-500" />
+                                        </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{cat}</p>
+                                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{card.bankName} •••• {card.cardNumber}</p>
                                             <p className="text-xs text-slate-400 dark:text-slate-500">
-                                                {Math.round((CASHBACK_RATES[cat] || DEFAULT_RATE) * 100 * 10) / 10}% hoàn tiền
+                                                {card.cashbackRate > 0
+                                                    ? `${card.cashbackRate}% hoàn tiền${card.cashbackCap > 0 ? ` · tối đa ${fmtShort(card.cashbackCap)}₫/tháng` : ''}`
+                                                    : 'Chưa thiết lập tỷ lệ — bấm để sửa'}
                                             </p>
                                         </div>
-                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">+{fmtShort(cb)}₫</span>
-                                    </div>
+                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">+{fmtShort(monthTotal)}₫</span>
+                                    </button>
                                 ))}
                             </div>
                         ) : (
                             <div className="p-6 text-center">
-                                <p className="text-sm text-slate-400 dark:text-slate-500">Chưa có giao dịch tháng này</p>
+                                <p className="text-sm text-slate-400 dark:text-slate-500">Chưa có thẻ tín dụng nào</p>
                             </div>
                         )}
 
                         {/* Info note */}
                         <div className="mx-4 border-t border-gray-100 dark:border-slate-700 py-3">
                             <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center">
-                                * Ước tính dựa trên tỷ lệ hoàn tiền trung bình. Số thực tế tùy theo chính sách ngân hàng.
+                                * Tính theo tỷ lệ hoàn tiền bạn thiết lập cho từng thẻ. Số thực tế nhận về tùy chính sách ngân hàng.
                             </p>
                         </div>
                     </div>
@@ -372,7 +348,7 @@ export default function CardsPage() {
                 {/* ── Credit card transaction history ──────────── */}
                 {creditCardTxs.length > 0 && (
                     <div className="px-6 mb-5 scroll-mt-24" ref={historyRef}>
-                        <CreditCardHistoryList transactions={creditCardTxs} />
+                        <CreditCardHistoryList transactions={creditCardTxs} cards={creditCards} />
                     </div>
                 )}
 

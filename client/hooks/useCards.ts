@@ -25,6 +25,8 @@ export interface Card {
     // credit
     paymentDueDay: number;
     statementDay: number;
+    cashbackRate: number;
+    cashbackCap: number;
     expirationDate: string;
     note: string;
 }
@@ -49,6 +51,8 @@ export interface CardFormData {
     // credit
     paymentDueDay: number;
     statementDay: number;
+    cashbackRate: number;
+    cashbackCap: number;
     expirationDate: string;
     note: string;
 }

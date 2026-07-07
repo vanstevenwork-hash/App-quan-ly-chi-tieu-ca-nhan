@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useCallback, useState } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import {
     Bell, Plus, Eye, EyeOff, TrendingUp, TrendingDown,
     Send, ScanLine, MoreHorizontal, ChevronRight,
@@ -16,8 +16,6 @@ import { toast } from 'sonner';
 import { useCards } from '@/hooks/useCards';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
-import { useBanks } from '@/hooks/useBanks';
-import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 import Link from 'next/link';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -40,11 +38,6 @@ export default function DashboardPage() {
     const [selectedTx, setSelectedTx] = useState<any>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [editingTx, setEditingTx] = useState<any>(null);
-    const { banks: fetchedBanks, fetchBanks } = useBanks();
-
-    useEffect(() => {
-        fetchBanks();
-    }, [fetchBanks]);
 
     // ── Real data ──
     const { transactions, summary, refetch, deleteTransaction } = useTransactions();
@@ -67,16 +60,6 @@ export default function DashboardPage() {
         () => cards.filter(c => c.cardType === 'savings').slice(0, 1),
         [cards]
     );
-
-    // O(1) bank/e-wallet/crypto lookup by short name, instead of 3 chained .find() per card row
-    const banksByShortName = useMemo(() => {
-        const map = new Map<string, { logo?: string }>();
-        [...fetchedBanks, ...E_WALLETS, ...CRYPTOS].forEach((b: any) => {
-            const key = b.shortName ?? b.short;
-            if (key && !map.has(key)) map.set(key, b);
-        });
-        return map;
-    }, [fetchedBanks]);
 
     // ── Chart data: last 7 days expenses & income ──
     const chartData = useMemo(() => {
@@ -282,7 +265,6 @@ export default function DashboardPage() {
                 <ImportantAlertsSection
                     creditAlerts={creditAlerts}
                     savingsCards={savingsCards}
-                    banksByShortName={banksByShortName}
                 />
 
                 {/* ── Unread app notifications ─────────────────────── */}

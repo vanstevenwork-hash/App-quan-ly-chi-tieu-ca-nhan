@@ -15,6 +15,7 @@ import CardFormModal from '@/components/CardFormModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
 import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
+import { resolveCardId, getCashbackAmount, getCappedCashbackTotal } from '@/lib/cashback';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
@@ -55,15 +56,6 @@ function daysUntilPayment(paymentDueDay: number): number | null {
     return Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
 }
 
-const CASHBACK_RATES: Record<string, number> = {
-    'Ăn uống': 0.03, 'Siêu thị': 0.025, 'Di chuyển': 0.02,
-    'Mua sắm': 0.015, 'Giải trí': 0.015, 'Sức khỏe': 0.01, 'Giáo dục': 0.01,
-};
-const DEFAULT_RATE = 0.005;
-function getCashbackRate(category: string) {
-    return CASHBACK_RATES[category] || DEFAULT_RATE;
-}
-
 const NETWORK_LABELS: Record<string, string> = {
     visa: 'Visa', mastercard: 'Mastercard', jcb: 'JCB', amex: 'American Express', napas: 'Napas', other: 'Khác',
 };
@@ -91,14 +83,22 @@ export default function CardDetailPage() {
     const cardTxs = useMemo(() => {
         if (!card) return [];
         return transactions
-            .filter(t => t.paymentMethod === 'card' && ((t.cardId as any)?._id || t.cardId) === card._id)
+            .filter(t => t.paymentMethod === 'card' && resolveCardId(t) === card._id)
             .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [transactions, card]);
 
-    const cashbackTotal = useMemo(
-        () => cardTxs.reduce((sum, t) => sum + (t.type === 'expense' ? t.amount * getCashbackRate(t.category) : 0), 0),
-        [cardTxs]
-    );
+    const cashbackThisMonth = useMemo(() => {
+        const now = new Date();
+        const monthTxs = cardTxs
+            .filter(t => t.type === 'expense')
+            .filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+        return getCappedCashbackTotal(monthTxs, card?.cashbackRate, card?.cashbackCap);
+    }, [cardTxs, card]);
+
+    const cashbackTotal = useMemo(() => {
+        const expenseTxs = cardTxs.filter(t => t.type === 'expense');
+        return getCappedCashbackTotal(expenseTxs, card?.cashbackRate, card?.cashbackCap);
+    }, [cardTxs, card]);
 
     const apiBank = useMemo(() => {
         if (!card) return undefined;
@@ -252,6 +252,33 @@ export default function CardDetailPage() {
                     </button>
                 </div>
 
+                {/* ── Cashback summary ──────────────────────────── */}
+                {isCredit && (
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">Hoàn tiền</h3>
+                            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
+                                {card.cashbackRate > 0 ? `${card.cashbackRate}%` : 'Chưa thiết lập'}
+                            </span>
+                        </div>
+                        {card.cashbackRate > 0 && card.cashbackCap > 0 && (
+                            <p className="text-[11px] text-slate-400 px-4 pb-2 -mt-1">Tối đa {fmtShort(card.cashbackCap)}₫/tháng</p>
+                        )}
+                        <div className="grid grid-cols-2 border-t border-gray-100 dark:border-slate-700">
+                            <div className="flex flex-col items-center justify-center p-4 border-r border-gray-100 dark:border-slate-700"
+                                style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
+                                <p className="text-[10px] text-emerald-700 font-semibold mb-1">Tháng này</p>
+                                <p className="text-lg font-bold text-emerald-700">+{fmtShort(cashbackThisMonth)}₫</p>
+                            </div>
+                            <div className="flex flex-col items-center justify-center p-4"
+                                style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
+                                <p className="text-[10px] text-blue-700 font-semibold mb-1">Tích lũy</p>
+                                <p className="text-lg font-bold text-blue-700">+{fmtShort(cashbackTotal)}₫</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* ── Info panel ────────────────────────────────── */}
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm divide-y divide-gray-50 dark:divide-slate-700/50 overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-3">
@@ -278,13 +305,6 @@ export default function CardDetailPage() {
                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Ngày {card.statementDay} hàng tháng</span>
                         </div>
                     )}
-                    {isCredit && cashbackTotal > 0 && (
-                        <div className="flex items-center gap-3 px-4 py-3">
-                            <CreditCard className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                            <span className="text-xs text-slate-400 flex-1">Hoàn tiền ước tính</span>
-                            <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">+{fmtShort(cashbackTotal)}₫</span>
-                        </div>
-                    )}
                     {card.note && (
                         <div className="flex items-start gap-3 px-4 py-3">
                             <StickyNote className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
@@ -305,7 +325,7 @@ export default function CardDetailPage() {
                         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700/50">
                             {(historyExpanded ? cardTxs : cardTxs.slice(0, 5)).map(t => {
                                 const isExpense = t.type === 'expense';
-                                const cb = isExpense ? t.amount * getCashbackRate(t.category) : 0;
+                                const cb = isExpense ? getCashbackAmount(card.cashbackRate, t.amount) : 0;
                                 const txDate = new Date(t.date);
                                 const dateLabel = txDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' });
                                 return (

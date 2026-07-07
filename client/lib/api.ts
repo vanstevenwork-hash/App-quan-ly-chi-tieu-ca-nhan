@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/useStore';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
@@ -28,7 +29,11 @@ api.interceptors.response.use(
                 const token = localStorage.getItem('token');
                 // Don't redirect if using demo/mock mode
                 if (token !== 'mock-token') {
-                    localStorage.removeItem('token');
+                    // Clear both the raw token AND the persisted auth store —
+                    // logout() keeps them in sync so isAuthenticated doesn't
+                    // linger true (and silently re-render protected pages)
+                    // after this hard redirect.
+                    useAuthStore.getState().logout();
                     window.location.href = '/auth/login';
                 }
             }
@@ -97,6 +102,13 @@ export const cardsApi = {
     setDefault: (id: string) => api.patch(`/cards/${id}/set-default`),
     pay: (id: string, amount: number, sourceId?: string) => api.patch(`/cards/${id}/pay`, { amount, sourceId }),
     updateBalance: (id: string, amount: number, action: 'add' | 'set') => api.patch(`/cards/${id}/balance`, { amount, action }),
+};
+
+// Cashback records (received/pending per card per month)
+export const cashbackApi = {
+    getAll: () => api.get('/cashback-records'),
+    upsert: (data: { cardId: string; year: number; month: number; status: 'pending' | 'received'; estimatedAmount?: number; receivedAmount?: number }) =>
+        api.put('/cashback-records', data),
 };
 
 // Wealth Sources
