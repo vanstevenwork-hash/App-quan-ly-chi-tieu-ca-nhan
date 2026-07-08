@@ -157,7 +157,7 @@ export default function GoalsPage() {
             {/* ── Delete Confirm ────────────────────────────────── */}
             {deleteConfirm && (
                 <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end px-4 pb-8" onClick={() => setDeleteConfirm(null)}>
-                    <div className="w-full bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="w-full bg-white dark:bg-slate-800 rounded-[20px] p-5 shadow-2xl" onClick={e => e.stopPropagation()}>
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Xoá mục tiêu?</h3>
                         <p className="text-sm text-slate-500 mb-5">Hành động này không thể hoàn tác.</p>
                         <div className="flex gap-3">

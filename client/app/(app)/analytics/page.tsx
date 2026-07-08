@@ -7,12 +7,14 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAx
 import {
     ChevronLeft, Plus, Trash2, Pencil, Filter,
     RefreshCw, TrendingUp, TrendingDown,
-    Activity, PieChart as PieIcon, ListFilter, ChevronRight
+    Activity, PieChart as PieIcon, ListFilter, ChevronRight, Package, Download
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import PageHeader from '@/components/PageHeader';
 import { toast } from 'sonner';
+import { exportTransactionsToCsv } from '@/lib/exportCsv';
 
 const RADIAN = Math.PI / 180;
 const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: any) => {
@@ -109,13 +111,22 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const PERIOD_TABS = ['Tháng này', 'Tuần này', 'Tháng trước'] as const;
+const PERIOD_TABS = ['Tháng này', 'Tuần này', 'Tháng trước', 'Tùy chỉnh'] as const;
+
+const toISODate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
 
 export default function AnalyticsPage() {
     const [periodTab, setPeriodTab] = useState<typeof PERIOD_TABS[number]>('Tháng này');
     const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingTx, setEditingTx] = useState<any>(null);
+    const [customStart, setCustomStart] = useState('');
+    const [customEnd, setCustomEnd] = useState(() => toISODate(new Date()));
 
     // Global store: only used for the always-recent 14-day trend chart and CRUD (create/update/delete).
     const { transactions: recentTransactions, deleteTransaction } = useTransactions();
@@ -124,11 +135,15 @@ export default function AnalyticsPage() {
     // backend's already-existing month/year-aware endpoints so each tab reflects its own period.
     const [periodTx, setPeriodTx] = useState<any[]>([]);
     const [summary, setSummary] = useState({ income: 0, expense: 0 });
-    const [categoryBreakdown, setCategoryBreakdown] = useState<{ category: string; total: number; color: string; icon: string }[]>([]);
+    const [categoryBreakdown, setCategoryBreakdown] = useState<{ category: string; total: number; color: string; Icon: LucideIcon }[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const monthYearForPeriod = useCallback(() => {
+    const paramsForPeriod = useCallback((): { month: number; year: number } | { startDate: string; endDate: string } | null => {
         const now = new Date();
+        if (periodTab === 'Tùy chỉnh') {
+            if (!customStart || !customEnd) return null;
+            return { startDate: customStart, endDate: customEnd };
+        }
         if (periodTab === 'Tháng trước') {
             return {
                 month: now.getMonth() === 0 ? 12 : now.getMonth(),
@@ -138,22 +153,29 @@ export default function AnalyticsPage() {
         // 'Tháng này' and 'Tuần này' both scope to the current month; the week tab
         // narrows further client-side since the backend only filters by month/year.
         return { month: now.getMonth() + 1, year: now.getFullYear() };
-    }, [periodTab]);
+    }, [periodTab, customStart, customEnd]);
 
     const fetchPeriodData = useCallback(async () => {
+        const params = paramsForPeriod();
+        if (!params) {
+            setPeriodTx([]);
+            setSummary({ income: 0, expense: 0 });
+            setCategoryBreakdown([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
-        const monthYear = monthYearForPeriod();
         try {
             const [txRes, sumRes, catRes] = await Promise.all([
-                transactionsApi.getAll({ ...monthYear, limit: 1000 }),
-                transactionsApi.getSummary(monthYear),
-                transactionsApi.getCategoryBreakdown({ ...monthYear, type: 'expense' }),
+                transactionsApi.getAll({ ...params, limit: 1000 }),
+                transactionsApi.getSummary(params),
+                transactionsApi.getCategoryBreakdown({ ...params, type: 'expense' }),
             ]);
             let tx = txRes.data?.data || [];
             let sum = sumRes.data?.data || { income: 0, expense: 0 };
             let catBreakdown = (catRes.data?.data || []).map((c: any) => {
                 const cfg = CATEGORIES_MAP.get(c.category);
-                return { category: c.category, total: c.total, color: cfg?.color || '#6C63FF', icon: cfg?.icon || '💰' };
+                return { category: c.category, total: c.total, color: cfg?.color || '#6C63FF', Icon: cfg?.Icon || Package };
             });
 
             if (periodTab === 'Tuần này') {
@@ -169,7 +191,7 @@ export default function AnalyticsPage() {
                 catBreakdown = Object.entries(catMap)
                     .map(([category, total]) => {
                         const cfg = CATEGORIES_MAP.get(category);
-                        return { category, total: total as number, color: cfg?.color || '#6C63FF', icon: cfg?.icon || '💰' };
+                        return { category, total: total as number, color: cfg?.color || '#6C63FF', Icon: cfg?.Icon || Package };
                     })
                     .sort((a, b) => b.total - a.total);
             }
@@ -184,7 +206,7 @@ export default function AnalyticsPage() {
         } finally {
             setLoading(false);
         }
-    }, [periodTab, monthYearForPeriod]);
+    }, [periodTab, paramsForPeriod]);
 
     useEffect(() => { fetchPeriodData(); }, [fetchPeriodData]);
 
@@ -207,6 +229,39 @@ export default function AnalyticsPage() {
         () => periodTx.filter(t => filterType === 'all' || t.type === filterType),
         [periodTx, filterType]
     );
+
+    const handleExport = () => {
+        if (filteredTx.length === 0) {
+            toast.error('Không có giao dịch nào để xuất');
+            return;
+        }
+        const periodLabel = periodTab === 'Tùy chỉnh'
+            ? `${customStart}_den_${customEnd}`
+            : periodTab.toLowerCase().replace(/\s+/g, '-');
+        exportTransactionsToCsv(filteredTx, `giao-dich_${periodLabel}.csv`);
+        toast.success(`Đã xuất ${filteredTx.length} giao dịch`);
+    };
+
+    // Last 6 months of income/expense, computed from the same globally-loaded
+    // transaction list used for the 14-day trend chart — a real, side-by-side
+    // "so với tháng trước" view instead of having to flip between period tabs.
+    const monthlyHistory = useMemo(() => {
+        const now = new Date();
+        const months = Array.from({ length: 6 }, (_, i) => {
+            const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+            return { year: d.getFullYear(), month: d.getMonth(), label: `Th${d.getMonth() + 1}/${d.getFullYear()}` };
+        });
+        return months.map(({ year, month, label }) => {
+            let income = 0, expense = 0;
+            recentTransactions.forEach(t => {
+                const d = new Date(t.date);
+                if (d.getFullYear() !== year || d.getMonth() !== month) return;
+                if (t.type === 'income') income += t.amount;
+                else expense += t.amount;
+            });
+            return { label, income, expense };
+        });
+    }, [recentTransactions]);
 
     const refetch = fetchPeriodData;
 
@@ -266,7 +321,7 @@ export default function AnalyticsPage() {
             <div className="relative z-10 px-5 pb-32">
                 {/* ── Period Selector Hero ────────────────────────────── */}
                 <div className="py-4">
-                    <div className="bg-white/50 dark:bg-slate-900/40 backdrop-blur-md rounded-3xl p-1.5 flex gap-1.5 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
+                    <div className="bg-white/50 dark:bg-slate-900/40 backdrop-blur-md rounded-[20px] p-1.5 flex gap-1.5 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
                         {PERIOD_TABS.map(p => (
                             <button key={p} onClick={() => setPeriodTab(p)}
                                 className={cn('flex-1 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-center',
@@ -277,6 +332,27 @@ export default function AnalyticsPage() {
                             </button>
                         ))}
                     </div>
+
+                    {periodTab === 'Tùy chỉnh' && (
+                        <div className="bg-white/50 dark:bg-slate-900/40 backdrop-blur-md rounded-[20px] p-3 flex items-center gap-2 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
+                            <input
+                                type="date"
+                                value={customStart}
+                                onChange={e => setCustomStart(e.target.value)}
+                                max={customEnd || undefined}
+                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
+                            />
+                            <span className="text-slate-400 text-xs font-bold flex-shrink-0">→</span>
+                            <input
+                                type="date"
+                                value={customEnd}
+                                onChange={e => setCustomEnd(e.target.value)}
+                                min={customStart || undefined}
+                                max={toISODate(new Date())}
+                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
+                            />
+                        </div>
+                    )}
 
                     {/* Summary Cards */}
                     <div className="grid grid-cols-3 gap-2">
@@ -328,6 +404,35 @@ export default function AnalyticsPage() {
                         </ResponsiveContainer>
                     </section>
 
+                    {/* ── Monthly history: real month-over-month comparison ── */}
+                    <section className="bg-white dark:bg-slate-900 rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+                        <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-1">Lịch sử theo tháng</h2>
+                        <div className="space-y-1.5">
+                            {monthlyHistory.map((m, i) => {
+                                const prev = i > 0 ? monthlyHistory[i - 1] : null;
+                                const expenseDelta = prev && prev.expense > 0 ? ((m.expense - prev.expense) / prev.expense) * 100 : null;
+                                const isCurrent = i === monthlyHistory.length - 1;
+                                return (
+                                    <div key={m.label} className={cn(
+                                        'flex items-center gap-2 rounded-2xl px-3 py-2.5 transition-colors',
+                                        isCurrent ? 'bg-purple-50/60 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30' : 'border border-transparent'
+                                    )}>
+                                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 w-14 flex-shrink-0">{m.label}</span>
+                                        <span className="text-[10px] font-bold text-emerald-500 flex-1 text-right">+{fmt(m.income)}₫</span>
+                                        <span className="text-[10px] font-bold text-rose-500 flex-1 text-right">-{fmt(m.expense)}₫</span>
+                                        <span className={cn(
+                                            'text-[9px] font-bold flex-shrink-0 w-11 text-right',
+                                            expenseDelta === null ? 'text-slate-300 dark:text-slate-600' : expenseDelta <= 0 ? 'text-emerald-500' : 'text-rose-500'
+                                        )}>
+                                            {expenseDelta === null ? '—' : `${expenseDelta <= 0 ? '↓' : '↑'}${Math.abs(expenseDelta).toFixed(0)}%`}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <p className="text-[9px] text-slate-300 dark:text-slate-600 text-center mt-3">Chi tiêu so với tháng liền trước</p>
+                    </section>
+
                     {/* ── Category pie chart ──────────────────────────── */}
                     {categoryBreakdown.length > 0 && (
                         <section className="bg-white dark:bg-slate-900 rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
@@ -355,7 +460,9 @@ export default function AnalyticsPage() {
                                         const pct = summary.expense > 0 ? Math.round((c.total / summary.expense) * 100) : 0;
                                         return (
                                             <div key={c.category} className="bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl p-2.5 flex items-center gap-3 group hover:scale-[1.01] transition-all">
-                                                <div className="w-8 h-8 rounded-xl flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: `${c.color}15` }}>{c.icon}</div>
+                                                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${c.color}15` }}>
+                                                    <c.Icon className="w-4 h-4" style={{ color: c.color }} />
+                                                </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between mb-1 px-0.5">
                                                         <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">{c.category}</span>
@@ -378,22 +485,29 @@ export default function AnalyticsPage() {
 
                     {/* ── Transaction List ────────────────────────────── */}
                     <section>
-                        <div className="flex items-center justify-between mb-3 px-1">
-                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Giao dịch gần nhất</h2>
-                            <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-1 flex gap-1 border border-slate-200/50 dark:border-slate-800">
-                                {(['all', 'expense', 'income'] as const).map(f => (
-                                    <button key={f} onClick={() => setFilterType(f)}
-                                        className={cn('px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase',
-                                            filterType === f ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
-                                        {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi' : 'Thu'}
-                                    </button>
-                                ))}
+                        <div className="flex items-center justify-between flex-wrap gap-y-2 mb-3 px-1 gap-2">
+                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex-shrink-0">Giao dịch gần nhất</h2>
+                            <div className="flex items-center gap-1.5">
+                                <button onClick={handleExport}
+                                    title="Xuất CSV"
+                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex-shrink-0">
+                                    <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-1 flex gap-1 border border-slate-200/50 dark:border-slate-800">
+                                    {(['all', 'expense', 'income'] as const).map(f => (
+                                        <button key={f} onClick={() => setFilterType(f)}
+                                            className={cn('px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase',
+                                                filterType === f ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
+                                            {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi' : 'Thu'}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
                         <div className="space-y-2">
                             {filteredTx.length === 0 ? (
-                                <div className="py-12 text-center bg-white dark:bg-slate-900/30 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+                                <div className="py-12 text-center bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                     <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-slate-800">
                                         <ListFilter className="w-6 h-6 text-slate-300" />
                                     </div>
@@ -406,8 +520,8 @@ export default function AnalyticsPage() {
                                     return (
                                         <div key={t._id} className="bg-white dark:bg-slate-900 rounded-2xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0 shadow-inner" style={{ backgroundColor: `${cat.color}15` }}>
-                                                    {cat.icon}
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner" style={{ backgroundColor: `${cat.color}15` }}>
+                                                    <cat.Icon className="w-[18px] h-[18px]" style={{ color: cat.color }} />
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="font-bold text-[13px] text-slate-800 dark:text-slate-200 truncate">{t.note || t.category}</p>

@@ -160,30 +160,51 @@ export default function DashboardPage() {
                 .anim-pulse-icon { animation: pulseGlow 2.5s ease-in-out infinite; }
             `}</style>
 
-            {/* ── Header ─────────────────────────────────────────────── */}
-            <header className="px-5 pb-3 flex items-center gap-2.5" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-                <Link
-                    href="/search"
-                    className="flex-1 min-w-0 h-11 pl-4 pr-3 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-between text-slate-400 dark:text-slate-500 hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors active:scale-[0.98]"
-                >
-                    <span className="text-sm">Tìm kiếm...</span>
-                    <Search className="w-4 h-4 flex-shrink-0" />
-                </Link>
+            {/* ── Header: identity left, actions right — sticky like every other page ── */}
+            <header
+                className="sticky top-0 z-20 px-5 pb-3 flex items-center gap-3 bg-[#F8F9FF]/80 dark:bg-slate-900/80 backdrop-blur-lg"
+                style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
+            >
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                    {user?.avatar ? (
+                        <div className="relative rounded-full shadow-[0_6px_14px_-4px_rgba(109,40,217,0.45)] ring-[2.5px] ring-white dark:ring-slate-800 flex-shrink-0">
+                            <img src={user.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                        </div>
+                    ) : (
+                        <div
+                            className="relative w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0"
+                            style={{
+                                background: 'radial-gradient(circle at 32% 28%, #B8A6FF 0%, #8B7CF6 35%, #6C63FF 65%, #5B21B6 100%)',
+                                boxShadow: 'inset 0 1.5px 2px rgba(255,255,255,0.55), inset 0 -4px 8px rgba(35,15,80,0.35), 0 6px 14px -4px rgba(109,40,217,0.55)',
+                            }}
+                        >
+                            <div aria-hidden className="absolute top-1.5 left-2 w-3.5 h-2 rounded-full bg-white/40 blur-[2px]" />
+                            <span className="relative">{initials}</span>
+                        </div>
+                    )}
+                    <p className="text-slate-800 dark:text-white font-bold text-base truncate">{user?.name || 'Người dùng'}</p>
+                </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
+                    <Link
+                        href="/search"
+                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                    >
+                        <Search className="w-[18px] h-[18px]" />
+                    </Link>
                     <button
                         onClick={() => { setAddType('expense'); setAutoOpenScanner(true); openAddModal(); }}
-                        className="w-11 h-11 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
-                        <ScanLine className="w-5 h-5" />
+                        <ScanLine className="w-[18px] h-[18px]" />
                     </button>
                     <button
                         onClick={() => setShowNoti(true)}
-                        className="w-11 h-11 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
-                        <Bell className="w-5 h-5" />
+                        <Bell className="w-[18px] h-[18px]" />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-400 rounded-full border-2 border-white animate-pulse" />
+                            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-400 rounded-full border-2 border-white dark:border-slate-800 animate-pulse" />
                         )}
                     </button>
                 </div>
@@ -191,90 +212,118 @@ export default function DashboardPage() {
 
             <main className="px-5 space-y-5">
 
-                {/* ── Asset card: same layout for light & dark mode ── */}
-                <div className="anim-scale-in relative overflow-hidden rounded-[24px] p-5 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#1B1E30] dark:via-[#15182A] dark:to-[#0F1120] border border-[#E9D5FF] dark:border-slate-700/40">
-                    <div className="hidden dark:block absolute inset-0 opacity-[0.06] pointer-events-none" style={{ backgroundImage: 'linear-gradient(115deg, transparent 40%, white 50%, transparent 60%)' }} />
-                    <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl pointer-events-none bg-purple-300/25 dark:bg-purple-500/10" />
+                {/* ── Asset card: light lavender / dark navy→purple with aurora glow ── */}
+                <div className="anim-scale-in relative overflow-hidden rounded-[20px] p-5 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#191E36] dark:via-[#151829] dark:to-[#141224] border border-[#E9D5FF] dark:border-slate-700/50">
+                    {/* Aurora glow — confined to the bottom-right corner, card stays mostly dark navy */}
+                    <div aria-hidden className="absolute inset-0 pointer-events-none">
+                        {/* deep-purple bloom hugging the corner */}
+                        <div
+                            className="absolute -bottom-24 -right-24 w-72 h-56 opacity-35 dark:opacity-70"
+                            style={{ background: 'radial-gradient(ellipse at center, rgba(109,40,217,0.45) 0%, rgba(91,33,182,0.22) 45%, transparent 70%)', filter: 'blur(24px)' }}
+                        />
+                        {/* small bright core, right at the corner */}
+                        <div
+                            className="absolute -bottom-14 -right-6 w-40 h-28 opacity-30 dark:opacity-60"
+                            style={{ background: 'radial-gradient(ellipse at center, rgba(167,139,250,0.45) 0%, transparent 65%)', filter: 'blur(14px)' }}
+                        />
+                        {/* silk light-lines, right half only */}
+                        <svg className="absolute bottom-0 right-0 w-2/3 h-24 opacity-20 dark:opacity-35" viewBox="0 0 260 96" fill="none" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="assetSilk" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
+                                    <stop stopColor="#C4B5FD" stopOpacity="0" />
+                                    <stop offset="0.6" stopColor="#C4B5FD" stopOpacity="0.8" />
+                                    <stop offset="1" stopColor="#8B5CF6" stopOpacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <path d="M0 96 C 90 64, 170 92, 260 36" stroke="url(#assetSilk)" strokeWidth="0.8" />
+                            <path d="M20 100 C 110 74, 190 96, 260 50" stroke="url(#assetSilk)" strokeWidth="0.6" />
+                            <path d="M60 104 C 140 86, 210 100, 260 66" stroke="url(#assetSilk)" strokeWidth="0.5" />
+                            <path d="M110 106 C 175 96, 225 104, 260 82" stroke="url(#assetSilk)" strokeWidth="0.4" />
+                        </svg>
+                        {/* rim light, bottom-right edge only */}
+                        <div className="absolute bottom-0 right-6 left-1/2 h-px bg-gradient-to-r from-transparent via-purple-400/30 dark:via-purple-300/50 to-transparent" />
+                    </div>
 
                     <div className="relative z-10">
-                        {/* Avatar + name + cashback badge, all in one row */}
-                        <div className="flex items-center gap-2.5 mb-4">
-                            {user?.avatar ? (
-                                <img src={user.avatar} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white dark:border-white/10 flex-shrink-0" />
-                            ) : (
-                                <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {initials}
-                                </div>
-                            )}
-                            <p className="text-slate-800 dark:text-white font-bold text-[15px] truncate flex-1 min-w-0">{user?.name || 'Người dùng'}</p>
+                        {/* Label + eye toggle left, cashback coin badge right */}
+                        <div className="flex items-center justify-between gap-2 mb-2.5">
+                            <div className="flex items-center gap-1.5">
+                                <Link href="/wealth" className="text-slate-500 dark:text-slate-300 text-sm font-medium hover:text-purple-500 dark:hover:text-white transition-colors">Tài sản ròng</Link>
+                                <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
+                                    {hideBalance ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
 
                             {/* Cashback badge — always shown, even at 0, so the feature is discoverable */}
                             <Link href="/cashback"
-                                className="inline-flex items-center gap-1 bg-amber-50 dark:bg-black/25 hover:bg-amber-100 dark:hover:bg-black/35 transition-colors px-2 py-1 rounded-full border border-amber-100 dark:border-transparent flex-shrink-0">
-                                <span className="text-sm leading-none flex-shrink-0">🪙</span>
-                                <span className="text-amber-700 dark:text-amber-300 text-[11px] font-bold whitespace-nowrap">
+                                className="inline-flex items-center gap-1.5 bg-amber-50 dark:bg-black/25 hover:bg-amber-100 dark:hover:bg-black/35 transition-colors pl-1.5 pr-2.5 py-1 rounded-full border border-amber-100 dark:border-white/10 flex-shrink-0">
+                                <span className="text-base leading-none flex-shrink-0">🪙</span>
+                                <span className="text-amber-700 dark:text-amber-300 text-xs font-bold whitespace-nowrap">
                                     {monthCashback > 0 ? `+${fmtFull(monthCashback)}đ` : '0đ'}
                                 </span>
                             </Link>
                         </div>
 
-                        {/* Net worth label + toggle */}
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                            <Link href="/wealth" className="text-slate-400 text-xs font-medium hover:text-purple-500 dark:hover:text-slate-300 transition-colors">Tài sản ròng</Link>
-                            <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
-                                {hideBalance ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                            </button>
-                        </div>
-                        <p className="text-slate-800 dark:text-white text-[26px] font-bold tracking-tight leading-none text-money mb-3">
-                            {hideBalance ? '********' : `${fmtFull(netWorth)}đ`}
+                        <p className="text-slate-800 dark:text-white text-[30px] font-bold tracking-tight leading-none text-money">
+                            {hideBalance ? '*******' : `${fmtFull(netWorth)}đ`}
                         </p>
 
-                        {/* Thu/Chi */}
-                        <div className="flex items-center gap-2.5">
-                            <Link href="/analytics" className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-                                <TrendingUp className="w-3 h-3" /> +{fmt(summary.income)}
+                        {/* Thu/Chi — value on top, label below, split by divider */}
+                        <div className="flex items-center gap-6 mt-5">
+                            <Link href="/analytics" className="group">
+                                <p className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
+                                    <TrendingUp className="w-3.5 h-3.5" /> +{fmt(summary.income)}
+                                </p>
+                                <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Thu nhập</p>
                             </Link>
-                            <span className="text-slate-300 dark:text-slate-600">·</span>
-                            <Link href="/analytics" className="inline-flex items-center gap-1 text-red-500 dark:text-red-400 text-xs font-bold">
-                                <TrendingDown className="w-3 h-3" /> -{fmt(summary.expense)}
+                            <div className="w-px h-9 bg-slate-200 dark:bg-white/15" />
+                            <Link href="/analytics" className="group">
+                                <p className="inline-flex items-center gap-1 text-red-500 dark:text-red-400 text-sm font-bold">
+                                    <TrendingDown className="w-3.5 h-3.5" /> -{fmt(summary.expense)}
+                                </p>
+                                <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Chi tiêu</p>
                             </Link>
                         </div>
                     </div>
                 </div>
 
-                {/* ── Savings & card debt (separate from net worth card) ── */}
+                {/* ── Savings & card debt shortcut tiles ── */}
                 <div className="anim-fade-up-d1 grid grid-cols-2 gap-3">
                     <Link href="/savings"
-                        className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
-                        <div className="w-full flex justify-between items-start mb-1">
-                            <div>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
-                                <p className="text-lg font-bold mt-1 text-money text-left text-emerald-600 dark:text-emerald-400">
-                                    {hideBalance ? '••' : fmt(totalSavings)}
-                                </p>
-                            </div>
-                            <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 dark:text-purple-400" />
+                        className="bg-white dark:bg-slate-800 rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-purple-200 dark:hover:border-purple-500/40 hover:shadow-md transition-all active:scale-95 group">
+                        {/* <div className="w-11 h-11 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                            <PiggyBank className="w-5 h-5 text-purple-600 dark:text-purple-300" />
+                        </div> */}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
+                            <p className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400 text-money leading-tight truncate">
+                                {hideBalance ? '••' : fmt(totalSavings)}
+                            </p>
+                            <p className="text-[10px] text-slate-400 truncate">
+                                {cards.filter(c => c.cardType === 'savings').length > 0
+                                    ? `${cards.filter(c => c.cardType === 'savings').length} sổ tiết kiệm`
+                                    : 'Chưa có sổ nào'}
+                            </p>
                         </div>
-
-                        {cards.filter(c => c.cardType === 'savings').length > 0 ?
-                            <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'savings').length} sổ tiết kiệm</p>
-                            : <p className="text-[10px] text-slate-400 mt-0.5">Bạn chưa có sổ tiết kiệm</p>}
+                        <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 flex-shrink-0" />
                     </Link>
                     <Link href="/cards"
-                        className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
-                        <div className="w-full flex justify-between items-start mb-1">
-                            <div>
-                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
-                                <p className="text-lg font-bold text-red-500 mt-1 text-money text-left">
-                                    {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
-                                </p>
-                            </div>
-                            <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 dark:text-purple-400" />
+                        className="bg-white dark:bg-slate-800 rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-500/40 hover:shadow-md transition-all active:scale-95 group">
+                        {/* <div className="w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                            <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                        </div> */}
+                        <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
+                            <p className="text-[15px] font-bold text-red-500 text-money leading-tight truncate">
+                                {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
+                            </p>
+                            <p className="text-[10px] text-slate-400 truncate">
+                                {cards.filter(c => c.cardType === 'credit').length > 0
+                                    ? `${cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng`
+                                    : 'Chưa có thẻ nào'}
+                            </p>
                         </div>
-
-                        {cards.filter(c => c.cardType === 'credit').length > 0 && (
-                            <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng</p>
-                        )}
+                        <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 flex-shrink-0" />
                     </Link>
                 </div>
 

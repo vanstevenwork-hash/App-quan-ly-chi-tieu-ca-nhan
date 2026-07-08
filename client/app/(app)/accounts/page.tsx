@@ -431,8 +431,8 @@ export default function AccountsPage() {
                 )}
 
                 {/* ── Summary & Net Worth ──────────────────────────── */}
-                <div className="px-5 pb-5">
-                    <div className="relative overflow-hidden rounded-3xl p-5 shadow-sm border border-white/50 dark:border-slate-800/50 bg-gradient-to-br from-[#E0C3FC]/20 to-[#8EC5FC]/20 dark:from-purple-900/10 dark:to-blue-900/10">
+                <div className="px-5 pb-2">
+                    <div className="relative overflow-hidden rounded-[20px] p-5 shadow-sm border border-white/50 dark:border-slate-800/50 bg-gradient-to-br from-[#E0C3FC]/20 to-[#8EC5FC]/20 dark:from-purple-900/10 dark:to-blue-900/10">
                         {/* Net worth */}
                         <div className="text-center mb-4">
                             <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5 font-medium">Tổng tài sản ròng</p>
@@ -519,7 +519,7 @@ export default function AccountsPage() {
                                             onClick={() => setCreditCardsExpanded(v => !v)}
                                             className="flex items-center gap-1.5 group"
                                         >
-                                            <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Thẻ tín dụng</h2>
+                                            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Thẻ tín dụng</h2>
                                             <ChevronDown className={cn(
                                                 'w-3.5 h-3.5 text-slate-400 transition-transform',
                                                 !creditCardsExpanded && '-rotate-90'
@@ -574,14 +574,14 @@ export default function AccountsPage() {
                                             onClick={() => setPaymentAccountsExpanded(v => !v)}
                                             className="flex items-center gap-1.5 group"
                                         >
-                                            <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Tài khoản thanh toán</h2>
+                                            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Tài khoản thanh toán</h2>
                                             <ChevronDown className={cn(
                                                 'w-3.5 h-3.5 text-slate-400 transition-transform',
                                                 !paymentAccountsExpanded && '-rotate-90'
                                             )} />
                                         </button>
                                     ) : (
-                                        <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tài khoản thanh toán</h2>
+                                        <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tài khoản thanh toán</h2>
                                     )}
                                     <button onClick={() => openAdd('debit')}
                                         className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
@@ -618,7 +618,7 @@ export default function AccountsPage() {
                                         </button>
                                     )
                                 ) : (
-                                    <div className="text-center py-12 bg-white dark:bg-slate-900/30 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+                                    <div className="text-center py-12 bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                         <p className="text-sm text-slate-400 dark:text-slate-500 font-medium italic">Chưa có tài khoản thanh toán</p>
                                     </div>
                                 )}
@@ -627,7 +627,7 @@ export default function AccountsPage() {
                             {/* If no credit cards at all, show add button */}
                             {creditCards.length === 0 && (
                                 <button onClick={() => openAdd('credit')}
-                                    className="w-full flex items-center gap-4 p-5 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-purple-300 dark:hover:border-purple-900 transition-all group">
+                                    className="w-full flex items-center gap-4 p-5 bg-white dark:bg-slate-900 rounded-[20px] border border-slate-100 dark:border-slate-800 shadow-sm hover:border-purple-300 dark:hover:border-purple-900 transition-all group">
                                     <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <CreditCard className="w-6 h-6 text-purple-500" />
                                     </div>
@@ -660,7 +660,7 @@ export default function AccountsPage() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center py-20 gap-6 bg-white dark:bg-slate-900/30 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+                                <div className="flex flex-col items-center py-20 gap-6 bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                     <div className="w-20 h-20 rounded-[2.5rem] bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center transform rotate-3">
                                         <PiggyBank className="w-10 h-10 text-purple-400 dark:text-purple-500" />
                                     </div>

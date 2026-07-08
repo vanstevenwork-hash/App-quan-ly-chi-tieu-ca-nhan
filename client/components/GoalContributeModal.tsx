@@ -51,7 +51,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
 
     return (
         <Dialog open={open} onOpenChange={v => !v && onClose()}>
-            <DialogContent className="p-0 gap-0 max-w-md w-full rounded-3xl overflow-hidden border-0 shadow-2xl max-h-[92vh] overflow-y-auto">
+            <DialogContent className="p-0 gap-0 max-w-md w-full rounded-[20px] overflow-hidden border-0 shadow-2xl max-h-[92vh] overflow-y-auto">
                 {/* Header */}
                 <div className="px-5 pt-5 pb-4 border-b border-gray-100 dark:border-slate-700">
                     <div className="flex items-center justify-between mb-3">

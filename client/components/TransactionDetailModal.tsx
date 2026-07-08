@@ -84,7 +84,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                     {/* Header (Icon, Amount, Category) */}
                     <div className="flex flex-col items-center mt-1">
                         <div className="bg-gradient-to-b from-[#7f19e6]/20 to-[#7f19e6]/5 dark:from-[#7f19e6]/30 dark:to-[#7f19e6]/10 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shadow-purple-500/10 mb-1.5 border border-purple-500/20">
-                            <span className="text-base filter drop-shadow-sm">{cat.icon}</span>
+                            <cat.Icon className="w-[18px] h-[18px] text-purple-600 dark:text-purple-400" />
                         </div>
                         <h2 className={cn(
                             "text-2xl font-black tracking-tight",

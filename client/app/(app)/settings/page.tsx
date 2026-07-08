@@ -24,6 +24,12 @@ const CURRENCIES = [
     { code: 'USD', label: 'US Dollar', symbol: '$' },
 ];
 
+// Layered "elevated glass" shadow recipe — soft ambient spread + tight contact
+// shadow, tinted purple in light mode (flat single-layer shadow-card reads flat;
+// stacking 2-3 shadows of different blur/spread is what actually reads as "3D").
+const CARD_SHADOW = 'shadow-[0_2px_2px_rgba(17,12,46,0.04),0_12px_24px_-8px_rgba(109,40,217,0.22),0_28px_48px_-16px_rgba(17,12,46,0.16)] dark:shadow-[0_2px_2px_rgba(0,0,0,0.3),0_12px_24px_-8px_rgba(0,0,0,0.5),0_28px_48px_-16px_rgba(0,0,0,0.4)]';
+const TILE_SHADOW = 'shadow-[0_1px_2px_rgba(17,12,46,0.04),0_8px_16px_-6px_rgba(109,40,217,0.14)] dark:shadow-[0_1px_2px_rgba(0,0,0,0.3),0_8px_16px_-6px_rgba(0,0,0,0.4)]';
+
 // Real pages that are NOT on the bottom nav — settings doubles as their hub
 const SHORTCUTS = [
     { href: '/notifications', label: 'Thông báo', icon: Bell, bg: 'bg-amber-50 dark:bg-amber-900/20', color: 'text-amber-500' },
@@ -159,27 +165,47 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-background pb-8">
             {/* Header */}
-            <div className="gradient-primary px-5 pb-16" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-                <h1 className="text-xl font-bold text-white">Cài đặt</h1>
-                <p className="text-white/70 text-sm mt-0.5">Tài khoản & tuỳ chỉnh ứng dụng</p>
+            <div className="relative gradient-primary px-5 pb-16 overflow-hidden" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
+                {/* Glossy sheen — simulates light hitting a curved glass surface */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{ background: 'radial-gradient(ellipse 140% 70% at 25% -30%, rgba(255,255,255,0.4), transparent 60%)' }}
+                />
+                <div className="relative z-10">
+                    <h1 className="text-xl font-bold text-white">Cài đặt</h1>
+                    <p className="text-white/70 text-sm mt-0.5">Tài khoản & tuỳ chỉnh ứng dụng</p>
+                </div>
             </div>
 
             {/* Profile card */}
             <div className="px-5 -mt-10 mb-5">
-                <div className="bg-card rounded-3xl shadow-card p-5 flex items-center gap-4">
+                <div className={cn(
+                    'relative bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-[#161B2E] rounded-[20px] p-5 flex items-center gap-4 border border-white dark:border-slate-700/60',
+                    CARD_SHADOW
+                )}>
                     <div className="relative flex-shrink-0">
                         {avatarUrl ? (
-                            <ImageUpload
-                                currentUrl={avatarUrl}
-                                onUpload={handleAvatarUpload}
-                                folder="chi_tieu/avatars"
-                                shape="circle"
-                                size={64}
-                            />
+                            <div className="relative rounded-full shadow-[0_10px_18px_-6px_rgba(109,40,217,0.45)] ring-[3px] ring-white dark:ring-slate-800">
+                                <ImageUpload
+                                    currentUrl={avatarUrl}
+                                    onUpload={handleAvatarUpload}
+                                    folder="chi_tieu/avatars"
+                                    shape="circle"
+                                    size={64}
+                                />
+                            </div>
                         ) : (
                             <div className="relative">
-                                <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center text-white text-xl font-bold">
-                                    {initials}
+                                <div
+                                    className="relative w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold overflow-hidden"
+                                    style={{
+                                        background: 'radial-gradient(circle at 32% 28%, #B8A6FF 0%, #8B7CF6 35%, #6C63FF 65%, #5B21B6 100%)',
+                                        boxShadow: 'inset 0 2px 3px rgba(255,255,255,0.55), inset 0 -6px 10px rgba(35,15,80,0.35), 0 10px 18px -6px rgba(109,40,217,0.55)',
+                                    }}
+                                >
+                                    {/* glossy highlight */}
+                                    <div aria-hidden className="absolute top-2 left-3 w-5 h-3 rounded-full bg-white/40 blur-[3px]" />
+                                    <span className="relative">{initials}</span>
                                 </div>
                                 <ImageUpload
                                     onUpload={handleAvatarUpload}
@@ -197,7 +223,7 @@ export default function SettingsPage() {
                     </div>
                     <button
                         onClick={() => { setNameInput(user?.name || ''); setShowNameDialog(true); }}
-                        className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 active:scale-95 transition-all flex-shrink-0">
+                        className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 active:scale-95 transition-all flex-shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_2px_4px_rgba(109,40,217,0.2)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),0_2px_4px_rgba(0,0,0,0.3)]">
                         <Pencil className="w-4 h-4" />
                     </button>
                 </div>
@@ -212,9 +238,15 @@ export default function SettingsPage() {
                             <button
                                 key={href}
                                 onClick={() => router.push(href)}
-                                className="bg-card rounded-2xl shadow-card p-3.5 flex flex-col items-center gap-2 hover:shadow-md active:scale-95 transition-all"
+                                className={cn(
+                                    'bg-card rounded-2xl p-3.5 flex flex-col items-center gap-2 active:scale-95 transition-all',
+                                    TILE_SHADOW
+                                )}
                             >
-                                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', bg)}>
+                                <div className={cn(
+                                    'w-10 h-10 rounded-xl flex items-center justify-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]',
+                                    bg
+                                )}>
                                     <Icon className={cn('w-5 h-5', color)} />
                                 </div>
                                 <span className="text-xs font-semibold text-foreground">{label}</span>
@@ -226,7 +258,7 @@ export default function SettingsPage() {
                 {/* Preferences */}
                 <div>
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2 px-1">Tùy chỉnh</p>
-                    <div className="bg-card rounded-3xl shadow-card overflow-hidden divide-y divide-border/50">
+                    <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50', CARD_SHADOW)}>
                         <SettingItem
                             icon={<Moon className="w-4 h-4" />}
                             label="Chế độ tối"
@@ -250,7 +282,7 @@ export default function SettingsPage() {
                 {/* Data */}
                 <div>
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2 px-1">Dữ liệu</p>
-                    <div className="bg-card rounded-3xl shadow-card overflow-hidden">
+                    <div className={cn('bg-card rounded-[20px] overflow-hidden', CARD_SHADOW)}>
                         <SettingItem
                             icon={<RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} />}
                             label="Làm mới dữ liệu"
@@ -262,7 +294,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Logout */}
-                <div className="bg-card rounded-3xl shadow-card overflow-hidden">
+                <div className={cn('bg-card rounded-[20px] overflow-hidden', CARD_SHADOW)}>
                     <SettingItem
                         icon={<LogOut className="w-4 h-4" />}
                         label="Đăng xuất"

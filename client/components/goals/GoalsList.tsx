@@ -43,7 +43,7 @@ function Confetti({ active }: { active: boolean }) {
     if (!active) return null;
     const dots = Array.from({ length: 20 });
     return (
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl z-10">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[20px] z-10">
             {dots.map((_, i) => (
                 <div key={i}
                     className="absolute w-2 h-2 rounded-full animate-bounce"
@@ -78,7 +78,7 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
 
     return (
         <div className={cn(
-            'relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border shadow-sm transition-all',
+            'relative bg-white dark:bg-slate-800 rounded-[20px] overflow-hidden border shadow-sm transition-all',
             isCompleted ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-gray-100 dark:border-slate-700'
         )}>
             <Confetti active={showConfetti} />
@@ -192,7 +192,7 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
 function EmptyState({ onAdd }: { onAdd: () => void }) {
     return (
         <div className="flex flex-col items-center justify-center px-8 py-16 text-center">
-            <div className="w-24 h-24 rounded-3xl mb-6 flex items-center justify-center text-5xl"
+            <div className="w-24 h-24 rounded-[20px] mb-6 flex items-center justify-center text-5xl"
                 style={{ background: 'linear-gradient(135deg, #6C63FF22, #6C63FF44)' }}>
                 🎯
             </div>
@@ -237,7 +237,7 @@ function GoalsListBase({ loading, hasGoals, filtered, onAdd, onContribute, onEdi
             {loading && (
                 <div className="space-y-4">
                     {[1, 2].map(i => (
-                        <div key={i} className="h-48 rounded-3xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
+                        <div key={i} className="h-48 rounded-[20px] bg-gray-100 dark:bg-slate-800 animate-pulse" />
                     ))}
                 </div>
             )}

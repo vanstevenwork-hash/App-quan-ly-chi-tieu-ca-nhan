@@ -166,7 +166,7 @@ export default function CardsPage() {
                 />
 
                 {/* ── Hero: Total debt ─────────────────────────── */}
-                <div className="text-center px-6 mb-8">
+                <div className="text-center px-5 mb-8">
                     <p className="text-sm text-slate-500 mb-1">Tổng dư nợ thẻ</p>
                     <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
                         {fmt(totalDebt)}₫
@@ -196,7 +196,7 @@ export default function CardsPage() {
                 />
 
                 {/* ── Quick actions ────────────────────────────── */}
-                <div className="px-6 mb-6">
+                <div className="px-5 mb-6">
                     <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl px-3.5 py-2.5 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
                             { icon: <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />, label: 'Thanh toán', bg: '#EEF2FF', bgDark: '#312E81', onClick: () => setShowPayment(true) },
@@ -233,7 +233,7 @@ export default function CardsPage() {
                 />
 
                 {/* ── Cashback section ─────────────────────────── */}
-                <div className="px-6 mb-5">
+                <div className="px-5 mb-5">
                     <div className="flex items-center justify-between mb-2.5">
                         <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Hoàn tiền theo thẻ</h3>
                         <button onClick={() => router.push('/cashback')}
@@ -303,7 +303,7 @@ export default function CardsPage() {
 
                 {/* ── Installment plans ─────────────────────────── */}
                 {installmentPlans.length > 0 && (
-                    <div className="px-6 mb-5">
+                    <div className="px-5 mb-5">
                         <div className="flex items-center justify-between mb-2.5">
                             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Kế hoạch trả góp</h3>
                             <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
@@ -351,13 +351,13 @@ export default function CardsPage() {
 
                 {/* ── Credit card transaction history ──────────── */}
                 {creditCardTxs.length > 0 && (
-                    <div className="px-6 mb-5 scroll-mt-24" ref={historyRef}>
+                    <div className="px-5 mb-5 scroll-mt-24" ref={historyRef}>
                         <CreditCardHistoryList transactions={creditCardTxs} cards={creditCards} />
                     </div>
                 )}
 
                 {/* ── Promo banner ────────────────────────────── */}
-                <div className="px-6">
+                <div className="px-5">
                     <div className="relative overflow-hidden rounded-xl p-4 text-white shadow-lg"
                         style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)' }}>
                         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full pointer-events-none" />

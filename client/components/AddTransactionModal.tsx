@@ -326,9 +326,9 @@ export default function AddTransactionModal({
                                             ? 'bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400 border-[#7f19e6]'
                                             : errors.category
                                                 ? 'bg-red-50 dark:bg-[#0F111A] border-red-200 dark:border-red-900/50'
-                                                : 'bg-slate-50 dark:bg-[#0F111A] border-slate-200 dark:border-slate-800 group-hover:border-slate-300')}
-                                        style={category === cat.label ? {} : { color: cat.color }}>
-                                        <span className="text-[18px]">{cat.icon}</span>
+                                                : 'group-hover:border-slate-300 dark:group-hover:border-slate-700')}
+                                        style={category === cat.label ? {} : { backgroundColor: `${cat.color}15`, borderColor: `${cat.color}30`, color: cat.color }}>
+                                        <cat.Icon className="w-[18px] h-[18px]" />
                                     </div>
                                     <span className={cn('text-[10px] font-bold text-center leading-tight', category === cat.label ? 'text-[#7f19e6] dark:text-purple-400' : 'text-slate-600 dark:text-slate-400')}>
                                         {cat.label}

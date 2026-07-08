@@ -320,7 +320,7 @@ duration-200
                                 </div>
                             </div>
                         ) : (
-                            <div className="w-full h-40 rounded-3xl p-5 relative overflow-hidden shadow-sm"
+                            <div className="w-full h-40 rounded-[20px] p-5 relative overflow-hidden shadow-sm"
                                 style={{
                                     background: cardBg,
                                     border: isWhite ? '1px solid #E2E8F0' : undefined,

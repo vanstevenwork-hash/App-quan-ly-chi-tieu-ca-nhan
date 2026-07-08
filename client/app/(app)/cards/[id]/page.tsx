@@ -134,7 +134,7 @@ export default function CardDetailPage() {
             <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900">
                 <PageHeader title="Chi tiết thẻ" backHref="/cards" />
                 <div className="px-5 pt-4 space-y-4">
-                    <div className="h-48 rounded-3xl bg-gray-200 dark:bg-slate-800 animate-pulse" />
+                    <div className="h-48 rounded-[20px] bg-gray-200 dark:bg-slate-800 animate-pulse" />
                     <div className="h-24 rounded-2xl bg-gray-200 dark:bg-slate-800 animate-pulse" />
                 </div>
             </div>
@@ -179,7 +179,7 @@ export default function CardDetailPage() {
 
             <div className="px-5 pt-4 space-y-5">
                 {/* ── Card visual ───────────────────────────────── */}
-                <div className="relative rounded-3xl p-5 shadow-xl overflow-hidden"
+                <div className="relative rounded-[20px] p-5 shadow-xl overflow-hidden"
                     style={{ background: getGradient(card), border: ts.border }}>
                     {card.color !== '#111111' && card.color !== '#FFFFFF' && (
                         <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />

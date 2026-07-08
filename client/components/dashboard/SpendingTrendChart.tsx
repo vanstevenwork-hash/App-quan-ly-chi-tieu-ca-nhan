@@ -1,6 +1,6 @@
 'use client';
 import { memo } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -111,8 +111,8 @@ function SpendingTrendChartBase({ chartData }: SpendingTrendChartProps) {
             <div className="flex justify-between items-center mb-3">
                 <h2 className="text-base font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
                 <Link href="/analytics"
-                    className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
-                    Xem chi tiết
+                    className="flex items-center gap-0.5 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-purple-500 dark:hover:text-purple-400 transition-colors">
+                    Xem chi tiết <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
             </div>
             <div className="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">

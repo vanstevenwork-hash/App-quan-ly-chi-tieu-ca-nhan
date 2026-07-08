@@ -88,7 +88,7 @@ export default function CalendarPage() {
     const imageUploadRef = useRef<ImageNoteUploadModalHandle>(null);
 
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
-    const { transactions, summary, refetch, deleteTransaction } = useTransactions();
+    const { transactions, refetch, deleteTransaction } = useTransactions();
     const { cards } = useCards();
     const { notesByDate, addImage, removeImage, refetch: refetchNotes } = useDayNotes(viewDate.month, viewDate.year);
 
@@ -138,17 +138,22 @@ export default function CalendarPage() {
         return map;
     }, [transactions, viewDate, notesByDate, daysInMonth]);
 
-    /* ── Cashback earned this month, across all credit cards ── */
-    const monthCashback = useMemo(() => {
+    /* ── Cashback earned in a given month, across all credit cards ── */
+    const getCashbackForMonth = useCallback((year: number, month: number) => {
         return creditCards.reduce((sum, card) => {
             const cardMonthTxs = transactions.filter(t => {
                 if (t.type !== 'expense' || t.paymentMethod !== 'card' || resolveCardId(t) !== card._id) return false;
                 const d = new Date(t.date);
-                return d.getMonth() === viewDate.month && d.getFullYear() === viewDate.year;
+                return d.getMonth() === month && d.getFullYear() === year;
             });
             return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap);
         }, 0);
-    }, [creditCards, transactions, viewDate]);
+    }, [creditCards, transactions]);
+
+    const monthCashback = useMemo(
+        () => getCashbackForMonth(viewDate.year, viewDate.month),
+        [getCashbackForMonth, viewDate]
+    );
 
     /* ── Month summary (income includes cashback earned this month) ── */
     const monthSummary = useMemo(() => {
@@ -156,6 +161,29 @@ export default function CalendarPage() {
         Object.values(txByDay).forEach(d => { income += d.income; expense += d.expense; });
         return { income: income + monthCashback, expense };
     }, [txByDay, monthCashback]);
+
+    /* ── Previous month summary, for the real "so với tháng trước" % change ── */
+    const prevMonthSummary = useMemo(() => {
+        const prevMonth = viewDate.month === 0 ? 11 : viewDate.month - 1;
+        const prevYear = viewDate.month === 0 ? viewDate.year - 1 : viewDate.year;
+        let income = 0, expense = 0;
+        transactions.forEach(t => {
+            const d = new Date(t.date);
+            if (d.getMonth() !== prevMonth || d.getFullYear() !== prevYear) return;
+            if (t.type === 'expense') expense += t.amount;
+            if (t.type === 'income') income += t.amount;
+        });
+        return { income: income + getCashbackForMonth(prevYear, prevMonth), expense };
+    }, [transactions, viewDate, getCashbackForMonth]);
+
+    // % change vs previous month — null when there's no prior data to compare against
+    // (avoids a misleading "+100%" the very first month a card/account is used).
+    const pctChange = (current: number, previous: number): number | null => {
+        if (previous <= 0) return current > 0 ? null : 0;
+        return ((current - previous) / previous) * 100;
+    };
+    const expenseChangePct = pctChange(monthSummary.expense, prevMonthSummary.expense);
+    const incomeChangePct = pctChange(monthSummary.income, prevMonthSummary.income);
 
     /* ── Selected day transactions ── */
     const selectedDayTxs = useMemo(() => {
@@ -231,7 +259,7 @@ export default function CalendarPage() {
             <PageHeader
                 title={`${MONTHS[viewDate.month]}, ${viewDate.year}`}
                 subtitle="LỊCH GIAO DỊCH"
-                showBackButton={false}
+                backHref="/dashboard"
                 rightActions={
                     <div className="flex gap-2">
                         <button
@@ -250,9 +278,9 @@ export default function CalendarPage() {
                 }
             />
 
-            <main className="px-6 space-y-5">
+            <main className="px-5 space-y-5">
                 {/* ── Summary Card: white in light mode, dark gradient + Donut in dark mode ── */}
-                <section className="bg-white dark:bg-gradient-to-br dark:from-[#1A1730] dark:via-[#161328] dark:to-[#121020] rounded-3xl p-5 shadow-sm dark:shadow-2xl border border-gray-100 dark:border-slate-700/40 relative overflow-hidden">
+                <section className="bg-white dark:bg-gradient-to-br dark:from-[#1A1730] dark:via-[#161328] dark:to-[#121020] rounded-[20px] p-5 shadow-sm dark:shadow-2xl border border-gray-100 dark:border-slate-700/40 relative overflow-hidden">
                     {/* Subtle glow — dark mode only */}
                     <div className="hidden dark:block absolute -top-20 -right-20 w-52 h-52 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
                     <div className="hidden dark:block absolute -bottom-16 -left-16 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -269,9 +297,17 @@ export default function CalendarPage() {
                                 <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Chi tiêu</p>
                             </div>
                             <p className="text-[18px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.expense)}</p>
-                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-red-500 dark:text-red-400 mt-1">
-                                <TrendingDown className="w-2.5 h-2.5" /> 12.5%
-                            </span>
+                            {expenseChangePct !== null ? (
+                                <span className={cn(
+                                    'inline-flex items-center gap-0.5 text-[10px] font-bold mt-1',
+                                    expenseChangePct <= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                                )}>
+                                    {expenseChangePct <= 0 ? <TrendingDown className="w-2.5 h-2.5" /> : <TrendingUp className="w-2.5 h-2.5" />}
+                                    {Math.abs(expenseChangePct).toFixed(1)}%
+                                </span>
+                            ) : (
+                                <span className="inline-block text-[10px] font-bold text-slate-300 dark:text-slate-600 mt-1">Chưa có dữ liệu</span>
+                            )}
                         </div>
 
                         {/* Center: Donut */}
@@ -292,18 +328,26 @@ export default function CalendarPage() {
                                 </div>
                             </div>
                             <p className="text-[18px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.income)}</p>
-                            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                                <TrendingUp className="w-2.5 h-2.5" /> 8.4%
-                            </span>
+                            {incomeChangePct !== null ? (
+                                <span className={cn(
+                                    'inline-flex items-center gap-0.5 text-[10px] font-bold mt-1',
+                                    incomeChangePct >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
+                                )}>
+                                    {incomeChangePct >= 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                                    {Math.abs(incomeChangePct).toFixed(1)}%
+                                </span>
+                            ) : (
+                                <span className="inline-block text-[10px] font-bold text-slate-300 dark:text-slate-600 mt-1">Chưa có dữ liệu</span>
+                            )}
                             {monthCashback > 0 && (
-                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1">(gồm {fmtFull(monthCashback)}đ hoàn tiền)</p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium mt-1 whitespace-nowrap">gồm {fmt(monthCashback)}đ hoàn tiền</p>
                             )}
                         </div>
                     </div>
                 </section>
 
                 {/* ── Filter Tabs ── */}
-                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl flex gap-1">
+                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex gap-1">
                     {(['all', 'expense', 'income'] as const).map(f => (
                         <button
                             key={f}
@@ -357,26 +401,26 @@ export default function CalendarPage() {
                 {/* ── Selected Day Panel ── */}
                 {selectedDay && (
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between px-1">
-                            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                            <h3 className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                 Ngày {selectedDay}/{viewDate.month + 1}/{viewDate.year}
                                 {txByDay[selectedDay]?.hasTx && (
-                                    <span className="ml-2 text-[10px] font-semibold text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full">
+                                    <span className="text-[10px] font-semibold text-purple-500 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded-full whitespace-nowrap">
                                         {txByDay[selectedDay].txs.length} giao dịch
                                     </span>
                                 )}
                             </h3>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-shrink-0">
                                 <button
                                     onClick={() => triggerImageUpload(dayToDateStr(selectedDay))}
-                                    className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors active:scale-95"
+                                    className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors active:scale-95 whitespace-nowrap"
                                 >
                                     <ImageIcon className="w-3 h-3" />
                                     Thêm ảnh
                                 </button>
                                 <button
                                     onClick={() => openAddModal()}
-                                    className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors active:scale-95"
+                                    className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors active:scale-95 whitespace-nowrap"
                                 >
                                     <Plus className="w-3 h-3" />
                                     Giao dịch
@@ -406,8 +450,8 @@ export default function CalendarPage() {
                                                             />
                                                             {/* Category icon - bottom left */}
                                                             {imgCat && (
-                                                                <div className="absolute -bottom-1.5 -left-1.5 w-7 h-7 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center text-sm z-10">
-                                                                    {imgCat.icon}
+                                                                <div className="absolute -bottom-1.5 -left-1.5 w-7 h-7 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center z-10">
+                                                                    <imgCat.Icon className="w-3.5 h-3.5" style={{ color: imgCat.color }} />
                                                                 </div>
                                                             )}
                                                             {/* Amount badge - bottom right */}
@@ -470,10 +514,10 @@ export default function CalendarPage() {
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 group-hover:scale-105 transition-transform"
+                                                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform"
                                                     style={{ backgroundColor: `${cat.color}18` }}
                                                 >
-                                                    {cat.icon}
+                                                    <cat.Icon className="w-5 h-5" style={{ color: cat.color }} />
                                                 </div>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">{t.note || t.category}</p>
@@ -504,18 +548,20 @@ export default function CalendarPage() {
                             <Target className="w-5 h-5 text-purple-500" />
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Mục tiêu</p>
-                        {monthSummary.expense > 0 ? (
+                        {monthSummary.expense > 0 && monthSummary.income > 0 ? (
                             <div className="space-y-1">
                                 <div className="w-full bg-white dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                                     <div
                                         className="bg-purple-500 h-full rounded-full transition-all duration-700"
-                                        style={{ width: `${Math.min((monthSummary.expense / (summary.income || 1)) * 100, 100).toFixed(0)}%` }}
+                                        style={{ width: `${Math.min((monthSummary.expense / monthSummary.income) * 100, 100).toFixed(0)}%` }}
                                     />
                                 </div>
                                 <p className="text-[9px] font-semibold text-slate-400">
-                                    {((monthSummary.expense / (summary.income || 1)) * 100).toFixed(0)}% thu nhập đã chi
+                                    {Math.min(Math.round((monthSummary.expense / monthSummary.income) * 100), 999)}% thu nhập đã chi
                                 </p>
                             </div>
+                        ) : monthSummary.expense > 0 ? (
+                            <p className="text-[9px] text-slate-400">Chưa có thu nhập tháng này</p>
                         ) : (
                             <p className="text-[9px] text-slate-400">Chưa có chi tiêu</p>
                         )}

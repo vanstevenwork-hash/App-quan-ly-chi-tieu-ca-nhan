@@ -206,7 +206,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                 {/* Add new card slide */}
                 <button
                     onClick={onAddNew}
-                    className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
+                    className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
                     <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                         <Plus className="w-6 h-6" />
                     </div>

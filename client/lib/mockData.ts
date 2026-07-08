@@ -1,3 +1,9 @@
+import type { LucideIcon } from 'lucide-react';
+import {
+    UtensilsCrossed, ShoppingBag, Car, Gamepad2, Pill, BookOpen, Receipt,
+    CreditCard, Bitcoin, Banknote, Laptop, TrendingUp, Gift, Landmark, Package,
+} from 'lucide-react';
+
 // Mock data for UI preview when not connected to backend
 export const mockUser = {
     _id: '1',
@@ -50,22 +56,25 @@ export const mockCategoryBreakdown = [
     { _id: 'Khác', total: 460000, count: 8, color: '#6B7280' },
 ];
 
-export const CATEGORIES = [
-    { id: 'food', label: 'Ăn uống', icon: '🍜', color: '#F59E0B' },
-    { id: 'shopping', label: 'Mua sắm', icon: '🛍️', color: '#8B5CF6' },
-    { id: 'transport', label: 'Di chuyển', icon: '🚗', color: '#3B82F6' },
-    { id: 'entertainment', label: 'Giải trí', icon: '🎮', color: '#EC4899' },
-    { id: 'health', label: 'Sức khỏe', icon: '💊', color: '#10B981' },
-    { id: 'education', label: 'Học tập', icon: '📚', color: '#F97316' },
-    { id: 'bills', label: 'Hóa đơn', icon: '💡', color: '#EF4444' },
-    { id: 'credit-pay', label: 'Trả thẻ tín dụng', icon: '💳', color: '#DC2626' },
-    { id: 'crypto', label: 'Crypto', icon: '₿', color: '#F7931A' },
-    { id: 'salary', label: 'Lương', icon: '💰', color: '#22C55E' },
-    { id: 'freelance', label: 'Freelance', icon: '💻', color: '#06B6D4' },
-    { id: 'investment', label: 'Đầu tư', icon: '📈', color: '#6C63FF' },
-    { id: 'bonus', label: 'Thưởng', icon: '🎁', color: '#A855F7' },
-    { id: 'interest', label: 'Tiền lãi', icon: '🏦', color: '#14B8A6' },
-    { id: 'other', label: 'Khác', icon: '📦', color: '#6B7280' },
+// `icon` (emoji) stays for the many existing call sites that render it as
+// plain text; `Icon` (lucide component) is the newer vector-icon look, opted
+// into per-view rather than swapped in everywhere at once.
+export const CATEGORIES: { id: string; label: string; icon: string; color: string; Icon: LucideIcon }[] = [
+    { id: 'food', label: 'Ăn uống', icon: '🍜', color: '#F59E0B', Icon: UtensilsCrossed },
+    { id: 'shopping', label: 'Mua sắm', icon: '🛍️', color: '#8B5CF6', Icon: ShoppingBag },
+    { id: 'transport', label: 'Di chuyển', icon: '🚗', color: '#3B82F6', Icon: Car },
+    { id: 'entertainment', label: 'Giải trí', icon: '🎮', color: '#EC4899', Icon: Gamepad2 },
+    { id: 'health', label: 'Sức khỏe', icon: '💊', color: '#10B981', Icon: Pill },
+    { id: 'education', label: 'Học tập', icon: '📚', color: '#F97316', Icon: BookOpen },
+    { id: 'bills', label: 'Hóa đơn', icon: '💡', color: '#EF4444', Icon: Receipt },
+    { id: 'credit-pay', label: 'Trả thẻ tín dụng', icon: '💳', color: '#DC2626', Icon: CreditCard },
+    { id: 'crypto', label: 'Crypto', icon: '₿', color: '#F7931A', Icon: Bitcoin },
+    { id: 'salary', label: 'Lương', icon: '💰', color: '#22C55E', Icon: Banknote },
+    { id: 'freelance', label: 'Freelance', icon: '💻', color: '#06B6D4', Icon: Laptop },
+    { id: 'investment', label: 'Đầu tư', icon: '📈', color: '#6C63FF', Icon: TrendingUp },
+    { id: 'bonus', label: 'Thưởng', icon: '🎁', color: '#A855F7', Icon: Gift },
+    { id: 'interest', label: 'Tiền lãi', icon: '🏦', color: '#14B8A6', Icon: Landmark },
+    { id: 'other', label: 'Khác', icon: '📦', color: '#6B7280', Icon: Package },
 ];
 
 // O(1) lookup by category label — avoids CATEGORIES.find(...) inside render loops

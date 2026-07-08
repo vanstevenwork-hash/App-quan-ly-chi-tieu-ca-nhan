@@ -20,7 +20,7 @@ export default function BalanceCard({
     const [hidden, setHidden] = useState(false);
 
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-card mx-4 overflow-hidden border border-gray-100 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 rounded-[20px] shadow-card mx-4 overflow-hidden border border-gray-100 dark:border-slate-700">
             {/* Top section */}
             <div className="px-5 pt-5 pb-4">
                 <p className="text-center text-xs font-semibold text-muted-foreground tracking-widest uppercase mb-2">

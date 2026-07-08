@@ -13,7 +13,7 @@ interface ChartCardProps {
 export default function ChartCard({ title, subtitle, children, className, action }: ChartCardProps) {
     return (
         <div className={cn(
-            'bg-card rounded-3xl p-5 shadow-card border border-border/50',
+            'bg-card rounded-[20px] p-5 shadow-card border border-border/50',
             className
         )}>
             <div className="flex items-center justify-between mb-4">

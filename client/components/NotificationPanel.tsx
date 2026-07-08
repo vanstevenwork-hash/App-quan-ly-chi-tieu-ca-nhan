@@ -13,7 +13,7 @@ const TABS = [
     { label: 'Nhắc nhở', key: 'reminder', types: ['reminder', 'security', 'system', 'general', 'goal_milestone', 'goal_complete'] },
 ] as const;
 
-const TYPE_MAP: Record<string, { icon: string; bg: string }> = {
+export const TYPE_MAP: Record<string, { icon: string; bg: string }> = {
     transaction_expense: { icon: '💸', bg: '#FEE2E2' },
     transaction_income: { icon: '💰', bg: '#ECFDF5' },
     goal_milestone: { icon: '🏆', bg: '#F0FDF4' },
@@ -139,7 +139,10 @@ function PanelContent({ onClose }: { onClose: () => void }) {
         <div className="flex flex-col h-full bg-white dark:bg-slate-900 relative">
             {/* Header */}
             {viewMode !== 'balance_history' && (
-                <div className="flex items-center justify-between px-4 pt-12 pb-2 bg-white dark:bg-slate-900 sticky top-0 z-10 border-b border-transparent dark:border-slate-800">
+                <div
+                    className="flex items-center justify-between px-4 pb-2 bg-white dark:bg-slate-900 sticky top-0 z-10 border-b border-transparent dark:border-slate-800"
+                    style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+                >
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
                         <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-slate-200" />
                     </button>
@@ -179,7 +182,10 @@ function PanelContent({ onClose }: { onClose: () => void }) {
 
                 return (
                     <div className="flex-1 overflow-y-auto pb-6 bg-[#F8F9FB] dark:bg-slate-950 flex flex-col">
-                        <div className="bg-white dark:bg-slate-900 px-4 pt-12 pb-4 sticky top-0 z-10 flex flex-col gap-4 shadow-sm dark:shadow-none dark:border-b dark:border-slate-800">
+                        <div
+                            className="bg-white dark:bg-slate-900 px-4 pb-4 sticky top-0 z-10 flex flex-col gap-4 shadow-sm dark:shadow-none dark:border-b dark:border-slate-800"
+                            style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+                        >
                             <div className="flex items-center justify-between">
                                 <button onClick={() => setViewMode('notifications')} className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
                                     <ChevronLeft className="w-6 h-6 text-[#1E293B] dark:text-slate-200" />
@@ -213,7 +219,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                             {Object.entries(hGrouped).map(([dateStr, items]) => (
                                 <div key={dateStr}>
                                     <h4 className="text-[15px] font-semibold text-[#475569] dark:text-slate-400 mb-3 px-1">{dateStr}</h4>
-                                    <div className="bg-white dark:bg-slate-900 rounded-3xl p-2 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-800">
+                                    <div className="bg-white dark:bg-slate-900 rounded-[20px] p-2 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-800">
                                         {items.map(n => {
                                             // Extract actual amount logically from the notification message text if possible
                                             // VD "Giao dịch 40.000 đ tại ..."
@@ -292,7 +298,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
 
                     {/* Bottom Action */}
                     {filtered.length > 0 && (
-                        <div className="absolute bottom-6 left-0 right-0 px-4">
+                        <div className="absolute left-0 right-0 px-4" style={{ bottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
                             <button onClick={markAllRead} className="w-full py-4 bg-[#F8F9FB] dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white font-semibold rounded-[20px] transition-colors shadow-sm border border-gray-100 dark:border-transparent">
                                 Đánh dấu đã đọc tất cả
                             </button>
@@ -304,7 +310,10 @@ function PanelContent({ onClose }: { onClose: () => void }) {
             {/* Detail View Modal */}
             {selectedNotification && (
                 <div className="absolute inset-0 z-20 bg-white dark:bg-slate-900 flex flex-col h-full overflow-hidden slide-in-bottom">
-                    <div className="flex items-center justify-between px-4 pt-12 pb-2 bg-white dark:bg-slate-900 border-b border-gray-50 dark:border-slate-800">
+                    <div
+                        className="flex items-center justify-between px-4 pb-2 bg-white dark:bg-slate-900 border-b border-gray-50 dark:border-slate-800"
+                        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+                    >
                         <button onClick={() => setSelectedNotification(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
                             <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-slate-200" />
                         </button>

@@ -5,14 +5,19 @@ const { createNotification } = require('./notificationController');
 // GET /api/transactions
 exports.getTransactions = async (req, res) => {
     try {
-        const { type, category, month, year, limit = 20, page = 1 } = req.query;
+        const { type, category, month, year, startDate, endDate, limit = 20, page = 1 } = req.query;
         const filter = { userId: req.user._id };
         if (type) filter.type = type;
         if (category) filter.category = category;
-        if (month && year) {
-            const startDate = new Date(year, month - 1, 1);
-            const endDate = new Date(year, month, 0, 23, 59, 59);
-            filter.date = { $gte: startDate, $lte: endDate };
+        if (startDate && endDate) {
+            const s = new Date(startDate);
+            const e = new Date(endDate);
+            e.setHours(23, 59, 59, 999);
+            filter.date = { $gte: s, $lte: e };
+        } else if (month && year) {
+            const s = new Date(year, month - 1, 1);
+            const e = new Date(year, month, 0, 23, 59, 59);
+            filter.date = { $gte: s, $lte: e };
         }
         const transactions = await Transaction.find(filter)
             .populate('cardId')
@@ -181,11 +186,20 @@ exports.deleteTransaction = async (req, res) => {
 // GET /api/transactions/summary — income/expense totals for a month
 exports.getSummary = async (req, res) => {
     try {
-        const { month = new Date().getMonth() + 1, year = new Date().getFullYear() } = req.query;
-        const startDate = new Date(year, month - 1, 1);
-        const endDate = new Date(year, month, 0, 23, 59, 59);
+        const { month, year, startDate, endDate } = req.query;
+        let start, end;
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        } else {
+            const m = month || new Date().getMonth() + 1;
+            const y = year || new Date().getFullYear();
+            start = new Date(y, m - 1, 1);
+            end = new Date(y, m, 0, 23, 59, 59);
+        }
         const agg = await Transaction.aggregate([
-            { $match: { userId: req.user._id, date: { $gte: startDate, $lte: endDate } } },
+            { $match: { userId: req.user._id, date: { $gte: start, $lte: end } } },
             { $group: { _id: '$type', total: { $sum: '$amount' }, count: { $sum: 1 } } },
         ]);
         const result = { income: 0, expense: 0, incomeCount: 0, expenseCount: 0 };
@@ -203,11 +217,20 @@ exports.getSummary = async (req, res) => {
 // GET /api/transactions/category-breakdown
 exports.getCategoryBreakdown = async (req, res) => {
     try {
-        const { month = new Date().getMonth() + 1, year = new Date().getFullYear(), type = 'expense' } = req.query;
-        const startDate = new Date(year, month - 1, 1);
-        const endDate = new Date(year, month, 0, 23, 59, 59);
+        const { month, year, startDate, endDate, type = 'expense' } = req.query;
+        let start, end;
+        if (startDate && endDate) {
+            start = new Date(startDate);
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        } else {
+            const m = month || new Date().getMonth() + 1;
+            const y = year || new Date().getFullYear();
+            start = new Date(y, m - 1, 1);
+            end = new Date(y, m, 0, 23, 59, 59);
+        }
         const agg = await Transaction.aggregate([
-            { $match: { userId: req.user._id, type, date: { $gte: startDate, $lte: endDate } } },
+            { $match: { userId: req.user._id, type, date: { $gte: start, $lte: end } } },
             { $group: { _id: '$category', total: { $sum: '$amount' }, count: { $sum: 1 } } },
             { $sort: { total: -1 } },
         ]);

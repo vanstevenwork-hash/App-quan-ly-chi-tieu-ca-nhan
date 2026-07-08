@@ -73,7 +73,7 @@ function SavingsSlide({ card, idx, onEdit, onDelete }: {
     })();
 
     return (
-        <div className="snap-center shrink-0 w-[85%] relative rounded-3xl p-6 text-white shadow-xl overflow-hidden transition hover:scale-[1.02]"
+        <div className="snap-center shrink-0 w-[85%] relative rounded-[20px] p-6 text-white shadow-xl overflow-hidden transition hover:scale-[1.02]"
             style={{ background: getGradient(card, idx) }}>
             <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
 
@@ -250,7 +250,7 @@ export default function SavingsPage() {
                 />
 
                 {/* ── Hero ─────────────────────────────────────── */}
-                <div className="text-center px-6 mb-8">
+                <div className="text-center px-5 mb-8">
                     <p className="text-sm text-slate-500 mb-1">Tổng tiền đang gửi</p>
                     <h1 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
                         {fmt(totalBalance)}₫
@@ -279,7 +279,7 @@ export default function SavingsPage() {
                         style={{ scrollbarWidth: 'none' }}>
 
                         {savingsCards.length === 0 && (
-                            <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
+                            <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
                                 <PiggyBank className="w-10 h-10 text-gray-300 dark:text-slate-600" />
                                 <p className="text-sm font-medium">Chưa có sổ tiết kiệm</p>
                             </div>
@@ -292,7 +292,7 @@ export default function SavingsPage() {
                         ))}
 
                         <button onClick={() => { setEditCard(null); setShowForm(true); }}
-                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-3xl border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
+                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
                             <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                                 <Plus className="w-6 h-6" />
                             </div>
@@ -302,7 +302,7 @@ export default function SavingsPage() {
                 </div>
 
                 {/* ── Quick actions ─────────────────────────────── */}
-                <div className="px-6 mb-6">
+                <div className="px-5 mb-6">
                     <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
                             { icon: <PiggyBank className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
@@ -324,7 +324,7 @@ export default function SavingsPage() {
 
                 {/* ── Maturity alerts ───────────────────────────── */}
                 {maturingSoon.length > 0 && (
-                    <div className="px-6 mb-5">
+                    <div className="px-5 mb-5">
                         <div className="flex items-start gap-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 rounded-2xl p-4">
                             <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" />
                             <div>
@@ -342,9 +342,9 @@ export default function SavingsPage() {
                 )}
 
                 {/* ── Detail info ───────────────────────────────── */}
-                <div className="px-6 mb-5">
+                <div className="px-5 mb-5">
                     <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">Thông tin chi tiết</h3>
-                    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800">
+                    <div className="bg-white dark:bg-slate-800 rounded-[20px] shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800">
 
                         {/* Maturity countdown — best upcoming */}
                         {savingsCards.filter(c => c.maturityDate).length > 0 ? (
@@ -403,7 +403,7 @@ export default function SavingsPage() {
                 </div>
 
                 {/* ── Promo banner ──────────────────────────────── */}
-                <div className="px-6">
+                <div className="px-5">
                     <div className="relative overflow-hidden rounded-2xl p-4 text-white shadow-lg"
                         style={{ background: 'linear-gradient(135deg, #059669 0%, #0EA5E9 100%)' }}>
                         <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full pointer-events-none" />
