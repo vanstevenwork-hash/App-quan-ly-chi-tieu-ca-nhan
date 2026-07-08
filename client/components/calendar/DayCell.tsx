@@ -35,7 +35,7 @@ function DayCellBase({ day, dayData, isSelected, isToday, filterType, onSelect, 
         <button
             onClick={() => onSelect(day)}
             className={cn(
-                'h-24 p-2 flex flex-col transition-all active:scale-95 group/day outline-none focus:outline-none relative w-full text-left',
+                'h-20 p-1.5 flex flex-col transition-all active:scale-95 group/day outline-none focus:outline-none relative w-full text-left',
                 isSelected
                     ? 'bg-white dark:bg-slate-900 border-2 border-primary/20 z-10 shadow-lg rounded-md scale-[1.02]'
                     : 'bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900/50'
@@ -60,11 +60,11 @@ function DayCellBase({ day, dayData, isSelected, isToday, filterType, onSelect, 
                                 key={img.url}
                                 src={img.url}
                                 alt=""
-                                className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm bg-slate-100"
+                                className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 object-cover shadow-sm bg-slate-100"
                             />
                         ))}
                         {combinedImages.length > 2 && (
-                            <div className="w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] font-bold text-slate-500 shadow-sm z-10">
+                            <div className="w-6 h-6 rounded-full border-2 border-white dark:border-slate-900 bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[9px] font-bold text-slate-500 shadow-sm z-10">
                                 +{combinedImages.length - 2}
                             </div>
                         )}

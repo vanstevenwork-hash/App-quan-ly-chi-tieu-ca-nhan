@@ -20,6 +20,7 @@ import PageHeader from '@/components/PageHeader';
 import { useUIStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { getDueThisCycle } from '@/lib/cardDue';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
@@ -110,14 +111,17 @@ export default function CardsPage() {
             }).filter(p => p.remaining > 0),
         [transactions]);
 
-    // ── Payment alerts (cards with balance and due within 30d) ──────────────
+    // ── Payment alerts (cards with amount due this cycle and due within 30d) ─
+    // Uses dueThisCycle (not raw balance) so a card mid-installment doesn't
+    // alert for the full remaining principal — only what's actually owed
+    // by the next due date.
     const paymentAlerts = useMemo(() =>
         creditCards
-            .filter(c => c.balance > 0 && c.paymentDueDay > 0)
-            .map(c => ({ card: c, days: daysUntilPayment(c.paymentDueDay) }))
+            .map(c => ({ card: c, dueThisCycle: getDueThisCycle(c.balance, transactions, c._id), days: daysUntilPayment(c.paymentDueDay) }))
+            .filter(x => x.dueThisCycle > 0 && x.card.paymentDueDay > 0)
             .filter(x => x.days !== null && x.days <= 30)
             .sort((a, b) => (a.days ?? 99) - (b.days ?? 99))
-        , [creditCards]);
+        , [creditCards, transactions]);
 
     // ── Credit card transactions ─────────────────────────────────────────────
     const creditCardTxs = useMemo(() =>

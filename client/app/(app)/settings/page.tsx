@@ -11,7 +11,7 @@ import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
 import {
     ChevronRight, Moon, Bell, LogOut, DollarSign, RefreshCw,
-    Pencil, CreditCard, BadgePercent, Landmark, Wallet, BarChart3,
+    Pencil, CreditCard, BadgePercent, Landmark,
     Check, Loader2, PiggyBank,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,6 @@ const SHORTCUTS = [
     { href: '/cards', label: 'Quản lý thẻ', icon: CreditCard, bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: 'text-indigo-500' },
     { href: '/cashback', label: 'Hoàn tiền', icon: BadgePercent, bg: 'bg-emerald-50 dark:bg-emerald-900/20', color: 'text-emerald-500' },
     { href: '/wealth', label: 'Tài sản', icon: Landmark, bg: 'bg-purple-50 dark:bg-purple-900/20', color: 'text-purple-500' },
-    { href: '/budget', label: 'Ngân sách', icon: Wallet, bg: 'bg-blue-50 dark:bg-blue-900/20', color: 'text-blue-500' },
     { href: '/savings', label: 'Tiết kiệm', icon: PiggyBank, bg: 'bg-pink-50 dark:bg-pink-900/20', color: 'text-pink-500' },
 ];
 
@@ -160,7 +159,7 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen bg-background pb-8">
             {/* Header */}
-            <div className="gradient-primary px-5 pb-16" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 3rem)' }}>
+            <div className="gradient-primary px-5 pb-16" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
                 <h1 className="text-xl font-bold text-white">Cài đặt</h1>
                 <p className="text-white/70 text-sm mt-0.5">Tài khoản & tuỳ chỉnh ứng dụng</p>
             </div>

@@ -18,10 +18,11 @@ interface AddTransactionModalProps {
     onSaved?: () => void;
     defaultType?: 'expense' | 'income';
     initialData?: any;
+    autoOpenScanner?: boolean;
 }
 
 export default function AddTransactionModal({
-    open, onClose, onSaved, defaultType = 'expense', initialData
+    open, onClose, onSaved, defaultType = 'expense', initialData, autoOpenScanner = false
 }: AddTransactionModalProps) {
     const [type, setType] = useState<'expense' | 'income'>(defaultType);
     const [amount, setAmount] = useState('');
@@ -88,11 +89,11 @@ export default function AddTransactionModal({
                 setIsInstallment(false);
                 setInstallmentMonths(12);
                 setReceiptImage('');
-                setShowScanner(false);
+                setShowScanner(autoOpenScanner);
             }
             setErrors({});
         }
-    }, [open, defaultType, initialData]);
+    }, [open, defaultType, initialData, autoOpenScanner]);
 
     // Update selected card automatically when tab changes or card lists update
     useEffect(() => {

@@ -16,6 +16,7 @@ import CardPaymentModal from '@/components/CardPaymentModal';
 import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import { resolveCardId, getCashbackAmount, getCappedCashbackTotal } from '@/lib/cashback';
+import { getActiveInstallmentPlans, getDueThisCycle } from '@/lib/cardDue';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
@@ -99,6 +100,16 @@ export default function CardDetailPage() {
         const expenseTxs = cardTxs.filter(t => t.type === 'expense');
         return getCappedCashbackTotal(expenseTxs, card?.cashbackRate, card?.cashbackCap);
     }, [cardTxs, card]);
+
+    const activeInstallmentPlans = useMemo(() => {
+        if (!card) return [];
+        return getActiveInstallmentPlans(transactions, card._id);
+    }, [transactions, card]);
+
+    const dueThisCycle = useMemo(() => {
+        if (!card) return 0;
+        return getDueThisCycle(card.balance, transactions, card._id);
+    }, [card, transactions]);
 
     const apiBank = useMemo(() => {
         if (!card) return undefined;
@@ -251,6 +262,31 @@ export default function CardDetailPage() {
                         <Trash2 className="w-4 h-4" /> Xoá thẻ
                     </button>
                 </div>
+
+                {/* ── Installment breakdown ─────────────────────── */}
+                {isCredit && activeInstallmentPlans.length > 0 && (
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div className="px-4 pt-3.5 pb-2 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white">Đang trả góp</h3>
+                            <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
+                                {activeInstallmentPlans.length} khoản
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-2 border-t border-gray-100 dark:border-slate-700">
+                            <div className="flex flex-col items-center justify-center p-4 border-r border-gray-100 dark:border-slate-700">
+                                <p className="text-[10px] text-slate-400 font-semibold mb-1 text-center">Cần thanh toán kỳ này</p>
+                                <p className="text-lg font-bold text-red-500">{fmtShort(dueThisCycle)}₫</p>
+                            </div>
+                            <div className="flex flex-col items-center justify-center p-4">
+                                <p className="text-[10px] text-slate-400 font-semibold mb-1 text-center">Tổng dư nợ (gồm trả góp)</p>
+                                <p className="text-lg font-bold text-slate-500">{fmtShort(card.balance)}₫</p>
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center px-4 py-2.5 border-t border-gray-100 dark:border-slate-700">
+                            Chỉ "Cần thanh toán kỳ này" là bắt buộc trả trước hạn — phần trả góp còn lại sẽ tính vào các kỳ sau.
+                        </p>
+                    </div>
+                )}
 
                 {/* ── Cashback summary ──────────────────────────── */}
                 {isCredit && (

@@ -40,7 +40,6 @@ app.get('/api-docs.json', (req, res) => res.json(swaggerSpec));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/accounts', require('./routes/accounts'));
-app.use('/api/budgets', require('./routes/budgets'));
 app.use('/api/goals', require('./routes/goals'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/cards', require('./routes/cards'));

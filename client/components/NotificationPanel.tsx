@@ -10,14 +10,12 @@ import { useRouter } from 'next/navigation';
 const TABS = [
     { label: 'Ưu đãi', key: 'promo', types: ['promo'] },
     { label: 'Giao dịch', key: 'transaction', types: ['transaction', 'payment', 'saving', 'transaction_expense', 'transaction_income'] },
-    { label: 'Nhắc nhở', key: 'reminder', types: ['reminder', 'budget', 'security', 'system', 'general', 'budget_warning', 'budget_overspend', 'goal_milestone', 'goal_complete'] },
+    { label: 'Nhắc nhở', key: 'reminder', types: ['reminder', 'security', 'system', 'general', 'goal_milestone', 'goal_complete'] },
 ] as const;
 
 const TYPE_MAP: Record<string, { icon: string; bg: string }> = {
     transaction_expense: { icon: '💸', bg: '#FEE2E2' },
     transaction_income: { icon: '💰', bg: '#ECFDF5' },
-    budget_warning: { icon: '⚠️', bg: '#FEF3C7' },
-    budget_overspend: { icon: '🚨', bg: '#FEE2E2' },
     goal_milestone: { icon: '🏆', bg: '#F0FDF4' },
     goal_complete: { icon: '🏆', bg: '#DCFCE7' },
     system: { icon: '🔔', bg: '#EFF6FF' },

@@ -74,14 +74,6 @@ export const accountsApi = {
     delete: (id: string) => api.delete(`/accounts/${id}`),
 };
 
-// Budgets
-export const budgetsApi = {
-    getAll: (params?: object) => api.get('/budgets', { params }),
-    create: (data: object) => api.post('/budgets', data),
-    update: (id: string, data: object) => api.put(`/budgets/${id}`, data),
-    delete: (id: string) => api.delete(`/budgets/${id}`),
-};
-
 // Goals
 export const goalsApi = {
     getAll: () => api.get('/goals'),

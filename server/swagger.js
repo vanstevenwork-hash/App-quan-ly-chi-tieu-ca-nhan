@@ -54,19 +54,6 @@ const options = {
                         cardId: { type: 'string', example: null, nullable: true },
                     },
                 },
-                // ===== BUDGET =====
-                BudgetBody: {
-                    type: 'object',
-                    required: ['category', 'limit', 'month', 'year'],
-                    properties: {
-                        category: { type: 'string', example: 'Ăn uống' },
-                        limit: { type: 'number', example: 3000000 },
-                        month: { type: 'integer', example: 3 },
-                        year: { type: 'integer', example: 2026 },
-                        icon: { type: 'string', example: '🍔' },
-                        color: { type: 'string', example: '#EF4444' },
-                    },
-                },
                 // ===== GOAL =====
                 GoalBody: {
                     type: 'object',
@@ -122,7 +109,6 @@ const options = {
         tags: [
             { name: 'Auth', description: 'Đăng ký / Đăng nhập' },
             { name: 'Transactions', description: 'Quản lý giao dịch' },
-            { name: 'Budgets', description: 'Quản lý ngân sách' },
             { name: 'Goals', description: 'Mục tiêu tài chính' },
             { name: 'Cards', description: 'Quản lý thẻ ngân hàng' },
             { name: 'Notifications', description: 'Thông báo' },
@@ -221,44 +207,6 @@ const options = {
                 delete: {
                     tags: ['Transactions'],
                     summary: 'Xoá giao dịch',
-                    security: [{ bearerAuth: [] }],
-                    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-                    responses: { 200: { description: 'Đã xoá' } },
-                },
-            },
-
-            // ===================== BUDGETS =====================
-            '/api/budgets': {
-                get: {
-                    tags: ['Budgets'],
-                    summary: 'Danh sách ngân sách theo tháng',
-                    security: [{ bearerAuth: [] }],
-                    parameters: [
-                        { name: 'month', in: 'query', schema: { type: 'integer', example: 3 } },
-                        { name: 'year', in: 'query', schema: { type: 'integer', example: 2026 } },
-                    ],
-                    responses: { 200: { description: 'Danh sách budget' } },
-                },
-                post: {
-                    tags: ['Budgets'],
-                    summary: 'Tạo ngân sách mới',
-                    security: [{ bearerAuth: [] }],
-                    requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/BudgetBody' } } } },
-                    responses: { 201: { description: 'Tạo thành công' } },
-                },
-            },
-            '/api/budgets/{id}': {
-                put: {
-                    tags: ['Budgets'],
-                    summary: 'Cập nhật ngân sách',
-                    security: [{ bearerAuth: [] }],
-                    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
-                    requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/BudgetBody' } } } },
-                    responses: { 200: { description: 'Đã cập nhật' } },
-                },
-                delete: {
-                    tags: ['Budgets'],
-                    summary: 'Xoá ngân sách',
                     security: [{ bearerAuth: [] }],
                     parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
                     responses: { 200: { description: 'Đã xoá' } },

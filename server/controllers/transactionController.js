@@ -1,61 +1,6 @@
 const Transaction = require('../models/Transaction');
 const Card = require('../models/Card');
-const Budget = require('../models/Budget');
 const { createNotification } = require('./notificationController');
-
-// Helper: recalculate and update Budget.spent for a category/month/year
-async function syncBudgetSpent(userId, category, month, year) {
-    const budget = await Budget.findOne({ userId, category, month, year });
-    if (!budget) return;
-
-    const now = new Date();
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
-
-    const agg = await Transaction.aggregate([
-        {
-            $match: {
-                userId,
-                category,
-                type: 'expense',
-                date: { $gte: startDate, $lte: endDate },
-            },
-        },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-    ]);
-
-    const spent = agg[0]?.total || 0;
-    budget.spent = spent;
-    await budget.save();
-
-    // Create budget-warning notification when 80%+ usage
-    const pct = Math.round((spent / budget.limit) * 100);
-    if (pct >= 80 && pct < 100) {
-        await createNotification({
-            userId: userId.toString(),
-            title: `Ngân sách ${category} sắp hết`,
-            message: `Bạn đã sử dụng ${pct}% ngân sách ${category}. Hãy cân nhắc chi tiêu thêm!`,
-            type: 'budget',
-            icon: '⚠️',
-            iconBg: '#FFF7ED',
-            isImportant: true,
-            relatedId: budget._id,
-            relatedModel: 'Budget',
-        });
-    } else if (pct >= 100) {
-        await createNotification({
-            userId: userId.toString(),
-            title: `Đã vượt ngân sách ${category}`,
-            message: `Bạn đã vượt ngân sách ${category} ${pct - 100}%. Hãy kiểm soát chi tiêu!`,
-            type: 'budget',
-            icon: '🚨',
-            iconBg: '#FEE2E2',
-            isImportant: true,
-            relatedId: budget._id,
-            relatedModel: 'Budget',
-        });
-    }
-}
 
 // GET /api/transactions
 exports.getTransactions = async (req, res) => {
@@ -138,12 +83,6 @@ exports.createTransaction = async (req, res) => {
             console.log('Skipping card balance update: paymentMethod is', paymentMethod, 'and cardId is', cardId);
         }
 
-        // Auto-sync budget spent for expense transactions
-        if (type === 'expense' && category) {
-            const d = t.date;
-            await syncBudgetSpent(req.user._id, category, d.getMonth() + 1, d.getFullYear());
-        }
-
         // Notification for transaction
         await createNotification({
             userId: req.user._id.toString(),
@@ -203,11 +142,6 @@ exports.updateTransaction = async (req, res) => {
             }
         }
 
-        // 3. Re-sync budget for old category and new category
-        const d = updated.date;
-        if (old.type === 'expense') await syncBudgetSpent(req.user._id, old.category, d.getMonth() + 1, d.getFullYear());
-        if (updated.type === 'expense') await syncBudgetSpent(req.user._id, updated.category, d.getMonth() + 1, d.getFullYear());
-
         res.json({ success: true, data: updated });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -238,11 +172,6 @@ exports.deleteTransaction = async (req, res) => {
 
         await Transaction.findByIdAndDelete(req.params.id);
 
-        // Re-sync budget
-        if (t.type === 'expense') {
-            const d = t.date;
-            await syncBudgetSpent(req.user._id, t.category, d.getMonth() + 1, d.getFullYear());
-        }
         res.json({ success: true, message: 'Đã xóa giao dịch' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });

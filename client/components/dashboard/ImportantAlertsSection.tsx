@@ -42,7 +42,7 @@ function AlertCard({
 }
 
 interface ImportantAlertsSectionProps {
-    creditAlerts: Card[];
+    creditAlerts: { card: Card; dueThisCycle: number }[];
     savingsCards: Card[];
 }
 
@@ -58,12 +58,12 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards }: ImportantAle
                 </span>
             </div>
             <div className="space-y-2.5 max-h-[280px] overflow-y-auto hide-scrollbar pb-2">
-                {creditAlerts.map(card => (
+                {creditAlerts.map(({ card, dueThisCycle }) => (
                     <AlertCard
                         key={card._id}
                         title={`Sao kê ${card.bankName}`}
-                        sub="Dư nợ thẻ tín dụng"
-                        amount={`${fmtFull(card.balance)}đ`}
+                        sub="Cần thanh toán kỳ này"
+                        amount={`${fmtFull(dueThisCycle)}đ`}
                         badge="Cần thanh toán"
                         accentColor="#EF4444"
                     />

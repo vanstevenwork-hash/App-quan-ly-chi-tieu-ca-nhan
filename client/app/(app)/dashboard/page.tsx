@@ -2,7 +2,7 @@
 import { useMemo, useCallback, useState } from 'react';
 import {
     Bell, Plus, Eye, EyeOff, TrendingUp, TrendingDown,
-    Send, ScanLine, MoreHorizontal, ChevronRight,
+    ChevronRight, Search, ScanLine,
 } from 'lucide-react';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { useCards } from '@/hooks/useCards';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
+import { getDueThisCycle } from '@/lib/cardDue';
+import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 import Link from 'next/link';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -33,6 +35,7 @@ export default function DashboardPage() {
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const [showNoti, setShowNoti] = useState(false);
     const [addType, setAddType] = useState<'expense' | 'income'>('expense');
+    const [autoOpenScanner, setAutoOpenScanner] = useState(false);
     const [hideBalance, setHideBalance] = useState(true);
     const [showAddMenu, setShowAddMenu] = useState(false);
     const [selectedTx, setSelectedTx] = useState<any>(null);
@@ -42,7 +45,7 @@ export default function DashboardPage() {
     // ── Real data ──
     const { transactions, summary, refetch, deleteTransaction } = useTransactions();
     const { cards, totalBalance, totalDebt } = useCards();
-    const { unreadCount, notifications } = useNotifications();
+    const { unreadCount } = useNotifications();
     const { sources: wealthSources, total: wealthTotal } = useWealth();
 
     // ── Derived values ──
@@ -52,9 +55,29 @@ export default function DashboardPage() {
         [cards]
     );
 
+    const creditCardsForCashback = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
+    const monthCashback = useMemo(() => {
+        const now = new Date();
+        return creditCardsForCashback.reduce((sum, card) => {
+            const cardMonthTxs = transactions.filter(t => {
+                if (t.type !== 'expense' || t.paymentMethod !== 'card' || resolveCardId(t) !== card._id) return false;
+                const d = new Date(t.date);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+            return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap);
+        }, 0);
+    }, [creditCardsForCashback, transactions]);
+    const initials = user?.name
+        ? user.name.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase()
+        : 'NN';
+
     const creditAlerts = useMemo(
-        () => cards.filter(c => c.cardType === 'credit' && c.balance > 0).slice(0, 2),
-        [cards]
+        () => cards
+            .filter(c => c.cardType === 'credit' && c.balance > 0)
+            .map(card => ({ card, dueThisCycle: getDueThisCycle(card.balance, transactions, card._id) }))
+            .filter(x => x.dueThisCycle > 0)
+            .slice(0, 2),
+        [cards, transactions]
     );
     const savingsCards = useMemo(
         () => cards.filter(c => c.cardType === 'savings').slice(0, 1),
@@ -138,126 +161,121 @@ export default function DashboardPage() {
             `}</style>
 
             {/* ── Header ─────────────────────────────────────────────── */}
-            <header className="px-5 pb-3 flex justify-between items-center" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-700 dark:text-slate-200 font-bold text-sm">
-                        {(user?.name || 'N').charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">Hello 👋</p>
-                        <p className="text-base font-bold text-slate-800 dark:text-slate-100 leading-tight">{user?.name || 'Bạn'}</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => setShowNoti(true)}
-                    className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+            <header className="px-5 pb-3 flex items-center gap-2.5" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
+                <Link
+                    href="/search"
+                    className="flex-1 min-w-0 h-11 pl-4 pr-3 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-between text-slate-400 dark:text-slate-500 hover:border-purple-200 dark:hover:border-purple-500/50 transition-colors active:scale-[0.98]"
                 >
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                        <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-400 rounded-full border-2 border-white animate-pulse" />
-                    )}
-                </button>
+                    <span className="text-sm">Tìm kiếm...</span>
+                    <Search className="w-4 h-4 flex-shrink-0" />
+                </Link>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                        onClick={() => { setAddType('expense'); setAutoOpenScanner(true); openAddModal(); }}
+                        className="w-11 h-11 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                    >
+                        <ScanLine className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => setShowNoti(true)}
+                        className="w-11 h-11 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                    >
+                        <Bell className="w-5 h-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-400 rounded-full border-2 border-white animate-pulse" />
+                        )}
+                    </button>
+                </div>
             </header>
 
             <main className="px-5 space-y-5">
 
-                {/* ── Asset card (light lavender gradient) ─────────── */}
-                <div className="anim-scale-in relative overflow-hidden rounded-[20px] p-2.5 pb-2 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] border border-[#E9D5FF] dark:border-purple-900/30 bg-gradient-to-br from-white to-[#F5F3FF] dark:from-slate-800 dark:to-slate-800/80">
-                    <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(167,139,250,0.25)' }} />
-                    <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(147,197,253,0.2)' }} />
+                {/* ── Asset card: same layout for light & dark mode ── */}
+                <div className="anim-scale-in relative overflow-hidden rounded-[24px] p-5 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#1B1E30] dark:via-[#15182A] dark:to-[#0F1120] border border-[#E9D5FF] dark:border-slate-700/40">
+                    <div className="hidden dark:block absolute inset-0 opacity-[0.06] pointer-events-none" style={{ backgroundImage: 'linear-gradient(115deg, transparent 40%, white 50%, transparent 60%)' }} />
+                    <div className="absolute -top-16 -right-16 w-48 h-48 rounded-full blur-3xl pointer-events-none bg-purple-300/25 dark:bg-purple-500/10" />
 
-                    <div className="text-center mb-2 relative z-10">
-                        <div className="flex items-center justify-center gap-2 mb-1">
+                    <div className="relative z-10">
+                        {/* Avatar + name + cashback badge, all in one row */}
+                        <div className="flex items-center gap-2.5 mb-4">
+                            {user?.avatar ? (
+                                <img src={user.avatar} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white dark:border-white/10 flex-shrink-0" />
+                            ) : (
+                                <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    {initials}
+                                </div>
+                            )}
+                            <p className="text-slate-800 dark:text-white font-bold text-[15px] truncate flex-1 min-w-0">{user?.name || 'Người dùng'}</p>
 
-                            <Link href="/wealth"
-                                className="flex items-center justify-center transition-colors">
-                                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest pr-2">Tổng tài sản ròng</p>
-                                <ChevronRight className="anim-arrow w-4 h-4 text-purple-400 dark:text-purple-400" />
+                            {/* Cashback badge — always shown, even at 0, so the feature is discoverable */}
+                            <Link href="/cashback"
+                                className="inline-flex items-center gap-1 bg-amber-50 dark:bg-black/25 hover:bg-amber-100 dark:hover:bg-black/35 transition-colors px-2 py-1 rounded-full border border-amber-100 dark:border-transparent flex-shrink-0">
+                                <span className="text-sm leading-none flex-shrink-0">🪙</span>
+                                <span className="text-amber-700 dark:text-amber-300 text-[11px] font-bold whitespace-nowrap">
+                                    {monthCashback > 0 ? `+${fmtFull(monthCashback)}đ` : '0đ'}
+                                </span>
                             </Link>
                         </div>
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                            <span className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight leading-none text-money">
-                                {hideBalance ? '• • • • • •' : fmtFull(netWorth)}
-                            </span>
-                            <span className="text-lg text-slate-400 font-medium align-top mt-0.5">đ</span>
-                            <button
-                                onClick={() => setHideBalance(v => !v)}
-                                className="p-1 rounded-full text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
-                            >
-                                {hideBalance ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+
+                        {/* Net worth label + toggle */}
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                            <Link href="/wealth" className="text-slate-400 text-xs font-medium hover:text-purple-500 dark:hover:text-slate-300 transition-colors">Tài sản ròng</Link>
+                            <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
+                                {hideBalance ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                             </button>
                         </div>
-                        <div className="flex items-center justify-center gap-2 mt-3">
+                        <p className="text-slate-800 dark:text-white text-[26px] font-bold tracking-tight leading-none text-money mb-3">
+                            {hideBalance ? '********' : `${fmtFull(netWorth)}đ`}
+                        </p>
 
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
-                                <TrendingUp className="anim-pulse-icon w-3.5 h-3.5 text-emerald-500" />
-                                <Link href="/analytics" className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                    Thu: +{fmt(summary.income)}
-                                </Link>
-                            </div>
-
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 dark:bg-red-500/10 rounded-full border border-red-100 dark:border-red-500/20 shadow-sm">
-                                <TrendingDown className="anim-pulse-icon w-3.5 h-3.5 text-red-500" style={{ animationDelay: '1.25s' }} />
-                                <Link href="/analytics" className="text-xs font-bold text-red-600 dark:text-red-400">
-                                    Chi: -{fmt(summary.expense)}
-                                </Link>
-                            </div>
-
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 relative z-10 pt-4">
-                            <Link href="/savings"
-                                className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
-                                <div className="w-full flex justify-between items-start mb-1">
-                                    <div>
-                                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
-                                        <p className="text-lg font-bold mt-1 text-money text-left text-emerald-600 dark:text-emerald-400">
-                                            {hideBalance ? '••' : fmt(totalSavings)}
-                                        </p>
-                                    </div>
-                                    <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 dark:text-purple-400" />
-                                </div>
-
-                                {cards.filter(c => c.cardType === 'savings').length > 0 ?
-                                    <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'savings').length} sổ tiết kiệm</p>
-                                    : <p className="text-[10px] text-slate-400 mt-0.5">Bạn chưa có sổ tiết kiệm</p>}
+                        {/* Thu/Chi */}
+                        <div className="flex items-center gap-2.5">
+                            <Link href="/analytics" className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                                <TrendingUp className="w-3 h-3" /> +{fmt(summary.income)}
                             </Link>
-                            <Link href="/cards"
-                                className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
-                                <div className="w-full flex justify-between items-start mb-1">
-                                    <div>
-                                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
-                                        <p className="text-lg font-bold text-red-500 mt-1 text-money text-left">
-                                            {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
-                                        </p>
-                                    </div>
-                                    <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 dark:text-purple-400" />
-                                </div>
-
-                                {cards.filter(c => c.cardType === 'credit').length > 0 && (
-                                    <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng</p>
-                                )}
+                            <span className="text-slate-300 dark:text-slate-600">·</span>
+                            <Link href="/analytics" className="inline-flex items-center gap-1 text-red-500 dark:text-red-400 text-xs font-bold">
+                                <TrendingDown className="w-3 h-3" /> -{fmt(summary.expense)}
                             </Link>
                         </div>
                     </div>
-
                 </div>
-                {/* ── Quick actions ───────────────────────────────────── */}
-                <div className="anim-fade-up-d1 flex justify-between items-center gap-3">
-                    {[
-                        { icon: <Plus className="w-6 h-6 text-purple-500" />, label: 'Thêm giao dịch', onClick: () => { setAddType('expense'); openAddModal(); } },
-                        { icon: <Send className="w-6 h-6 text-purple-500" />, label: 'Chuyển tiền', onClick: () => { setAddType('income'); openAddModal(); } },
-                        { icon: <ScanLine className="w-6 h-6 text-purple-500" />, label: 'Quét QR', onClick: () => { } },
-                        { icon: <MoreHorizontal className="w-6 h-6 text-purple-500" />, label: 'Thêm', onClick: () => setAddType('expense') },
-                    ].map(item => (
-                        <button key={item.label} onClick={item.onClick}
-                            className="flex-1 flex flex-col items-center gap-2 group">
-                            <div className="w-14 h-14 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 dark:border-slate-700 group-active:scale-95 transition-transform group-hover:border-purple-200 dark:group-hover:border-purple-500/50">
-                                {item.icon}
+
+                {/* ── Savings & card debt (separate from net worth card) ── */}
+                <div className="anim-fade-up-d1 grid grid-cols-2 gap-3">
+                    <Link href="/savings"
+                        className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/50 hover:shadow-md transition-all active:scale-95 group">
+                        <div className="w-full flex justify-between items-start mb-1">
+                            <div>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
+                                <p className="text-lg font-bold mt-1 text-money text-left text-emerald-600 dark:text-emerald-400">
+                                    {hideBalance ? '••' : fmt(totalSavings)}
+                                </p>
                             </div>
-                            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{item.label}</span>
-                        </button>
-                    ))}
+                            <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 dark:text-purple-400" />
+                        </div>
+
+                        {cards.filter(c => c.cardType === 'savings').length > 0 ?
+                            <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'savings').length} sổ tiết kiệm</p>
+                            : <p className="text-[10px] text-slate-400 mt-0.5">Bạn chưa có sổ tiết kiệm</p>}
+                    </Link>
+                    <Link href="/cards"
+                        className="bg-white dark:bg-slate-800 rounded-xl p-2.5 pl-3 flex flex-col items-start border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-900/50 hover:shadow-md transition-all active:scale-95 group">
+                        <div className="w-full flex justify-between items-start mb-1">
+                            <div>
+                                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
+                                <p className="text-lg font-bold text-red-500 mt-1 text-money text-left">
+                                    {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
+                                </p>
+                            </div>
+                            <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 dark:text-purple-400" />
+                        </div>
+
+                        {cards.filter(c => c.cardType === 'credit').length > 0 && (
+                            <p className="text-[10px] text-slate-400 mt-0.5">{cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng</p>
+                        )}
+                    </Link>
                 </div>
 
 
@@ -266,24 +284,6 @@ export default function DashboardPage() {
                     creditAlerts={creditAlerts}
                     savingsCards={savingsCards}
                 />
-
-                {/* ── Unread app notifications ─────────────────────── */}
-                {
-                    unreadCount > 0 && notifications.slice(0, 2).map(n => (
-                        <div key={n._id}
-                            className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-purple-100 dark:border-purple-900/30 flex items-center gap-3 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-                            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                                style={{ backgroundColor: n.iconBg || '#EDE9FE' }}>
-                                {n.icon || '🔔'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-slate-800 truncate">{n.title}</p>
-                                <p className="text-xs text-slate-400 truncate mt-0.5">{n.message}</p>
-                            </div>
-                            {!n.isRead && <span className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />}
-                        </div>
-                    ))
-                }
 
                 {/* ── Spending trend chart ─────────────────────────── */}
                 <SpendingTrendChart chartData={chartData} />
@@ -309,10 +309,11 @@ export default function DashboardPage() {
             {/* ── Modals ───────────────────────────────────────────── */}
             <AddTransactionModal
                 open={isAddModalOpen}
-                onClose={() => { closeAddModal(); setEditingTx(null); }}
+                onClose={() => { closeAddModal(); setEditingTx(null); setAutoOpenScanner(false); }}
                 onSaved={refetch}
                 defaultType={addType}
                 initialData={editingTx}
+                autoOpenScanner={autoOpenScanner}
             />
             <NotificationPanel open={showNoti} onClose={() => setShowNoti(false)} />
             <TransactionDetailModal

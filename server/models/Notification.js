@@ -7,13 +7,13 @@ const notificationSchema = new mongoose.Schema(
         message: { type: String, required: true },
         type: {
             type: String,
-            enum: ['payment', 'saving', 'promo', 'security', 'transaction', 'budget', 'system', 'general'],
+            enum: ['payment', 'saving', 'promo', 'security', 'transaction', 'system', 'general'],
             default: 'transaction',
         },
         icon: { type: String, default: '🔔' },
         iconBg: { type: String, default: '#EEF2FF' },
         relatedId: { type: mongoose.Schema.Types.ObjectId },
-        relatedModel: { type: String }, // 'Transaction' | 'Budget' | 'Goal'
+        relatedModel: { type: String }, // 'Transaction' | 'Goal'
         isRead: { type: Boolean, default: false },
         isImportant: { type: Boolean, default: false },
         actionUrl: { type: String },

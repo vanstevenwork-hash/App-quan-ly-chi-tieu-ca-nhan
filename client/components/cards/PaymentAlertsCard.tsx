@@ -42,7 +42,7 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
 }
 
 interface PaymentAlertsCardProps {
-    paymentAlerts: { card: Card; days: number | null }[];
+    paymentAlerts: { card: Card; dueThisCycle: number; days: number | null }[];
     creditCardsCount: number;
     totalCreditLimit: number;
 }
@@ -61,16 +61,15 @@ function PaymentAlertsCardBase({ paymentAlerts, creditCardsCount, totalCreditLim
                 )}
             </div>
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-700/50">
-                {paymentAlerts.length > 0 ? (alertsExpanded ? paymentAlerts : paymentAlerts.slice(0, 2)).map(({ card, days }) => {
+                {paymentAlerts.length > 0 ? (alertsExpanded ? paymentAlerts : paymentAlerts.slice(0, 2)).map(({ card, dueThisCycle, days }) => {
                     const isUrgent = (days ?? 99) <= 5;
-                    const minPay = card.balance * 0.05;
                     return (
                         <DetailRow
                             key={card._id}
                             icon={<Clock className={cn('w-5 h-5', isUrgent ? 'text-red-500' : 'text-orange-500')} />}
                             iconBg={isUrgent ? '#FEE2E2' : '#FEF3C7'}
                             title={`${card.bankShortName} — Hạn thanh toán`}
-                            sub={`Tối thiểu: ${fmtShort(minPay)}₫`}
+                            sub={`Cần thanh toán: ${fmtShort(dueThisCycle)}₫`}
                             value={`${card.paymentDueDay}/${new Date().getMonth() + 1 > 12 ? 1 : new Date().getMonth() + 1}`}
                             badge={isUrgent ? 'Gấp' : `${days}N nữa`}
                             badgeColor={isUrgent ? '#EF4444' : '#F59E0B'}

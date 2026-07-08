@@ -25,14 +25,6 @@ export const mockAccounts = [
     { _id: '4', name: 'Ví tiền mặt', type: 'wallet', balance: 2340000, color: '#F59E0B', icon: 'wallet', accountNumber: '' },
 ];
 
-export const mockBudgets = [
-    { _id: '1', category: 'Ăn uống', limit: 3000000, spent: 1840000, color: '#F59E0B', icon: 'utensils', month: 3, year: 2026 },
-    { _id: '2', category: 'Mua sắm', limit: 2000000, spent: 1500000, color: '#8B5CF6', icon: 'shopping-bag', month: 3, year: 2026 },
-    { _id: '3', category: 'Di chuyển', limit: 1000000, spent: 2500000, color: '#EF4444', icon: 'car', month: 3, year: 2026 },
-    { _id: '4', category: 'Giải trí', limit: 1500000, spent: 350000, color: '#EC4899', icon: 'music', month: 3, year: 2026 },
-    { _id: '5', category: 'Sức khỏe', limit: 500000, spent: 120000, color: '#10B981', icon: 'heart', month: 3, year: 2026 },
-];
-
 export const mockGoals = [
     { _id: '1', name: 'Mua xe ô tô', targetAmount: 850000000, currentAmount: 450000000, deadline: '2027-12-31', color: '#6C63FF', icon: 'car' },
     { _id: '2', name: 'Quỹ khẩn cấp', targetAmount: 20000000, currentAmount: 8000000, deadline: '2026-06-30', color: '#10B981', icon: 'shield' },

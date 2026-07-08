@@ -86,6 +86,18 @@
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
+
+  /* iOS Safari auto-zooms the whole page on focus if an input's computed
+     font-size is under 16px. tailwind.config.ts remaps `text-base` to 13px
+     app-wide for compact UI text, so every form input inherited that same
+     13px (or 14px via `md:text-sm`) and triggered the zoom. Inputs are
+     usability surfaces, not display text — floor them at 16px regardless
+     of whatever text-size utility class they were given. */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* Custom scrollbar */
