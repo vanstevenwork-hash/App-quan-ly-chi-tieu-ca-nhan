@@ -211,7 +211,7 @@ export default function CardDetailPage() {
                     <div className="flex justify-between items-end mb-4">
                         <div>
                             <p className="text-xs mb-1" style={{ color: ts.subtext }}>{isCredit ? 'Dư nợ hiện tại' : 'Số dư'}</p>
-                            <p className="text-3xl font-bold tracking-tight" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
+                            <p className="text-3xl font-bold tracking-tight" style={{ color: ts.text }}>{fmt(card.balance)}đ</p>
                         </div>
                         {isCredit && dueDays !== null && (
                             <div className="text-right">
@@ -275,11 +275,11 @@ export default function CardDetailPage() {
                         <div className="grid grid-cols-2 border-t border-gray-100 dark:border-slate-700">
                             <div className="flex flex-col items-center justify-center p-4 border-r border-gray-100 dark:border-slate-700">
                                 <p className="text-[10px] text-slate-400 font-semibold mb-1 text-center">Cần thanh toán kỳ này</p>
-                                <p className="text-lg font-bold text-red-500">{fmtShort(dueThisCycle)}₫</p>
+                                <p className="text-lg font-bold text-red-500">{fmtShort(dueThisCycle)}đ</p>
                             </div>
                             <div className="flex flex-col items-center justify-center p-4">
                                 <p className="text-[10px] text-slate-400 font-semibold mb-1 text-center">Tổng dư nợ (gồm trả góp)</p>
-                                <p className="text-lg font-bold text-slate-500">{fmtShort(card.balance)}₫</p>
+                                <p className="text-lg font-bold text-slate-500">{fmtShort(card.balance)}đ</p>
                             </div>
                         </div>
                         <p className="text-[10px] text-gray-400 dark:text-slate-500 text-center px-4 py-2.5 border-t border-gray-100 dark:border-slate-700">
@@ -298,18 +298,18 @@ export default function CardDetailPage() {
                             </span>
                         </div>
                         {card.cashbackRate > 0 && card.cashbackCap > 0 && (
-                            <p className="text-[11px] text-slate-400 px-4 pb-2 -mt-1">Tối đa {fmtShort(card.cashbackCap)}₫/tháng</p>
+                            <p className="text-[11px] text-slate-400 px-4 pb-2 -mt-1">Tối đa {fmtShort(card.cashbackCap)}đ/tháng</p>
                         )}
                         <div className="grid grid-cols-2 border-t border-gray-100 dark:border-slate-700">
                             <div className="flex flex-col items-center justify-center p-4 border-r border-gray-100 dark:border-slate-700"
                                 style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
                                 <p className="text-[10px] text-emerald-700 font-semibold mb-1">Tháng này</p>
-                                <p className="text-lg font-bold text-emerald-700">+{fmtShort(cashbackThisMonth)}₫</p>
+                                <p className="text-lg font-bold text-emerald-700">+{fmtShort(cashbackThisMonth)}đ</p>
                             </div>
                             <div className="flex flex-col items-center justify-center p-4"
                                 style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
                                 <p className="text-[10px] text-blue-700 font-semibold mb-1">Tích lũy</p>
-                                <p className="text-lg font-bold text-blue-700">+{fmtShort(cashbackTotal)}₫</p>
+                                <p className="text-lg font-bold text-blue-700">+{fmtShort(cashbackTotal)}đ</p>
                             </div>
                         </div>
                     </div>
@@ -383,10 +383,10 @@ export default function CardDetailPage() {
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className={cn('text-sm font-bold', isExpense ? 'text-red-500 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400')}>
-                                                {isExpense ? '-' : '+'}{fmt(t.amount)}₫
+                                                {isExpense ? '-' : '+'}{fmt(t.amount)}đ
                                             </p>
                                             {isExpense && cb > 0 && (
-                                                <p className="text-[10px] text-amber-500 font-semibold">+{Math.round(cb).toLocaleString('vi-VN')}₫ CB</p>
+                                                <p className="text-[10px] text-amber-500 font-semibold">+{Math.round(cb).toLocaleString('vi-VN')}đ CB</p>
                                             )}
                                         </div>
                                     </div>

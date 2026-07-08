@@ -200,8 +200,8 @@ export default function CashbackPage() {
                 {/* Trend chart */}
                 <div>
                     <div className="flex items-center gap-2 mb-2.5">
-                        <TrendingUp className="w-4 h-4 text-indigo-500" />
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Xu hướng {MONTHS_WINDOW} tháng</h3>
+                        <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Xu hướng {MONTHS_WINDOW} tháng</h3>
                     </div>
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-gray-100 dark:border-slate-700 shadow-sm">
                         <ResponsiveContainer width="100%" height={140}>
@@ -210,7 +210,7 @@ export default function CashbackPage() {
                                 <YAxis tick={{ fontSize: 8, fill: '#94A3B8' }} axisLine={false} tickLine={false}
                                     tickFormatter={v => `${Math.round(v / 1000)}k`} />
                                 <Tooltip
-                                    formatter={(v?: number) => [`${fmt(v || 0)}₫`, 'Hoàn tiền']}
+                                    formatter={(v?: number) => [`${fmt(v || 0)}đ`, 'Hoàn tiền']}
                                     contentStyle={{ borderRadius: 12, fontSize: 12, border: '1px solid #E2E8F0' }}
                                 />
                                 <Bar dataKey="total" radius={[6, 6, 0, 0]} fill="#10B981" maxBarSize={28} />
@@ -222,7 +222,7 @@ export default function CashbackPage() {
                 {/* Per-card breakdown */}
                 <div>
                     <div className="flex items-center justify-between mb-2.5">
-                        <h3 className="text-sm font-bold text-slate-800 dark:text-white">Chi tiết</h3>
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Chi tiết</h3>
                         <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex gap-1">
                             <button
                                 onClick={() => setViewTab('month')}
@@ -270,10 +270,10 @@ export default function CashbackPage() {
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{card.bankName} •••• {card.cardNumber}</p>
                                             <p className="text-[11px] text-slate-400">
-                                                {card.cashbackRate}% hoàn tiền{card.cashbackCap > 0 ? ` · tối đa ${fmtShort(card.cashbackCap)}₫/tháng` : ''}
+                                                {card.cashbackRate}% hoàn tiền{card.cashbackCap > 0 ? ` · tối đa ${fmtShort(card.cashbackCap)}đ/tháng` : ''}
                                             </p>
                                         </div>
-                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">+{fmt(total)}₫</span>
+                                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0">+{fmt(total)}đ</span>
                                     </div>
                                     );
                                 })}
@@ -301,7 +301,7 @@ export default function CashbackPage() {
                                         <div className="min-w-0">
                                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{card.bankName} •••• {card.cardNumber}</p>
                                             <p className="text-[11px] text-slate-400">
-                                                {card.cashbackRate}% hoàn tiền{card.cashbackCap > 0 ? ` · tối đa ${fmtShort(card.cashbackCap)}₫/tháng` : ''}
+                                                {card.cashbackRate}% hoàn tiền{card.cashbackCap > 0 ? ` · tối đa ${fmtShort(card.cashbackCap)}đ/tháng` : ''}
                                             </p>
                                         </div>
                                     </div>
@@ -312,7 +312,7 @@ export default function CashbackPage() {
                                                 <div key={key} className="flex items-center gap-3 px-4 py-3">
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{row.label}</p>
-                                                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">+{fmt(row.displayAmount)}₫</p>
+                                                        <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">+{fmt(row.displayAmount)}đ</p>
                                                     </div>
                                                     <button
                                                         onClick={() => handleToggleStatus(card._id, row.year, row.month, row.status, row.estimatedAmount)}

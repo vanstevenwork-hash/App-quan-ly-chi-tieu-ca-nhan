@@ -294,7 +294,7 @@ export default function CalendarPage() {
                                 <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center border border-red-100 dark:border-red-900/30 shrink-0">
                                     <TrendingDown className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
                                 </div>
-                                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Chi tiêu</p>
+                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">Chi tiêu</p>
                             </div>
                             <p className="text-[18px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.expense)}</p>
                             {expenseChangePct !== null ? (
@@ -322,7 +322,7 @@ export default function CalendarPage() {
                         {/* Right: Thu nhập */}
                         <div className="flex-1 text-right">
                             <div className="flex items-center justify-end gap-2 mb-1.5">
-                                <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Thu nhập</p>
+                                <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">Thu nhập</p>
                                 <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-[#1A2A2D] flex items-center justify-center border border-emerald-100 dark:border-[#243A3E] shrink-0">
                                     <Wallet className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
                                 </div>

@@ -436,7 +436,7 @@ export default function AccountsPage() {
                         {/* Net worth */}
                         <div className="text-center mb-4">
                             <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5 font-medium">Tổng tài sản ròng</p>
-                            <p className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">{fmt(netWorth)} đ</p>
+                            <p className="text-[30px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">{fmt(netWorth)} đ</p>
                         </div>
 
                         {/* Summary pills — same figures as above, no need to repeat "Dư nợ" separately */}
