@@ -1,6 +1,7 @@
 'use client';
 import { memo, useState } from 'react';
-import { Plus, Star, AlertCircle, CreditCard, Pencil, Trash2 } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
+import { ActionIcon } from '@/components/icons/CustomIcon';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getBankLogo } from '@/lib/bankLogos';
@@ -65,7 +66,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
             {/* Default badge — absolute top-right */}
             {card.isDefault && (
                 <span className="absolute top-0 right-0 z-10 bg-yellow-400/90 text-yellow-900 text-[10px] font-bold px-1 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                    <Star className="w-2.5 h-2.5" />
+                    <CustomIcon type="star" size={10} tile={false} color="#F59E0B" />
                 </span>
             )}
             {card.color !== '#111111' && card.color !== '#FFFFFF' && (
@@ -99,11 +100,11 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                 <div className="flex gap-1">
                     <button onClick={onEdit}
                         className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition">
-                        <Pencil className="w-3 h-3" style={{ color: ts.text }} />
+                        <ActionIcon type="pencil" size={14} tile={false} color={ts.text} />
                     </button>
                     <button onClick={onDelete}
                         className="w-7 h-7 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center transition">
-                        <Trash2 className="w-3 h-3 text-red-500" />
+                        <ActionIcon type="trash" size={14} tile={false} color="#EF4444" />
                     </button>
                 </div>
             </div>
@@ -117,7 +118,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                     <div className="text-right">
                         <p className="text-xs mb-1" style={{ color: ts.subtext }}>Hạn thanh toán</p>
                         <div className="flex items-center gap-1 justify-end">
-                            {isUrgent && <AlertCircle className="w-4 h-4 text-red-400" />}
+                            {isUrgent && <CustomIcon type="alertCircle" size={16} tile={false} color="#EF4444" />}
                             <p className={cn('text-sm font-bold', isUrgent ? 'text-red-400' : '')} style={isUrgent ? undefined : { color: ts.subtext }}>
                                 {dueDays <= 0 ? 'Đã quá hạn!' : `${dueDays} ngày nữa`}
                             </p>
@@ -154,7 +155,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                 <button onClick={onPay}
                     className="w-full mt-auto py-2 rounded-xl bg-black/10 hover:bg-black/20 text-xs font-bold transition flex items-center justify-center gap-1.5"
                     style={{ color: ts.text }}>
-                    <CreditCard className="w-3.5 h-3.5" /> Thanh toán ngay
+                    <CustomIcon type="creditCard" size={14} tile={false} color="currentColor" /> Thanh toán ngay
                 </button>
             )}
         </div>
@@ -208,7 +209,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                     onClick={onAddNew}
                     className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
                     <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                        <Plus className="w-6 h-6" />
+                        <ActionIcon type="plus" size={24} tile={false} color="#94A3B8" />
                     </div>
                     <span className="font-semibold text-sm">Thêm thẻ mới</span>
                 </button>

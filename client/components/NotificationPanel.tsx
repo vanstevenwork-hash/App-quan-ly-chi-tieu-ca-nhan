@@ -1,13 +1,16 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, Settings, History, ChevronRight, Bell } from 'lucide-react';
+import { ChevronLeft, Settings, History, ChevronRight } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuthStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
 
 const TABS = [
+    { label: 'Quan trọng', key: 'important', types: [] },
     { label: 'Ưu đãi', key: 'promo', types: ['promo'] },
     { label: 'Giao dịch', key: 'transaction', types: ['transaction', 'payment', 'saving', 'transaction_expense', 'transaction_income'] },
     { label: 'Nhắc nhở', key: 'reminder', types: ['reminder', 'security', 'system', 'general', 'goal_milestone', 'goal_complete'] },
@@ -23,9 +26,13 @@ export const TYPE_MAP: Record<string, { icon: string; bg: string }> = {
     promo: { icon: '🎁', bg: '#FFF1F2' },
 };
 
+type PanelTab = 'important' | 'promo' | 'transaction' | 'reminder';
+
 interface NotificationPanelProps {
     open: boolean;
     onClose: () => void;
+    /** Tab to show when the panel opens (e.g. 'important' from the Home alerts section) */
+    initialTab?: PanelTab;
 }
 
 const isToday = (date: Date) => {
@@ -50,23 +57,32 @@ const formatDateTime = (dateStr: string) => {
 };
 
 import { useBanks } from '@/hooks/useBanks';
+import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 
-function PanelContent({ onClose }: { onClose: () => void }) {
+const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+
+function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open: boolean; initialTab?: PanelTab }) {
     const { isAuthenticated } = useAuthStore();
     const { notifications, loading, markRead, markAllRead } = useNotifications();
+    const { creditAlerts, savingsAlerts, count: alertCount } = useImportantAlerts();
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     useEffect(() => {
         fetchBanks();
     }, [fetchBanks]);
 
-    const [activeTab, setActiveTab] = useState<'promo' | 'transaction' | 'reminder'>('transaction');
+    const [activeTab, setActiveTab] = useState<PanelTab>('transaction');
+
+    // Jump to the requested tab each time the panel is opened with one
+    useEffect(() => {
+        if (open && initialTab) setActiveTab(initialTab);
+    }, [open, initialTab]);
     const [historyTab, setHistoryTab] = useState<'all' | 'payment' | 'credit'>('all');
     const [selectedNotification, setSelectedNotification] = useState<any>(null);
     const [viewMode, setViewMode] = useState<'notifications' | 'balance_history'>('notifications');
     const router = useRouter();
-    const { Search, Filter, AlignJustify, Wallet, CreditCard: CreditCardIcon, Plus } = require('lucide-react');
+    const { Search, Filter, AlignJustify } = require('lucide-react');
 
     const getMatchingLogo = (text?: string) => {
         if (!text) return null;
@@ -80,13 +96,14 @@ function PanelContent({ onClose }: { onClose: () => void }) {
     if (!isAuthenticated) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 p-8 text-center bg-white dark:bg-slate-900 h-full">
-                <Bell className="w-12 h-12 text-gray-300 dark:text-slate-600" />
+                <UtilityIcon type="bell" size={48} tile={false} color="#CBD5E1" />
                 <p className="text-gray-500 dark:text-slate-400 text-sm">Đăng nhập để xem thông báo</p>
             </div>
         );
     }
 
     const filtered = useMemo(() => notifications.filter(n => {
+        if (activeTab === 'important') return n.isImportant;
         const types = TABS.find(t => t.key === activeTab)?.types || ([] as readonly string[]);
         return (types as readonly string[]).includes(n.type) || (activeTab === 'transaction' && !(TABS.flatMap(x => x.types) as readonly string[]).includes(n.type));
     }), [notifications, activeTab]);
@@ -144,11 +161,11 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                     style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
                 >
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
-                        <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-slate-200" />
+                        <ActionIcon type="chevronLeft" size={24} tile={false} color="currentColor" />
                     </button>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Thông báo</h2>
                     <button className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
-                        <Settings className="w-6 h-6 text-gray-800 dark:text-slate-200" />
+                        <ActionIcon type="settings" size={24} tile={false} color="currentColor" />
                     </button>
                 </div>
             )}
@@ -174,10 +191,10 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                 const getHistoryIcon = (n: any) => {
                     const matchLogo = getMatchingLogo(n.title) || getMatchingLogo(n.message);
                     if (matchLogo) return <div className="w-full h-full p-2.5 rounded-full bg-white"><img src={matchLogo} alt="bank" className="w-full h-full object-contain" /></div>;
-                    if (n.type === 'transaction_income') return <Plus className="w-5 h-5 text-[#10B981]" />;
+                    if (n.type === 'transaction_income') return <ActionIcon type="plus" size={20} tile={false} color="#10B981" />;
                     if (n.title?.toLowerCase().includes('lãi')) return <AlignJustify className="w-5 h-5 text-gray-400" />;
-                    if (n.title?.toLowerCase().includes('thẻ tín dụng')) return <CreditCardIcon className="w-5 h-5 text-gray-400" />;
-                    return <Wallet className="w-5 h-5 text-gray-400" />;
+                    if (n.title?.toLowerCase().includes('thẻ tín dụng')) return <ActionIcon type="creditCard" size={20} tile={false} color="#94A3B8" />;
+                    return <UtilityIcon type="wallet" size={20} tile={false} color="#94A3B8" />;
                 };
 
                 return (
@@ -188,7 +205,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                         >
                             <div className="flex items-center justify-between">
                                 <button onClick={() => setViewMode('notifications')} className="p-2 -ml-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
-                                    <ChevronLeft className="w-6 h-6 text-[#1E293B] dark:text-slate-200" />
+                                    <ActionIcon type="chevronLeft" size={24} tile={false} color="currentColor" />
                                 </button>
                                 <h2 className="text-[19px] font-bold text-[#1E293B] dark:text-white">Lịch sử</h2>
                                 <div className="flex items-center gap-1">
@@ -254,20 +271,22 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                     <div className="px-4 py-2 mt-2">
                         <div className="flex items-center gap-4 bg-[#F8F9FB] dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors p-4 rounded-[20px] cursor-pointer" onClick={() => setViewMode('balance_history')}>
                             <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-transparent flex items-center justify-center shadow-sm">
-                                <History className="w-5 h-5 text-gray-700 dark:text-slate-300" />
+                                <ActionIcon type="history" size={20} tile={false} color="currentColor" />
                             </div>
                             <div className="flex-1">
                                 <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white">Xem biến động số dư</h3>
                                 <p className="text-[13px] text-gray-500 dark:text-slate-400 mt-0.5">Theo dõi lịch sử thay đổi số dư của bạn</p>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400 dark:text-slate-500" />
+                            <ActionIcon type="chevronRight" size={20} tile={false} color="currentColor" />
                         </div>
                     </div>
 
                     {/* Tabs */}
                     <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
                         {TABS.map(tab => {
-                            const count = notifications.filter(n => !n.isRead && ((tab.types as readonly string[]).includes(n.type) || (tab.key === 'transaction' && !(TABS.flatMap(x => x.types) as readonly string[]).includes(n.type)))).length;
+                            const count = tab.key === 'important'
+                                ? alertCount + notifications.filter(n => !n.isRead && n.isImportant).length
+                                : notifications.filter(n => !n.isRead && ((tab.types as readonly string[]).includes(n.type) || (tab.key === 'transaction' && !(TABS.flatMap(x => x.types) as readonly string[]).includes(n.type)))).length;
                             const isActive = activeTab === tab.key;
                             return (
                                 <button key={tab.key} onClick={() => setActiveTab(tab.key)}
@@ -285,10 +304,54 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                         {loading && (
                             <div className="p-8 text-center text-gray-400 dark:text-slate-500 text-sm">Đang tải...</div>
                         )}
-                        {!loading && filtered.length === 0 && (
+                        {!loading && filtered.length === 0 && !(activeTab === 'important' && alertCount > 0) && (
                             <div className="flex flex-col items-center justify-center gap-3 p-10 mt-10">
-                                <Bell className="w-12 h-12 text-gray-200 dark:text-slate-700" />
+                                <UtilityIcon type="bell" size={48} tile={false} color="#E2E8F0" />
                                 <p className="text-gray-400 dark:text-slate-500 text-sm">Không có thông báo nào</p>
+                            </div>
+                        )}
+                        {/* Live important alerts — same source as the Home "Thông báo quan trọng" section */}
+                        {activeTab === 'important' && alertCount > 0 && (
+                            <div className="mb-4">
+                                <h4 className="px-5 py-2 text-[14px] font-medium text-gray-500 dark:text-slate-400">Cần chú ý</h4>
+                                <div className="flex flex-col space-y-2 px-3">
+                                    {creditAlerts.map(({ card, dueThisCycle }) => {
+                                        const logo = getMatchingLogo(card.bankName) || getMatchingLogo(card.bankShortName);
+                                        return (
+                                            <div key={card._id}
+                                                onClick={() => { router.push(`/cards/${card._id}`); onClose(); }}
+                                                className="flex px-4 py-3 gap-4 cursor-pointer rounded-2xl bg-red-50/60 dark:bg-red-900/10 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                                <div className="w-12 h-12 rounded-full border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden">
+                                                    {logo
+                                                        ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-full"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
+                                                        : '💳'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[15px] font-bold text-gray-900 dark:text-white truncate">Sao kê {card.bankName}</p>
+                                                    <p className="text-[13.5px] text-red-500 dark:text-red-400 mt-1 font-medium">Cần thanh toán kỳ này: {fmtFull(dueThisCycle)}đ</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {savingsAlerts.map(card => {
+                                        const logo = getMatchingLogo(card.bankName) || getMatchingLogo(card.bankShortName);
+                                        return (
+                                            <div key={card._id}
+                                                onClick={() => { router.push('/savings'); onClose(); }}
+                                                className="flex px-4 py-3 gap-4 cursor-pointer rounded-2xl bg-amber-50/60 dark:bg-amber-900/10 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
+                                                <div className="w-12 h-12 rounded-full border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden">
+                                                    {logo
+                                                        ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-full"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
+                                                        : '🏦'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[15px] font-bold text-gray-900 dark:text-white truncate">Sổ tiết kiệm {card.bankShortName}</p>
+                                                    <p className="text-[13.5px] text-amber-600 dark:text-amber-400 mt-1 font-medium">Kiểm tra kỳ hạn — {fmtFull(card.balance)}đ</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
                         {renderGroup('Hôm nay', grouped.today)}
@@ -315,7 +378,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
                         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
                     >
                         <button onClick={() => setSelectedNotification(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors flex-shrink-0">
-                            <ChevronLeft className="w-6 h-6 text-gray-800 dark:text-slate-200" />
+                            <ActionIcon type="chevronLeft" size={24} tile={false} color="currentColor" />
                         </button>
                         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Chi tiết giao dịch</h2>
                         <div className="w-10"></div>
@@ -353,7 +416,7 @@ function PanelContent({ onClose }: { onClose: () => void }) {
     );
 }
 
-export default function NotificationPanel({ open, onClose }: NotificationPanelProps) {
+export default function NotificationPanel({ open, onClose, initialTab }: NotificationPanelProps) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => { setMounted(true); }, []);
@@ -369,7 +432,7 @@ export default function NotificationPanel({ open, onClose }: NotificationPanelPr
             'fixed top-0 right-0 h-full w-full sm:w-[400px] z-[1000] shadow-2xl flex flex-col transition-transform duration-300 ease-out bg-white dark:bg-slate-900 overflow-hidden',
             open ? 'translate-x-0' : 'translate-x-full'
         )}>
-            <PanelContent onClose={onClose} />
+            <PanelContent onClose={onClose} open={open} initialTab={initialTab} />
         </div>
     );
 

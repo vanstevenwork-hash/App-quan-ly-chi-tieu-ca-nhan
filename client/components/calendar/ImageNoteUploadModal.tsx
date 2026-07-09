@@ -1,10 +1,10 @@
 'use client';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { ImageIcon, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CATEGORIES } from '@/lib/mockData';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import { uploadApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -94,7 +94,7 @@ function ImageNoteUploadModalBase(
                                 <img src={uploadPreview} alt="Preview" className="w-full h-full object-cover" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
-                                    <ImageIcon className="w-8 h-8 text-slate-300" />
+                                    <ActionIcon type="image" size={32} tile={false} color="#CBD5E1" />
                                 </div>
                             )}
                             {/* Gradient Overlay */}
@@ -178,7 +178,7 @@ function ImageNoteUploadModalBase(
                                 disabled={isUploading}
                                 className="flex-1 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
                             >
-                                {isUploading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Lưu Ghi Chú'}
+                                {isUploading ? <ActionIcon type="loader" size={20} tile={false} spin color="#FFFFFF" className="mx-auto" /> : 'Lưu Ghi Chú'}
                             </Button>
                         </div>
                     </form>

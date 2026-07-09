@@ -2,11 +2,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import {
-    Pencil, Trash2, CreditCard, AlertCircle, Star,
-    ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp,
-    User, Hash, Layers, CalendarClock, StickyNote,
-} from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBanks } from '@/hooks/useBanks';
@@ -147,7 +143,7 @@ export default function CardDetailPage() {
                 <PageHeader title="Chi tiết thẻ" backHref="/cards" />
                 <div className="flex flex-col items-center justify-center gap-3 py-24 px-6 text-center">
                     <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                        <CreditCard className="w-8 h-8 text-slate-300" />
+                        <CustomIcon type="creditCard" size={32} tile={false} color="currentColor" className="text-slate-300" />
                     </div>
                     <p className="font-bold text-slate-700 dark:text-slate-200">Không tìm thấy thẻ</p>
                     <p className="text-sm text-slate-400 dark:text-slate-500">Thẻ này có thể đã bị xoá.</p>
@@ -172,7 +168,7 @@ export default function CardDetailPage() {
                 rightActions={
                     <button onClick={() => setShowForm(true)}
                         className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
-                        <Pencil className="w-4 h-4" />
+                        <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
                     </button>
                 }
             />
@@ -203,7 +199,7 @@ export default function CardDetailPage() {
                         </div>
                         {card.isDefault && (
                             <span className="bg-yellow-400/90 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
-                                <Star className="w-2.5 h-2.5" /> Mặc định
+                                <CustomIcon type="star" size={10} tile={false} color="#F59E0B" /> Mặc định
                             </span>
                         )}
                     </div>
@@ -217,7 +213,7 @@ export default function CardDetailPage() {
                             <div className="text-right">
                                 <p className="text-xs mb-1" style={{ color: ts.subtext }}>Hạn thanh toán</p>
                                 <div className="flex items-center gap-1 justify-end">
-                                    {isUrgent && <AlertCircle className="w-4 h-4 text-red-400" />}
+                                    {isUrgent && <CustomIcon type="alertCircle" size={16} tile={false} color="#EF4444" />}
                                     <p className={cn('text-sm font-bold', isUrgent ? 'text-red-400' : '')} style={isUrgent ? undefined : { color: ts.subtext }}>
                                         {dueDays <= 0 ? 'Đã quá hạn!' : `${dueDays} ngày nữa`}
                                     </p>
@@ -245,13 +241,13 @@ export default function CardDetailPage() {
                     {isCredit && card.balance > 0 && (
                         <button onClick={() => setShowPayment(true)}
                             className="col-span-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all">
-                            <CreditCard className="w-4 h-4" /> Thanh toán ngay
+                            <CustomIcon type="creditCard" size={16} tile={false} color="currentColor" /> Thanh toán ngay
                         </button>
                     )}
                     {!card.isDefault && (
                         <button onClick={() => setDefaultCard(card._id)}
                             className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-yellow-300 dark:hover:border-yellow-700 active:scale-[0.98] transition-all">
-                            <Star className="w-4 h-4 text-yellow-500" /> Đặt mặc định
+                            <CustomIcon type="star" size={16} tile={false} color="#F59E0B" /> Đặt mặc định
                         </button>
                     )}
                     <button onClick={() => setDeleteConfirm(true)}
@@ -259,7 +255,7 @@ export default function CardDetailPage() {
                             'flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm font-bold text-red-500 hover:border-red-300 dark:hover:border-red-900 active:scale-[0.98] transition-all',
                             card.isDefault && 'col-span-2'
                         )}>
-                        <Trash2 className="w-4 h-4" /> Xoá thẻ
+                        <CustomIcon type="trash" size={16} tile={false} color="currentColor" /> Xoá thẻ
                     </button>
                 </div>
 
@@ -318,32 +314,32 @@ export default function CardDetailPage() {
                 {/* ── Info panel ────────────────────────────────── */}
                 <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm divide-y divide-gray-50 dark:divide-slate-700/50 overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-3">
-                        <User className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <CustomIcon type="user" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                         <span className="text-xs text-slate-400 flex-1">Chủ thẻ</span>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{card.cardHolder || '—'}</span>
                     </div>
                     <div className="flex items-center gap-3 px-4 py-3">
-                        <Hash className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <CustomIcon type="alignJustify" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                         <span className="text-xs text-slate-400 flex-1">Số thẻ</span>
                         <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 tracking-widest">•••• {card.cardNumber}</span>
                     </div>
                     {card.cardNetwork && (
                         <div className="flex items-center gap-3 px-4 py-3">
-                            <Layers className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                            <CustomIcon type="package" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                             <span className="text-xs text-slate-400 flex-1">Mạng lưới</span>
                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{NETWORK_LABELS[card.cardNetwork] || card.cardNetwork}</span>
                         </div>
                     )}
                     {isCredit && card.statementDay > 0 && (
                         <div className="flex items-center gap-3 px-4 py-3">
-                            <CalendarClock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                            <CustomIcon type="calendar" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                             <span className="text-xs text-slate-400 flex-1">Ngày sao kê</span>
                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Ngày {card.statementDay} hàng tháng</span>
                         </div>
                     )}
                     {card.note && (
                         <div className="flex items-start gap-3 px-4 py-3">
-                            <StickyNote className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+                            <CustomIcon type="fileText" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0 mt-0.5" />
                             <span className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{card.note}</span>
                         </div>
                     )}
@@ -371,8 +367,8 @@ export default function CardDetailPage() {
                                             isExpense ? 'bg-red-50 dark:bg-red-900/30' : 'bg-emerald-50 dark:bg-emerald-900/30'
                                         )}>
                                             {isExpense
-                                                ? <ArrowUpRight className="w-4 h-4 text-red-500" />
-                                                : <ArrowDownLeft className="w-4 h-4 text-emerald-600" />}
+                                                ? <CustomIcon type="arrowUpRight" size={16} tile={false} color="#EF4444" />
+                                                : <CustomIcon type="arrowDownLeft" size={16} tile={false} color="#10B981" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{t.category}</p>
@@ -398,9 +394,9 @@ export default function CardDetailPage() {
                                         onClick={() => setHistoryExpanded(v => !v)}
                                         className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold text-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
                                         {historyExpanded ? (
-                                            <><ChevronUp className="w-3.5 h-3.5" /> Thu gọn</>
+                                            <><CustomIcon type="chevronUp" size={14} tile={false} color="currentColor" /> Thu gọn</>
                                         ) : (
-                                            <><ChevronDown className="w-3.5 h-3.5" /> Xem thêm {cardTxs.length - 5} giao dịch</>
+                                            <><CustomIcon type="chevronDown" size={14} tile={false} color="currentColor" /> Xem thêm {cardTxs.length - 5} giao dịch</>
                                         )}
                                     </button>
                                 </div>

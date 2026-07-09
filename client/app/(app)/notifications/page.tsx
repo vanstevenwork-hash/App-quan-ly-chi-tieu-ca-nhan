@@ -1,9 +1,14 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { Bell, CheckCheck } from 'lucide-react';
+import { Suspense, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ActionIcon } from '@/components/icons/ActionIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { cn } from '@/lib/utils';
 import { useNotifications, type NotificationItem } from '@/hooks/useNotifications';
+import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { TYPE_MAP } from '@/components/NotificationPanel';
+
+const fmtFull = (n: number) => n.toLocaleString('vi-VN');
 
 const TABS = [
     { label: 'Tất cả', key: 'all' },
@@ -25,9 +30,15 @@ const timeAgo = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-export default function NotificationsPage() {
+function NotificationsContent() {
     const { notifications, loading, error, unreadCount, markRead, markAllRead } = useNotifications();
-    const [activeTab, setActiveTab] = useState<'all' | 'important' | 'transaction'>('all');
+    const { creditAlerts, savingsAlerts, count: alertCount } = useImportantAlerts();
+    const searchParams = useSearchParams();
+    const initialTab = searchParams.get('tab');
+    const [activeTab, setActiveTab] = useState<'all' | 'important' | 'transaction'>(
+        initialTab === 'important' || initialTab === 'transaction' ? initialTab : 'all'
+    );
+    const router = useRouter();
 
     const filtered = useMemo(() => notifications.filter((n) => {
         if (activeTab === 'important') return n.isImportant;
@@ -58,7 +69,7 @@ export default function NotificationsPage() {
                             className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center"
                             aria-label="Đánh dấu đã đọc tất cả"
                         >
-                            <CheckCheck className="w-4 h-4 text-foreground" />
+                            <ActionIcon type="checkCheck" size={16} tile={false} color="currentColor" />
                         </button>
                     )}
                 </div>
@@ -89,10 +100,44 @@ export default function NotificationsPage() {
             {!loading && error && notifications.length === 0 && (
                 <div className="p-10 text-center text-muted-foreground text-sm">{error}</div>
             )}
-            {!loading && !error && filtered.length === 0 && (
+            {!loading && !error && filtered.length === 0 && !(activeTab === 'important' && alertCount > 0) && (
                 <div className="flex flex-col items-center justify-center gap-3 py-16">
-                    <Bell className="w-12 h-12 text-gray-200 dark:text-slate-700" />
+                    <UtilityIcon type="bell" size={48} tile={false} color="#E2E8F0" />
                     <p className="text-muted-foreground text-sm">Không có thông báo nào</p>
+                </div>
+            )}
+
+            {/* Live important alerts — same source as the Home "Thông báo quan trọng" section */}
+            {activeTab === 'important' && alertCount > 0 && (
+                <div className="divide-y divide-gray-50 dark:divide-slate-800/50 border-b border-gray-50 dark:border-slate-800/50">
+                    {creditAlerts.map(({ card, dueThisCycle }) => (
+                        <button key={card._id}
+                            onClick={() => router.push(`/cards/${card._id}`)}
+                            className="w-full flex items-start gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors text-left">
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-red-50 dark:bg-red-500/15">
+                                💳
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm leading-snug font-bold text-foreground">Sao kê {card.bankName}</p>
+                                <p className="text-xs mt-0.5 text-red-500 font-medium">Cần thanh toán kỳ này: {fmtFull(dueThisCycle)}đ</p>
+                                <p className="text-muted-foreground text-xs mt-1">Đang hiệu lực</p>
+                            </div>
+                        </button>
+                    ))}
+                    {savingsAlerts.map(card => (
+                        <button key={card._id}
+                            onClick={() => router.push('/savings')}
+                            className="w-full flex items-start gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors text-left">
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-amber-50 dark:bg-amber-500/15">
+                                🏦
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm leading-snug font-bold text-foreground">Sổ tiết kiệm {card.bankShortName}</p>
+                                <p className="text-xs mt-0.5 text-amber-600 dark:text-amber-400 font-medium">Kiểm tra kỳ hạn — {fmtFull(card.balance)}đ</p>
+                                <p className="text-muted-foreground text-xs mt-1">Đang hiệu lực</p>
+                            </div>
+                        </button>
+                    ))}
                 </div>
             )}
 
@@ -137,5 +182,14 @@ export default function NotificationsPage() {
                 })}
             </div>
         </div>
+    );
+}
+
+// useSearchParams needs a Suspense boundary for static rendering
+export default function NotificationsPage() {
+    return (
+        <Suspense fallback={null}>
+            <NotificationsContent />
+        </Suspense>
     );
 }

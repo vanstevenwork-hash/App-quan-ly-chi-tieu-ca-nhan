@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { Search, Save, Check, Trash2 } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import type { Card, CardFormData } from '@/hooks/useCards';
+import { ActionIcon } from '@/components/icons/CustomIcon';
 import { useBanks } from '@/hooks/useBanks';
 import { useAuthStore } from '@/store/useStore';
 import { useCards } from '@/hooks/useCards';
@@ -294,7 +295,7 @@ duration-200
                                         </p>
                                     </div>
                                     <div className={cn('w-6 h-6 rounded-full border flex items-center justify-center', isWhite ? 'border-slate-300 bg-slate-100' : 'border-white/40 bg-white/10')}>
-                                        <Check className={cn('w-3.5 h-3.5', isWhite ? 'text-slate-600' : 'text-white')} />
+                                        <ActionIcon type="check" size={14} tile={false} color={isWhite ? '#475569' : '#FFFFFF'} />
                                     </div>
                                 </div>
 
@@ -375,7 +376,7 @@ duration-200
                             <label className="text-sm font-bold text-[#000000] dark:text-white">Ngân hàng / Nguồn gốc</label>
                             {(!['eWallet', 'crypto'].includes(form.cardType)) && (
                                 <div className="relative w-[140px]">
-                                    <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                    <CustomIcon type="search" size={16} tile={false} color="currentColor" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <Input value={searchBank} onChange={e => setSearchBank(e.target.value)}
                                         placeholder="Tìm kiếm..." className="pl-9 h-9 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#7f19e6] dark:text-white dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                 </div>
@@ -715,7 +716,7 @@ duration-200
                     {isEdit && (
                         <button onClick={handleDelete} disabled={saving}
                             className="w-14 h-14 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 transition flex items-center justify-center flex-shrink-0 disabled:opacity-50">
-                            <Trash2 className="w-5 h-5" />
+                            <ActionIcon type="trash" size={20} tile={false} color="#EF4444" />
                         </button>
                     )}
                     <div className="flex-1">
@@ -724,7 +725,7 @@ duration-200
                         )}
                         <button onClick={handleSave} disabled={saving}
                             className="w-full h-12 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <Save className="w-5 h-5" />
+                            <ActionIcon type="save" size={20} tile={false} color="#FFFFFF" />
                             <span>{saving ? 'Đang lưu...' : (isEdit ? 'Lưu thay đổi' : 'Hoàn tất')}</span>
                         </button>
                     </div>

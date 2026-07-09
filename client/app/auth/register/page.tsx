@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useAuthStore } from '@/store/useStore';
 import { authApi } from '@/lib/api';
 import { mockUser } from '@/lib/mockData';
@@ -57,7 +57,7 @@ export default function RegisterPage() {
             <div className="flex-1 px-6">
                 <form onSubmit={handleRegister} className="space-y-4">
                     <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <CustomIcon type="user" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Họ và tên"
                             value={name}
@@ -68,7 +68,7 @@ export default function RegisterPage() {
                         {errors.name && <p className="text-xs text-red-500 mt-1 ml-1">{errors.name}</p>}
                     </div>
                     <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <CustomIcon type="mail" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="email"
                             placeholder="Email"
@@ -80,7 +80,7 @@ export default function RegisterPage() {
                         {errors.email && <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>}
                     </div>
                     <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <CustomIcon type="lock" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type={showPass ? 'text' : 'password'}
                             placeholder="Mật khẩu"
@@ -91,7 +91,7 @@ export default function RegisterPage() {
                         />
                         <button type="button" onClick={() => setShowPass(!showPass)}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                            {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showPass ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" />}
                         </button>
                         {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
                     </div>
@@ -102,7 +102,7 @@ export default function RegisterPage() {
                         className="w-full gradient-primary text-white rounded-2xl h-14 text-base font-bold shadow-glow hover:opacity-90 transition-all border-0 mt-2"
                     >
                         {loading ? 'Đang tạo tài khoản...' : (
-                            <>Đăng ký <ArrowRight className="w-4 h-4 ml-2" /></>
+                            <>Đăng ký <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" className="ml-2" /></>
                         )}
                     </Button>
                 </form>

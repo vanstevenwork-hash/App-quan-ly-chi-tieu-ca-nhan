@@ -1,7 +1,7 @@
 'use client';
-import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 interface PageHeaderProps {
     title: string;
@@ -37,7 +37,7 @@ export default function PageHeader({
                     onClick={onBack ?? (() => router.push(backHref))}
                     className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0"
                 >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ActionIcon type="arrowLeft" size={20} tile={false} />
                 </button>
             )}
             <div className="flex-1 min-w-0">

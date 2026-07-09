@@ -1,6 +1,7 @@
 'use client';
 import { memo } from 'react';
-import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -78,9 +79,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                     <div className="flex items-center gap-2">
                         <div className={cn(
                             "w-6 h-6 rounded-full flex items-center justify-center transition-colors",
-                            isPositive ? "bg-emerald-500/20 text-emerald-500" : "bg-rose-500/20 text-rose-500"
+                            isPositive ? "bg-emerald-500/20" : "bg-rose-500/20"
                         )}>
-                            {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                            <UtilityIcon
+                                type={isPositive ? 'trendingUp' : 'trendingDown'}
+                                size={14}
+                                tile={false}
+                                color={isPositive ? '#10B981' : '#F43F5E'}
+                            />
                         </div>
                         <span className={cn(
                             "text-sm font-black",
@@ -112,7 +118,7 @@ function SpendingTrendChartBase({ chartData }: SpendingTrendChartProps) {
                 <h2 className="text-base font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
                 <Link href="/analytics"
                     className="flex items-center gap-0.5 text-xs font-semibold text-slate-400 dark:text-slate-500 hover:text-purple-500 dark:hover:text-purple-400 transition-colors">
-                    Xem chi tiết <ChevronRight className="w-3.5 h-3.5" />
+                    Xem chi tiết <ActionIcon type="chevronRight" size={14} tile={false} color="#94A3B8" />
                 </Link>
             </div>
             <div className="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">

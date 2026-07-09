@@ -1,7 +1,8 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { CreditCard, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -24,7 +25,7 @@ const fmtShort = (n: number) => {
 const MONTHS_WINDOW = 6;
 
 export default function CashbackPage() {
-    const { cards, loading: cardsLoading } = useCards();
+    const { cards, loading: cardsLoading, refetch: refetchCards } = useCards();
     const { transactions, loading: txLoading } = useTransactions();
     const { records, setStatus, loading: recordsLoading } = useCashbackRecords();
     const [updatingKey, setUpdatingKey] = useState<string | null>(null);
@@ -121,7 +122,12 @@ export default function CashbackPage() {
         try {
             const nextStatus = currentStatus === 'received' ? 'pending' : 'received';
             await setStatus(cardId, year, month, nextStatus, estimatedAmount);
-            toast.success(nextStatus === 'received' ? 'Đã đánh dấu nhận tiền' : 'Đã chuyển về chờ nhận');
+            // Server credits/reverses the cashback on the card itself — reload cards
+            // so debt totals on Home/Accounts reflect it immediately.
+            refetchCards();
+            toast.success(nextStatus === 'received'
+                ? `Đã nhận ${fmt(estimatedAmount)}₫ — trừ vào dư nợ thẻ`
+                : 'Đã chuyển về chờ nhận — hoàn tác trên dư nợ thẻ');
         } catch {
             toast.error('Cập nhật thất bại, thử lại sau');
         } finally {
@@ -167,7 +173,7 @@ export default function CashbackPage() {
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-2">
                             <p className="text-slate-500 dark:text-slate-300 text-sm font-medium">Tổng hoàn tiền</p>
-                            <span className="text-2xl leading-none">🪙</span>
+                            <UtilityIcon type="coins" size={32} tile={false} />
                         </div>
                         <p className="text-slate-800 dark:text-white text-[30px] font-bold tracking-tight leading-none">
                             {fmt(totalReceived + totalPending)}<span className="text-lg text-slate-400 font-medium ml-0.5">₫</span>
@@ -175,9 +181,7 @@ export default function CashbackPage() {
 
                         <div className="flex items-center gap-4 mt-5">
                             <div className="flex-1 flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30 shadow-sm">
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                </div>
+                                <UtilityIcon type="checkCircle" size={32} tile />
                                 <div>
                                     <p className="text-[10px] text-slate-400 font-medium">Đã nhận</p>
                                     <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{fmt(totalReceived)}₫</p>
@@ -185,9 +189,7 @@ export default function CashbackPage() {
                             </div>
                             <div className="w-px h-9 bg-slate-200 dark:bg-white/15" />
                             <div className="flex-1 flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 shadow-sm">
-                                    <Clock className="w-4 h-4 text-amber-500" />
-                                </div>
+                                <UtilityIcon type="clock" size={32} tile />
                                 <div>
                                     <p className="text-[10px] text-slate-400 font-medium">Đang chờ</p>
                                     <p className="text-sm font-bold text-amber-600 dark:text-amber-400">{fmt(totalPending)}₫</p>
@@ -200,7 +202,7 @@ export default function CashbackPage() {
                 {/* Trend chart */}
                 <div>
                     <div className="flex items-center gap-2 mb-2.5">
-                        <TrendingUp className="w-3.5 h-3.5 text-indigo-500" />
+                        <UtilityIcon type="trendingUp" size={14} tile={false} color="#6366F1" />
                         <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Xu hướng {MONTHS_WINDOW} tháng</h3>
                     </div>
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-3.5 border border-gray-100 dark:border-slate-700 shadow-sm">
@@ -264,7 +266,7 @@ export default function CashbackPage() {
                                                 className="w-10 h-10 rounded-lg object-contain bg-white p-1 border border-gray-100 dark:border-slate-700 flex-shrink-0" />
                                         ) : (
                                             <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                                                <CreditCard className="w-4 h-4 text-indigo-500" />
+                                                <ActionIcon type="creditCard" size={16} tile={false} color="#6366F1" />
                                             </div>
                                         )}
                                         <div className="flex-1 min-w-0">
@@ -295,7 +297,7 @@ export default function CashbackPage() {
                                                 className="w-9 h-9 rounded-lg object-contain bg-white p-1 border border-gray-100 dark:border-slate-700 flex-shrink-0" />
                                         ) : (
                                             <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                                                <CreditCard className="w-4 h-4 text-indigo-500" />
+                                                <ActionIcon type="creditCard" size={16} tile={false} color="#6366F1" />
                                             </div>
                                         )}
                                         <div className="min-w-0">

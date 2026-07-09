@@ -1,9 +1,11 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, X, Clock, ChevronRight, Package } from 'lucide-react';
+import { Search, X, ChevronRight, Package } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { CATEGORIES_MAP } from '@/lib/mockData';
+import CategoryIcon from '@/components/icons/CategoryIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import PageHeader from '@/components/PageHeader';
@@ -130,7 +132,7 @@ export default function SearchPage() {
                             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-700/50">
                                 {recentSearches.map(term => (
                                     <div key={term} className="flex items-center gap-3 px-4 py-3">
-                                        <Clock className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                                        <UtilityIcon type="clock" size={16} tile={false} color="#94A3B8" className="flex-shrink-0" />
                                         <button onClick={() => setQuery(term)} className="flex-1 min-w-0 text-left text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
                                             {term}
                                         </button>
@@ -207,12 +209,12 @@ export default function SearchPage() {
                                             onClick={() => handleSelect(t)}
                                             className="w-full flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all px-4 py-3.5 text-left"
                                         >
-                                            <div
-                                                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                                                style={{ backgroundColor: `${cat?.color || '#6B7280'}15` }}
-                                            >
-                                                {cat ? <cat.Icon className="w-5 h-5" style={{ color: cat.color }} /> : <Package className="w-5 h-5 text-slate-400" />}
-                                            </div>
+                                            <CategoryIcon
+                                                type={cat?.catIconType || 'khac'}
+                                                size={40}
+                                                tile
+                                                className="flex-shrink-0"
+                                            />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{t.note || t.category}</p>
                                                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">

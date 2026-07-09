@@ -1,14 +1,15 @@
 'use client';
 import { memo, useState } from 'react';
-import { Clock, CheckCircle2, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
     if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
-    return `${Math.round(n / 1_000)}k`;
+    return `${Math.round(n / 1000)}k`;
 };
 
 function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
@@ -17,25 +18,23 @@ function DetailRow({ icon, iconBg, title, sub, value, badge, badgeColor }: {
     badge?: string; badgeColor?: string;
 }) {
     return (
-        <div className="flex items-center px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-slate-800/50 rounded-xl transition group cursor-pointer">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0"
+        <div className="flex items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-all group">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105"
                 style={{ backgroundColor: iconBg }}>
                 {icon}
             </div>
             <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start gap-2">
-                    <h4 className="font-semibold text-slate-800 dark:text-slate-100 text-sm truncate">{title}</h4>
-                    {badge && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg flex-shrink-0"
-                            style={{ backgroundColor: `${badgeColor}18`, color: badgeColor }}>
-                            {badge}
-                        </span>
-                    )}
-                </div>
-                <div className="flex justify-between items-end mt-0.5">
-                    <p className="text-xs text-slate-400 dark:text-slate-500">{sub}</p>
-                    <p className="font-bold text-slate-800 dark:text-slate-100 text-sm">{value}</p>
-                </div>
+                <p className="text-[13px] font-bold text-slate-800 dark:text-slate-200 leading-tight truncate">{title}</p>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">{sub}</p>
+            </div>
+            <div className="text-right flex-shrink-0">
+                <p className="text-[13px] font-black text-slate-800 dark:text-slate-100">{value}</p>
+                {badge && (
+                    <span className="inline-block text-[8px] font-bold px-1.5 py-0.5 rounded mt-0.5 uppercase tracking-wide leading-none"
+                        style={{ backgroundColor: `${badgeColor}22`, color: badgeColor }}>
+                        {badge}
+                    </span>
+                )}
             </div>
         </div>
     );
@@ -51,22 +50,14 @@ function PaymentAlertsCardBase({ paymentAlerts, creditCardsCount, totalCreditLim
     const [alertsExpanded, setAlertsExpanded] = useState(false);
 
     return (
-        <div className="px-6 mb-5">
-            <div className="flex items-center justify-between mb-2.5">
-                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Hạn thanh toán</h3>
-                {paymentAlerts.length > 0 && (
-                    <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">
-                        {paymentAlerts.length} thẻ
-                    </span>
-                )}
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-700/50">
+        <div className="px-6 mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-[20px] shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
                 {paymentAlerts.length > 0 ? (alertsExpanded ? paymentAlerts : paymentAlerts.slice(0, 2)).map(({ card, dueThisCycle, days }) => {
                     const isUrgent = (days ?? 99) <= 5;
                     return (
                         <DetailRow
                             key={card._id}
-                            icon={<Clock className={cn('w-5 h-5', isUrgent ? 'text-red-500' : 'text-orange-500')} />}
+                            icon={<UtilityIcon type="clock" size={20} tile={false} color={isUrgent ? '#EF4444' : '#F59E0B'} />}
                             iconBg={isUrgent ? '#FEE2E2' : '#FEF3C7'}
                             title={`${card.bankShortName} — Hạn thanh toán`}
                             sub={`Cần thanh toán: ${fmtShort(dueThisCycle)}₫`}
@@ -77,7 +68,7 @@ function PaymentAlertsCardBase({ paymentAlerts, creditCardsCount, totalCreditLim
                     );
                 }) : (
                     <DetailRow
-                        icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                        icon={<UtilityIcon type="checkCircle" size={20} tile={false} color="#10B981" />}
                         iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#064E3B' : '#D1FAE5'}
                         title="Không có hạn thanh toán gần"
                         sub="Tất cả thẻ đều ổn"
@@ -85,23 +76,22 @@ function PaymentAlertsCardBase({ paymentAlerts, creditCardsCount, totalCreditLim
                     />
                 )}
 
-                {/* Show more / less button for alerts */}
                 {paymentAlerts.length > 2 && (
-                    <div className="p-2 border-t border-gray-50 dark:border-slate-700/50">
+                    <div className="px-2 pb-2">
                         <button
                             onClick={() => setAlertsExpanded(prev => !prev)}
                             className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold text-indigo-500 bg-indigo-50/30 dark:bg-indigo-900/10 border border-indigo-100/50 dark:border-indigo-900/30 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
                             {alertsExpanded ? (
-                                <><ChevronUp className="w-3.5 h-3.5" /> Thu gọn</>
+                                <><ActionIcon type="chevronUp" size={14} tile={false} color="currentColor" /> Thu gọn</>
                             ) : (
-                                <><ChevronDown className="w-3.5 h-3.5" /> Xem thêm {paymentAlerts.length - 2} thông báo</>
+                                <><ActionIcon type="chevronDown" size={14} tile={false} color="currentColor" /> Xem thêm {paymentAlerts.length - 2} thông báo</>
                             )}
                         </button>
                     </div>
                 )}
 
                 <DetailRow
-                    icon={<TrendingUp className="w-5 h-5 text-indigo-500" />}
+                    icon={<UtilityIcon type="trendingUp" size={20} tile={false} color="#6366F1" />}
                     iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#312E81' : '#EEF2FF'}
                     title="Tổng hạn mức tín dụng"
                     sub={`${creditCardsCount} thẻ tín dụng`}

@@ -1,7 +1,8 @@
 'use client';
 import { memo } from 'react';
-import { Target, Flame, Trophy, Coins } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn } from '@/lib/utils';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 
 const fmtShort = (n: number) => {
     if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
@@ -44,10 +45,10 @@ function GoalsStatsAndFiltersBase({
             <div className="px-5 mb-5">
                 <div className="grid grid-cols-4 gap-2">
                     {[
-                        { icon: <Target className="w-4 h-4 text-[#6C63FF]" />, label: 'Tổng', value: totalGoals, bg: '#6C63FF15' },
-                        { icon: <Flame className="w-4 h-4 text-orange-500" />, label: 'Đang TH', value: activeGoals, bg: '#F97316' + '15' },
-                        { icon: <Trophy className="w-4 h-4 text-amber-500" />, label: 'Hoàn thành', value: completedGoals, bg: '#F59E0B15' },
-                        { icon: <Coins className="w-4 h-4 text-emerald-600" />, label: 'Đã tiết kiệm', value: fmtShort(totalSaved), bg: '#10B98115' },
+                        { icon: <UtilityIcon type="target" size={16} tile={false} color="#6C63FF" />, label: 'Tổng', value: totalGoals, bg: '#6C63FF15' },
+                        { icon: <CustomIcon type="flame" size={16} tile={false} color="#EF4444" />, label: 'Đang TH', value: activeGoals, bg: '#F97316' + '15' },
+                        { icon: <UtilityIcon type="trophy" size={16} tile={false} color="#F59E0B" />, label: 'Hoàn thành', value: completedGoals, bg: '#F59E0B15' },
+                        { icon: <UtilityIcon type="coins" size={16} tile={false} color="#10B981" />, label: 'Đã tiết kiệm', value: fmtShort(totalSaved), bg: '#10B98115' },
                     ].map(s => (
                         <div key={s.label} className="bg-white dark:bg-slate-800 rounded-2xl p-3 text-center border border-gray-100 dark:border-slate-700 shadow-sm">
                             <div className="w-8 h-8 rounded-xl mx-auto mb-1.5 flex items-center justify-center" style={{ backgroundColor: s.bg }}>

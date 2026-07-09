@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, useCallback } from 'react';
-import { TrendingUp, RefreshCw, CreditCard, Landmark, PiggyBank, Smartphone, Bitcoin, Briefcase, Eye, EyeOff } from 'lucide-react';
+import { TrendingUp, RefreshCw, Landmark, Smartphone, Bitcoin, Briefcase } from 'lucide-react';
 import Image from 'next/image';
 import { useWealth, type WealthSource, type WealthSourceUI } from '@/hooks/useWealth';
 import { useCards, type Card } from '@/hooks/useCards';
@@ -13,6 +13,8 @@ import CardFormModal from '@/components/CardFormModal';
 import { useBanks } from '@/hooks/useBanks';
 import { useEffect } from 'react';
 import { E_WALLETS, CRYPTOS } from '@/lib/constants';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 const fmtFull = (n: number) => Math.round(n).toLocaleString('vi-VN');
 
@@ -44,9 +46,9 @@ export default function WealthPage() {
 
     const allSources = useMemo(() => {
         const getFallbackIcon = (type: string) => {
-            if (type === 'savings') return <PiggyBank className="w-6 h-6" />;
+            if (type === 'savings') return <UtilityIcon type="piggyBank" size={24} tile={false} color="#3B82F6" />;
             if (type === 'eWallet') return <Smartphone className="w-6 h-6" />;
-            if (type === 'credit' || type === 'debit') return <CreditCard className="w-6 h-6" />;
+            if (type === 'credit' || type === 'debit') return <ActionIcon type="creditCard" size={24} tile={false} color="#6C63FF" />;
             if (type === 'crypto') return <Bitcoin className="w-6 h-6" />;
             return <Landmark className="w-6 h-6" />;
         };
@@ -71,7 +73,7 @@ export default function WealthPage() {
         const mappedSources = sources.map(s => {
             let iconNode: React.ReactNode = s.icon;
             if (s.category === 'crypto') iconNode = <Bitcoin className="w-6 h-6" />;
-            else if (s.category === 'stock') iconNode = <TrendingUp className="w-6 h-6" />;
+            else if (s.category === 'stock') iconNode = <UtilityIcon type="trendingUp" size={24} tile={false} color="#10B981" />;
             else if (s.category === 'real_estate') iconNode = <Landmark className="w-6 h-6" />;
             else if (!s.icon || (typeof s.icon === 'string' && s.icon.length > 2)) iconNode = <Briefcase className="w-6 h-6" />;
 
@@ -259,14 +261,14 @@ export default function WealthPage() {
                         <div className="flex items-center justify-between gap-2 mb-2.5">
                             <p className="text-slate-500 dark:text-slate-300 text-sm font-medium">Tổng tài sản ròng</p>
                             <button onClick={() => setIsVisible(!isVisible)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
-                                {isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                {isVisible ? <ActionIcon type="eye" size={16} tile={false} color="#94A3B8" /> : <ActionIcon type="eyeOff" size={16} tile={false} color="#94A3B8" />}
                             </button>
                         </div>
                         <p className="text-slate-800 dark:text-white text-[30px] font-bold tracking-tight leading-none text-money">
                             {isVisible ? `${fmtFull(combinedTotal)}đ` : '*******'}
                         </p>
                         <div className="inline-flex items-center gap-1.5 mt-4 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">
-                            <TrendingUp className="w-3.5 h-3.5" />
+                            <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" />
                             <span>{Object.keys(byCategory).length} danh mục quản lý</span>
                         </div>
                     </div>

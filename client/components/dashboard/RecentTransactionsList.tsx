@@ -3,6 +3,7 @@ import { memo } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { CATEGORIES_MAP } from '@/lib/mockData';
+import CategoryIcon from '@/components/icons/CategoryIcon';
 
 const fmt = (n: number) => {
     if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} tỷ`;
@@ -19,12 +20,12 @@ function TransactionRow({ t, onClick }: { t: any; onClick: () => void }) {
             onClick={onClick}
             className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3.5 cursor-pointer"
         >
-            <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: `${cat.color}15` }}
-            >
-                <cat.Icon className="w-[18px] h-[18px]" style={{ color: cat.color }} />
-            </div>
+            <CategoryIcon
+                type={cat.catIconType || 'khac'}
+                size={40}
+                tile
+                className="flex-shrink-0"
+            />
             <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{t.note || t.category}</p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate">

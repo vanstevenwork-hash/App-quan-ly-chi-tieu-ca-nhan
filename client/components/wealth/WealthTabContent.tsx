@@ -1,8 +1,8 @@
 'use client';
 import { memo, useState } from 'react';
-import { Pencil, Trash2, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { WealthSourceUI } from '@/hooks/useWealth';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 const fmtFull = (n: number) => Math.round(n).toLocaleString('vi-VN');
 
@@ -47,13 +47,13 @@ function WealthCard({ source, onEdit, onDelete, className }: {
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
                         className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-purple-100 hover:text-purple-600 dark:hover:bg-purple-900/40 transition-colors shadow-sm"
                     >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <ActionIcon type="pencil" size={14} tile={false} color="#8B5CF6" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40 transition-colors shadow-sm"
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <ActionIcon type="trash" size={14} tile={false} color="#EF4444" />
                     </button>
                 </div>
             </div>
@@ -97,7 +97,7 @@ function GroupedWealthCard({ title, icon, color, items, onEdit, onDelete }: {
                         </div>
                     </div>
                     <div className={cn("transition-transform duration-300 mr-1 p-1 rounded-full bg-slate-50 dark:bg-slate-700/50", isExpanded ? "rotate-180" : "")}>
-                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                        <ActionIcon type="chevronDown" size={16} tile={false} color="#94A3B8" />
                     </div>
                 </div>
             </div>

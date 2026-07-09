@@ -1,11 +1,13 @@
 'use client';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
-    Plus, CreditCard,
+    Plus,
     History, BarChart3, Wallet, Trash2,
     Gift,
-    BadgePercent, CheckCircle2, RefreshCw, CalendarDays,
+    BadgePercent, RefreshCw, CalendarDays,
 } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBanks } from '@/hooks/useBanks';
@@ -178,7 +180,7 @@ export default function CardsPage() {
                         </div>
                     ) : (
                         <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                            <CheckCircle2 className="w-4 h-4" />
+                            <UtilityIcon type="checkCircle" size={16} tile={false} color="#10B981" />
                             <span>Không có dư nợ thẻ tín dụng</span>
                         </div>
                     )}
@@ -199,7 +201,7 @@ export default function CardsPage() {
                 <div className="px-5 mb-6">
                     <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl px-3.5 py-2.5 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
-                            { icon: <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />, label: 'Thanh toán', bg: '#EEF2FF', bgDark: '#312E81', onClick: () => setShowPayment(true) },
+                            { icon: <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />, label: 'Thanh toán', bg: '#EEF2FF', bgDark: '#312E81', onClick: () => setShowPayment(true) },
                             { icon: <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, label: 'Giao dịch', bg: '#D1FAE5', bgDark: '#064E3B', onClick: openAddModal },
                             { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, label: 'Lịch sử', bg: '#FEF3C7', bgDark: '#78350F', onClick: () => historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
                             { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, label: 'Báo cáo', bg: '#EDE9FE', bgDark: '#4C1D95', onClick: () => router.push('/analytics') },
@@ -272,7 +274,7 @@ export default function CardsPage() {
                                         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800 transition text-left"
                                     >
                                         <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                                            <CreditCard className="w-4 h-4 text-indigo-500" />
+                                            <ActionIcon type="creditCard" size={16} tile={false} color="#6366F1" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{card.bankName} •••• {card.cardNumber}</p>

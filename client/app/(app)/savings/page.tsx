@@ -2,10 +2,11 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
     Plus, TrendingUp,
-    PiggyBank, History, BarChart3, RefreshCw,
-    AlertTriangle, CalendarCheck, Percent, CheckCircle2,
+    History, BarChart3, RefreshCw,
+    AlertTriangle, CalendarCheck, Percent,
     Pencil, Trash2, Gift,
 } from 'lucide-react';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
 import PageHeader from '@/components/PageHeader';
@@ -257,7 +258,7 @@ export default function SavingsPage() {
                     </h1>
                     {totalInterest > 0 && (
                         <div className="flex items-center justify-center gap-1 mt-2 text-emerald-600 dark:text-emerald-400 text-sm font-medium">
-                            <TrendingUp className="w-4 h-4" />
+                            <UtilityIcon type="trendingUp" size={16} tile={false} color="#10B981" />
                             <span>Lãi tạm tính: +{fmtShort(totalInterest)}₫</span>
                         </div>
                     )}
@@ -280,7 +281,7 @@ export default function SavingsPage() {
 
                         {savingsCards.length === 0 && (
                             <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
-                                <PiggyBank className="w-10 h-10 text-gray-300 dark:text-slate-600" />
+                                <UtilityIcon type="piggyBank" size={40} tile={false} color="#94A3B8" />
                                 <p className="text-sm font-medium">Chưa có sổ tiết kiệm</p>
                             </div>
                         )}
@@ -305,7 +306,7 @@ export default function SavingsPage() {
                 <div className="px-5 mb-6">
                     <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
-                            { icon: <PiggyBank className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
+                            { icon: <UtilityIcon type="piggyBank" size={24} tile={false} color="#059669" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
                             { icon: <RefreshCw className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: () => { setEditCard(null); setShowForm(true); } },
                             { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, bg: '#FEF3C7', bgDark: '#78350F', label: 'Lịch sử', onClick: () => { } },
                             { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, bg: '#EDE9FE', bgDark: '#4C1D95', label: 'Báo cáo', onClick: () => { } },
@@ -368,7 +369,7 @@ export default function SavingsPage() {
                             })()
                         ) : (
                             <DetailRow
-                                icon={<CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                                icon={<UtilityIcon type="checkCircle" size={20} tile={false} color="#10B981" />}
                                 iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#064E3B' : '#D1FAE5'}
                                 title="Không có sổ sắp đáo hạn"
                                 sub="Tất cả đang hoạt động bình thường"
@@ -393,7 +394,7 @@ export default function SavingsPage() {
 
                         {/* Best interest rate */}
                         <DetailRow
-                            icon={<TrendingUp className="w-5 h-5 text-indigo-500" />}
+                            icon={<UtilityIcon type="trendingUp" size={20} tile={false} color="#6366F1" />}
                             iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#312E81' : '#EEF2FF'}
                             title="Lãi suất cao nhất"
                             sub="Trong danh mục của bạn"

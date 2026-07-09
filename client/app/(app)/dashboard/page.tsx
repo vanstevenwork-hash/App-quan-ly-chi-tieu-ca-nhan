@@ -1,9 +1,10 @@
 'use client';
 import { useMemo, useCallback, useState } from 'react';
 import {
-    Bell, Plus, Eye, EyeOff, TrendingUp, TrendingDown,
+    Bell, Plus, Eye, EyeOff,
     ChevronRight, Search, ScanLine,
 } from 'lucide-react';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
 import NotificationPanel from '@/components/NotificationPanel';
@@ -16,7 +17,7 @@ import { toast } from 'sonner';
 import { useCards } from '@/hooks/useCards';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
-import { getDueThisCycle } from '@/lib/cardDue';
+import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 import Link from 'next/link';
 
@@ -34,6 +35,7 @@ export default function DashboardPage() {
     const { user } = useAuthStore();
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const [showNoti, setShowNoti] = useState(false);
+    const [notiTab, setNotiTab] = useState<'important' | undefined>(undefined);
     const [addType, setAddType] = useState<'expense' | 'income'>('expense');
     const [autoOpenScanner, setAutoOpenScanner] = useState(false);
     const [hideBalance, setHideBalance] = useState(true);
@@ -71,18 +73,9 @@ export default function DashboardPage() {
         ? user.name.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase()
         : 'NN';
 
-    const creditAlerts = useMemo(
-        () => cards
-            .filter(c => c.cardType === 'credit' && c.balance > 0)
-            .map(card => ({ card, dueThisCycle: getDueThisCycle(card.balance, transactions, card._id) }))
-            .filter(x => x.dueThisCycle > 0)
-            .slice(0, 2),
-        [cards, transactions]
-    );
-    const savingsCards = useMemo(
-        () => cards.filter(c => c.cardType === 'savings').slice(0, 1),
-        [cards]
-    );
+    const { creditAlerts: allCreditAlerts, savingsAlerts, count: importantCount } = useImportantAlerts();
+    const creditAlerts = useMemo(() => allCreditAlerts.slice(0, 2), [allCreditAlerts]);
+    const savingsCards = useMemo(() => savingsAlerts.slice(0, 1), [savingsAlerts]);
 
     // ── Chart data: last 7 days expenses & income ──
     const chartData = useMemo(() => {
@@ -199,7 +192,7 @@ export default function DashboardPage() {
                         <ScanLine className="w-[18px] h-[18px]" />
                     </button>
                     <button
-                        onClick={() => setShowNoti(true)}
+                        onClick={() => { setNotiTab(undefined); setShowNoti(true); }}
                         className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
                         <Bell className="w-[18px] h-[18px]" />
@@ -272,14 +265,14 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-6 mt-5">
                             <Link href="/analytics" className="group">
                                 <p className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
-                                    <TrendingUp className="w-3.5 h-3.5" /> +{fmt(summary.income)}
+                                    <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" /> +{fmt(summary.income)}
                                 </p>
                                 <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Thu nhập</p>
                             </Link>
                             <div className="w-px h-9 bg-slate-200 dark:bg-white/15" />
                             <Link href="/analytics" className="group">
                                 <p className="inline-flex items-center gap-1 text-red-500 dark:text-red-400 text-sm font-bold">
-                                    <TrendingDown className="w-3.5 h-3.5" /> -{fmt(summary.expense)}
+                                    <UtilityIcon type="trendingDown" size={14} tile={false} color="#EF4444" /> -{fmt(summary.expense)}
                                 </p>
                                 <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Chi tiêu</p>
                             </Link>
@@ -291,9 +284,6 @@ export default function DashboardPage() {
                 <div className="anim-fade-up-d1 grid grid-cols-2 gap-3">
                     <Link href="/savings"
                         className="bg-white dark:bg-slate-800 rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-purple-200 dark:hover:border-purple-500/40 hover:shadow-md transition-all active:scale-95 group">
-                        {/* <div className="w-11 h-11 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                            <PiggyBank className="w-5 h-5 text-purple-600 dark:text-purple-300" />
-                        </div> */}
                         <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
                             <p className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400 text-money leading-tight truncate">
@@ -332,6 +322,8 @@ export default function DashboardPage() {
                 <ImportantAlertsSection
                     creditAlerts={creditAlerts}
                     savingsCards={savingsCards}
+                    totalCount={importantCount}
+                    onOpen={() => { setNotiTab('important'); setShowNoti(true); }}
                 />
 
                 {/* ── Spending trend chart ─────────────────────────── */}
@@ -364,7 +356,7 @@ export default function DashboardPage() {
                 initialData={editingTx}
                 autoOpenScanner={autoOpenScanner}
             />
-            <NotificationPanel open={showNoti} onClose={() => setShowNoti(false)} />
+            <NotificationPanel open={showNoti} onClose={() => setShowNoti(false)} initialTab={notiTab} />
             <TransactionDetailModal
                 open={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}

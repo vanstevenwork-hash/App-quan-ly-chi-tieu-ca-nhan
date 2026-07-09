@@ -10,14 +10,15 @@ import { useCashbackRecordStore } from '@/hooks/useCashbackRecords';
 import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
 import {
-    ChevronRight, Moon, Bell, LogOut, DollarSign, RefreshCw,
-    Pencil, CreditCard, BadgePercent, Landmark,
-    Check, Loader2, PiggyBank,
+    LogOut, DollarSign, RefreshCw,
+    BadgePercent, Landmark,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
 import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
+import { ActionIcon } from '@/components/icons/ActionIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 
 const CURRENCIES = [
     { code: 'VND', label: 'Việt Nam Đồng', symbol: '₫' },
@@ -32,11 +33,11 @@ const TILE_SHADOW = 'shadow-[0_1px_2px_rgba(17,12,46,0.04),0_8px_16px_-6px_rgba(
 
 // Real pages that are NOT on the bottom nav — settings doubles as their hub
 const SHORTCUTS = [
-    { href: '/notifications', label: 'Thông báo', icon: Bell, bg: 'bg-amber-50 dark:bg-amber-900/20', color: 'text-amber-500' },
-    { href: '/cards', label: 'Quản lý thẻ', icon: CreditCard, bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: 'text-indigo-500' },
-    { href: '/cashback', label: 'Hoàn tiền', icon: BadgePercent, bg: 'bg-emerald-50 dark:bg-emerald-900/20', color: 'text-emerald-500' },
-    { href: '/wealth', label: 'Tài sản', icon: Landmark, bg: 'bg-purple-50 dark:bg-purple-900/20', color: 'text-purple-500' },
-    { href: '/savings', label: 'Tiết kiệm', icon: PiggyBank, bg: 'bg-pink-50 dark:bg-pink-900/20', color: 'text-pink-500' },
+    { href: '/notifications', label: 'Thông báo', isUtil: true, type: 'bell', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F59E0B' },
+    { href: '/cards', label: 'Quản lý thẻ', isAction: true, type: 'creditCard', bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: '#6366F1' },
+    { href: '/cashback', label: 'Hoàn tiền', icon: BadgePercent, bg: 'bg-emerald-50 dark:bg-emerald-900/20', colorRaw: 'text-emerald-500' },
+    { href: '/wealth', label: 'Tài sản', icon: Landmark, bg: 'bg-purple-50 dark:bg-purple-900/20', colorRaw: 'text-purple-500' },
+    { href: '/savings', label: 'Tiết kiệm', isUtil: true, type: 'piggyBank', bg: 'bg-pink-50 dark:bg-pink-900/20', color: '#EF4444' },
 ];
 
 const SettingItem = ({
@@ -67,7 +68,7 @@ const SettingItem = ({
             <p className={cn('text-sm font-semibold truncate', danger ? 'text-red-500' : 'text-foreground')}>{label}</p>
             {sublabel && <p className="text-muted-foreground text-xs truncate mt-0.5">{sublabel}</p>}
         </div>
-        {right || <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+        {right || <ActionIcon type="chevronRight" size={16} tile={false} color="currentColor" className="flex-shrink-0" />}
     </button>
 );
 
@@ -224,7 +225,7 @@ export default function SettingsPage() {
                     <button
                         onClick={() => { setNameInput(user?.name || ''); setShowNameDialog(true); }}
                         className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 active:scale-95 transition-all flex-shrink-0 shadow-[inset_0_1px_1px_rgba(255,255,255,0.6),0_2px_4px_rgba(109,40,217,0.2)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.08),0_2px_4px_rgba(0,0,0,0.3)]">
-                        <Pencil className="w-4 h-4" />
+                        <ActionIcon type="pencil" size={16} tile={false} />
                     </button>
                 </div>
             </div>
@@ -234,10 +235,10 @@ export default function SettingsPage() {
                 <div>
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2 px-1">Quản lý nhanh</p>
                     <div className="grid grid-cols-3 gap-2.5">
-                        {SHORTCUTS.map(({ href, label, icon: Icon, bg, color }) => (
+                        {SHORTCUTS.map((item) => (
                             <button
-                                key={href}
-                                onClick={() => router.push(href)}
+                                key={item.href}
+                                onClick={() => router.push(item.href)}
                                 className={cn(
                                     'bg-card rounded-2xl p-3.5 flex flex-col items-center gap-2 active:scale-95 transition-all',
                                     TILE_SHADOW
@@ -245,11 +246,17 @@ export default function SettingsPage() {
                             >
                                 <div className={cn(
                                     'w-10 h-10 rounded-xl flex items-center justify-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]',
-                                    bg
+                                    item.bg
                                 )}>
-                                    <Icon className={cn('w-5 h-5', color)} />
+                                    {item.isUtil ? (
+                                         <UtilityIcon type={item.type!} size={20} tile={false} color={item.color} />
+                                     ) : (item as any).isAction ? (
+                                         <ActionIcon type={(item as any).type!} size={20} tile={false} color={item.color} />
+                                     ) : (
+                                         item.icon && <item.icon className={cn('w-5 h-5', item.colorRaw)} />
+                                     )}
                                 </div>
-                                <span className="text-xs font-semibold text-foreground">{label}</span>
+                                <span className="text-xs font-semibold text-foreground">{item.label}</span>
                             </button>
                         ))}
                     </div>
@@ -260,7 +267,7 @@ export default function SettingsPage() {
                     <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider mb-2 px-1">Tùy chỉnh</p>
                     <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50', CARD_SHADOW)}>
                         <SettingItem
-                            icon={<Moon className="w-4 h-4" />}
+                            icon={<ActionIcon type="moon" size={16} tile={false} color="#8B5CF6" />}
                             label="Chế độ tối"
                             sublabel={isDarkMode ? 'Đang bật' : 'Đang tắt'}
                             right={
@@ -288,7 +295,7 @@ export default function SettingsPage() {
                             label="Làm mới dữ liệu"
                             sublabel="Tải lại giao dịch, thẻ, tài sản, thông báo"
                             onClick={handleRefreshData}
-                            right={refreshing ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : undefined}
+                            right={refreshing ? <ActionIcon type="loader" size={16} tile={false} spin /> : undefined}
                         />
                     </div>
                 </div>
@@ -296,7 +303,7 @@ export default function SettingsPage() {
                 {/* Logout */}
                 <div className={cn('bg-card rounded-[20px] overflow-hidden', CARD_SHADOW)}>
                     <SettingItem
-                        icon={<LogOut className="w-4 h-4" />}
+                        icon={<ActionIcon type="logOut" size={16} tile={false} color="#EF4444" />}
                         label="Đăng xuất"
                         sublabel={user?.email || undefined}
                         onClick={() => setShowLogoutConfirm(true)}
@@ -326,7 +333,7 @@ export default function SettingsPage() {
                             Hủy
                         </Button>
                         <Button onClick={handleSaveName} disabled={savingName} className="rounded-xl">
-                            {savingName && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            {savingName && <ActionIcon type="loader" size={16} tile={false} spin className="mr-2" />}
                             Lưu
                         </Button>
                     </DialogFooter>
@@ -361,7 +368,7 @@ export default function SettingsPage() {
                                         <p className="text-sm font-bold text-foreground">{c.code}</p>
                                         <p className="text-xs text-muted-foreground">{c.label}</p>
                                     </div>
-                                    {active && <Check className="w-5 h-5 text-primary" />}
+                                    {active && <ActionIcon type="check" size={20} tile={false} color="#6C63FF" />}
                                 </button>
                             );
                         })}
@@ -382,8 +389,8 @@ export default function SettingsPage() {
                         <Button type="button" variant="outline" onClick={() => setShowLogoutConfirm(false)} className="rounded-xl">
                             Hủy
                         </Button>
-                        <Button onClick={handleLogout} className="rounded-xl bg-red-500 hover:bg-red-600 text-white">
-                            <LogOut className="mr-2 h-4 w-4" /> Đăng xuất
+                        <Button onClick={handleLogout} className="rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center">
+                            <ActionIcon type="logOut" size={16} tile={false} color="#FFFFFF" className="mr-2" /> Đăng xuất
                         </Button>
                     </DialogFooter>
                 </DialogContent>

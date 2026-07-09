@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, Plus, TrendingUp, TrendingDown, X, ImageIcon, Target, Wallet } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCards } from '@/hooks/useCards';
 import { useUIStore } from '@/store/useStore';
@@ -13,6 +13,8 @@ import DayActionSheet from '@/components/calendar/DayActionSheet';
 import ImageNoteUploadModal, { type ImageNoteUploadModalHandle } from '@/components/calendar/ImageNoteUploadModal';
 import PageHeader from '@/components/PageHeader';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
+import CategoryIcon from '@/components/icons/CategoryIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -266,13 +268,13 @@ export default function CalendarPage() {
                             onClick={prevMonth}
                             className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                         >
-                            <ChevronLeft className="w-5 h-5 text-slate-500" />
+                            <ActionIcon type="chevronLeft" size={20} tile={false} color="#6B7280" />
                         </button>
                         <button
                             onClick={nextMonth}
                             className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                         >
-                            <ChevronRight className="w-5 h-5 text-slate-500" />
+                            <ActionIcon type="chevronRight" size={20} tile={false} color="#6B7280" />
                         </button>
                     </div>
                 }
@@ -292,7 +294,7 @@ export default function CalendarPage() {
                         <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1.5">
                                 <div className="w-7 h-7 rounded-lg bg-red-50 dark:bg-red-900/20 flex items-center justify-center border border-red-100 dark:border-red-900/30 shrink-0">
-                                    <TrendingDown className="w-3.5 h-3.5 text-red-500 dark:text-red-400" />
+                                    <UtilityIcon type="trendingDown" size={14} tile={false} color="#EF4444" />
                                 </div>
                                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">Chi tiêu</p>
                             </div>
@@ -302,7 +304,7 @@ export default function CalendarPage() {
                                     'inline-flex items-center gap-0.5 text-[10px] font-bold mt-1',
                                     expenseChangePct <= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
                                 )}>
-                                    {expenseChangePct <= 0 ? <TrendingDown className="w-2.5 h-2.5" /> : <TrendingUp className="w-2.5 h-2.5" />}
+                                    {expenseChangePct <= 0 ? <UtilityIcon type="trendingDown" size={10} tile={false} color="#10B981" /> : <UtilityIcon type="trendingUp" size={10} tile={false} color="#EF4444" />}
                                     {Math.abs(expenseChangePct).toFixed(1)}%
                                 </span>
                             ) : (
@@ -324,7 +326,7 @@ export default function CalendarPage() {
                             <div className="flex items-center justify-end gap-2 mb-1.5">
                                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">Thu nhập</p>
                                 <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-[#1A2A2D] flex items-center justify-center border border-emerald-100 dark:border-[#243A3E] shrink-0">
-                                    <Wallet className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
+                                    <UtilityIcon type="wallet" size={14} tile={false} color="#10B981" />
                                 </div>
                             </div>
                             <p className="text-[18px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.income)}</p>
@@ -333,7 +335,7 @@ export default function CalendarPage() {
                                     'inline-flex items-center gap-0.5 text-[10px] font-bold mt-1',
                                     incomeChangePct >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'
                                 )}>
-                                    {incomeChangePct >= 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                                    {incomeChangePct >= 0 ? <UtilityIcon type="trendingUp" size={10} tile={false} color="#10B981" /> : <UtilityIcon type="trendingDown" size={10} tile={false} color="#EF4444" />}
                                     {Math.abs(incomeChangePct).toFixed(1)}%
                                 </span>
                             ) : (
@@ -415,14 +417,14 @@ export default function CalendarPage() {
                                     onClick={() => triggerImageUpload(dayToDateStr(selectedDay))}
                                     className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/10 px-3 py-1.5 rounded-full hover:bg-emerald-100 transition-colors active:scale-95 whitespace-nowrap"
                                 >
-                                    <ImageIcon className="w-3 h-3" />
+                                    <ActionIcon type="image" size={12} tile={false} color="currentColor" />
                                     Thêm ảnh
                                 </button>
                                 <button
                                     onClick={() => openAddModal()}
                                     className="flex items-center gap-1.5 text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-3 py-1.5 rounded-full hover:bg-purple-100 transition-colors active:scale-95 whitespace-nowrap"
                                 >
-                                    <Plus className="w-3 h-3" />
+                                    <ActionIcon type="plus" size={12} tile={false} color="currentColor" />
                                     Giao dịch
                                 </button>
                             </div>
@@ -450,8 +452,12 @@ export default function CalendarPage() {
                                                             />
                                                             {/* Category icon - bottom left */}
                                                             {imgCat && (
-                                                                <div className="absolute -bottom-1.5 -left-1.5 w-7 h-7 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center z-10">
-                                                                    <imgCat.Icon className="w-3.5 h-3.5" style={{ color: imgCat.color }} />
+                                                                <div className="absolute -bottom-1.5 -left-1.5 w-7 h-7 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center z-10 overflow-hidden">
+                                                                    <CategoryIcon
+                                                                        type={imgCat.catIconType || 'khac'}
+                                                                        size={28}
+                                                                        tile={false}
+                                                                    />
                                                                 </div>
                                                             )}
                                                             {/* Amount badge - bottom right */}
@@ -465,7 +471,7 @@ export default function CalendarPage() {
                                                                 onClick={() => removeImage(dateStr, img.url)}
                                                                 className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/img:opacity-100 hover:bg-red-600 transition-all shadow-lg z-20"
                                                             >
-                                                                <X className="w-3 h-3" />
+                                                                <ActionIcon type="x" size={12} tile={false} color="#FFFFFF" />
                                                             </button>
                                                         </div>
                                                     );
@@ -475,7 +481,7 @@ export default function CalendarPage() {
                                                     onClick={() => triggerImageUpload(dateStr)}
                                                     className="w-16 h-16  rounded-2xl border-2 border-dashed border-purple-300 dark:border-purple-800 flex items-center justify-center text-purple-400 hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all"
                                                 >
-                                                    <Plus className="w-6 h-6" />
+                                                    <ActionIcon type="plus" size={24} tile={false} color="currentColor" />
                                                 </button>
                                             </div>
                                         </div>
@@ -513,12 +519,12 @@ export default function CalendarPage() {
                                             className="w-full flex items-center justify-between p-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div
-                                                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform"
-                                                    style={{ backgroundColor: `${cat.color}18` }}
-                                                >
-                                                    <cat.Icon className="w-5 h-5" style={{ color: cat.color }} />
-                                                </div>
+                                                <CategoryIcon
+                                                    type={cat.catIconType || 'khac'}
+                                                    size={40}
+                                                    tile
+                                                    className="flex-shrink-0 group-hover:scale-105 transition-transform"
+                                                />
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">{t.note || t.category}</p>
                                                     <p className="text-[10px] text-slate-400 font-medium mt-0.5">{t.category}</p>
@@ -545,7 +551,7 @@ export default function CalendarPage() {
                         className="bg-violet-50 dark:bg-violet-900/20 p-4 rounded-2xl space-y-3 border border-violet-100 dark:border-violet-900/30 hover:border-violet-200 active:scale-95 transition-all"
                     >
                         <div className="w-9 h-9 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
-                            <Target className="w-5 h-5 text-purple-500" />
+                            <UtilityIcon type="target" size={20} tile={false} color="#A78BFA" />
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Mục tiêu</p>
                         {monthSummary.expense > 0 && monthSummary.income > 0 ? (
@@ -572,7 +578,7 @@ export default function CalendarPage() {
                         className="bg-white dark:bg-slate-800 p-4 rounded-2xl space-y-2 border border-gray-100 dark:border-slate-700 hover:border-emerald-200 active:scale-95 transition-all"
                     >
                         <div className="w-9 h-9 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center">
-                            <TrendingUp className="w-5 h-5 text-emerald-500" />
+                            <UtilityIcon type="trendingUp" size={20} tile={false} color="#10B981" />
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Tiết kiệm tháng</p>
                         <p className="text-lg font-extrabold text-emerald-500">
@@ -590,7 +596,7 @@ export default function CalendarPage() {
                 className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all duration-200"
                 style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
             >
-                <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
+                <ActionIcon type="plus" size={28} tile={false} color="#FFFFFF" />
             </button>
 
             {/* ── Action Sheet (+ button tapped on a day) ── */}
@@ -613,7 +619,7 @@ export default function CalendarPage() {
                         onClick={() => setLightboxImg(null)}
                         className="absolute top-5 right-5 w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors"
                     >
-                        <X className="w-5 h-5" />
+                        <ActionIcon type="x" size={20} tile={false} color="#FFFFFF" />
                     </button>
                     <img
                         src={lightboxImg}

@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { WealthSource, WealthFormData } from '@/hooks/useWealth';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 const EMOJI_LIST = [
     '💰', '🏦', '🥇', '🪙', '💎', '₿', '📈', '🏠', '🚗', '💳',
@@ -103,7 +103,7 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
                         <p className="text-xs text-gray-400">Tùy chỉnh icon và tên theo ý muốn</p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
-                        <X className="w-4 h-4 text-gray-500" />
+                        <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                     </button>
                 </div>
 
@@ -219,7 +219,7 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
                                     !form.name || saving
                                         ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                         : 'bg-gradient-to-r from-purple-500 to-indigo-600 hover:opacity-90 active:scale-95 shadow-lg shadow-purple-200')}>
-                                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                                {saving ? <ActionIcon type="loader" size={20} tile={false} spin color="#FFFFFF" /> : <ActionIcon type="check" size={20} tile={false} color="#FFFFFF" />}
                                 {saving ? 'Đang lưu...' : (editSource ? 'Cập nhật' : 'Thêm tài sản')}
                             </button>
                         </div>

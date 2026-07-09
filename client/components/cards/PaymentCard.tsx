@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { ActionIcon } from "@/components/icons/ActionIcon";
 import { cn } from "@/lib/utils";
 
 type PaymentCardProps = {
@@ -33,7 +33,7 @@ export default function PaymentCard({
             {/* Selected icon */}
             {isSelected && (
                 <div className="absolute top-[-6px] right-[-6px] w-4 h-4 rounded-full border border-[#7f19e6] flex items-center justify-center bg-white dark:bg-slate-900">
-                    <Check className="w-2.5 h-2.5 text-[#7f19e6] dark:text-purple-400 stroke-[3]" />
+                    <ActionIcon type="check" size={10} tile={false} color="#7f19e6" />
                 </div>
             )}
 

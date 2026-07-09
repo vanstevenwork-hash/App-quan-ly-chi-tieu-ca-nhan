@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
 import type { Goal, GoalFormData } from '@/hooks/useGoals';
 
 const GOAL_CATEGORIES = [

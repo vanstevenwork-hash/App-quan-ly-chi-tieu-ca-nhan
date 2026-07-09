@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES } from '@/lib/mockData';
+import CategoryIcon from '@/components/icons/CategoryIcon';
 import { cn } from '@/lib/utils';
 import { useCards } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
-import { Banknote, ArrowRight, Calendar, Check, RefreshCw, ScanLine, X, Image as ImageIcon } from 'lucide-react';
+import { ArrowRight, RefreshCw, ScanLine } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { getBankLogo } from '@/lib/bankLogos';
 import PaymentCard from './cards/PaymentCard';
 import BillScanner from './BillScanner';
@@ -321,14 +323,18 @@ export default function AddTransactionModal({
                         <div className="grid grid-cols-5 gap-y-3 gap-x-2">
                             {filteredCategories.map(cat => (
                                 <div key={cat.id} onClick={() => { setCategory(cat.label); setErrors(p => ({ ...p, category: '' })); }} className="flex flex-col items-center gap-1 group cursor-pointer">
-                                    <div className={cn('w-[42px] h-[42px] rounded-full flex items-center justify-center border transition-all shadow-sm',
+                                    <div className={cn('rounded-[10px] transition-all',
                                         category === cat.label
-                                            ? 'bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400 border-[#7f19e6]'
+                                            ? 'ring-2 ring-[#7f19e6] ring-offset-1 dark:ring-offset-[#0F111A]'
                                             : errors.category
-                                                ? 'bg-red-50 dark:bg-[#0F111A] border-red-200 dark:border-red-900/50'
-                                                : 'group-hover:border-slate-300 dark:group-hover:border-slate-700')}
-                                        style={category === cat.label ? {} : { backgroundColor: `${cat.color}15`, borderColor: `${cat.color}30`, color: cat.color }}>
-                                        <cat.Icon className="w-[18px] h-[18px]" />
+                                                ? 'ring-1 ring-red-300'
+                                                : 'group-hover:ring-1 group-hover:ring-slate-300')}>
+                                        <CategoryIcon
+                                            type={cat.catIconType}
+                                            size={42}
+                                            tile
+                                            color={category === cat.label ? '#7f19e6' : undefined}
+                                        />
                                     </div>
                                     <span className={cn('text-[10px] font-bold text-center leading-tight', category === cat.label ? 'text-[#7f19e6] dark:text-purple-400' : 'text-slate-600 dark:text-slate-400')}>
                                         {cat.label}
@@ -500,7 +506,7 @@ export default function AddTransactionModal({
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                             <button className="flex w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F111A] p-2.5 text-left hover:border-slate-300 dark:hover:border-slate-600 transition-colors focus:outline-none focus:ring-1 focus:ring-[#7f19e6]">
                                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{formatDateStr(date)}</span>
-                                <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                                <ActionIcon type="calendar" size={16} tile={false} color="#94A3B8" />
                             </button>
                         </div>
                     </div>
@@ -528,14 +534,14 @@ export default function AddTransactionModal({
                                 <div className="flex-1">
                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Hóa đơn đã quét</p>
                                     <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
-                                        <Check className="w-3 h-3" /> Tự động điền dữ liệu
+                                        <ActionIcon type="check" size={12} tile={false} color="#10B981" /> Tự động điền dữ liệu
                                     </p>
                                 </div>
                                 <button
                                     onClick={() => setReceiptImage('')}
                                     className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
                                 >
-                                    <X className="w-4 h-4" />
+                                    <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                                 </button>
                             </div>
                         </div>
@@ -548,7 +554,7 @@ export default function AddTransactionModal({
                         <div className="flex-1 flex justify-start">
                             <button onClick={onClose}
                                 className="flex w-full max-w-[100px] items-center justify-center h-12 gap-1.5 rounded-xl bg-slate-100 dark:bg-[#1A1D2D] hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-700 dark:text-slate-300 font-bold text-sm">
-                                <X className="w-4 h-4" />
+                                <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                                 <span>Đóng</span>
                             </button>
                         </div>

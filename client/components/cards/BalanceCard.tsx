@@ -1,5 +1,6 @@
 'use client';
-import { Eye, EyeOff, TrendingUp, TrendingDown, Wallet, CreditCard } from 'lucide-react';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { useState } from 'react';
 import { formatCurrency, formatShortCurrency } from '@/lib/mockData';
 
@@ -35,11 +36,11 @@ export default function BalanceCard({
                         onClick={() => setHidden(!hidden)}
                         className="p-1.5 rounded-full bg-muted/60 hover:bg-muted transition-colors"
                     >
-                        {hidden ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                        {hidden ? <ActionIcon type="eyeOff" size={16} tile={false} color="#94A3B8" /> : <ActionIcon type="eye" size={16} tile={false} color="#94A3B8" />}
                     </button>
                 </div>
                 <div className="flex items-center justify-center gap-1.5 mt-2">
-                    <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                    <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" />
                     <span className="text-emerald-500 text-xs font-semibold">+12.5% tháng này</span>
                 </div>
             </div>
@@ -50,9 +51,7 @@ export default function BalanceCard({
             {/* Bottom stats */}
             <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-slate-700">
                 <div className="px-5 py-4 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Wallet className="w-4 h-4 text-primary" />
-                    </div>
+                    <UtilityIcon type="piggyBank" size={40} tile />
                     <div>
                         <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Tiết kiệm</p>
                         <p className="font-bold text-foreground text-sm text-money">
@@ -62,7 +61,7 @@ export default function BalanceCard({
                 </div>
                 <div className="px-5 py-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center flex-shrink-0">
-                        <CreditCard className="w-4 h-4 text-red-500" />
+                        <ActionIcon type="creditCard" size={16} tile={false} color="#EF4444" />
                     </div>
                     <div>
                         <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Dư nợ thẻ</p>

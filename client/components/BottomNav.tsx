@@ -1,22 +1,20 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CalendarDays, Target, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import HomeIcon from './icons/HomeIcon';
-import WalletIcon from './icons/WalletIcon';
+import { NavHomeIcon, NavCalendarIcon, NavCardIcon, NavGoalIcon, NavSettingsIcon } from './icons/CredBackIcons';
 
 type NavItem = {
     href: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: React.ComponentType<{ className?: string; blob?: boolean; mono?: boolean; color?: string }>;
     label: string;
 };
 const navItems: NavItem[] = [
-    { href: '/dashboard', icon: HomeIcon, label: 'Tổng quan' },
-    { href: '/calendar', icon: CalendarDays, label: 'Lịch' },
-    { href: '/accounts', icon: WalletIcon, label: 'Tài khoản' },
-    { href: '/goals', icon: Target, label: 'Mục tiêu' },
-    { href: '/settings', icon: Settings, label: 'Cài đặt' },
+    { href: '/dashboard', icon: NavHomeIcon, label: 'Tổng quan' },
+    { href: '/calendar', icon: NavCalendarIcon, label: 'Lịch' },
+    { href: '/accounts', icon: NavCardIcon, label: 'Tài khoản' },
+    { href: '/goals', icon: NavGoalIcon, label: 'Mục tiêu' },
+    { href: '/settings', icon: NavSettingsIcon, label: 'Cài đặt' },
 ];
 
 // Springy overshoot easing — the halo ring springs between tab slots.
@@ -70,7 +68,7 @@ export default function BottomNav() {
                                 {/* gradient ring with a bar-matching disc punched into the middle */}
                                 <div className="absolute inset-0 rounded-full p-[2.5px]" style={{ background: RING_GRADIENT }}>
                                     <div className="w-full h-full rounded-full bg-white dark:bg-[#191E36] flex items-center justify-center">
-                                        <ActiveIcon className="w-[22px] h-[22px] text-slate-800 dark:text-white" />
+                                        <ActiveIcon className="w-[22px] h-[22px]" />
                                     </div>
                                 </div>
                             </div>
@@ -91,7 +89,7 @@ export default function BottomNav() {
                                     <div className="h-7 w-7" aria-hidden />
                                 ) : (
                                     <div className="flex h-7 w-7 items-center justify-center text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors duration-300">
-                                        <Icon className="w-[22px] h-[22px]" />
+                                        <Icon className="w-[22px] h-[22px]" blob={false} mono color="currentColor" />
                                     </div>
                                 )}
                                 <span

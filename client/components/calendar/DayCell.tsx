@@ -1,7 +1,7 @@
 'use client';
 import { memo } from 'react';
-import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 const fmt = (n: number) => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
@@ -89,7 +89,7 @@ function DayCellBase({ day, dayData, isSelected, isToday, filterType, onSelect, 
                         className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/day:bg-purple-100 group-hover/day:text-purple-600 transition-all shadow-sm border border-dashed border-slate-200 dark:border-slate-700"
                         onClick={(e) => onPlus(day, e)}
                     >
-                        <Plus className="w-3 h-3" strokeWidth={3} />
+                        <ActionIcon type="plus" size={12} tile={false} color="currentColor" />
                     </div>
                 ) : (
                     <div
@@ -97,7 +97,7 @@ function DayCellBase({ day, dayData, isSelected, isToday, filterType, onSelect, 
                         onClick={(e) => onPlus(day, e)}
                     >
                         <div className="w-6 h-6 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-purple-600 shadow-lg border border-purple-100 dark:border-purple-900/50">
-                            <Plus className="w-4 h-4" strokeWidth={3} />
+                            <ActionIcon type="plus" size={16} tile={false} color="currentColor" />
                         </div>
                     </div>
                 )}

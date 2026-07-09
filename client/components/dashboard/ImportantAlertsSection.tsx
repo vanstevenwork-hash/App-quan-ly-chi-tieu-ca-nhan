@@ -1,29 +1,29 @@
 'use client';
 import { memo } from 'react';
-import Link from 'next/link';
-import { ReceiptText, CalendarClock, ChevronRight } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
 
 const fmtFull = (n: number) => n.toLocaleString('vi-VN');
 
 function AlertCard({
-    title, sub, amount, badge, variant,
+    title, sub, amount, badge, variant, onClick,
 }: {
     title: string; sub: string; amount: string; badge: string;
-    variant: 'credit' | 'savings';
+    variant: 'credit' | 'savings'; onClick: () => void;
 }) {
     const isCredit = variant === 'credit';
     return (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3.5 flex items-center gap-3">
+        <button onClick={onClick} className="w-full text-left bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200 px-4 py-3.5 flex items-center gap-3">
             {/* Icon tile, colored by alert type */}
             <div className={cn(
                 'w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0',
                 isCredit ? 'bg-red-50 dark:bg-red-500/15' : 'bg-amber-50 dark:bg-amber-500/15'
             )}>
                 {isCredit
-                    ? <ReceiptText className="w-5 h-5 text-red-500 dark:text-red-400" />
-                    : <CalendarClock className="w-5 h-5 text-amber-500 dark:text-amber-400" />}
+                    ? <CustomIcon type="receipt" size={20} tile={false} color="#EF4444" />
+                    : <CustomIcon type="calendar" size={20} tile={false} color="#F59E0B" />}
             </div>
 
             {/* Title + sub */}
@@ -53,28 +53,32 @@ function AlertCard({
                     {badge}
                 </span>
             </div>
-        </div>
+        </button>
     );
 }
 
 interface ImportantAlertsSectionProps {
     creditAlerts: { card: Card; dueThisCycle: number }[];
     savingsCards: Card[];
+    /** Full alert count (un-sliced) so the badge matches the notifications screen */
+    totalCount?: number;
+    /** Opens the notification panel on the "Quan trọng" tab */
+    onOpen: () => void;
 }
 
-function ImportantAlertsSectionBase({ creditAlerts, savingsCards }: ImportantAlertsSectionProps) {
+function ImportantAlertsSectionBase({ creditAlerts, savingsCards, totalCount, onOpen }: ImportantAlertsSectionProps) {
     if (creditAlerts.length === 0 && savingsCards.length === 0) return null;
 
     return (
         <section className="anim-fade-up-d2">
             <div className="flex justify-between items-center mb-3">
                 <h2 className="text-base font-bold text-slate-800 dark:text-white">Thông báo quan trọng</h2>
-                <Link href="/notifications" className="flex items-center gap-1 group">
+                <button onClick={onOpen} className="flex items-center gap-1 group">
                     <span className="w-6 h-6 rounded-full bg-primary/15 text-primary dark:bg-purple-500/25 dark:text-purple-300 flex items-center justify-center text-xs font-bold">
-                        {creditAlerts.length + savingsCards.length}
+                        {totalCount ?? (creditAlerts.length + savingsCards.length)}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-purple-500 transition-colors" />
-                </Link>
+                    <ActionIcon type="chevronRight" size={16} tile={false} color="#94A3B8" className="group-hover:text-purple-500 transition-colors" />
+                </button>
             </div>
             <div className="space-y-2.5 max-h-[280px] overflow-y-auto hide-scrollbar pb-2">
                 {creditAlerts.map(({ card, dueThisCycle }) => (
@@ -85,6 +89,7 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards }: ImportantAle
                         amount={`${fmtFull(dueThisCycle)}đ`}
                         badge="Cần thanh toán"
                         variant="credit"
+                        onClick={onOpen}
                     />
                 ))}
                 {savingsCards.map(card => (
@@ -95,6 +100,7 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards }: ImportantAle
                         amount={`${fmtFull(card.balance)}đ`}
                         badge="Xem chi tiết"
                         variant="savings"
+                        onClick={onOpen}
                     />
                 ))}
             </div>

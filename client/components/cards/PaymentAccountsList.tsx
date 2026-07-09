@@ -1,37 +1,44 @@
 'use client';
 import { memo } from 'react';
-import { Star, Wallet, Bitcoin, Smartphone, Pencil, Trash2 } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { getBankLogo } from '@/lib/bankLogos';
 import { cn } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
 
 function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
     card: Card; onEdit: () => void; onDelete: () => void; bankLogoUrl?: string;
 }) {
-    const TypeIcon = card.cardType === 'crypto' ? Bitcoin
-        : card.cardType === 'eWallet' ? Smartphone
-            : Wallet;
-    const iconBg = card.cardType === 'crypto' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
-        : card.cardType === 'eWallet' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'
-            : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400';
+    const isCrypto = card.cardType === 'crypto';
+    const isEWallet = card.cardType === 'eWallet';
     const logoUrl = bankLogoUrl || getBankLogo(card.bankShortName, card.bankName);
     const balanceColor = card.balance < 0 ? 'text-red-500' : 'text-emerald-500 dark:text-emerald-400';
 
     return (
         <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm transition-all hover:border-indigo-200 dark:hover:border-indigo-900/50 group">
-            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 overflow-hidden', !logoUrl ? iconBg : 'bg-white shadow-sm border border-gray-100')}>
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 overflow-hidden', 
+                logoUrl ? 'bg-white shadow-sm border border-gray-100' : 
+                isCrypto ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' :
+                isEWallet ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' :
+                'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+            )}>
                 {logoUrl ? (
                     <img src={logoUrl} alt={card.bankName} className="w-full h-full object-contain p-1.5" />
+                ) : isCrypto ? (
+                    <CustomIcon type="bitcoin" size={20} tile={false} color="#F97316" />
+                ) : isEWallet ? (
+                    <CustomIcon type="smartphone" size={20} tile={false} color="#10B981" />
                 ) : (
-                    <TypeIcon className="w-5 h-5" />
+                    <UtilityIcon type="wallet" size={20} tile={false} color="#10B981" />
                 )}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{card.bankName}</p>
-                    {card.isDefault && <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />}
+                    {card.isDefault && <CustomIcon type="star" size={10} tile={false} color="#F59E0B" />}
                 </div>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium tracking-tight uppercase">
                     {card.cardHolder} {card.cardNumber ? `• ${card.cardNumber}` : ''}
@@ -53,14 +60,14 @@ function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
                         className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 transition-colors shadow-sm"
                         title="Chỉnh sửa"
                     >
-                        <Pencil className="w-3.5 h-3.5" />
+                        <ActionIcon type="pencil" size={14} tile={false} color="#6366F1" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40 transition-colors shadow-sm"
                         title="Xóa"
                     >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <ActionIcon type="trash" size={14} tile={false} color="#EF4444" />
                     </button>
                 </div>
             </div>

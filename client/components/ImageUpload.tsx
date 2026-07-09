@@ -1,9 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { Camera, X, Loader2, ImagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { uploadApi } from '@/lib/api';
 import { toast } from 'sonner';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 interface ImageUploadProps {
     currentUrl?: string;
@@ -128,12 +128,12 @@ export default function ImageUpload({
                             'absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity',
                             radius
                         )}>
-                            <Camera className="w-5 h-5 text-white" />
+                            <ActionIcon type="camera" size={20} tile={false} color="#FFFFFF" />
                         </div>
                     </>
                 ) : (
                     <div className="flex flex-col items-center gap-1 text-slate-400">
-                        <ImagePlus className="w-6 h-6" />
+                        <ActionIcon type="imagePlus" size={24} tile={false} color="#94A3B8" />
                         {size >= 80 && (
                             <span className="text-[9px] font-semibold uppercase tracking-wide">Chọn ảnh</span>
                         )}
@@ -146,7 +146,7 @@ export default function ImageUpload({
                         'absolute inset-0 bg-black/50 flex items-center justify-center',
                         radius
                     )}>
-                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                        <ActionIcon type="loader" size={20} tile={false} spin color="#FFFFFF" />
                     </div>
                 )}
             </button>
@@ -158,7 +158,7 @@ export default function ImageUpload({
                     onClick={clear}
                     className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors"
                 >
-                    <X className="w-3 h-3" />
+                    <ActionIcon type="x" size={12} tile={false} color="#FFFFFF" />
                 </button>
             )}
         </div>

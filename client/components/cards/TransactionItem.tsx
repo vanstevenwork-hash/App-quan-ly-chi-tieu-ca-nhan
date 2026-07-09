@@ -1,7 +1,8 @@
 'use client';
-import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { formatCurrency, formatDate, CATEGORIES_MAP } from '@/lib/mockData';
 import { cn } from '@/lib/utils';
+import CategoryIcon from '@/components/icons/CategoryIcon';
 
 interface TransactionItemProps {
     transaction: {
@@ -29,12 +30,12 @@ export default function TransactionItem({ transaction, onClick }: TransactionIte
             )}
         >
             {/* Category Icon */}
-            <div
-                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: `${cat.color}20` }}
-            >
-                <cat.Icon className="w-5 h-5" style={{ color: cat.color }} />
-            </div>
+            <CategoryIcon
+                type={cat.catIconType || 'khac'}
+                size={44}
+                tile
+                className="flex-shrink-0"
+            />
 
             {/* Info */}
             <div className="flex-1 min-w-0">
@@ -63,8 +64,8 @@ export default function TransactionItem({ transaction, onClick }: TransactionIte
                 )}
             >
                 {isIncome
-                    ? <ArrowDownLeft className="w-3 h-3 text-emerald-500" />
-                    : <ArrowUpRight className="w-3 h-3 text-red-500" />}
+                    ? <CustomIcon type="arrowDownLeft" size={12} tile={false} color="#10B981" />
+                    : <CustomIcon type="arrowUpRight" size={12} tile={false} color="#EF4444" />}
             </div>
         </div>
     );

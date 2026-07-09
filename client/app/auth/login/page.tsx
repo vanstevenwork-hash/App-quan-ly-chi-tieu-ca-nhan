@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/useStore';
 import { authApi } from '@/lib/api';
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin} className="space-y-4">
                     {/* Email */}
                     <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <CustomIcon type="mail" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type="email"
                             placeholder="Số điện thoại / Email"
@@ -115,7 +115,7 @@ export default function LoginPage() {
 
                     {/* Password */}
                     <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <CustomIcon type="lock" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             type={showPass ? 'text' : 'password'}
                             placeholder="Mật khẩu"
@@ -129,7 +129,7 @@ export default function LoginPage() {
                             onClick={() => setShowPass(!showPass)}
                             className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
-                            {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showPass ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" />}
                         </button>
                         {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
                     </div>
@@ -156,7 +156,7 @@ export default function LoginPage() {
                         className="w-full gradient-primary text-white rounded-2xl h-14 text-xl font-bold shadow-glow hover:opacity-90 transition-all border-0 mt-2"
                     >
                         {loading ? 'Đang đăng nhập...' : (
-                            <>Đăng nhập <ArrowRight className="w-4 h-4 ml-2" /></>
+                            <>Đăng nhập <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" className="ml-2" /></>
                         )}
                     </Button>
                 </form>
@@ -218,7 +218,7 @@ export default function LoginPage() {
                     {forgotSuccess ? (
                         <div className="flex flex-col items-center justify-center py-6 text-center space-y-3">
                             <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                                <CustomIcon type="checkCircle2" size={24} tile={false} color="#10B981" />
                             </div>
                             <h3 className="font-bold text-lg">Đã gửi thành công!</h3>
                             <p className="text-sm text-muted-foreground">
@@ -234,7 +234,7 @@ export default function LoginPage() {
                     ) : (
                         <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                <CustomIcon type="mail" size={16} tile={false} color="currentColor" className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <Input
                                     type="email"
                                     placeholder="Nhập email của bạn"
@@ -258,7 +258,7 @@ export default function LoginPage() {
                                     disabled={forgotLoading}
                                     className="rounded-xl bg-primary hover:bg-primary/90"
                                 >
-                                    {forgotLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {forgotLoading && <CustomIcon type="loader" size={16} tile={false} spin className="mr-2" />}
                                     Gửi mật khẩu mới
                                 </Button>
                             </DialogFooter>

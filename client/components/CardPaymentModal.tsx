@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { X, CreditCard, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
+import { ActionIcon } from '@/components/icons/CustomIcon';
+import { UtilityIcon } from '@/components/icons/CustomIcon';
 import { createPortal } from 'react-dom';
 import { cardsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -117,7 +119,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                 <div className="flex items-center justify-between px-5 pb-3 pt-1 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-2">
                         <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                            <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                            <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white">Thanh toán thẻ</h2>
@@ -125,7 +127,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                         </div>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-slate-700 transition">
-                        <X className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                        <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                     </button>
                 </div>
 
@@ -133,7 +135,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                     {/* Card selector */}
                     {creditCards.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 py-8 text-gray-400 dark:text-slate-500">
-                            <AlertCircle className="w-10 h-10" />
+                            <CustomIcon type="alertCircle" size={40} tile={false} color="currentColor" />
                             <p className="text-sm">Bạn chưa có thẻ tín dụng nào</p>
                         </div>
                     ) : (
@@ -163,7 +165,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                                                         return cardBankLogo ? (
                                                             <Image src={cardBankLogo} width={24} height={24} className="w-6 h-6 object-contain grayscale-0 group-disabled:grayscale" alt="" />
                                                         ) : (
-                                                            <CreditCard className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                                            <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />
                                                         );
                                                     })()}
                                                 </div>
@@ -181,9 +183,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                                                         </span>
                                                     )}
                                                     {selectedId === card._id && (
-                                                        <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center mt-1 ml-auto">
-                                                            <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                                                        </div>
+                                                        <UtilityIcon type="checkCircle" size={20} tile={false} color="#6366F1" className="mt-1 ml-auto" />
                                                     )}
                                                 </div>
                                             </button>
@@ -307,7 +307,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                                 !amount || saving
                                     ? 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-slate-500 cursor-not-allowed'
                                     : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-90 active:scale-95 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/30')}>
-                            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
+                            {saving ? <ActionIcon type="loader" size={20} tile={false} spin color="#FFFFFF" /> : <UtilityIcon type="checkCircle" size={20} tile={false} color="#FFFFFF" />}
                             {saving ? 'Đang xử lý...' : 'Thanh toán ngay'}
                         </button>
                     </div>

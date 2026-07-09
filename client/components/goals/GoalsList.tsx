@@ -1,7 +1,8 @@
 'use client';
 import { memo } from 'react';
-import { CheckCircle2, Pencil, Trash2, Coins, Calendar, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import type { Goal } from '@/hooks/useGoals';
 
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
@@ -78,8 +79,8 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
 
     return (
         <div className={cn(
-            'relative bg-white dark:bg-slate-800 rounded-[20px] overflow-hidden border shadow-sm transition-all',
-            isCompleted ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-gray-100 dark:border-slate-700'
+            'relative bg-white dark:bg-slate-900 rounded-[20px] overflow-hidden border shadow-sm transition-all',
+            isCompleted ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-gray-100 dark:border-slate-800'
         )}>
             <Confetti active={showConfetti} />
 
@@ -101,12 +102,12 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
                     </div>
                     <div className="flex gap-1 ml-2 flex-shrink-0">
                         {!isCompleted && (
-                            <button onClick={onEdit} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 transition">
-                                <Pencil className="w-3 h-3 text-slate-500" />
+                            <button onClick={onEdit} className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                                <ActionIcon type="pencil" size={12} tile={false} color="#64748B" />
                             </button>
                         )}
                         <button onClick={onDelete} className="w-7 h-7 rounded-full bg-red-50 dark:bg-red-900/30 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/50 transition">
-                            <Trash2 className="w-3 h-3 text-red-500" />
+                            <ActionIcon type="trash" size={12} tile={false} color="#EF4444" />
                         </button>
                     </div>
                 </div>
@@ -120,7 +121,7 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
                             <span className="text-sm font-bold" style={{ color: goal.color }}>{pct}%</span>
                         </div>
                     </div>
-                    <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-700 ease-out"
                             style={{ width: `${pct}%`, backgroundColor: goal.color }} />
                     </div>
@@ -137,9 +138,9 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
                         isCompleted ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                             isOverdue ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
                                 isUrgent ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                                    'bg-slate-50 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                                    'bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                     )}>
-                        {isCompleted ? <Trophy className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+                        {isCompleted ? <UtilityIcon type="trophy" size={12} tile={false} color="#F59E0B" /> : <ActionIcon type="calendar" size={12} tile={false} color="currentColor" />}
                         {isCompleted ? `Hoàn thành ${goal.completedAt ? new Date(goal.completedAt).toLocaleDateString('vi-VN') : ''}` :
                             isOverdue ? 'Đã quá hạn!' :
                                 `${days} ngày còn lại`}
@@ -148,18 +149,18 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
 
                 {/* Savings plan */}
                 {plan && !isCompleted && (
-                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-3 mb-3">
+                    <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3 mb-3">
                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-wide">Kế hoạch tiết kiệm</p>
                         <div className="grid grid-cols-3 gap-2 text-center">
-                            <div className="bg-white dark:bg-slate-800 rounded-xl p-2">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl p-2">
                                 <p className="text-[9px] text-slate-400 mb-0.5">Hàng ngày</p>
                                 <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{fmtShort(plan.daily)}₫</p>
                             </div>
-                            <div className="bg-white dark:bg-slate-800 rounded-xl p-2">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl p-2">
                                 <p className="text-[9px] text-slate-400 mb-0.5">Hàng tuần</p>
                                 <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{fmtShort(plan.weekly)}₫</p>
                             </div>
-                            <div className="bg-white dark:bg-slate-800 rounded-xl p-2">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl p-2">
                                 <p className="text-[9px] text-slate-400 mb-0.5">Hàng tháng</p>
                                 <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{fmtShort(plan.monthly)}₫</p>
                             </div>
@@ -172,14 +173,14 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
                     <button onClick={onContribute}
                         className="w-full py-2.5 rounded-2xl text-white text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                         style={{ background: `linear-gradient(135deg, ${goal.color}, ${goal.color}bb)` }}>
-                        <Coins className="w-4 h-4" />
+                        <UtilityIcon type="coins" size={16} tile={false} color="#FFFFFF" />
                         Đóng góp tiền
                     </button>
                 )}
 
                 {isCompleted && (
                     <div className="flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-sm font-bold">
-                        <CheckCircle2 className="w-4 h-4" />
+                        <UtilityIcon type="checkCircle" size={16} tile={false} color="#10B981" />
                         Đã hoàn thành! 🎉
                     </div>
                 )}
@@ -237,7 +238,7 @@ function GoalsListBase({ loading, hasGoals, filtered, onAdd, onContribute, onEdi
             {loading && (
                 <div className="space-y-4">
                     {[1, 2].map(i => (
-                        <div key={i} className="h-48 rounded-[20px] bg-gray-100 dark:bg-slate-800 animate-pulse" />
+                        <div key={i} className="h-48 rounded-[20px] bg-gray-100 dark:bg-slate-900 animate-pulse" />
                     ))}
                 </div>
             )}

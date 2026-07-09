@@ -1,5 +1,5 @@
 'use client';
-import { Plus, ImageIcon } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 
 interface DayActionSheetProps {
     day: number | null;
@@ -40,7 +40,7 @@ export default function DayActionSheet({ day, dateLabel, dateStr, onClose, onAdd
                             className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-all active:scale-95 border-2 border-transparent hover:border-purple-200 dark:hover:border-purple-700"
                         >
                             <div className="w-12 h-12 rounded-2xl bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                                <Plus className="w-6 h-6 text-white" />
+                                <ActionIcon type="plus" size={24} tile={false} color="#FFFFFF" />
                             </div>
                             <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Giao dịch</span>
                         </button>
@@ -49,7 +49,7 @@ export default function DayActionSheet({ day, dateLabel, dateStr, onClose, onAdd
                             className="flex flex-col items-center gap-2 p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all active:scale-95 border-2 border-transparent hover:border-emerald-200 dark:hover:border-emerald-700"
                         >
                             <div className="w-12 h-12 rounded-2xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                                <ImageIcon className="w-6 h-6 text-white" />
+                                <ActionIcon type="image" size={24} tile={false} color="#FFFFFF" />
                             </div>
                             <span className="text-sm font-bold text-slate-700 dark:text-slate-200">Ảnh / Ghi chú</span>
                         </button>

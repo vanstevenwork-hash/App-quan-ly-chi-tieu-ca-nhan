@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { X, Plus, Minus, Clock } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import type { Goal } from '@/hooks/useGoals';
 
 interface GoalContributeModalProps {
@@ -60,7 +61,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                             <h2 className="text-base font-bold text-slate-900 dark:text-white truncate max-w-[180px]">{goal.name}</h2>
                         </div>
                         <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                            <X className="w-4 h-4 text-slate-500" />
+                            <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                         </button>
                     </div>
 
@@ -84,12 +85,12 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                         <button onClick={() => { setMode('deposit'); setError(''); }}
                             className={cn('flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all',
                                 mode === 'deposit' ? 'bg-white dark:bg-slate-700 shadow text-emerald-600 dark:text-emerald-400' : 'text-slate-400 hover:text-slate-600')}>
-                            <Plus className="w-4 h-4" /> Nạp tiền
+                            <ActionIcon type="plus" size={16} tile={false} color="currentColor" /> Nạp tiền
                         </button>
                         <button onClick={() => { setMode('withdraw'); setError(''); }}
                             className={cn('flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all',
                                 mode === 'withdraw' ? 'bg-white dark:bg-slate-700 shadow text-red-500 dark:text-red-400' : 'text-slate-400 hover:text-slate-600')}>
-                            <Minus className="w-4 h-4" /> Rút tiền
+                            <ActionIcon type="minus" size={16} tile={false} color="currentColor" /> Rút tiền
                         </button>
                     </div>
 
@@ -148,7 +149,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                     {contributions.length > 0 && (
                         <div>
                             <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5" /> Lịch sử đóng góp
+                                <UtilityIcon type="clock" size={14} tile={false} color="#64748B" /> Lịch sử đóng góp
                             </h3>
                             <div className="space-y-2 max-h-48 overflow-y-auto">
                                 {contributions.map(c => (
@@ -156,7 +157,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             <div className={cn('w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0',
                                                 c.type === 'deposit' ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-red-100 dark:bg-red-900/40')}>
-                                                {c.type === 'deposit' ? <Plus className="w-3.5 h-3.5 text-emerald-600" /> : <Minus className="w-3.5 h-3.5 text-red-500" />}
+                                                {c.type === 'deposit' ? <ActionIcon type="plus" size={14} tile={false} color="#059669" /> : <ActionIcon type="minus" size={14} tile={false} color="#EF4444" />}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{c.note || (c.type === 'deposit' ? 'Nạp tiền' : 'Rút tiền')}</p>

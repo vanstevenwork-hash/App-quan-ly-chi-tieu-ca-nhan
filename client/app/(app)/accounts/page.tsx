@@ -2,9 +2,10 @@
 import { useState, useMemo } from 'react';
 import {
     Plus, RefreshCw, Trash2, Pencil, Star, MoreHorizontal, Info,
-    AlertTriangle, PiggyBank, CreditCard,
-    Wallet, Smartphone, Bitcoin, ChevronRight, ChevronDown, BadgeCheck,
+    AlertTriangle, CreditCard,
+    Smartphone, Bitcoin, ChevronRight, ChevronDown, BadgeCheck,
 } from 'lucide-react';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
 import PageHeader from '@/components/PageHeader';
@@ -218,9 +219,7 @@ function SavingsCard({ card, onEdit, onDelete }: {
                                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
                         ) : (
-                            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/50 flex items-center justify-center flex-shrink-0">
-                                <PiggyBank className="w-5 h-5 text-purple-500 dark:text-purple-400" />
-                            </div>
+                            <UtilityIcon type="piggyBank" size={40} tile className="flex-shrink-0" />
                         );
                     })()}
                     <div>
@@ -287,13 +286,13 @@ function SavingsCard({ card, onEdit, onDelete }: {
 function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
     card: Card; onEdit: () => void; onDelete: () => void; onSetDefault: () => void;
 }) {
-    const TypeIcon = card.cardType === 'crypto' ? Bitcoin
-        : card.cardType === 'eWallet' ? Smartphone
-            : card.cardType === 'savings' ? PiggyBank
-                : Wallet;
-    const iconBg = card.cardType === 'crypto' ? 'bg-yellow-50 text-yellow-600'
-        : card.cardType === 'eWallet' ? 'bg-purple-50 text-purple-600'
-            : 'bg-green-50 text-green-600';
+    const isCrypto = card.cardType === 'crypto';
+    const isEWallet = card.cardType === 'eWallet';
+    const isSavings = card.cardType === 'savings';
+    const iconBg = isCrypto ? 'bg-yellow-50 text-yellow-600'
+        : isEWallet ? 'bg-purple-50 text-purple-600'
+            : isSavings ? 'bg-blue-50 text-blue-600'
+                : 'bg-green-50 text-green-600';
 
     return (
         <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
@@ -309,7 +308,10 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
                         />
                     ) : (
                         <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', iconBg)}>
-                            <TypeIcon className="w-5 h-5" />
+                            {isCrypto ? <Bitcoin className="w-5 h-5" /> : 
+                             isEWallet ? <Smartphone className="w-5 h-5" /> :
+                             isSavings ? <UtilityIcon type="piggyBank" size={20} tile={false} color="#3B82F6" /> :
+                             <UtilityIcon type="wallet" size={20} tile={false} color="#10B981" />}
                         </div>
                     );
                 })()}
@@ -430,27 +432,65 @@ export default function AccountsPage() {
                     </div>
                 )}
 
-                {/* ── Summary & Net Worth ──────────────────────────── */}
+                {/* ── Summary & Net Worth — aurora hero, same style as Home ── */}
                 <div className="px-5 pb-2">
-                    <div className="relative overflow-hidden rounded-[20px] p-5 shadow-sm border border-white/50 dark:border-slate-800/50 bg-gradient-to-br from-[#E0C3FC]/20 to-[#8EC5FC]/20 dark:from-purple-900/10 dark:to-blue-900/10">
-                        {/* Net worth */}
-                        <div className="text-center mb-4">
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5 font-medium">Tổng tài sản ròng</p>
-                            <p className="text-[30px] font-bold text-slate-900 dark:text-white tracking-tight leading-none">{fmt(netWorth)} đ</p>
+                    <div className="relative overflow-hidden rounded-[20px] p-5 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#191E36] dark:via-[#151829] dark:to-[#141224] border border-[#E9D5FF] dark:border-slate-700/50">
+                        {/* Aurora glow — confined to the bottom-right corner, matches the Home hero card */}
+                        <div aria-hidden className="absolute inset-0 pointer-events-none">
+                            <div
+                                className="absolute -bottom-24 -right-24 w-72 h-56 opacity-35 dark:opacity-70"
+                                style={{ background: 'radial-gradient(ellipse at center, rgba(109,40,217,0.45) 0%, rgba(91,33,182,0.22) 45%, transparent 70%)', filter: 'blur(24px)' }}
+                            />
+                            <div
+                                className="absolute -bottom-14 -right-6 w-40 h-28 opacity-30 dark:opacity-60"
+                                style={{ background: 'radial-gradient(ellipse at center, rgba(167,139,250,0.45) 0%, transparent 65%)', filter: 'blur(14px)' }}
+                            />
+                            <svg className="absolute bottom-0 right-0 w-2/3 h-24 opacity-20 dark:opacity-35" viewBox="0 0 260 96" fill="none" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="acctSilk" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
+                                        <stop stopColor="#C4B5FD" stopOpacity="0" />
+                                        <stop offset="0.6" stopColor="#C4B5FD" stopOpacity="0.8" />
+                                        <stop offset="1" stopColor="#8B5CF6" stopOpacity="0" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0 96 C 90 64, 170 92, 260 36" stroke="url(#acctSilk)" strokeWidth="0.8" />
+                                <path d="M20 100 C 110 74, 190 96, 260 50" stroke="url(#acctSilk)" strokeWidth="0.6" />
+                                <path d="M60 104 C 140 86, 210 100, 260 66" stroke="url(#acctSilk)" strokeWidth="0.5" />
+                                <path d="M110 106 C 175 96, 225 104, 260 82" stroke="url(#acctSilk)" strokeWidth="0.4" />
+                            </svg>
+                            <div className="absolute bottom-0 right-6 left-1/2 h-px bg-gradient-to-r from-transparent via-purple-400/30 dark:via-purple-300/50 to-transparent" />
                         </div>
 
-                        {/* Summary pills — same figures as above, no need to repeat "Dư nợ" separately */}
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                { label: 'Tài sản', value: fmtShort(totalBalance), color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50/50 dark:bg-emerald-900/20' },
-                                { label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50/50 dark:bg-blue-900/20' },
-                                { label: 'Dư nợ thẻ', value: `-${fmtShort(totalDebt)}`, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50/50 dark:bg-red-900/20' },
-                            ].map(item => (
-                                <div key={item.label} className={cn('rounded-xl py-2 px-1.5 text-center', item.bg)}>
-                                    <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase mb-0.5 truncate">{item.label}</p>
-                                    <p className={cn('font-bold text-xs leading-none', item.color)}>{item.value}</p>
-                                </div>
-                            ))}
+                        <div className="relative z-10">
+                            {/* Net worth */}
+                            <div className="text-center">
+                                <p className="text-sm text-slate-500 dark:text-slate-300 font-medium mb-1.5">Tổng tài sản ròng</p>
+                                <p className="text-[30px] font-bold text-slate-800 dark:text-white tracking-tight leading-none text-money">{fmt(netWorth)} đ</p>
+                            </div>
+
+                            {/* Breakdown — value on top, label below, split by dividers (Home style) */}
+                            <div className="flex items-stretch justify-center mt-5">
+                                {[
+                                    { iconType: 'wallet', label: 'Tài sản', value: fmtShort(totalBalance), color: 'text-emerald-600 dark:text-emerald-400', colorRaw: '#10B981' },
+                                    { iconType: 'piggyBank', label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400', colorRaw: '#3B82F6' },
+                                    { isLucide: true, icon: CreditCard, label: 'Dư nợ thẻ', value: totalDebt > 0 ? `-${fmtShort(totalDebt)}` : '0', color: 'text-red-500 dark:text-red-400' },
+                                ].map((item: any, i) => (
+                                    <div key={item.label} className="flex flex-1 items-center min-w-0">
+                                        {i > 0 && <div className="w-px h-9 self-center bg-slate-200 dark:bg-white/15 flex-shrink-0" />}
+                                        <div className="flex-1 text-center min-w-0 px-1">
+                                            <p className={cn('inline-flex items-center gap-1 text-sm font-bold text-money', item.color)}>
+                                                {item.isLucide ? (
+                                                    <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                                                ) : (
+                                                    <UtilityIcon type={item.iconType} size={14} tile={false} color={item.colorRaw} className="flex-shrink-0" />
+                                                )}
+                                                {item.value}
+                                            </p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 truncate">{item.label}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -467,7 +507,7 @@ export default function AccountsPage() {
                                 )}>
                                 {tab === 'cards' ? (
                                     <>
-                                        <Wallet className="w-4 h-4" />
+                                        <UtilityIcon type="wallet" size={16} tile={false} color={activeTab === tab ? '#7f19e6' : '#6B7280'} />
                                         <span>Thẻ & Ví</span>
                                         {(creditCards.length + debitCards.length) > 0 && (
                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400">
@@ -477,7 +517,7 @@ export default function AccountsPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <PiggyBank className="w-4 h-4" />
+                                        <UtilityIcon type="piggyBank" size={16} tile={false} color={activeTab === tab ? '#7f19e6' : '#6B7280'} />
                                         <span>Tiết kiệm</span>
                                         {savingsCards.length > 0 && (
                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400">
@@ -604,9 +644,7 @@ export default function AccountsPage() {
                                             className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
-                                                    <Wallet className="w-5 h-5 text-emerald-500" />
-                                                </div>
+                                                <UtilityIcon type="wallet" size={40} tile />
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{debitCards.length} tài khoản & ví</p>
                                                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
@@ -662,7 +700,7 @@ export default function AccountsPage() {
                             ) : (
                                 <div className="flex flex-col items-center py-20 gap-6 bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                     <div className="w-20 h-20 rounded-[2.5rem] bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center transform rotate-3">
-                                        <PiggyBank className="w-10 h-10 text-purple-400 dark:text-purple-500" />
+                                        <UtilityIcon type="piggyBank" size={40} tile={false} color="#A855F7" />
                                     </div>
                                     <div className="text-center px-6">
                                         <p className="font-bold text-slate-700 dark:text-slate-200 text-lg">Chưa có sổ tiết kiệm</p>

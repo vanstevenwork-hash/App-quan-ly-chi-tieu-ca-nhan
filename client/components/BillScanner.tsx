@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Camera, Upload, X, Loader2, Sparkles, Check, AlertCircle, RotateCcw, ScanLine, Receipt, FileText } from 'lucide-react';
+import { AlertCircle, RotateCcw, ScanLine, Receipt, FileText, Sparkles } from 'lucide-react';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import { ocrApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -154,7 +155,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                     </div>
                     <button onClick={onClose}
                         className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                        <X className="w-4 h-4 text-slate-500" />
+                        <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                     </button>
                 </div>
 
@@ -191,14 +192,14 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                         onClick={() => cameraInputRef.current?.click()}
                         className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.97] transition-all"
                     >
-                        <Camera className="w-5 h-5" />
+                        <ActionIcon type="camera" size={20} tile={false} color="#FFFFFF" />
                         <span>Chụp ảnh</span>
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm border-2 border-slate-200 dark:border-slate-700 hover:border-[#7f19e6] hover:text-[#7f19e6] active:scale-[0.97] transition-all"
                     >
-                        <Upload className="w-5 h-5" />
+                        <ActionIcon type="upload" size={20} tile={false} color="currentColor" />
                         <span>Tải ảnh lên</span>
                     </button>
                 </div>
@@ -239,9 +240,9 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 <div className="flex items-center gap-2">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7f19e6] to-[#b44dff] flex items-center justify-center shadow-lg shadow-purple-500/25">
                         {scanning ? (
-                            <Loader2 className="w-5 h-5 text-white animate-spin" />
+                            <ActionIcon type="loader" size={20} tile={false} spin color="#FFFFFF" />
                         ) : result ? (
-                            <Check className="w-5 h-5 text-white" />
+                            <ActionIcon type="check" size={20} tile={false} color="#FFFFFF" />
                         ) : (
                             <ScanLine className="w-5 h-5 text-white" />
                         )}
@@ -257,7 +258,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 </div>
                 <button onClick={() => { reset(); onClose(); }}
                     className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                    <X className="w-4 h-4 text-slate-500" />
+                    <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                 </button>
             </div>
 
@@ -388,7 +389,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                         onClick={handleApply}
                         className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.97] transition-all"
                     >
-                        <Check className="w-4 h-4" />
+                        <ActionIcon type="check" size={16} tile={false} color="#FFFFFF" />
                         <span>Điền vào form</span>
                     </button>
                 )}

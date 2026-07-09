@@ -3,13 +3,9 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { transactionsApi } from '@/lib/api';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
+import CategoryIcon from '@/components/icons/CategoryIcon';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
-import {
-    ChevronLeft, Plus, Trash2, Pencil, Filter,
-    RefreshCw, TrendingUp, TrendingDown,
-    Activity, PieChart as PieIcon, ListFilter, ChevronRight, Package, Download
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn } from '@/lib/utils';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import PageHeader from '@/components/PageHeader';
@@ -95,7 +91,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                             "w-6 h-6 rounded-full flex items-center justify-center transition-colors",
                             isPositive ? "bg-emerald-500/20 text-emerald-500" : "bg-rose-500/20 text-rose-500"
                         )}>
-                            {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                            {isPositive ? <CustomIcon type="trendingUp" size={14} tile={false} color="#10B981" /> : <CustomIcon type="trendingDown" size={14} tile={false} color="#EF4444" />}
                         </div>
                         <span className={cn(
                             "text-sm font-black",
@@ -135,7 +131,7 @@ export default function AnalyticsPage() {
     // backend's already-existing month/year-aware endpoints so each tab reflects its own period.
     const [periodTx, setPeriodTx] = useState<any[]>([]);
     const [summary, setSummary] = useState({ income: 0, expense: 0 });
-    const [categoryBreakdown, setCategoryBreakdown] = useState<{ category: string; total: number; color: string; Icon: LucideIcon }[]>([]);
+    const [categoryBreakdown, setCategoryBreakdown] = useState<{ category: string; total: number; color: string; catIconType: string }[]>([]);
     const [loading, setLoading] = useState(true);
 
     const paramsForPeriod = useCallback((): { month: number; year: number } | { startDate: string; endDate: string } | null => {
@@ -175,7 +171,7 @@ export default function AnalyticsPage() {
             let sum = sumRes.data?.data || { income: 0, expense: 0 };
             let catBreakdown = (catRes.data?.data || []).map((c: any) => {
                 const cfg = CATEGORIES_MAP.get(c.category);
-                return { category: c.category, total: c.total, color: cfg?.color || '#6C63FF', Icon: cfg?.Icon || Package };
+                return { category: c.category, total: c.total, color: cfg?.color || '#6C63FF', catIconType: cfg?.catIconType || 'khac' };
             });
 
             if (periodTab === 'Tuần này') {
@@ -191,7 +187,7 @@ export default function AnalyticsPage() {
                 catBreakdown = Object.entries(catMap)
                     .map(([category, total]) => {
                         const cfg = CATEGORIES_MAP.get(category);
-                        return { category, total: total as number, color: cfg?.color || '#6C63FF', Icon: cfg?.Icon || Package };
+                        return { category, total: total as number, color: cfg?.color || '#6C63FF', catIconType: cfg?.catIconType || 'khac' };
                     })
                     .sort((a, b) => b.total - a.total);
             }
@@ -308,11 +304,11 @@ export default function AnalyticsPage() {
                     <div className="flex items-center gap-2">
                         <button onClick={refetch}
                             className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
-                            <RefreshCw className="w-4 h-4" />
+                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" />
                         </button>
                         <button onClick={() => setShowAddModal(true)}
                             className="w-10 h-10 rounded-full gradient-primary text-white shadow-lg shadow-purple-500/20 flex items-center justify-center active:scale-95 transition-all">
-                            <Plus className="w-5 h-5" />
+                            <CustomIcon type="plus" size={20} tile={false} color="currentColor" />
                         </button>
                     </div>
                 }
@@ -357,9 +353,9 @@ export default function AnalyticsPage() {
                     {/* Summary Cards */}
                     <div className="grid grid-cols-3 gap-2">
                         {[
-                            { label: 'Thu nhập', value: summary.income, color: 'text-emerald-500', bg: 'bg-emerald-50/50 dark:bg-emerald-900/10', icon: <TrendingUp className="w-2.5 h-2.5" /> },
-                            { label: 'Chi tiêu', value: summary.expense, color: 'text-rose-500', bg: 'bg-rose-50/50 dark:bg-rose-900/10', icon: <TrendingDown className="w-2.5 h-2.5" /> },
-                            { label: 'Số dư', value: summary.income - summary.expense, color: 'text-blue-500', bg: 'bg-blue-50/50 dark:bg-blue-900/10', icon: <Activity className="w-2.5 h-2.5" /> },
+                            { label: 'Thu nhập', value: summary.income, color: 'text-emerald-500', bg: 'bg-emerald-50/50 dark:bg-emerald-900/10', icon: <CustomIcon type="trendingUp" size={10} tile={false} color="currentColor" /> },
+                            { label: 'Chi tiêu', value: summary.expense, color: 'text-rose-500', bg: 'bg-rose-50/50 dark:bg-rose-900/10', icon: <CustomIcon type="trendingDown" size={10} tile={false} color="currentColor" /> },
+                            { label: 'Số dư', value: summary.income - summary.expense, color: 'text-blue-500', bg: 'bg-blue-50/50 dark:bg-blue-900/10', icon: <CustomIcon type="wallet" size={10} tile={false} color="currentColor" /> },
                         ].map(item => (
                             <div key={item.label} className={cn('rounded-[1.25rem] p-3 transition-all border border-white/50 dark:border-slate-800/10 shadow-sm', item.bg)}>
                                 <div className="flex items-center gap-1 mb-1.5 opacity-70">
@@ -460,9 +456,12 @@ export default function AnalyticsPage() {
                                         const pct = summary.expense > 0 ? Math.round((c.total / summary.expense) * 100) : 0;
                                         return (
                                             <div key={c.category} className="bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl p-2.5 flex items-center gap-3 group hover:scale-[1.01] transition-all">
-                                                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${c.color}15` }}>
-                                                    <c.Icon className="w-4 h-4" style={{ color: c.color }} />
-                                                </div>
+                                                <CategoryIcon
+                                                    type={c.catIconType || 'khac'}
+                                                    size={32}
+                                                    tile
+                                                    className="flex-shrink-0"
+                                                />
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between mb-1 px-0.5">
                                                         <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">{c.category}</span>
@@ -491,7 +490,7 @@ export default function AnalyticsPage() {
                                 <button onClick={handleExport}
                                     title="Xuất CSV"
                                     className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex-shrink-0">
-                                    <Download className="w-3.5 h-3.5" />
+                                    <CustomIcon type="upload" size={14} tile={false} color="currentColor" />
                                 </button>
                                 <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-1 flex gap-1 border border-slate-200/50 dark:border-slate-800">
                                     {(['all', 'expense', 'income'] as const).map(f => (
@@ -509,7 +508,7 @@ export default function AnalyticsPage() {
                             {filteredTx.length === 0 ? (
                                 <div className="py-12 text-center bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                     <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-slate-800">
-                                        <ListFilter className="w-6 h-6 text-slate-300" />
+                                        <CustomIcon type="filter" size={24} tile={false} color="currentColor" className="text-slate-300" />
                                     </div>
                                     <p className="text-slate-400 dark:text-slate-500 text-xs font-medium italic">Không tìm thấy giao dịch nào</p>
                                 </div>
@@ -520,9 +519,12 @@ export default function AnalyticsPage() {
                                     return (
                                         <div key={t._id} className="bg-white dark:bg-slate-900 rounded-2xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-inner" style={{ backgroundColor: `${cat.color}15` }}>
-                                                    <cat.Icon className="w-[18px] h-[18px]" style={{ color: cat.color }} />
-                                                </div>
+                                                <CategoryIcon
+                                                    type={cat.catIconType || 'khac'}
+                                                    size={36}
+                                                    tile
+                                                    className="flex-shrink-0"
+                                                />
                                                 <div className="min-w-0">
                                                     <p className="font-bold text-[13px] text-slate-800 dark:text-slate-200 truncate">{t.note || t.category}</p>
                                                     <div className="flex items-center gap-1.5 mt-0.5">
@@ -547,11 +549,11 @@ export default function AnalyticsPage() {
                                                 <div className="absolute inset-0 flex items-center justify-end gap-1.5 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
                                                     <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }}
                                                         className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 transition-all shadow-sm">
-                                                        <Pencil className="w-3.5 h-3.5" />
+                                                        <CustomIcon type="pencil" size={14} tile={false} color="currentColor" />
                                                     </button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleDelete(t._id); }}
                                                         className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-rose-100 hover:text-rose-500 dark:hover:bg-rose-900/40 transition-all shadow-sm">
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <CustomIcon type="trash" size={14} tile={false} color="currentColor" />
                                                     </button>
                                                 </div>
                                             </div>
