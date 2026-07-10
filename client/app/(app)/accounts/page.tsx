@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import {
     Plus, RefreshCw, Trash2, Pencil, Star, MoreHorizontal, Info,
     AlertTriangle, CreditCard,
-    Smartphone, Bitcoin, ChevronRight, ChevronDown, BadgeCheck,
+    Bitcoin, ChevronRight, ChevronDown, BadgeCheck,
 } from 'lucide-react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
@@ -204,7 +204,7 @@ function SavingsCard({ card, onEdit, onDelete }: {
         : '—';
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] relative overflow-hidden">
+        <div className="bg-white dark:bg-surface rounded-xl p-5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 rounded-full -mr-10 -mt-10 blur-2xl pointer-events-none"
                 style={{ backgroundColor: '#8B5CF620' }} />
             <div className="flex justify-between items-start mb-4">
@@ -219,7 +219,7 @@ function SavingsCard({ card, onEdit, onDelete }: {
                                 onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
                         ) : (
-                            <UtilityIcon type="piggyBank" size={40} tile className="flex-shrink-0" />
+                            <UtilityIcon type="soTietKiem" size={40} tile className="flex-shrink-0" />
                         );
                     })()}
                     <div>
@@ -295,7 +295,7 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
                 : 'bg-green-50 text-green-600';
 
     return (
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
+        <div className="bg-white dark:bg-surface rounded-xl p-4 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
             <div className="flex items-center gap-3">
                 {(() => {
                     const logoUrl = getBankLogo(card.bankShortName, card.bankName);
@@ -309,9 +309,9 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
                     ) : (
                         <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', iconBg)}>
                             {isCrypto ? <Bitcoin className="w-5 h-5" /> : 
-                             isEWallet ? <Smartphone className="w-5 h-5" /> :
-                             isSavings ? <UtilityIcon type="piggyBank" size={20} tile={false} color="#3B82F6" /> :
-                             <UtilityIcon type="wallet" size={20} tile={false} color="#10B981" />}
+                             isEWallet ? <UtilityIcon type="eWallet" size={20} tile={false} color="#8B5CF6" /> :
+                             isSavings ? <UtilityIcon type="soTietKiem" size={20} tile={false} color="#F0A319" /> :
+                             <UtilityIcon type="theGhiNo" size={20} tile={false} color="#3D7BF0" />}
                         </div>
                     );
                 })()}
@@ -337,7 +337,7 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
 function DeleteConfirm({ card, onConfirm, onCancel }: { card: Card; onConfirm: () => void; onCancel: () => void }) {
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4" onClick={onCancel}>
-            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl pb-10" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-surface w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl pb-10" onClick={e => e.stopPropagation()}>
                 <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto">
                     <Trash2 className="w-6 h-6 text-red-500" />
                 </div>
@@ -395,7 +395,7 @@ export default function AccountsPage() {
     };
 
     return (
-        <div className="min-h-screen pb-32 bg-[#F8F9FF] dark:bg-slate-950 transition-colors duration-200">
+        <div className="min-h-screen pb-32 bg-[#F8F9FF] dark:bg-surface-deep transition-colors duration-200">
             {/* Background gradient blob - dark mode friendly */}
             <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 dark:hidden"
                 style={{ background: 'linear-gradient(to bottom, rgba(224,195,252,0.3), transparent)' }} />
@@ -408,7 +408,7 @@ export default function AccountsPage() {
                 subtitle="Tài chính"
                 rightActions={
                     <button onClick={refetch}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all relative flex-shrink-0">
+                        className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all relative flex-shrink-0">
                         <RefreshCw className="w-4 h-4" />
                     </button>
                 }
@@ -472,7 +472,7 @@ export default function AccountsPage() {
                             <div className="flex items-stretch justify-center mt-5">
                                 {[
                                     { iconType: 'wallet', label: 'Tài sản', value: fmtShort(totalBalance), color: 'text-emerald-600 dark:text-emerald-400', colorRaw: '#10B981' },
-                                    { iconType: 'piggyBank', label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400', colorRaw: '#3B82F6' },
+                                    { iconType: 'soTietKiem', label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400', colorRaw: '#3B82F6' },
                                     { isLucide: true, icon: CreditCard, label: 'Dư nợ thẻ', value: totalDebt > 0 ? `-${fmtShort(totalDebt)}` : '0', color: 'text-red-500 dark:text-red-400' },
                                 ].map((item: any, i) => (
                                     <div key={item.label} className="flex flex-1 items-center min-w-0">
@@ -495,7 +495,7 @@ export default function AccountsPage() {
                     </div>
 
                     {/* Tabs */}
-                    <div className="mt-5 bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-xl p-1.5 flex gap-1.5 border border-slate-200/50 dark:border-slate-800/50">
+                    <div className="mt-5 bg-slate-100/50 dark:bg-surface/50 backdrop-blur-sm rounded-xl p-1.5 flex gap-1.5 border border-slate-200/50 dark:border-slate-800/50">
                         {(['cards', 'savings'] as const).map(tab => (
                             <button key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -517,7 +517,7 @@ export default function AccountsPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <UtilityIcon type="piggyBank" size={16} tile={false} color={activeTab === tab ? '#7f19e6' : '#6B7280'} />
+                                        <UtilityIcon type="soTietKiem" size={16} tile={false} color={activeTab === tab ? '#7f19e6' : '#6B7280'} />
                                         <span>Tiết kiệm</span>
                                         {savingsCards.length > 0 && (
                                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400">
@@ -535,7 +535,7 @@ export default function AccountsPage() {
 
                     {/* ── Maturity alert ───────────────────────────────── */}
                     {maturityAlerts.map(card => (
-                        <div key={card._id} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-orange-100 dark:border-orange-900/20 flex items-start gap-3 shadow-sm shadow-orange-500/5">
+                        <div key={card._id} className="bg-white dark:bg-surface rounded-xl p-4 border border-orange-100 dark:border-orange-900/20 flex items-start gap-3 shadow-sm shadow-orange-500/5">
                             <div className="bg-orange-100 dark:bg-orange-900/20 p-2 rounded-full text-orange-600 dark:text-orange-400 flex-shrink-0">
                                 <AlertTriangle className="w-5 h-5" />
                             </div>
@@ -579,7 +579,7 @@ export default function AccountsPage() {
                                             ))}
                                             {/* Add credit card slide */}
                                             <button onClick={() => openAdd('credit')}
-                                                className="snap-center shrink-0 w-40 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
+                                                className="snap-center shrink-0 w-40 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-surface/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
                                                 <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
                                                     <Plus className="w-6 h-6" />
                                                 </div>
@@ -589,7 +589,7 @@ export default function AccountsPage() {
                                     ) : (
                                         <button
                                             onClick={() => setCreditCardsExpanded(true)}
-                                            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
+                                            className="w-full flex items-center justify-between p-4 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
@@ -641,7 +641,7 @@ export default function AccountsPage() {
                                     ) : (
                                         <button
                                             onClick={() => setPaymentAccountsExpanded(true)}
-                                            className="w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
+                                            className="w-full flex items-center justify-between p-4 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <UtilityIcon type="wallet" size={40} tile />
@@ -656,7 +656,7 @@ export default function AccountsPage() {
                                         </button>
                                     )
                                 ) : (
-                                    <div className="text-center py-12 bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
+                                    <div className="text-center py-12 bg-white dark:bg-surface/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                         <p className="text-sm text-slate-400 dark:text-slate-500 font-medium italic">Chưa có tài khoản thanh toán</p>
                                     </div>
                                 )}
@@ -665,7 +665,7 @@ export default function AccountsPage() {
                             {/* If no credit cards at all, show add button */}
                             {creditCards.length === 0 && (
                                 <button onClick={() => openAdd('credit')}
-                                    className="w-full flex items-center gap-4 p-5 bg-white dark:bg-slate-900 rounded-[20px] border border-slate-100 dark:border-slate-800 shadow-sm hover:border-purple-300 dark:hover:border-purple-900 transition-all group">
+                                    className="w-full flex items-center gap-4 p-5 bg-white dark:bg-surface rounded-[20px] border border-slate-100 dark:border-slate-800 shadow-sm hover:border-purple-300 dark:hover:border-purple-900 transition-all group">
                                     <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <CreditCard className="w-6 h-6 text-purple-500" />
                                     </div>
@@ -698,9 +698,9 @@ export default function AccountsPage() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center py-20 gap-6 bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
+                                <div className="flex flex-col items-center py-20 gap-6 bg-white dark:bg-surface/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                     <div className="w-20 h-20 rounded-[2.5rem] bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center transform rotate-3">
-                                        <UtilityIcon type="piggyBank" size={40} tile={false} color="#A855F7" />
+                                        <UtilityIcon type="soTietKiem" size={40} tile={false} color="#A855F7" />
                                     </div>
                                     <div className="text-center px-6">
                                         <p className="font-bold text-slate-700 dark:text-slate-200 text-lg">Chưa có sổ tiết kiệm</p>

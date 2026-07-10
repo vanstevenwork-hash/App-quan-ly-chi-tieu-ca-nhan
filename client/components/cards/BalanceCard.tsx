@@ -51,7 +51,7 @@ export default function BalanceCard({
             {/* Bottom stats */}
             <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-slate-700">
                 <div className="px-5 py-4 flex items-center gap-3">
-                    <UtilityIcon type="piggyBank" size={40} tile />
+                    <UtilityIcon type="soTietKiem" size={40} tile />
                     <div>
                         <p className="text-muted-foreground text-[10px] font-semibold uppercase tracking-wider">Tiết kiệm</p>
                         <p className="font-bold text-foreground text-sm text-money">

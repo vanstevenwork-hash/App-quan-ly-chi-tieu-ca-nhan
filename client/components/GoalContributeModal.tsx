@@ -103,7 +103,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                                 onChange={e => { setAmount(e.target.value.replace(/\D/g, '')); setError(''); }}
                                 placeholder="0"
                                 inputMode="numeric"
-                                className={cn('w-full rounded-xl border px-4 py-3.5 text-lg font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition pr-8',
+                                className={cn('w-full rounded-xl border px-4 py-3.5 text-lg font-bold bg-white dark:bg-surface text-slate-900 dark:text-white outline-none transition pr-8',
                                     error ? 'border-red-400' : 'border-slate-200 dark:border-slate-700 focus:border-[#6C63FF] focus:ring-1 focus:ring-[#6C63FF]')}
                             />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₫</span>
@@ -129,7 +129,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                             value={note}
                             onChange={e => setNote(e.target.value)}
                             placeholder={mode === 'deposit' ? 'VD: Tiết kiệm tháng 3...' : 'VD: Chi tiêu khẩn cấp...'}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
                         />
                     </div>
 

@@ -277,7 +277,7 @@ export default function AnalyticsPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#F8F9FF] dark:bg-slate-950 flex items-center justify-center">
+            <div className="min-h-screen bg-[#F8F9FF] dark:bg-surface-deep flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-10 h-10 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
                     <p className="text-gray-400 dark:text-gray-500 font-medium text-sm">Đang tải dữ liệu...</p>
@@ -287,7 +287,7 @@ export default function AnalyticsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#F8F9FF] dark:bg-slate-950 transition-colors duration-200">
+        <div className="min-h-screen bg-[#F8F9FF] dark:bg-surface-deep transition-colors duration-200">
             {/* Background blobs */}
             <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 dark:hidden"
                 style={{ background: 'linear-gradient(to bottom, rgba(224,195,252,0.2), transparent)' }} />
@@ -298,12 +298,12 @@ export default function AnalyticsPage() {
             <PageHeader
                 title="Báo cáo chi tiêu"
                 subtitle="Thống kê"
-                className="bg-[#F8F9FF]/80 dark:bg-slate-950/80"
+                className="bg-[#F8F9FF]/80 dark:bg-surface-deep/80"
                 zIndexClassName="z-30"
                 rightActions={
                     <div className="flex items-center gap-2">
                         <button onClick={refetch}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
+                            className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
                             <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" />
                         </button>
                         <button onClick={() => setShowAddModal(true)}
@@ -317,12 +317,12 @@ export default function AnalyticsPage() {
             <div className="relative z-10 px-5 pb-32">
                 {/* ── Period Selector Hero ────────────────────────────── */}
                 <div className="py-4">
-                    <div className="bg-white/50 dark:bg-slate-900/40 backdrop-blur-md rounded-[20px] p-1.5 flex gap-1.5 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
+                    <div className="bg-white/50 dark:bg-surface/40 backdrop-blur-md rounded-[20px] p-1.5 flex gap-1.5 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
                         {PERIOD_TABS.map(p => (
                             <button key={p} onClick={() => setPeriodTab(p)}
                                 className={cn('flex-1 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-center',
                                     periodTab === p
-                                        ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm'
+                                        ? 'bg-white dark:bg-surface text-purple-600 dark:text-purple-400 shadow-sm'
                                         : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>
                                 {p}
                             </button>
@@ -330,13 +330,13 @@ export default function AnalyticsPage() {
                     </div>
 
                     {periodTab === 'Tùy chỉnh' && (
-                        <div className="bg-white/50 dark:bg-slate-900/40 backdrop-blur-md rounded-[20px] p-3 flex items-center gap-2 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
+                        <div className="bg-white/50 dark:bg-surface/40 backdrop-blur-md rounded-[20px] p-3 flex items-center gap-2 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
                             <input
                                 type="date"
                                 value={customStart}
                                 onChange={e => setCustomStart(e.target.value)}
                                 max={customEnd || undefined}
-                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
+                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
                             />
                             <span className="text-slate-400 text-xs font-bold flex-shrink-0">→</span>
                             <input
@@ -345,7 +345,7 @@ export default function AnalyticsPage() {
                                 onChange={e => setCustomEnd(e.target.value)}
                                 min={customStart || undefined}
                                 max={toISODate(new Date())}
-                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
+                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
                             />
                         </div>
                     )}
@@ -370,7 +370,7 @@ export default function AnalyticsPage() {
 
                 <div className="space-y-4">
                     {/* ── Trend chart ─────────────────────────────────── */}
-                    <section className="bg-white dark:bg-slate-900 rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+                    <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Xu hướng 14 ngày</h2>
                             <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ export default function AnalyticsPage() {
                     </section>
 
                     {/* ── Monthly history: real month-over-month comparison ── */}
-                    <section className="bg-white dark:bg-slate-900 rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+                    <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
                         <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-1">Lịch sử theo tháng</h2>
                         <div className="space-y-1.5">
                             {monthlyHistory.map((m, i) => {
@@ -431,7 +431,7 @@ export default function AnalyticsPage() {
 
                     {/* ── Category pie chart ──────────────────────────── */}
                     {categoryBreakdown.length > 0 && (
-                        <section className="bg-white dark:bg-slate-900 rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+                        <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
                             <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-1">Cơ cấu chi tiêu</h2>
                             <div className="flex flex-col items-center">
                                 <ResponsiveContainer width="100%" height={200}>
@@ -455,7 +455,7 @@ export default function AnalyticsPage() {
                                     {categoryBreakdown.map(c => {
                                         const pct = summary.expense > 0 ? Math.round((c.total / summary.expense) * 100) : 0;
                                         return (
-                                            <div key={c.category} className="bg-slate-50/50 dark:bg-slate-800/30 rounded-2xl p-2.5 flex items-center gap-3 group hover:scale-[1.01] transition-all">
+                                            <div key={c.category} className="bg-slate-50/50 dark:bg-surface/30 rounded-2xl p-2.5 flex items-center gap-3 group hover:scale-[1.01] transition-all">
                                                 <CategoryIcon
                                                     type={c.catIconType || 'khac'}
                                                     size={32}
@@ -489,14 +489,14 @@ export default function AnalyticsPage() {
                             <div className="flex items-center gap-1.5">
                                 <button onClick={handleExport}
                                     title="Xuất CSV"
-                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex-shrink-0">
+                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-surface border border-slate-200/50 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex-shrink-0">
                                     <CustomIcon type="upload" size={14} tile={false} color="currentColor" />
                                 </button>
-                                <div className="bg-slate-100 dark:bg-slate-900 rounded-xl p-1 flex gap-1 border border-slate-200/50 dark:border-slate-800">
+                                <div className="bg-slate-100 dark:bg-surface rounded-xl p-1 flex gap-1 border border-slate-200/50 dark:border-slate-800">
                                     {(['all', 'expense', 'income'] as const).map(f => (
                                         <button key={f} onClick={() => setFilterType(f)}
                                             className={cn('px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase',
-                                                filterType === f ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
+                                                filterType === f ? 'bg-white dark:bg-surface text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
                                             {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi' : 'Thu'}
                                         </button>
                                     ))}
@@ -506,8 +506,8 @@ export default function AnalyticsPage() {
 
                         <div className="space-y-2">
                             {filteredTx.length === 0 ? (
-                                <div className="py-12 text-center bg-white dark:bg-slate-900/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-slate-800">
+                                <div className="py-12 text-center bg-white dark:bg-surface/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-surface flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-slate-800">
                                         <CustomIcon type="filter" size={24} tile={false} color="currentColor" className="text-slate-300" />
                                     </div>
                                     <p className="text-slate-400 dark:text-slate-500 text-xs font-medium italic">Không tìm thấy giao dịch nào</p>
@@ -517,7 +517,7 @@ export default function AnalyticsPage() {
                                     const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES[CATEGORIES.length - 1];
                                     const isIncome = t.type === 'income';
                                     return (
-                                        <div key={t._id} className="bg-white dark:bg-slate-900 rounded-2xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">
+                                        <div key={t._id} className="bg-white dark:bg-surface rounded-2xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">
                                             <div className="flex items-center gap-3">
                                                 <CategoryIcon
                                                     type={cat.catIconType || 'khac'}

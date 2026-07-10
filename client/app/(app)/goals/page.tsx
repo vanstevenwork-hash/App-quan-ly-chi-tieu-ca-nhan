@@ -102,7 +102,7 @@ export default function GoalsPage() {
     const handleDeleteClick = useCallback((id: string) => setDeleteConfirm(id), []);
 
     return (
-        <div className="min-h-screen pb-32 bg-[#F8F9FF] dark:bg-slate-950 transition-colors duration-200">
+        <div className="min-h-screen pb-32 bg-[#F8F9FF] dark:bg-surface-deep transition-colors duration-200">
             {/* Background gradient blob - dark mode friendly */}
             <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 dark:hidden"
                 style={{ background: 'linear-gradient(to bottom, rgba(224,195,252,0.3), transparent)' }} />
@@ -115,7 +115,7 @@ export default function GoalsPage() {
                     title="Mục tiêu 🎯"
                     subtitle="Theo dõi"
                     rightActions={
-                        <button onClick={refetch} className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all">
+                        <button onClick={refetch} className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all">
                             <RefreshCw className="w-4 h-4" />
                         </button>
                     }

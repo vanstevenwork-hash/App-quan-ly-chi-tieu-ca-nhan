@@ -86,7 +86,7 @@ function ImageNoteUploadModalBase(
             <Dialog open={modalOpen} onOpenChange={(open) => {
                 if (!isUploading) setModalOpen(open);
             }}>
-                <DialogContent className="sm:max-w-md rounded-[20px] p-0 overflow-hidden bg-white dark:bg-slate-900 border-0">
+                <DialogContent className="sm:max-w-md rounded-[20px] p-0 overflow-hidden bg-white dark:bg-surface border-0">
                     <form onSubmit={submitUpload} className="flex flex-col max-h-[85vh]">
                         {/* Header Image Preview */}
                         <div className="relative w-full h-48 bg-slate-100 dark:bg-slate-800 flex-shrink-0">

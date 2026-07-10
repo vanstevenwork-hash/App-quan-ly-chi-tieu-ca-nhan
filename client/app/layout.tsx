@@ -50,13 +50,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/icon-512.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
       </head>
-      <body className={`${manrope.className} antialiased bg-[#F0F2F8] dark:bg-slate-950`}>
+      <body className={`${manrope.className} antialiased bg-[#F0F2F8] dark:bg-surface-deep`}>
         <ThemeProvider />
         <Toaster position="top-center" richColors closeButton />
         {/* Safe-area (notch/Dynamic Island) clearance is handled by each page's own
             top element (PageHeader or header padding) — not here, to avoid double-padding
             once a sticky header also adds env(safe-area-inset-top). */}
-        <div id="root" className="min-h-screen max-w-[480px] mx-auto bg-[#F0F2F8] dark:bg-slate-900 transition-colors duration-200">
+        <div id="root" className="min-h-screen max-w-[480px] mx-auto bg-[#F0F2F8] dark:bg-surface-deep transition-colors duration-200">
           {children}
         </div>
       </body>

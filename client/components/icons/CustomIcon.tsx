@@ -23,7 +23,7 @@ export const CATEGORY_ICON_LIST = [
     { type: 'thuong',        label: 'Thưởng',            color: '#A855F7', group: 'thu' },
     { type: 'tienLai',       label: 'Tiền lãi',          color: '#14B8A6', group: 'thu' },
     { type: 'khac',          label: 'Khác',              color: '#6B7280', group: 'thu' },
-    { type: 'soTietKiem',    label: 'Sổ tiết kiệm',     color: '#3B82F6', group: 'taiSan' },
+    { type: 'soTietKiem',    label: 'Sổ tiết kiệm',     color: '#F0A319', group: 'taiSan' },
     { type: 'vang',          label: 'Vàng',              color: '#F59E0B', group: 'taiSan' },
     { type: 'bitcoin',       label: 'Bitcoin',           color: '#F97316', group: 'taiSan' },
     { type: 'cryptoKhac',    label: 'Crypto (khác)',     color: '#8B5CF6', group: 'taiSan' },
@@ -120,6 +120,8 @@ export const EXTRAS = [
   { type: "alertCircle", label: "AlertCircle", color: "#EF4444", tint: 0.1 },
   { type: "alertTriangle", label: "AlertTriangle", color: "#F59E0B", tint: 0.1 },
   { type: "smartphone", label: "Smartphone", color: "#10B981", tint: 0.14 },
+  { type: "eWallet", label: "Ví điện tử", color: "#8B5CF6", tint: 0.14 },
+  { type: "theGhiNo", label: "Thẻ ghi nợ", color: "#3D7BF0", tint: 0.14 },
   { type: "bitcoin", label: "Bitcoin", color: "#F97316", tint: 0.14 },
   { type: "landmark", label: "Landmark", color: "#3B82F6", tint: 0.14 },
   { type: "briefcase", label: "Briefcase", color: "#06B6D4", tint: 0.14 },
@@ -279,12 +281,16 @@ const GLYPHS: Record<string, (C: string) => React.ReactNode> = {
         <rect x="11.2" y="7" width="1.6" height="3" fill={W} opacity="0.7" />
         <rect x="11.2" y="10" width="1.6" height="3" fill={W} opacity="0.7" />
     </>),
+    // Sổ tiết kiệm: bìa sổ + gáy + nhãn, đồng xu ₫ chồng góc dưới phải
     soTietKiem: (C) => (<>
-        <rect x="4.8" y="4" width="14.4" height="16" rx="2.2" fill={C} />
-        <rect x="4.8" y="7.6" width="14.4" height="1.5" fill={W} opacity="0.6" />
-        <circle cx="12" cy="14.5" r="3" stroke={W} strokeWidth="1.6" fill="none" />
-        <rect x="11.2" y="13.2" width="1.6" height="2.6" rx="0.8" fill={W} />
-        <rect x="10.2" y="14.2" width="3.6" height="1.6" rx="0.8" fill={W} />
+        <rect x="7.9" y="6.6" width="9.7" height="11.2" rx="1.1" fill={C} opacity="0.5" />
+        <rect x="7" y="6" width="9.7" height="11.8" rx="1.1" fill={C} />
+        <rect x="8.9" y="6" width="1.2" height="11.8" fill={W} opacity="0.55" />
+        <rect x="10.6" y="8.2" width="4.8" height="0.7" rx="0.35" fill={W} />
+        <rect x="10.6" y="9.6" width="3.4" height="0.6" rx="0.3" fill={W} opacity="0.75" />
+        <circle cx="16" cy="15.5" r="3.1" fill={W} />
+        <circle cx="16" cy="15.5" r="2.5" fill={C} />
+        <text x="16" y="16.6" textAnchor="middle" fill={W} fontSize="3.2" fontWeight="800" fontFamily="system-ui,-apple-system,sans-serif">₫</text>
     </>),
     vang: (C) => (<>
         <rect x="8" y="8" width="12" height="6.5" rx="1.8" fill={C} opacity="0.55" />
@@ -565,6 +571,34 @@ const GLYPHS: Record<string, (C: string) => React.ReactNode> = {
             />
             <rect x="10.9" y="9.4" width="2.2" height="6" rx="1.1" fill={W} />
             <circle cx="12" cy="17.6" r="1.3" fill={W} />
+        </>
+    ),
+    // Thẻ ghi nợ: 2 lớp thẻ + dải từ, chip, số thẻ và sóng contactless
+    theGhiNo: (C: string) => (
+        <>
+            <rect x="6.4" y="6.8" width="13.1" height="8.6" rx="1.2" fill={C} opacity="0.5" />
+            <rect x="5.4" y="7.8" width="13.1" height="8.6" rx="1.2" fill={C} />
+            <rect x="5.4" y="9.6" width="13.1" height="1.8" fill={W} />
+            <rect x="6.75" y="12.5" width="2.4" height="1.8" rx="0.4" fill={W} />
+            <rect x="7.1" y="12.85" width="1.7" height="1.05" rx="0.25" fill={C} opacity="0.55" />
+            <circle cx="10.6" cy="14.8" r="0.35" fill={W} />
+            <circle cx="11.6" cy="14.8" r="0.35" fill={W} />
+            <circle cx="12.65" cy="14.8" r="0.35" fill={W} />
+            <rect x="13.7" y="14.45" width="3.5" height="0.75" rx="0.38" fill={W} />
+            <g stroke={W} strokeWidth="0.5" strokeLinecap="round" fill="none">
+                <path d="M15.9 13 a1.05 1.05 0 0 1 0 -1.5" />
+                <path d="M16.9 13.5 a1.8 1.8 0 0 1 0 -2.5" />
+            </g>
+        </>
+    ),
+    // Ví điện tử: thân ví + thẻ thò ra, ngăn bấm bên phải và tia sét thanh toán nhanh
+    eWallet: (C: string) => (
+        <>
+            <rect x="7.5" y="6.1" width="9" height="3.3" rx="0.8" fill={C} opacity="0.55" />
+            <rect x="5.9" y="7.5" width="12.2" height="9.9" rx="1.4" fill={C} />
+            <path d="M18.1 10.9 H15 C14 10.9 13.2 11.7 13.2 12.7 C13.2 13.6 14 14.4 15 14.4 H18.1 Z" fill={W} />
+            <circle cx="15.1" cy="12.7" r="0.8" fill={C} />
+            <path d="M9.2 10.1 L7.8 13.1 H9.2 L8.5 15.8 L11.2 12.2 H9.7 L10.5 10.1 Z" fill={W} />
         </>
     ),
     smartphone: (C: string) => (

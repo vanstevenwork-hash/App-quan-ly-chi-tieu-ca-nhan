@@ -37,8 +37,8 @@ function DayCellBase({ day, dayData, isSelected, isToday, filterType, onSelect, 
             className={cn(
                 'h-20 p-1.5 flex flex-col transition-all active:scale-95 group/day outline-none focus:outline-none relative w-full text-left',
                 isSelected
-                    ? 'bg-white dark:bg-slate-900 border-2 border-primary/20 z-10 shadow-lg rounded-md scale-[1.02]'
-                    : 'bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900/50'
+                    ? 'bg-white dark:bg-surface border-2 border-primary/20 z-10 shadow-lg rounded-md scale-[1.02]'
+                    : 'bg-white dark:bg-surface-deep hover:bg-slate-50 dark:hover:bg-slate-900/50'
             )}
         >
             {/* Day number - Top Left */}

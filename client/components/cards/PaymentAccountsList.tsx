@@ -30,9 +30,9 @@ function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
                 ) : isCrypto ? (
                     <CustomIcon type="bitcoin" size={20} tile={false} color="#F97316" />
                 ) : isEWallet ? (
-                    <CustomIcon type="smartphone" size={20} tile={false} color="#10B981" />
+                    <CustomIcon type="eWallet" size={20} tile={false} color="#8B5CF6" />
                 ) : (
-                    <UtilityIcon type="wallet" size={20} tile={false} color="#10B981" />
+                    <UtilityIcon type="theGhiNo" size={20} tile={false} color="#3D7BF0" />
                 )}
             </div>
             <div className="flex-1 min-w-0">

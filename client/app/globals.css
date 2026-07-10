@@ -46,13 +46,15 @@
   }
 
   .dark {
-    --background: 230 25% 7%;
+    /* Matches the surface tokens in tailwind.config.ts:
+       --background = surface-deep #0B0F1E, --card = surface #121829 */
+    --background: 227 46% 8%;
     --foreground: 220 14% 93%;
 
-    --card: 230 20% 11%;
+    --card: 224 39% 12%;
     --card-foreground: 220 14% 93%;
 
-    --popover: 230 20% 11%;
+    --popover: 224 39% 12%;
     --popover-foreground: 220 14% 93%;
 
     --primary: 248 75% 72%;

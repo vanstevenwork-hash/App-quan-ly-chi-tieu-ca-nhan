@@ -14,11 +14,11 @@ import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 import Image from 'next/image';
 
 const CARD_TYPES = [
-    { value: 'credit', label: 'Thẻ tín dụng', icon: '💳', desc: 'Thanh toán sau, có hạn mức' },
-    { value: 'debit', label: 'Thẻ ghi nợ', icon: '🏧', desc: 'Thanh toán bằng số dư' },
-    { value: 'savings', label: 'Sổ tiết kiệm', icon: '🐷', desc: 'Gửi tiết kiệm có kỳ hạn' },
-    { value: 'eWallet', label: 'Ví điện tử', icon: '📱', desc: 'MoMo, ZaloPay...' },
-    { value: 'crypto', label: 'Crypto', icon: '₿', desc: 'Bitcoin, ETH, USDT...' },
+    { value: 'credit', label: 'Thẻ tín dụng', iconType: 'creditCard', color: '#6C63FF', desc: 'Thanh toán sau, có hạn mức' },
+    { value: 'debit', label: 'Thẻ ghi nợ', iconType: 'theGhiNo', color: '#3D7BF0', desc: 'Thanh toán bằng số dư' },
+    { value: 'savings', label: 'Sổ tiết kiệm', iconType: 'soTietKiem', color: '#F0A319', desc: 'Gửi tiết kiệm có kỳ hạn' },
+    { value: 'eWallet', label: 'Ví điện tử', iconType: 'eWallet', color: '#8B5CF6', desc: 'MoMo, ZaloPay...' },
+    { value: 'crypto', label: 'Crypto', iconType: 'bitcoin', color: '#F97316', desc: 'Bitcoin, ETH, USDT...' },
 ] as const;
 
 // Standard color palette — black & white are special
@@ -245,7 +245,7 @@ fixed inset-x-0 bottom-0 top-[20vh] z-50
 gap-2
 w-full max-w-md mx-auto
 !translate-x-0 !translate-y-0
-bg-white dark:bg-slate-900
+bg-white dark:bg-surface
 rounded-t-3xl sm:rounded-3xl
 shadow-xl flex flex-col
 overflow-hidden
@@ -257,16 +257,16 @@ data-[state=closed]:slide-out-to-bottom
 duration-200
 "
             >
-                <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
+                <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-surface z-10" onClick={onClose}>
                     <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                 </button>
-                <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-surface z-10 border-b border-slate-100 dark:border-slate-800">
                     <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">
                         {isEdit ? 'Chỉnh sửa' : isSavings ? 'Thêm sổ tiết kiệm' : 'Thêm thẻ / tài khoản'}
                     </h2>
                 </div>
 
-                <div className="flex-1 overflow-y-auto hide-scrollbar pb-6 bg-white dark:bg-slate-900 px-4 pt-1 space-y-3">
+                <div className="flex-1 overflow-y-auto hide-scrollbar pb-6 bg-white dark:bg-surface px-4 pt-1 space-y-3">
 
                     {/* PREVIEW CARD */}
                     {!isSavings && (
@@ -339,8 +339,9 @@ duration-200
                                             </div>
                                         )}
                                     </div>
-                                    <span className={cn('text-sm font-medium', textOpacity)}>
-                                        {CARD_TYPES.find(t => t.value === form.cardType)?.icon} {CARD_TYPES.find(t => t.value === form.cardType)?.label}
+                                    <span className={cn('text-sm font-medium inline-flex items-center gap-1.5', textOpacity)}>
+                                        <CustomIcon type={CARD_TYPES.find(t => t.value === form.cardType)?.iconType || 'creditCard'} size={15} tile={false} color="currentColor" />
+                                        {CARD_TYPES.find(t => t.value === form.cardType)?.label}
                                     </span>
                                 </div>
                                 <p className={cn('text-sm font-mono tracking-widest mb-1', textSubtle)}>•••• •••• •••• {form.cardNumber || '????'}</p>
@@ -360,7 +361,7 @@ duration-200
                                             'flex gap-2 p-1 rounded-xl border transition-all text-left items-center justify-center flex-col',
                                             form.cardType === t.value ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
                                         )}>
-                                        <span className="text-xl">{t.icon}</span>
+                                        <CustomIcon type={t.iconType} size={26} tile={false} color={t.color} />
                                         <div>
                                             <p className={cn("text-[11px] text-center font-bold", form.cardType === t.value ? "text-[#7f19e6] dark:text-purple-400" : "text-[#000000] dark:text-white")}>{t.label}</p>
                                         </div>
@@ -423,7 +424,7 @@ duration-200
                                     value={cardLabel}
                                     onChange={e => handleCardLabelChange(e.target.value)}
                                     placeholder={form.bankName || 'Nhập tên thẻ...'}
-                                    className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
+                                    className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
                                 />
                             </div>
                         )}
@@ -435,7 +436,7 @@ duration-200
                                     <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Tên chủ {isSavings ? 'sổ' : 'thẻ'}</p>
                                     <Input value={form.cardHolder} onChange={e => set('cardHolder', e.target.value.toUpperCase())}
                                         placeholder={userNamePlaceholder}
-                                        className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold uppercase text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold uppercase text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                 </div>
                             )}
 
@@ -455,7 +456,7 @@ duration-200
                                             }
                                             placeholder="1234"
                                             maxLength={4}
-                                            className="w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold tracking-widest text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
+                                            className="w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold tracking-widest text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
                                         />
                                     </div>
 
@@ -477,7 +478,7 @@ duration-200
                                             }}
                                             placeholder="0"
                                             className={cn(
-                                                "w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1",
+                                                "w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1",
                                                 errCls("balance") ||
                                                 "focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]"
                                             )}
@@ -500,7 +501,7 @@ duration-200
                                             value={form.balance ? new Intl.NumberFormat('vi-VN').format(form.balance) : ''}
                                             onChange={e => { set('balance', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
                                             placeholder="0"
-                                            className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                            className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
                                         {errors.balance && <p className="text-xs text-red-500 mt-1">{errors.balance}</p>}
                                     </div>
 
@@ -511,7 +512,7 @@ duration-200
                                             <Input type="number" step="0.1" value={form.interestRate || ''}
                                                 onChange={e => { set('interestRate', Number(e.target.value)); setErrors(p => ({ ...p, interestRate: '' })); }}
                                                 placeholder="7.5"
-                                                className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('interestRate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('interestRate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
                                             {errors.interestRate && <p className="text-xs text-red-500 mt-1">{errors.interestRate}</p>}
                                         </div>
                                         <div>
@@ -524,7 +525,7 @@ duration-200
                                                     d.setMonth(d.getMonth() + t);
                                                     set('maturityDate', d.toISOString().slice(0, 10));
                                                 }
-                                            }} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-black dark:text-white h-12 px-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-[#7f19e6] focus:border-[#7f19e6] dark:focus:border-purple-400 appearance-none">
+                                            }} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-black dark:text-white h-12 px-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-[#7f19e6] focus:border-[#7f19e6] dark:focus:border-purple-400 appearance-none">
                                                 <option value={1}>1 tháng</option>
                                                 <option value={3}>3 tháng</option>
                                                 <option value={6}>6 tháng</option>
@@ -550,7 +551,7 @@ duration-200
                                                         set('maturityDate', d.toISOString().slice(0, 10));
                                                     }
                                                 }}
-                                                className={cn('w-full rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:ring-1', errCls('depositDate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:ring-1', errCls('depositDate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
                                             {errors.depositDate && <p className="text-xs text-red-500 mt-1">{errors.depositDate}</p>}
                                         </div>
 
@@ -597,7 +598,7 @@ duration-200
                                                     set('expirationDate', val);
                                                 }}
                                                 maxLength={5}
-                                                placeholder="MM/YY" className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                placeholder="MM/YY" className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                         </div>
                                     </div>
                                 </div>
@@ -612,7 +613,7 @@ duration-200
                                             value={form.creditLimit ? new Intl.NumberFormat('vi-VN').format(form.creditLimit) : ''}
                                             onChange={e => { set('creditLimit', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
                                             placeholder="50.000.000"
-                                            className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                     </div>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
@@ -620,7 +621,7 @@ duration-200
                                             <Input type="number" min={1} max={31} value={form.statementDay || ''}
                                                 onChange={e => { set('statementDay', Number(e.target.value)); setErrors(p => ({ ...p, statementDay: '' })); }}
                                                 placeholder="25"
-                                                className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('statementDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('statementDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
                                             {errors.statementDay && <p className="text-xs text-red-500 mt-1">{errors.statementDay}</p>}
                                         </div>
                                         <div>
@@ -628,7 +629,7 @@ duration-200
                                             <Input type="number" min={1} max={31} value={form.paymentDueDay || ''}
                                                 onChange={e => { set('paymentDueDay', Number(e.target.value)); setErrors(p => ({ ...p, paymentDueDay: '' })); }}
                                                 placeholder="10"
-                                                className={cn('rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('paymentDueDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('paymentDueDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
                                             {errors.paymentDueDay && <p className="text-xs text-red-500 mt-1">{errors.paymentDueDay}</p>}
                                         </div>
                                     </div>
@@ -638,7 +639,7 @@ duration-200
                                             <Input type="number" min={0} max={100} step={0.1} value={form.cashbackRate || ''}
                                                 onChange={e => set('cashbackRate', Number(e.target.value))}
                                                 placeholder="vd: 1.5"
-                                                className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hoàn tiền tối đa/tháng</p>
@@ -646,7 +647,7 @@ duration-200
                                                 value={form.cashbackCap ? new Intl.NumberFormat('vi-VN').format(form.cashbackCap) : ''}
                                                 onChange={e => set('cashbackCap', Number(e.target.value.replace(/\D/g, '')))}
                                                 placeholder="Không giới hạn"
-                                                className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                         </div>
                                     </div>
                                     <p className="text-xs text-slate-400 -mt-2">Theo chính sách hoàn tiền thật của thẻ này, dùng để tính "Hoàn tiền" trên trang Thẻ. Để trống mục tối đa nếu thẻ không giới hạn.</p>
@@ -693,7 +694,7 @@ duration-200
                                 <div>
                                     <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ghi chú</p>
                                     <Input value={form.note} onChange={e => set('note', e.target.value)}
-                                        placeholder="Ghi chú tuỳ ý..." className="rounded-xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 h-12 text-base text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        placeholder="Ghi chú tuỳ ý..." className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                 </div>
                             )}
 
@@ -712,7 +713,7 @@ duration-200
 
                 </div>
 
-                <div className="shrink-0 w-full p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-3">
+                <div className="shrink-0 w-full p-4 bg-white dark:bg-surface border-t border-slate-100 dark:border-slate-800 flex gap-3">
                     {isEdit && (
                         <button onClick={handleDelete} disabled={saving}
                             className="w-14 h-14 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 transition flex items-center justify-center flex-shrink-0 disabled:opacity-50">

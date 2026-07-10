@@ -227,7 +227,7 @@ export default function SavingsPage() {
     const monthLabel = `Tháng ${now.getMonth() + 1}/${now.getFullYear()}`;
 
     return (
-        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
+        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">
             {/* Gradient bg blob */}
             <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 dark:hidden"
                 style={{ background: 'linear-gradient(to bottom, rgba(167,243,208,0.3), transparent)' }} />
@@ -241,7 +241,7 @@ export default function SavingsPage() {
                     subtitle="Tài chính"
                     rightActions={
                         <button onClick={refresh}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
+                            className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
                             <RefreshCw className="w-4 h-4" />
                             {maturingSoon.length > 0 && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-white dark:border-slate-800" />
@@ -280,8 +280,8 @@ export default function SavingsPage() {
                         style={{ scrollbarWidth: 'none' }}>
 
                         {savingsCards.length === 0 && (
-                            <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
-                                <UtilityIcon type="piggyBank" size={40} tile={false} color="#94A3B8" />
+                            <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-surface/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
+                                <UtilityIcon type="soTietKiem" size={40} tile={false} color="#94A3B8" />
                                 <p className="text-sm font-medium">Chưa có sổ tiết kiệm</p>
                             </div>
                         )}
@@ -293,7 +293,7 @@ export default function SavingsPage() {
                         ))}
 
                         <button onClick={() => { setEditCard(null); setShowForm(true); }}
-                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
+                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-surface/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
                             <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
                                 <Plus className="w-6 h-6" />
                             </div>
@@ -304,9 +304,9 @@ export default function SavingsPage() {
 
                 {/* ── Quick actions ─────────────────────────────── */}
                 <div className="px-5 mb-6">
-                    <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
+                    <div className="bg-white/70 dark:bg-surface/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
-                            { icon: <UtilityIcon type="piggyBank" size={24} tile={false} color="#059669" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
+                            { icon: <UtilityIcon type="soTietKiem" size={24} tile={false} color="#059669" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
                             { icon: <RefreshCw className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: () => { setEditCard(null); setShowForm(true); } },
                             { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, bg: '#FEF3C7', bgDark: '#78350F', label: 'Lịch sử', onClick: () => { } },
                             { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, bg: '#EDE9FE', bgDark: '#4C1D95', label: 'Báo cáo', onClick: () => { } },
@@ -345,7 +345,7 @@ export default function SavingsPage() {
                 {/* ── Detail info ───────────────────────────────── */}
                 <div className="px-5 mb-5">
                     <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-3">Thông tin chi tiết</h3>
-                    <div className="bg-white dark:bg-slate-800 rounded-[20px] shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800">
+                    <div className="bg-white dark:bg-surface rounded-[20px] shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800">
 
                         {/* Maturity countdown — best upcoming */}
                         {savingsCards.filter(c => c.maturityDate).length > 0 ? (

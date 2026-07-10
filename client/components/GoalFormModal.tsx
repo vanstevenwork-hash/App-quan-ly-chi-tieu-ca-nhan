@@ -113,7 +113,7 @@ export default function GoalFormModal({ open, onClose, onSave, editGoal }: GoalF
 fixed inset-x-0 bottom-0 top-[20vh] z-50
 w-full max-w-md mx-auto gap-2
 !translate-x-0 !translate-y-0
-bg-white dark:bg-slate-900
+bg-white dark:bg-surface
 rounded-t-3xl sm:rounded-3xl
 shadow-xl flex flex-col
 overflow-hidden
@@ -128,14 +128,14 @@ duration-200
 
                 {/* Drag handle */}
                 <button
-                    className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900"
+                    className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-surface"
                     onClick={onClose}
                 >
                     <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                 </button>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-2 shrink-0 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between px-4 py-2 shrink-0 bg-white dark:bg-surface border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center justify-center w-full text-center">
 
                         <div>
@@ -167,7 +167,7 @@ duration-200
                             }}
                             placeholder="VD: Mua laptop mới, Du lịch Nhật..."
                             className={cn(
-                                'w-full rounded-xl border px-4 py-3 text-sm font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none transition',
+                                'w-full rounded-xl border px-4 py-3 text-sm font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none transition',
                                 errors.name
                                     ? 'border-red-400 focus:ring-1 focus:ring-red-400'
                                     : 'border-slate-200 dark:border-slate-700 focus:ring-1 focus:ring-[#6C63FF]'
@@ -199,7 +199,7 @@ duration-200
                                     setErrors(p => ({ ...p, targetAmount: undefined }));
                                 }}
                                 placeholder="0"
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 pr-8 text-sm bg-white dark:bg-slate-900 outline-none focus:ring-1 focus:ring-[#6C63FF]"
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 pr-8 text-sm bg-white dark:bg-surface outline-none focus:ring-1 focus:ring-[#6C63FF]"
                             />
 
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">
@@ -273,7 +273,7 @@ duration-200
                     </div>
 
 
-                    {/* Deadline */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block">Ngày hoàn thành</label> <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 10)} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-medium bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition" /> </div> {/* Auto-save */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 block">Tiết kiệm tự động (tuỳ chọn)</label> <div className="flex gap-2"> <div className="relative flex-1"> <input value={autoSaveAmount ? parseInt(autoSaveAmount.replace(/\D/g, '') || '0').toLocaleString('vi-VN') : ''} onChange={e => setAutoSaveAmount(e.target.value.replace(/\D/g, ''))} placeholder="Số tiền" className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] pr-6" /> <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">₫</span> </div> <select value={autoSaveFreq} onChange={e => setAutoSaveFreq(e.target.value as any)} className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-[#6C63FF] flex-shrink-0" > <option value="">Tần suất</option> <option value="daily">Hàng ngày</option> <option value="weekly">Hàng tuần</option> <option value="monthly">Hàng tháng</option> </select> </div> </div>
+                    {/* Deadline */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block">Ngày hoàn thành</label> <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 10)} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition" /> </div> {/* Auto-save */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 block">Tiết kiệm tự động (tuỳ chọn)</label> <div className="flex gap-2"> <div className="relative flex-1"> <input value={autoSaveAmount ? parseInt(autoSaveAmount.replace(/\D/g, '') || '0').toLocaleString('vi-VN') : ''} onChange={e => setAutoSaveAmount(e.target.value.replace(/\D/g, ''))} placeholder="Số tiền" className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] pr-6" /> <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">₫</span> </div> <select value={autoSaveFreq} onChange={e => setAutoSaveFreq(e.target.value as any)} className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-surface text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-[#6C63FF] flex-shrink-0" > <option value="">Tần suất</option> <option value="daily">Hàng ngày</option> <option value="weekly">Hàng tuần</option> <option value="monthly">Hàng tháng</option> </select> </div> </div>
                     {/* Note */}
                     <div>
                         <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block">
@@ -284,13 +284,13 @@ duration-200
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             rows={2}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm bg-white dark:bg-slate-900 outline-none focus:ring-1 focus:ring-[#6C63FF] resize-none"
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm bg-white dark:bg-surface outline-none focus:ring-1 focus:ring-[#6C63FF] resize-none"
                         />
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800">
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-surface/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800">
                     <button
                         onClick={handleSave}
                         disabled={saving}

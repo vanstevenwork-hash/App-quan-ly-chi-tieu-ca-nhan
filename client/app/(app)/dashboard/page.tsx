@@ -77,28 +77,6 @@ export default function DashboardPage() {
     const creditAlerts = useMemo(() => allCreditAlerts.slice(0, 2), [allCreditAlerts]);
     const savingsCards = useMemo(() => savingsAlerts.slice(0, 1), [savingsAlerts]);
 
-    // ── Chart data: last 7 days expenses & income ──
-    const chartData = useMemo(() => {
-        const days: Record<string, { expense: number, income: number }> = {};
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(Date.now() - i * 86_400_000);
-            days[`${d.getDate()}/${d.getMonth() + 1}`] = { expense: 0, income: 0 };
-        }
-        transactions.forEach(t => {
-            const d = new Date(t.date);
-            const key = `${d.getDate()}/${d.getMonth() + 1}`;
-            if (key in days) {
-                if (t.type === 'expense') days[key].expense -= t.amount;
-                if (t.type === 'income') days[key].income += t.amount;
-            }
-        });
-        return Object.entries(days).map(([name, data], i, arr) => ({
-            name: i === arr.length - 1 ? 'Hôm nay' : name,
-            expense: data.expense,
-            income: data.income,
-        }));
-    }, [transactions]);
-
     const handleEditTx = (tx: any) => {
         setIsDetailOpen(false);
         setEditingTx(tx);
@@ -122,7 +100,7 @@ export default function DashboardPage() {
     const handleAddFirstTx = useCallback(() => { setAddType('expense'); openAddModal(); }, [openAddModal]);
 
     return (
-        <div className="min-h-screen pb-28 bg-[#F8F9FF] dark:bg-slate-900 transition-colors duration-200">
+        <div className="min-h-screen pb-28 bg-[#F8F9FF] dark:bg-surface-deep transition-colors duration-200">
             <style>{`
                 @keyframes arrowSlide {
                     0%,100% { transform: translateX(0); opacity: 1; }
@@ -155,7 +133,7 @@ export default function DashboardPage() {
 
             {/* ── Header: identity left, actions right — sticky like every other page ── */}
             <header
-                className="sticky top-0 z-20 px-5 pb-3 flex items-center gap-3 bg-[#F8F9FF]/80 dark:bg-slate-900/80 backdrop-blur-lg"
+                className="sticky top-0 z-20 px-5 pb-3 flex items-center gap-3 bg-[#F8F9FF]/80 dark:bg-surface-deep/80 backdrop-blur-lg"
                 style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
             >
                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -181,19 +159,19 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <Link
                         href="/search"
-                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                        className="w-10 h-10 bg-white dark:bg-surface rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
                         <Search className="w-[18px] h-[18px]" />
                     </Link>
                     <button
                         onClick={() => { setAddType('expense'); setAutoOpenScanner(true); openAddModal(); }}
-                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                        className="w-10 h-10 bg-white dark:bg-surface rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
                         <ScanLine className="w-[18px] h-[18px]" />
                     </button>
                     <button
                         onClick={() => { setNotiTab(undefined); setShowNoti(true); }}
-                        className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
+                        className="w-10 h-10 bg-white dark:bg-surface rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
                         <Bell className="w-[18px] h-[18px]" />
                         {unreadCount > 0 && (
@@ -283,7 +261,7 @@ export default function DashboardPage() {
                 {/* ── Savings & card debt shortcut tiles ── */}
                 <div className="anim-fade-up-d1 grid grid-cols-2 gap-3">
                     <Link href="/savings"
-                        className="bg-white dark:bg-slate-800 rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-purple-200 dark:hover:border-purple-500/40 hover:shadow-md transition-all active:scale-95 group">
+                        className="bg-white dark:bg-surface rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-purple-200 dark:hover:border-purple-500/40 hover:shadow-md transition-all active:scale-95 group">
                         <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
                             <p className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400 text-money leading-tight truncate">
@@ -298,7 +276,7 @@ export default function DashboardPage() {
                         <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 flex-shrink-0" />
                     </Link>
                     <Link href="/cards"
-                        className="bg-white dark:bg-slate-800 rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-500/40 hover:shadow-md transition-all active:scale-95 group">
+                        className="bg-white dark:bg-surface rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-500/40 hover:shadow-md transition-all active:scale-95 group">
                         {/* <div className="w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                             <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                         </div> */}
@@ -327,11 +305,12 @@ export default function DashboardPage() {
                 />
 
                 {/* ── Spending trend chart ─────────────────────────── */}
-                <SpendingTrendChart chartData={chartData} />
+                <SpendingTrendChart transactions={transactions} />
 
                 {/* ── Recent transactions ──────────────────────────── */}
                 <RecentTransactionsList
                     transactions={transactions}
+                    cards={cards}
                     onSelectTx={handleSelectTx}
                     onAddFirst={handleAddFirstTx}
                 />

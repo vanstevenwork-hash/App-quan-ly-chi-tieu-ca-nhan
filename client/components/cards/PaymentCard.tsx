@@ -32,7 +32,7 @@ export default function PaymentCard({
         >
             {/* Selected icon */}
             {isSelected && (
-                <div className="absolute top-[-6px] right-[-6px] w-4 h-4 rounded-full border border-[#7f19e6] flex items-center justify-center bg-white dark:bg-slate-900">
+                <div className="absolute top-[-6px] right-[-6px] w-4 h-4 rounded-full border border-[#7f19e6] flex items-center justify-center bg-white dark:bg-surface">
                     <ActionIcon type="check" size={10} tile={false} color="#7f19e6" />
                 </div>
             )}

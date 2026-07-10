@@ -43,6 +43,12 @@ const config: Config = {
 					DEFAULT: "hsl(var(--card))",
 					foreground: "hsl(var(--card-foreground))",
 				},
+				// Dark-mode surface system: cards sit on a deeper page canvas.
+				// Đổi 2 mã này là toàn bộ nền thẻ/nền trang dark mode đổi theo.
+				surface: {
+					DEFAULT: "#121829", // card / panel background
+					deep: "#0B0F1E",    // page background behind cards
+				},
 				violet: {
 					50: "#F5F3FF",
 					100: "#EDE9FE",

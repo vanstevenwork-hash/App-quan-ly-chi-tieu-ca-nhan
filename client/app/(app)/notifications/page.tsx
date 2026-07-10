@@ -51,7 +51,7 @@ function NotificationsContent() {
     };
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950">
+        <div className="min-h-screen bg-white dark:bg-surface-deep">
             {/* Header */}
             <div className="px-5 pb-3" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
                 <div className="flex items-center justify-between mb-4">

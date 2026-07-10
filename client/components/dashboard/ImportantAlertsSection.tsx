@@ -15,7 +15,7 @@ function AlertCard({
 }) {
     const isCredit = variant === 'credit';
     return (
-        <button onClick={onClick} className="w-full text-left bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200 px-4 py-3.5 flex items-center gap-3">
+        <button onClick={onClick} className="w-full text-left bg-white dark:bg-surface rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200 px-4 py-3.5 flex items-center gap-3">
             {/* Icon tile, colored by alert type */}
             <div className={cn(
                 'w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0',

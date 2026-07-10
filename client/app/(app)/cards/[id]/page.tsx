@@ -127,11 +127,11 @@ export default function CardDetailPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900">
+            <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep">
                 <PageHeader title="Chi tiết thẻ" backHref="/cards" />
                 <div className="px-5 pt-4 space-y-4">
-                    <div className="h-48 rounded-[20px] bg-gray-200 dark:bg-slate-800 animate-pulse" />
-                    <div className="h-24 rounded-2xl bg-gray-200 dark:bg-slate-800 animate-pulse" />
+                    <div className="h-48 rounded-[20px] bg-gray-200 dark:bg-surface animate-pulse" />
+                    <div className="h-24 rounded-2xl bg-gray-200 dark:bg-surface animate-pulse" />
                 </div>
             </div>
         );
@@ -139,10 +139,10 @@ export default function CardDetailPage() {
 
     if (!card) {
         return (
-            <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900">
+            <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep">
                 <PageHeader title="Chi tiết thẻ" backHref="/cards" />
                 <div className="flex flex-col items-center justify-center gap-3 py-24 px-6 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-surface flex items-center justify-center">
                         <CustomIcon type="creditCard" size={32} tile={false} color="currentColor" className="text-slate-300" />
                     </div>
                     <p className="font-bold text-slate-700 dark:text-slate-200">Không tìm thấy thẻ</p>
@@ -160,14 +160,14 @@ export default function CardDetailPage() {
     const isCredit = card.cardType === 'credit';
 
     return (
-        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
+        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">
             <PageHeader
                 title={card.bankName}
                 subtitle="Chi tiết thẻ"
                 backHref="/cards"
                 rightActions={
                     <button onClick={() => setShowForm(true)}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
+                        className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
                         <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
                     </button>
                 }
@@ -246,13 +246,13 @@ export default function CardDetailPage() {
                     )}
                     {!card.isDefault && (
                         <button onClick={() => setDefaultCard(card._id)}
-                            className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-yellow-300 dark:hover:border-yellow-700 active:scale-[0.98] transition-all">
+                            className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-yellow-300 dark:hover:border-yellow-700 active:scale-[0.98] transition-all">
                             <CustomIcon type="star" size={16} tile={false} color="#F59E0B" /> Đặt mặc định
                         </button>
                     )}
                     <button onClick={() => setDeleteConfirm(true)}
                         className={cn(
-                            'flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 text-sm font-bold text-red-500 hover:border-red-300 dark:hover:border-red-900 active:scale-[0.98] transition-all',
+                            'flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 text-sm font-bold text-red-500 hover:border-red-300 dark:hover:border-red-900 active:scale-[0.98] transition-all',
                             card.isDefault && 'col-span-2'
                         )}>
                         <CustomIcon type="trash" size={16} tile={false} color="currentColor" /> Xoá thẻ
@@ -261,7 +261,7 @@ export default function CardDetailPage() {
 
                 {/* ── Installment breakdown ─────────────────────── */}
                 {isCredit && activeInstallmentPlans.length > 0 && (
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div className="px-4 pt-3.5 pb-2 flex items-center justify-between">
                             <h3 className="text-sm font-bold text-slate-800 dark:text-white">Đang trả góp</h3>
                             <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
@@ -286,7 +286,7 @@ export default function CardDetailPage() {
 
                 {/* ── Cashback summary ──────────────────────────── */}
                 {isCredit && (
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
                             <h3 className="text-sm font-bold text-slate-800 dark:text-white">Hoàn tiền</h3>
                             <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full">
@@ -312,7 +312,7 @@ export default function CardDetailPage() {
                 )}
 
                 {/* ── Info panel ────────────────────────────────── */}
-                <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm divide-y divide-gray-50 dark:divide-slate-700/50 overflow-hidden">
+                <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm divide-y divide-gray-50 dark:divide-slate-700/50 overflow-hidden">
                     <div className="flex items-center gap-3 px-4 py-3">
                         <CustomIcon type="user" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                         <span className="text-xs text-slate-400 flex-1">Chủ thẻ</span>
@@ -350,11 +350,11 @@ export default function CardDetailPage() {
                     <div>
                         <div className="flex items-center justify-between mb-2.5 px-1">
                             <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Lịch sử giao dịch</h3>
-                            <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                            <span className="text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-surface px-2 py-0.5 rounded-full">
                                 {cardTxs.length} giao dịch
                             </span>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700/50">
+                        <div className="bg-white dark:bg-surface rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700/50">
                             {(historyExpanded ? cardTxs : cardTxs.slice(0, 5)).map(t => {
                                 const isExpense = t.type === 'expense';
                                 const cb = isExpense ? getCashbackAmount(card.cashbackRate, t.amount) : 0;
@@ -424,11 +424,11 @@ export default function CardDetailPage() {
             {deleteConfirm && (
                 <>
                     <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setDeleteConfirm(false)} />
-                    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 bg-white dark:bg-slate-800 rounded-t-3xl p-6 shadow-2xl">
+                    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 bg-white dark:bg-surface rounded-t-3xl p-6 shadow-2xl">
                         <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                                <Trash2 className="w-6 h-6 text-red-500" />
+                                <CustomIcon type="trash" size={24} tile={false} color="#EF4444" />
                             </div>
                             <div>
                                 <p className="font-bold text-slate-800 dark:text-slate-100 text-base uppercase">Xoá thẻ?</p>

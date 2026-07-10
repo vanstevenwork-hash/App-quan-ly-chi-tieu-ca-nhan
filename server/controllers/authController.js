@@ -18,7 +18,7 @@ exports.register = async (req, res) => {
         res.status(201).json({
             success: true,
             token,
-            user: { _id: user._id, name: user.name, email: user.email, avatar: user.avatar, currency: user.currency },
+            user: { _id: user._id, name: user.name, email: user.email, avatar: user.avatar, currency: user.currency, language: user.language },
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -36,7 +36,7 @@ exports.login = async (req, res) => {
         res.json({
             success: true,
             token,
-            user: { _id: user._id, name: user.name, email: user.email, avatar: user.avatar, currency: user.currency },
+            user: { _id: user._id, name: user.name, email: user.email, avatar: user.avatar, currency: user.currency, language: user.language },
         });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -51,9 +51,9 @@ exports.getProfile = async (req, res) => {
 // @desc Update profile
 exports.updateProfile = async (req, res) => {
     try {
-        const { name, avatar, currency } = req.body;
+        const { name, avatar, currency, language } = req.body;
         const user = await User.findByIdAndUpdate(
-            req.user._id, { name, avatar, currency }, { new: true, select: '-password' }
+            req.user._id, { name, avatar, currency, language }, { new: true, select: '-password' }
         );
         res.json({ success: true, user });
     } catch (err) {

@@ -256,7 +256,7 @@ export default function CalendarPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8F9FF] dark:bg-slate-900 pb-32">
+        <div className="min-h-screen bg-[#F8F9FF] dark:bg-surface-deep pb-32">
             {/* ── Header ── */}
             <PageHeader
                 title={`${MONTHS[viewDate.month]}, ${viewDate.year}`}
@@ -266,13 +266,13 @@ export default function CalendarPage() {
                     <div className="flex gap-2">
                         <button
                             onClick={prevMonth}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-surface/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                         >
                             <ActionIcon type="chevronLeft" size={20} tile={false} color="#6B7280" />
                         </button>
                         <button
                             onClick={nextMonth}
-                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                            className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 dark:bg-surface/50 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
                         >
                             <ActionIcon type="chevronRight" size={20} tile={false} color="#6B7280" />
                         </button>
@@ -349,7 +349,7 @@ export default function CalendarPage() {
                 </section>
 
                 {/* ── Filter Tabs ── */}
-                <div className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl flex gap-1">
+                <div className="bg-slate-100 dark:bg-surface p-1 rounded-xl flex gap-1">
                     {(['all', 'expense', 'income'] as const).map(f => (
                         <button
                             key={f}
@@ -367,12 +367,12 @@ export default function CalendarPage() {
                 </div>
 
                 {/* ── Calendar Grid ── */}
-                <div className="bg-slate-200 dark:bg-slate-800 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div className="bg-slate-200 dark:bg-surface rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div className="grid grid-cols-7 gap-[1px]">
                         {/* Day headers */}
                         {DAYS.map((d, i) => (
                             <div key={d} className={cn(
-                                'py-3 text-center text-[10px] font-extrabold uppercase tracking-tighter bg-white dark:bg-slate-950',
+                                'py-3 text-center text-[10px] font-extrabold uppercase tracking-tighter bg-white dark:bg-surface-deep',
                                 i === 6 ? 'text-red-400' : 'text-slate-400'
                             )}>
                                 {d}
@@ -382,7 +382,7 @@ export default function CalendarPage() {
                         {/* Day cells */}
                         {cells.map((day, i) => {
                             if (!day) {
-                                return <div key={`empty-${i}`} className="h-20 p-1.5 bg-white dark:bg-slate-950 opacity-20" />;
+                                return <div key={`empty-${i}`} className="h-20 p-1.5 bg-white dark:bg-surface-deep opacity-20" />;
                             }
                             return (
                                 <DayCell
@@ -437,7 +437,7 @@ export default function CalendarPage() {
                             return (
                                 <div className="space-y-2">
                                     {imgs.length > 0 && (
-                                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-sm">
+                                        <div className="bg-white dark:bg-surface rounded-2xl p-4 border border-gray-100 dark:border-slate-700 shadow-sm">
                                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">ẢNH NGÀY NÀY</p>
                                             <div className="flex flex-wrap gap-3">
                                                 {imgs.map((img) => {
@@ -452,7 +452,7 @@ export default function CalendarPage() {
                                                             />
                                                             {/* Category icon - bottom left */}
                                                             {imgCat && (
-                                                                <div className="absolute -bottom-1.5 -left-1.5 w-7 h-7 rounded-full bg-white dark:bg-slate-900 border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center z-10 overflow-hidden">
+                                                                <div className="absolute -bottom-1.5 -left-1.5 w-7 h-7 rounded-full bg-white dark:bg-surface border-2 border-white dark:border-slate-800 shadow-md flex items-center justify-center z-10 overflow-hidden">
                                                                     <CategoryIcon
                                                                         type={imgCat.catIconType || 'khac'}
                                                                         size={28}
@@ -491,7 +491,7 @@ export default function CalendarPage() {
                         })()}
 
                         {selectedDayTxs.length === 0 ? (
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center border border-dashed border-slate-200 dark:border-slate-700">
+                            <div className="bg-white dark:bg-surface rounded-2xl p-8 text-center border border-dashed border-slate-200 dark:border-slate-700">
                                 <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-2xl">
                                     📅
                                 </div>
@@ -508,7 +508,7 @@ export default function CalendarPage() {
                                 </button>
                             </div>
                         ) : (
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm divide-y divide-slate-50 dark:divide-slate-700/50 overflow-hidden">
+                            <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm divide-y divide-slate-50 dark:divide-slate-700/50 overflow-hidden">
                                 {selectedDayTxs.map((t: any) => {
                                     const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES[CATEGORIES.length - 1];
                                     const isIncome = t.type === 'income';
@@ -550,7 +550,7 @@ export default function CalendarPage() {
                         href="/goals"
                         className="bg-violet-50 dark:bg-violet-900/20 p-4 rounded-2xl space-y-3 border border-violet-100 dark:border-violet-900/30 hover:border-violet-200 active:scale-95 transition-all"
                     >
-                        <div className="w-9 h-9 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
+                        <div className="w-9 h-9 bg-white dark:bg-surface rounded-xl flex items-center justify-center shadow-sm">
                             <UtilityIcon type="target" size={20} tile={false} color="#A78BFA" />
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Mục tiêu</p>
@@ -575,7 +575,7 @@ export default function CalendarPage() {
 
                     <Link
                         href="/analytics"
-                        className="bg-white dark:bg-slate-800 p-4 rounded-2xl space-y-2 border border-gray-100 dark:border-slate-700 hover:border-emerald-200 active:scale-95 transition-all"
+                        className="bg-white dark:bg-surface p-4 rounded-2xl space-y-2 border border-gray-100 dark:border-slate-700 hover:border-emerald-200 active:scale-95 transition-all"
                     >
                         <div className="w-9 h-9 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center">
                             <UtilityIcon type="trendingUp" size={20} tile={false} color="#10B981" />

@@ -102,7 +102,7 @@ export default function SearchPage() {
     };
 
     return (
-        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
+        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">
             <PageHeader title="Tìm kiếm" backHref="/dashboard" />
 
             <div className="px-5 pt-2">
@@ -113,7 +113,7 @@ export default function SearchPage() {
                         value={query}
                         onChange={e => setQuery(e.target.value)}
                         placeholder="Tìm tính năng, giao dịch..."
-                        className="w-full h-12 pl-11 pr-10 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-slate-700 text-sm font-medium text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-300"
+                        className="w-full h-12 pl-11 pr-10 rounded-full bg-white dark:bg-surface shadow-sm border border-gray-100 dark:border-slate-700 text-sm font-medium text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-300"
                     />
                     {query && (
                         <button onClick={() => setQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -129,7 +129,7 @@ export default function SearchPage() {
                     {recentSearches.length > 0 && (
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2.5 px-1">Tìm kiếm gần đây</p>
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-700/50">
+                            <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-700/50">
                                 {recentSearches.map(term => (
                                     <div key={term} className="flex items-center gap-3 px-4 py-3">
                                         <UtilityIcon type="clock" size={16} tile={false} color="#94A3B8" className="flex-shrink-0" />
@@ -148,7 +148,7 @@ export default function SearchPage() {
                     {/* Suggested features */}
                     <div>
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2.5 px-1">Tính năng</p>
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-700/50">
+                        <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-700/50">
                             {FEATURES.map(f => (
                                 <button
                                     key={f.href}
@@ -171,7 +171,7 @@ export default function SearchPage() {
                     {featureResults.length > 0 && (
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2.5 px-1">Tính năng</p>
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-700/50">
+                            <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm overflow-hidden divide-y divide-gray-50 dark:divide-slate-700/50">
                                 {featureResults.map(f => (
                                     <button
                                         key={f.href}
@@ -207,7 +207,7 @@ export default function SearchPage() {
                                         <button
                                             key={t._id}
                                             onClick={() => handleSelect(t)}
-                                            className="w-full flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all px-4 py-3.5 text-left"
+                                            className="w-full flex items-center gap-3 bg-white dark:bg-surface rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all px-4 py-3.5 text-left"
                                         >
                                             <CategoryIcon
                                                 type={cat?.catIconType || 'khac'}

@@ -21,14 +21,14 @@ export default function DayActionSheet({ day, dateLabel, dateStr, onClose, onAdd
                 onClick={onClose}
             />
             <div className="fixed bottom-0 inset-x-0 z-50 flex justify-center animate-in slide-in-from-bottom duration-300">
-                <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden">
+                <div className="w-full max-w-md bg-white dark:bg-surface rounded-t-3xl shadow-2xl flex flex-col overflow-hidden">
                     {/* Handle */}
-                    <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-slate-900 z-10" onClick={onClose}>
+                    <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-surface z-10" onClick={onClose}>
                         <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
                     </button>
 
                     {/* Header */}
-                    <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center px-4 pb-2 shrink-0 bg-white dark:bg-surface z-10 border-b border-slate-100 dark:border-slate-800">
                         <h2 className="text-xl font-bold flex-1 text-center text-[#000000] dark:text-white">
                             Ngày {dateLabel}
                         </h2>

@@ -109,14 +109,14 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
             <div onClick={onClose} className="fixed inset-0 bg-black/50 z-[1100] backdrop-blur-sm" />
 
             {/* Sheet from bottom */}
-            <div className="fixed bottom-0 left-0 right-0 z-[1101] bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="fixed bottom-0 left-0 right-0 z-[1101] bg-white dark:bg-surface rounded-t-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
                 {/* Handle */}
-                <div className="flex justify-center pt-3 pb-1 shrink-0 bg-white dark:bg-slate-900 z-10">
+                <div className="flex justify-center pt-3 pb-1 shrink-0 bg-white dark:bg-surface z-10">
                     <div className="w-10 h-1 bg-gray-200 dark:bg-slate-700 rounded-full" />
                 </div>
 
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 pb-3 pt-1 shrink-0 bg-white dark:bg-slate-900 z-10 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between px-5 pb-3 pt-1 shrink-0 bg-white dark:bg-surface z-10 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-2">
                         <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
                             <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />
@@ -263,7 +263,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                                     {/* Amount input */}
                                     <div>
                                         <p className="text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">Số tiền thanh toán</p>
-                                        <div className="flex items-center gap-2 border-2 border-gray-200 dark:border-slate-700 focus-within:border-indigo-400 dark:focus-within:border-indigo-400 rounded-2xl px-4 py-3 transition-colors bg-white dark:bg-slate-900">
+                                        <div className="flex items-center gap-2 border-2 border-gray-200 dark:border-slate-700 focus-within:border-indigo-400 dark:focus-within:border-indigo-400 rounded-2xl px-4 py-3 transition-colors bg-white dark:bg-surface">
                                             <input
                                                 type="tel"
                                                 value={displayAmount}
@@ -298,7 +298,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                 </div>
                 {/* Footer fixed */}
                 {selectedCard && (
-                    <div className="shrink-0 w-full p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+                    <div className="shrink-0 w-full p-4 bg-white dark:bg-surface border-t border-slate-100 dark:border-slate-800">
                         {/* Pay button */}
                         <button
                             onClick={handlePay}

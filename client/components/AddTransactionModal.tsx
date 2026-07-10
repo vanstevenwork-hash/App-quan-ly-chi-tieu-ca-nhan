@@ -414,7 +414,7 @@ export default function AddTransactionModal({
                                     'flex items-center justify-between w-full rounded-xl p-3 border-2 transition-all',
                                     isInstallment
                                         ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20'
-                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
+                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface hover:border-slate-300 dark:hover:border-slate-600'
                                 )}
                             >
                                 <div className="flex items-center gap-2">
@@ -457,7 +457,7 @@ export default function AddTransactionModal({
                                                         'py-2 rounded-xl text-sm font-bold border-2 transition-all',
                                                         installmentMonths === m
                                                             ? 'border-[#7f19e6] bg-[#7f19e6] text-white shadow-md shadow-[#7f19e6]/30'
-                                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-[#7f19e6]/50'
+                                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-slate-600 dark:text-slate-400 hover:border-[#7f19e6]/50'
                                                     )}
                                                 >
                                                     {m}

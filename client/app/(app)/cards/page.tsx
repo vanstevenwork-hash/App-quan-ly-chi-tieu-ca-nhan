@@ -144,7 +144,7 @@ export default function CardsPage() {
     const handleAddNewCard = useCallback(() => { setEditCard(null); setShowForm(true); }, []);
 
     return (
-        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-slate-900 transition-colors duration-200">
+        <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">
             {/* Background gradient blob */}
             <div className="fixed top-0 left-0 w-full h-96 pointer-events-none z-0 dark:hidden"
                 style={{ background: 'linear-gradient(to bottom, rgba(199,210,254,0.4), transparent)' }} />
@@ -158,7 +158,7 @@ export default function CardsPage() {
                     subtitle="Tài chính"
                     rightActions={
                         <button onClick={refetchCards}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
+                            className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
                             <RefreshCw className="w-4 h-4" />
                             {paymentAlerts.length > 0 && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800" />
@@ -199,7 +199,7 @@ export default function CardsPage() {
 
                 {/* ── Quick actions ────────────────────────────── */}
                 <div className="px-5 mb-6">
-                    <div className="bg-white/70 dark:bg-slate-800/80 backdrop-blur-xl rounded-xl px-3.5 py-2.5 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
+                    <div className="bg-white/70 dark:bg-surface/80 backdrop-blur-xl rounded-xl px-3.5 py-2.5 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
                             { icon: <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />, label: 'Thanh toán', bg: '#EEF2FF', bgDark: '#312E81', onClick: () => setShowPayment(true) },
                             { icon: <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, label: 'Giao dịch', bg: '#D1FAE5', bgDark: '#064E3B', onClick: openAddModal },
@@ -243,7 +243,7 @@ export default function CardsPage() {
                             Quản lý
                         </button>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+                    <div className="bg-white dark:bg-surface rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
                         {/* Total cashback hero — two cols: monthly + yearly */}
                         <div className="grid grid-cols-2 border-b border-gray-100 dark:border-slate-700">
                             <div className="flex flex-col items-center justify-center p-4 border-r border-gray-100 dark:border-slate-700"
@@ -312,7 +312,7 @@ export default function CardsPage() {
                                 {installmentPlans.length} gói
                             </span>
                         </div>
-                        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700">
+                        <div className="bg-white dark:bg-surface rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700">
                             {installmentPlans.map(({ t, months, monthly, remaining, paid }) => {
                                 const paidPct = months > 0 ? Math.round((paid / months) * 100) : 0;
                                 return (
@@ -392,7 +392,7 @@ export default function CardsPage() {
                 return (
                     <>
                         <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setDeleteConfirmId(null)} />
-                        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 bg-white dark:bg-slate-800 rounded-t-3xl p-6 shadow-2xl">
+                        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-50 bg-white dark:bg-surface rounded-t-3xl p-6 shadow-2xl">
                             <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">

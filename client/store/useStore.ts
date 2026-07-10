@@ -12,6 +12,7 @@ interface User {
     email: string;
     avatar: string;
     currency: string;
+    language?: string;
 }
 
 interface AuthStore {
