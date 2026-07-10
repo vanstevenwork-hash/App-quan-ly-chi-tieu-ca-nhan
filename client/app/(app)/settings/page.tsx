@@ -1,4 +1,5 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Switch } from '@/components/ui/switch';
@@ -9,10 +10,6 @@ import { useAuthStore, useUIStore } from '@/store/useStore';
 import { useCashbackRecordStore } from '@/hooks/useCashbackRecords';
 import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
-import {
-    DollarSign, RefreshCw, BadgePercent, Landmark,
-    Globe, ScanFace, Download,
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
 import { authApi } from '@/lib/api';
@@ -40,8 +37,8 @@ const TILE_SHADOW = 'shadow-[0_1px_2px_rgba(17,12,46,0.04),0_8px_16px_-6px_rgba(
 const SHORTCUTS = [
     { href: '/notifications', label: 'Thông báo', isUtil: true, type: 'bell', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F59E0B' },
     { href: '/cards', label: 'Quản lý thẻ', isAction: true, type: 'creditCard', bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: '#6366F1' },
-    { href: '/cashback', label: 'Hoàn tiền', icon: BadgePercent, bg: 'bg-emerald-50 dark:bg-emerald-900/20', colorRaw: 'text-emerald-500' },
-    { href: '/wealth', label: 'Tài sản', icon: Landmark, bg: 'bg-purple-50 dark:bg-purple-900/20', colorRaw: 'text-purple-500' },
+    { href: '/cashback', label: 'Hoàn tiền', isUtil: true, type: 'hoanTien', bg: 'bg-emerald-50 dark:bg-emerald-900/20', color: '#10B981' },
+    { href: '/wealth', label: 'Tài sản', isUtil: true, type: 'landmark', bg: 'bg-purple-50 dark:bg-purple-900/20', color: '#8B5CF6' },
     { href: '/savings', label: 'Tiết kiệm', isUtil: true, type: 'soTietKiem', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F0A319' },
 ];
 
@@ -333,11 +330,9 @@ export default function SettingsPage() {
                                     item.bg
                                 )}>
                                     {item.isUtil ? (
-                                        <UtilityIcon type={item.type!} size={20} tile={false} color={item.color} />
-                                    ) : (item as any).isAction ? (
-                                        <ActionIcon type={(item as any).type!} size={20} tile={false} color={item.color} />
+                                        <UtilityIcon type={item.type} size={20} tile={false} color={item.color} />
                                     ) : (
-                                        item.icon && <item.icon className={cn('w-5 h-5', item.colorRaw)} />
+                                        <ActionIcon type={item.type} size={20} tile={false} color={item.color} />
                                     )}
                                 </div>
                                 <span className="text-[10px] font-semibold text-foreground leading-tight text-center w-full truncate">{item.label}</span>
@@ -362,13 +357,13 @@ export default function SettingsPage() {
                             }
                         />
                         <SettingItem
-                            icon={<DollarSign className="w-[18px] h-[18px]" />}
+                            icon={<CustomIcon type="dollarSign" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
                             label="Đơn vị tiền tệ"
                             value={`${currentCurrency.code} · ${currentCurrency.symbol}`}
                             onClick={() => setShowCurrencyDialog(true)}
                         />
                         <SettingItem
-                            icon={<Globe className="w-[18px] h-[18px]" />}
+                            icon={<CustomIcon type="globe" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
                             label="Ngôn ngữ"
                             value={currentLanguage.label}
                             onClick={() => setShowLanguageDialog(true)}
@@ -381,7 +376,7 @@ export default function SettingsPage() {
                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.15em] mb-2.5 px-1">Bảo mật</p>
                     <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50 border border-transparent dark:border-slate-800/60', CARD_SHADOW)}>
                         <SettingItem
-                            icon={<ScanFace className="w-[18px] h-[18px]" />}
+                            icon={<CustomIcon type="scanFace" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
                             label="Mở khóa bằng Face ID"
                             sublabel="Yêu cầu khi mở app"
                             right={<Switch checked={faceId} onCheckedChange={toggleFaceId} />}
@@ -406,14 +401,14 @@ export default function SettingsPage() {
                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.15em] mb-2.5 px-1">Dữ liệu</p>
                     <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50 border border-transparent dark:border-slate-800/60', CARD_SHADOW)}>
                         <SettingItem
-                            icon={<RefreshCw className={cn('w-[18px] h-[18px]', refreshing && 'animate-spin')} />}
+                            icon={<CustomIcon type="refreshCw" size={18} tile={false} color="currentColor" className={cn('w-[18px] h-[18px]', refreshing && 'animate-spin')} />}
                             label="Làm mới dữ liệu"
                             sublabel={lastSyncLabel}
                             onClick={handleRefreshData}
                             right={refreshing ? <ActionIcon type="loader" size={16} tile={false} spin /> : undefined}
                         />
                         <SettingItem
-                            icon={<Download className="w-[18px] h-[18px]" />}
+                            icon={<CustomIcon type="download" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
                             label="Xuất dữ liệu"
                             sublabel="Tải file CSV giao dịch"
                             onClick={handleExportData}

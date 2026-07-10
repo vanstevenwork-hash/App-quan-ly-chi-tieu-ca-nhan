@@ -6,7 +6,7 @@ import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { cn } from '@/lib/utils';
 import { useNotifications, type NotificationItem } from '@/hooks/useNotifications';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
-import { TYPE_MAP } from '@/components/NotificationPanel';
+import { TYPE_MAP, renderNotifIcon } from '@/components/NotificationPanel';
 
 const fmtFull = (n: number) => n.toLocaleString('vi-VN');
 
@@ -145,6 +145,8 @@ function NotificationsContent() {
             <div className="divide-y divide-gray-50 dark:divide-slate-800/50 pb-24">
                 {filtered.map((notif) => {
                     const meta = TYPE_MAP[notif.type] || TYPE_MAP.general;
+                    // Vector category icon for transaction notifs; stored emoji only as fallback
+                    const customIcon = renderNotifIcon(notif);
                     const icon = notif.icon || meta.icon;
                     const iconBg = notif.iconBg || meta.bg;
                     const isUnread = !notif.isRead;
@@ -157,10 +159,10 @@ function NotificationsContent() {
                             {/* Icon */}
                             <div className="relative flex-shrink-0">
                                 <div
-                                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
-                                    style={{ backgroundColor: iconBg }}
+                                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl overflow-hidden"
+                                    style={customIcon ? undefined : { backgroundColor: iconBg }}
                                 >
-                                    {icon}
+                                    {customIcon ?? icon}
                                 </div>
                                 {isUnread && (
                                     <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white dark:border-slate-950" />

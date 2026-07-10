@@ -1,6 +1,6 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Plus, RefreshCw } from 'lucide-react';
 import { useGoals, type Goal } from '@/hooks/useGoals';
 import GoalFormModal from '@/components/GoalFormModal';
 import GoalContributeModal from '@/components/GoalContributeModal';
@@ -116,7 +116,7 @@ export default function GoalsPage() {
                     subtitle="Theo dõi"
                     rightActions={
                         <button onClick={refetch} className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all">
-                            <RefreshCw className="w-4 h-4" />
+                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                         </button>
                     }
                 />
@@ -151,7 +151,7 @@ export default function GoalsPage() {
                 onClick={() => { setEditGoal(null); setShowForm(true); }}
                 className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(108,99,255,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
                 style={{ background: 'linear-gradient(135deg, #6C63FF, #8B5CF6)' }}>
-                <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
+                <CustomIcon type="plus" size={28} tile={false} color="currentColor" className="w-7 h-7 text-white" />
             </button>
 
             {/* ── Delete Confirm ────────────────────────────────── */}

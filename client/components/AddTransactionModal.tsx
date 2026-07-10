@@ -1,4 +1,5 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES } from '@/lib/mockData';
@@ -8,7 +9,6 @@ import { useCards } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
-import { ArrowRight, RefreshCw, ScanLine } from 'lucide-react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { getBankLogo } from '@/lib/bankLogos';
 import PaymentCard from './cards/PaymentCard';
@@ -422,7 +422,7 @@ export default function AddTransactionModal({
                                         'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
                                         isInstallment ? 'bg-[#7f19e6] text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                     )}>
-                                        <RefreshCw className="w-4 h-4" />
+                                        <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                                     </div>
                                     <div className="text-left">
                                         <p className={cn('text-sm font-bold', isInstallment ? 'text-[#7f19e6]' : 'text-slate-700 dark:text-slate-300')}>
@@ -564,7 +564,7 @@ export default function AddTransactionModal({
                             <button onClick={() => setShowScanner(true)}
                                 className="w-full relative overflow-hidden flex items-center justify-center h-12 gap-1.5 rounded-xl border border-[#7f19e6]/50 dark:border-[#7f19e6]/70 bg-transparent hover:bg-[#7f19e6]/10 shadow-[0_0_15px_rgba(127,25,230,0.2)] dark:shadow-[0_0_15px_rgba(127,25,230,0.3)] hover:shadow-[0_0_20px_rgba(127,25,230,0.4)] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 text-[#000000] dark:text-white font-bold text-sm group">
                                 <div className="absolute inset-0 w-1/4 h-full bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent -skew-x-12 -translate-x-24 group-hover:animate-[shimmer_1s_ease-in-out_infinite]" />
-                                <ScanLine className="w-4 h-4 text-[#7f19e6] dark:text-purple-400 group-hover:scale-110 transition-transform duration-300" />
+                                <CustomIcon type="scanLine" size={16} tile={false} color="currentColor" className="w-4 h-4 text-[#7f19e6] dark:text-purple-400 group-hover:scale-110 transition-transform duration-300" />
                                 <span>Quét Bill</span>
                             </button>
                             <span className="text-[10px] text-slate-400 mt-1 whitespace-nowrap">Quét mã QR / hóa đơn</span>
@@ -575,7 +575,7 @@ export default function AddTransactionModal({
                             <button onClick={handleSave} disabled={saving}
                                 className="w-full max-w-[160px] flex items-center justify-center h-12 gap-1.5 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span>{saving ? 'Đang lưu...' : (initialData ? 'Cập nhật' : 'Thêm')}</span>
-                                <ArrowRight className="w-4 h-4" />
+                                <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                             </button>
                         </div>
                     </div>

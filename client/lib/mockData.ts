@@ -1,8 +1,3 @@
-import type { LucideIcon } from 'lucide-react';
-import {
-    UtensilsCrossed, ShoppingBag, Car, Gamepad2, Pill, BookOpen, Receipt,
-    CreditCard, Bitcoin, Banknote, Laptop, TrendingUp, Gift, Landmark, Package,
-} from 'lucide-react';
 import { CATEGORY_LABEL_TO_TYPE } from '@/components/icons/CategoryIcon';
 
 // Mock data for UI preview when not connected to backend
@@ -57,25 +52,24 @@ export const mockCategoryBreakdown = [
     { _id: 'Khác', total: 460000, count: 8, color: '#6B7280' },
 ];
 
-// `icon` (emoji) stays for the many existing call sites that render it as
-// plain text; `Icon` (lucide component) is the newer vector-icon look, opted
-// into per-view rather than swapped in everywhere at once.
-export const CATEGORIES: { id: string; label: string; icon: string; color: string; Icon: LucideIcon; catIconType: string }[] = [
-    { id: 'food',        label: 'Ăn uống',           icon: '🍜', color: '#F59E0B', Icon: UtensilsCrossed, catIconType: 'anUong' },
-    { id: 'shopping',   label: 'Mua sắm',           icon: '🛍️', color: '#8B5CF6', Icon: ShoppingBag,    catIconType: 'muaSam' },
-    { id: 'transport',  label: 'Di chuyển',         icon: '🚗', color: '#3B82F6', Icon: Car,           catIconType: 'diChuyen' },
-    { id: 'entertainment', label: 'Giải trí',       icon: '🎮', color: '#EC4899', Icon: Gamepad2,      catIconType: 'giaiTri' },
-    { id: 'health',     label: 'Sức khỏe',          icon: '💊', color: '#10B981', Icon: Pill,          catIconType: 'sucKhoe' },
-    { id: 'education',  label: 'Học tập',           icon: '📚', color: '#F97316', Icon: BookOpen,      catIconType: 'hocTap' },
-    { id: 'bills',      label: 'Hóa đơn',           icon: '💡', color: '#EF4444', Icon: Receipt,      catIconType: 'hoaDon' },
-    { id: 'credit-pay', label: 'Trả thẻ tín dụng', icon: '💳', color: '#DC2626', Icon: CreditCard,   catIconType: 'traTheTinDung' },
-    { id: 'crypto',     label: 'Crypto',            icon: '₿',    color: '#F7931A', Icon: Bitcoin,      catIconType: 'crypto' },
-    { id: 'salary',     label: 'Lương',             icon: '💰', color: '#22C55E', Icon: Banknote,     catIconType: 'luong' },
-    { id: 'freelance',  label: 'Freelance',         icon: '💻', color: '#06B6D4', Icon: Laptop,       catIconType: 'freelance' },
-    { id: 'investment', label: 'Đầu tư',            icon: '📈', color: '#6C63FF', Icon: TrendingUp,   catIconType: 'dauTu' },
-    { id: 'bonus',      label: 'Thưởng',            icon: '🎁', color: '#A855F7', Icon: Gift,         catIconType: 'thuong' },
-    { id: 'interest',   label: 'Tiền lãi',          icon: '🏦', color: '#14B8A6', Icon: Landmark,    catIconType: 'tienLai' },
-    { id: 'other',      label: 'Khác',              icon: '📦', color: '#6B7280', Icon: Package,     catIconType: 'khac' },
+// `icon` (emoji) stays for the call sites that render it as plain text;
+// `catIconType` is the CustomIcon glyph key — the vector-icon look used everywhere else.
+export const CATEGORIES: { id: string; label: string; icon: string; color: string; catIconType: string }[] = [
+    { id: 'food',        label: 'Ăn uống',           icon: '🍜', color: '#F59E0B', catIconType: 'anUong' },
+    { id: 'shopping',   label: 'Mua sắm',           icon: '🛍️', color: '#8B5CF6', catIconType: 'muaSam' },
+    { id: 'transport',  label: 'Di chuyển',         icon: '🚗', color: '#3B82F6', catIconType: 'diChuyen' },
+    { id: 'entertainment', label: 'Giải trí',       icon: '🎮', color: '#EC4899', catIconType: 'giaiTri' },
+    { id: 'health',     label: 'Sức khỏe',          icon: '💊', color: '#10B981', catIconType: 'sucKhoe' },
+    { id: 'education',  label: 'Học tập',           icon: '📚', color: '#F97316', catIconType: 'hocTap' },
+    { id: 'bills',      label: 'Hóa đơn',           icon: '💡', color: '#EF4444', catIconType: 'hoaDon' },
+    { id: 'credit-pay', label: 'Trả thẻ tín dụng', icon: '💳', color: '#DC2626', catIconType: 'traTheTinDung' },
+    { id: 'crypto',     label: 'Crypto',            icon: '₿',    color: '#F7931A', catIconType: 'crypto' },
+    { id: 'salary',     label: 'Lương',             icon: '💰', color: '#22C55E', catIconType: 'luong' },
+    { id: 'freelance',  label: 'Freelance',         icon: '💻', color: '#06B6D4', catIconType: 'freelance' },
+    { id: 'investment', label: 'Đầu tư',            icon: '📈', color: '#6C63FF', catIconType: 'dauTu' },
+    { id: 'bonus',      label: 'Thưởng',            icon: '🎁', color: '#A855F7', catIconType: 'thuong' },
+    { id: 'interest',   label: 'Tiền lãi',          icon: '🏦', color: '#14B8A6', catIconType: 'tienLai' },
+    { id: 'other',      label: 'Khác',              icon: '📦', color: '#6B7280', catIconType: 'khac' },
 ];
 
 // O(1) lookup by category label — avoids CATEGORIES.find(...) inside render loops

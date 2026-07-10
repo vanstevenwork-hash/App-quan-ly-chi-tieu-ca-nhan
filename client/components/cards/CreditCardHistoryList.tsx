@@ -1,6 +1,6 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { memo, useMemo, useState } from 'react';
-import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
@@ -61,8 +61,8 @@ function CreditCardHistoryListBase({ transactions, cards }: CreditCardHistoryLis
                                     : 'bg-emerald-50 dark:bg-emerald-900/30'
                             )}>
                                 {isExpense
-                                    ? <ArrowUpRight className="w-4 h-4 text-red-500" />
-                                    : <ArrowDownLeft className="w-4 h-4 text-emerald-600" />}
+                                    ? <CustomIcon type="arrowUpRight" size={16} tile={false} color="currentColor" className="w-4 h-4 text-red-500" />
+                                    : <CustomIcon type="arrowDownLeft" size={16} tile={false} color="currentColor" className="w-4 h-4 text-emerald-600" />}
                             </div>
 
                             {/* Info */}

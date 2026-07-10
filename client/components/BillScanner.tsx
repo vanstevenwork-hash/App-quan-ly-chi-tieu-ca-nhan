@@ -1,6 +1,6 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { AlertCircle, RotateCcw, ScanLine, Receipt, FileText, Sparkles } from 'lucide-react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import { ocrApi } from '@/lib/api';
@@ -146,7 +146,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7f19e6] to-[#b44dff] flex items-center justify-center shadow-lg shadow-purple-500/25">
-                            <ScanLine className="w-5 h-5 text-white" />
+                            <CustomIcon type="scanLine" size={20} tile={false} color="currentColor" className="w-5 h-5 text-white" />
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-slate-800 dark:text-white">Scan Bill</h3>
@@ -173,7 +173,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 >
                     <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/30 dark:to-slate-800 flex items-center justify-center">
-                            <Receipt className="w-8 h-8 text-[#7f19e6]" />
+                            <CustomIcon type="receipt" size={32} tile={false} color="currentColor" className="w-8 h-8 text-[#7f19e6]" />
                         </div>
                         <div>
                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -223,7 +223,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
 
                 {/* Tip */}
                 <div className="flex items-start gap-2 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30 p-3">
-                    <Sparkles className="w-4 h-4 text-[#7f19e6] mt-0.5 flex-shrink-0" />
+                    <CustomIcon type="sparkles" size={16} tile={false} color="currentColor" className="w-4 h-4 text-[#7f19e6] mt-0.5 flex-shrink-0" />
                     <p className="text-[11px] text-purple-700 dark:text-purple-300 leading-relaxed">
                         <span className="font-bold">Mẹo:</span> Chụp rõ nét phần <span className="font-bold">tổng tiền</span> trên bill để tăng độ chính xác. Hỗ trợ bill siêu thị, nhà hàng, cửa hàng...
                     </p>
@@ -244,7 +244,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                         ) : result ? (
                             <ActionIcon type="check" size={20} tile={false} color="#FFFFFF" />
                         ) : (
-                            <ScanLine className="w-5 h-5 text-white" />
+                            <CustomIcon type="scanLine" size={20} tile={false} color="currentColor" className="w-5 h-5 text-white" />
                         )}
                     </div>
                     <div>
@@ -298,7 +298,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 {/* Error overlay */}
                 {error && (
                     <div className="absolute inset-0 bg-red-500/10 backdrop-blur-sm flex flex-col items-center justify-center gap-2 p-4">
-                        <AlertCircle className="w-10 h-10 text-red-500" />
+                        <CustomIcon type="alertCircle" size={40} tile={false} color="currentColor" className="w-10 h-10 text-red-500" />
                         <p className="text-sm text-red-600 dark:text-red-400 text-center font-medium">{error}</p>
                     </div>
                 )}
@@ -381,7 +381,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                     onClick={reset}
                     className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.97] transition-all"
                 >
-                    <RotateCcw className="w-4 h-4" />
+                    <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                     <span>Chụp lại</span>
                 </button>
                 {result && (

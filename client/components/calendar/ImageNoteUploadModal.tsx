@@ -125,7 +125,7 @@ function ImageNoteUploadModalBase(
                                                     : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
                                             )}
                                         >
-                                            <cat.Icon className="w-3.5 h-3.5" />
+                                            <ActionIcon type={cat.catIconType} size={14} tile={false} color={uploadCategory === cat.label ? cat.color : 'currentColor'} />
                                             {cat.label}
                                         </button>
                                     ))}

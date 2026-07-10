@@ -45,18 +45,18 @@ function ProgressRing({ pct, color, icon }: { pct: number; color: string; icon: 
     const r = 42;
     const C = 2 * Math.PI * r;
     return (
-        <div className="relative w-[92px] h-[92px] flex-shrink-0">
+        <div className="relative w-[66px] h-[66px] flex-shrink-0">
             <svg viewBox="0 0 96 96" className="w-full h-full -rotate-90">
                 <circle cx="48" cy="48" r={r} strokeWidth="7" fill="none" className="stroke-slate-100 dark:stroke-slate-800" />
                 <circle cx="48" cy="48" r={r} strokeWidth="7" fill="none" stroke={color} strokeLinecap="round"
                     strokeDasharray={C} strokeDashoffset={C * (1 - Math.min(100, pct) / 100)}
                     className="transition-all duration-700 ease-out" />
             </svg>
-            <div className="absolute inset-[11px] rounded-full flex items-center justify-center text-[30px]"
+            <div className="absolute inset-[8px] rounded-full flex items-center justify-center text-[21px]"
                 style={{ backgroundColor: `${color}1A` }}>
                 {icon}
             </div>
-            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-[3px] rounded-full text-[11px] font-bold text-white shadow-md"
+            <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-[2px] rounded-full text-[10px] font-bold text-white shadow-md"
                 style={{ backgroundColor: color }}>
                 {pct}%
             </span>
@@ -123,27 +123,27 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
     const insight = buildInsight(goal, remaining, monthsRemain);
 
     return (
-        <div className="relative bg-white dark:bg-surface rounded-[24px] border border-gray-100 dark:border-slate-800 shadow-sm p-5">
+        <div className="relative bg-white dark:bg-surface rounded-[20px] border border-gray-100 dark:border-slate-800 shadow-sm p-4">
             <Confetti active={pct >= 100} />
 
             {/* ⋯ menu */}
-            <div className="absolute top-4 right-4 z-20">
+            <div className="absolute top-3 right-3 z-20">
                 <button onClick={() => setMenuOpen(v => !v)}
-                    className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700/60 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                    <UtilityIcon type="moreHorizontal" size={18} tile={false} color="currentColor" />
+                    className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700/60 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                    <UtilityIcon type="moreHorizontal" size={15} tile={false} color="currentColor" />
                 </button>
                 {menuOpen && (
                     <>
                         <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                        <div className="absolute right-0 top-11 z-20 w-40 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xl overflow-hidden">
+                        <div className="absolute right-0 top-9 z-20 w-40 rounded-xl bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 shadow-xl overflow-hidden">
                             {!isCompleted && (
                                 <button onClick={() => { setMenuOpen(false); onEdit(); }}
-                                    className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5">
+                                    className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5">
                                     <CustomIcon type="pencil" size={14} tile={false} color="#8B5CF6" /> Chỉnh sửa
                                 </button>
                             )}
                             <button onClick={() => { setMenuOpen(false); onDelete(); }}
-                                className="w-full px-4 py-3 text-left text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5">
+                                className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5">
                                 <CustomIcon type="trash" size={14} tile={false} color="#EF4444" /> Xóa mục tiêu
                             </button>
                         </div>
@@ -152,12 +152,12 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
             </div>
 
             {/* Ring + title + deadline */}
-            <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-3 mb-3">
                 <ProgressRing pct={pct} color={goal.color} icon={goal.icon} />
-                <div className="min-w-0 flex-1 pr-10">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white truncate">{goal.name}</h3>
+                <div className="min-w-0 flex-1 pr-8">
+                    <h3 className="text-[16px] font-bold text-slate-900 dark:text-white truncate">{goal.name}</h3>
                     {deadlineDate ? (
-                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1.5 font-medium">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-medium">
                             📅 Hạn chót{' '}
                             <span className="font-bold text-amber-500 dark:text-amber-400">
                                 T{deadlineDate.getMonth() + 1}/{deadlineDate.getFullYear()}
@@ -165,24 +165,23 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
                             {monthsRemain !== null && monthsRemain > 0 && !isCompleted && <> · còn {monthsRemain} tháng</>}
                         </p>
                     ) : goal.description ? (
-                        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1.5 truncate">{goal.description}</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">{goal.description}</p>
                     ) : null}
+                    {/* Amount — sits beside the ring to save a full row */}
+                    <p className="text-[20px] font-bold text-slate-900 dark:text-white leading-none tabular-nums mt-1.5">
+                        {fmtViShort(goal.currentAmount)}
+                        <span className="text-[13px] text-slate-400 dark:text-slate-500 font-semibold"> / {fmtViShort(goal.targetAmount)}</span>
+                    </p>
                 </div>
             </div>
 
-            {/* Amount */}
-            <p className="text-[30px] font-bold text-slate-900 dark:text-white leading-none tabular-nums">
-                {fmtViShort(goal.currentAmount)}
-                <span className="text-lg text-slate-400 dark:text-slate-500 font-semibold"> / {fmtViShort(goal.targetAmount)}</span>
-            </p>
-
             {/* Progress bar + scale marks */}
-            <div className="mt-3.5">
-                <div className="h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div>
+                <div className="h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700 ease-out"
                         style={{ width: `${pct}%`, backgroundColor: goal.color }} />
                 </div>
-                <div className="flex justify-between mt-1.5 text-[10px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
+                <div className="flex justify-between mt-1 text-[9px] font-medium text-slate-400 dark:text-slate-500 tabular-nums">
                     {[0, 0.25, 0.5, 0.75, 1].map(f => (
                         <span key={f}>{f === 0 ? '0' : fmtViShort(goal.targetAmount * f)}</span>
                     ))}
@@ -191,30 +190,30 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
 
             {/* Pace insight */}
             {insight && (
-                <div className="mt-4 flex items-start gap-3 rounded-2xl p-4 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
-                    <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                        <UtilityIcon type="sparkles" size={16} tile={false} color="#8B5CF6" />
+                <div className="mt-3 flex items-start gap-2.5 rounded-xl p-3 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                        <UtilityIcon type="sparkles" size={13} tile={false} color="#8B5CF6" />
                     </div>
-                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{insight}</p>
+                    <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">{insight}</p>
                 </div>
             )}
 
             {/* Actions */}
             {!isCompleted ? (
-                <div className="mt-4 flex gap-3">
+                <div className="mt-3 flex gap-2.5">
                     <button onClick={onContribute}
-                        className="flex-1 py-3.5 rounded-2xl text-white text-[15px] font-bold flex items-center justify-center gap-2 bg-gradient-to-r from-[#8B7CF6] to-[#6C63FF] shadow-lg shadow-[#6C63FF]/25 active:scale-[0.98] transition-all">
-                        <CustomIcon type="plus" size={16} tile={false} color="#FFFFFF" />
+                        className="flex-1 py-2.5 rounded-xl text-white text-[13px] font-bold flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#8B7CF6] to-[#6C63FF] shadow-md shadow-[#6C63FF]/25 active:scale-[0.98] transition-all">
+                        <CustomIcon type="plus" size={14} tile={false} color="#FFFFFF" />
                         Góp tiền vào mục tiêu
                     </button>
                     <button onClick={onEdit}
-                        className="px-5 py-3.5 rounded-2xl text-[15px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.98] transition-all">
+                        className="px-4 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.98] transition-all">
                         {goal.autoSaveAmount ? `Tự động: ${fmtViShort(goal.autoSaveAmount)}` : 'Góp tự động'}
                     </button>
                 </div>
             ) : (
-                <div className="mt-4 flex items-center justify-center gap-2 py-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[15px] font-bold">
-                    <CustomIcon type="checkCircle2" size={18} tile={false} color="#10B981" />
+                <div className="mt-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[13px] font-bold">
+                    <CustomIcon type="checkCircle2" size={16} tile={false} color="#10B981" />
                     Đã hoàn thành! 🎉
                 </div>
             )}
@@ -301,7 +300,7 @@ function GoalsListBase({ loading, hasGoals, filtered, onAdd, onContribute, onEdi
             {loading && (
                 <div className="space-y-4">
                     {[1, 2].map(i => (
-                        <div key={i} className="h-64 rounded-[24px] bg-gray-100 dark:bg-surface animate-pulse" />
+                        <div key={i} className="h-48 rounded-[20px] bg-gray-100 dark:bg-surface animate-pulse" />
                     ))}
                 </div>
             )}

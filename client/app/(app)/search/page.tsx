@@ -1,7 +1,7 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, X, ChevronRight, Package } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
@@ -107,7 +107,7 @@ export default function SearchPage() {
 
             <div className="px-5 pt-2">
                 <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <CustomIcon type="search" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                         autoFocus
                         value={query}
@@ -117,7 +117,7 @@ export default function SearchPage() {
                     />
                     {query && (
                         <button onClick={() => setQuery('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                            <X className="w-4 h-4" />
+                            <CustomIcon type="x" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                         </button>
                     )}
                 </div>
@@ -137,7 +137,7 @@ export default function SearchPage() {
                                             {term}
                                         </button>
                                         <button onClick={() => removeRecentSearch(term)} className="text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 flex-shrink-0">
-                                            <X className="w-3.5 h-3.5" />
+                                            <CustomIcon type="x" size={14} tile={false} color="currentColor" className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
                                 ))}
@@ -159,7 +159,7 @@ export default function SearchPage() {
                                         {f.icon}
                                     </div>
                                     <span className="flex-1 min-w-0 text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{f.label}</span>
-                                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                                    <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
                                 </button>
                             ))}
                         </div>
@@ -182,7 +182,7 @@ export default function SearchPage() {
                                             {f.icon}
                                         </div>
                                         <span className="flex-1 min-w-0 text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{f.label}</span>
-                                        <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
                                     </button>
                                 ))}
                             </div>

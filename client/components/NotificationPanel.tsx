@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { CustomIcon, CATEGORY_LABEL_TO_TYPE, CATEGORY_ICON_MAP } from '@/components/icons/CustomIcon';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronLeft, Settings, History, ChevronRight } from 'lucide-react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,31 @@ export const TYPE_MAP: Record<string, { icon: string; bg: string }> = {
     general: { icon: '📢', bg: '#F8FAFC' },
     promo: { icon: '🎁', bg: '#FFF1F2' },
 };
+
+// Transaction notifications carry "«Danh mục»: 200.000đ…" in the message —
+// parse the category out and show its real vector icon instead of the stored 💸 emoji.
+const TX_NOTIF_TYPES = ['transaction', 'transaction_expense', 'transaction_income', 'payment'];
+
+export function renderNotifIcon(n: any, size = 22): ReactNode | null {
+    const isTx = TX_NOTIF_TYPES.includes(n?.type) || /giao dịch/i.test(n?.title || '');
+    if (!isTx) return null;
+    const catType = CATEGORY_LABEL_TO_TYPE[(n?.message || '').split(':')[0].trim()];
+    if (catType) {
+        const color = CATEGORY_ICON_MAP[catType]?.color || '#6C63FF';
+        return (
+            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${color}1F` }}>
+                <CustomIcon type={catType} size={size} tile={false} />
+            </div>
+        );
+    }
+    const isIncome = n?.type === 'transaction_income' || /thu nhập|nhận/i.test(n?.title || '');
+    const color = isIncome ? '#10B981' : '#EF4444';
+    return (
+        <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: `${color}1F` }}>
+            <CustomIcon type={isIncome ? 'arrowDownLeft' : 'arrowUpRight'} size={size - 4} tile={false} color={color} />
+        </div>
+    );
+}
 
 type PanelTab = 'important' | 'promo' | 'transaction' | 'reminder';
 
@@ -82,8 +107,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
     const [selectedNotification, setSelectedNotification] = useState<any>(null);
     const [viewMode, setViewMode] = useState<'notifications' | 'balance_history'>('notifications');
     const router = useRouter();
-    const { Search, Filter, AlignJustify } = require('lucide-react');
-
+    
     const getMatchingLogo = (text?: string) => {
         if (!text) return null;
         const lower = text.toLowerCase();
@@ -134,9 +158,11 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                             <img src={matchLogo} alt="bank" className="w-full h-full object-contain" />
                                         </div>
                                     ) : (
-                                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: meta.bg || '#F8FAFC' }}>
-                                            {n.icon || meta.icon}
-                                        </div>
+                                        renderNotifIcon(n) ?? (
+                                            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: meta.bg || '#F8FAFC' }}>
+                                                {n.icon || meta.icon}
+                                            </div>
+                                        )
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -191,8 +217,10 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                 const getHistoryIcon = (n: any) => {
                     const matchLogo = getMatchingLogo(n.title) || getMatchingLogo(n.message);
                     if (matchLogo) return <div className="w-full h-full p-2.5 rounded-full bg-white"><img src={matchLogo} alt="bank" className="w-full h-full object-contain" /></div>;
+                    const catType = CATEGORY_LABEL_TO_TYPE[(n?.message || '').split(':')[0].trim()];
+                    if (catType) return <CustomIcon type={catType} size={22} tile={false} />;
                     if (n.type === 'transaction_income') return <ActionIcon type="plus" size={20} tile={false} color="#10B981" />;
-                    if (n.title?.toLowerCase().includes('lãi')) return <AlignJustify className="w-5 h-5 text-gray-400" />;
+                    if (n.title?.toLowerCase().includes('lãi')) return <CustomIcon type="alignJustify" size={20} tile={false} color="currentColor" className="w-5 h-5 text-gray-400" />;
                     if (n.title?.toLowerCase().includes('thẻ tín dụng')) return <ActionIcon type="creditCard" size={20} tile={false} color="#94A3B8" />;
                     return <UtilityIcon type="wallet" size={20} tile={false} color="#94A3B8" />;
                 };
@@ -210,10 +238,10 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                 <h2 className="text-[19px] font-bold text-[#1E293B] dark:text-white">Lịch sử</h2>
                                 <div className="flex items-center gap-1">
                                     <button className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                                        <Search className="w-[22px] h-[22px] text-[#475569] dark:text-slate-400" />
+                                        <CustomIcon type="search" size={22} tile={false} color="currentColor" className="w-[22px] h-[22px] text-[#475569] dark:text-slate-400" />
                                     </button>
                                     <button className="p-2 -mr-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-                                        <Filter className="w-[22px] h-[22px] text-[#475569] dark:text-slate-400" />
+                                        <CustomIcon type="filter" size={22} tile={false} color="currentColor" className="w-[22px] h-[22px] text-[#475569] dark:text-slate-400" />
                                     </button>
                                 </div>
                             </div>
@@ -227,7 +255,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                         {loading && <div className="p-8 text-center text-gray-400 dark:text-slate-500 text-sm">Đang tải...</div>}
                         {!loading && hFiltered.length === 0 && (
                             <div className="flex flex-col items-center justify-center gap-3 p-10 mt-10">
-                                <History className="w-12 h-12 text-gray-200 dark:text-slate-700" />
+                                <CustomIcon type="history" size={48} tile={false} color="currentColor" className="w-12 h-12 text-gray-200 dark:text-slate-700" />
                                 <p className="text-gray-400 dark:text-slate-500 text-sm">Không có giao dịch nào</p>
                             </div>
                         )}
@@ -388,7 +416,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                             {(() => {
                                 const matchLogo = getMatchingLogo(selectedNotification.title) || getMatchingLogo(selectedNotification.message);
                                 if (matchLogo) return <div className="w-full h-full p-3 bg-white"><img src={matchLogo} alt="bank" className="w-full h-full object-contain" /></div>;
-                                return selectedNotification.icon || TYPE_MAP[selectedNotification.type]?.icon || '🔔';
+                                return renderNotifIcon(selectedNotification, 36) ?? selectedNotification.icon ?? TYPE_MAP[selectedNotification.type]?.icon ?? '🔔';
                             })()}
                         </div>
                         <h3 className="text-center text-[18px] font-bold text-gray-900 dark:text-white mb-2">{selectedNotification.title}</h3>

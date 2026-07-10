@@ -1,9 +1,6 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useMemo, useCallback, useState } from 'react';
-import {
-    Bell, Plus, Eye, EyeOff,
-    ChevronRight, Search, ScanLine,
-} from 'lucide-react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
@@ -161,19 +158,19 @@ export default function DashboardPage() {
                         href="/search"
                         className="w-10 h-10 bg-white dark:bg-surface rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
-                        <Search className="w-[18px] h-[18px]" />
+                        <CustomIcon type="search" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />
                     </Link>
                     <button
                         onClick={() => { setAddType('expense'); setAutoOpenScanner(true); openAddModal(); }}
                         className="w-10 h-10 bg-white dark:bg-surface rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
-                        <ScanLine className="w-[18px] h-[18px]" />
+                        <CustomIcon type="scanLine" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />
                     </button>
                     <button
                         onClick={() => { setNotiTab(undefined); setShowNoti(true); }}
                         className="w-10 h-10 bg-white dark:bg-surface rounded-full border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-center relative text-slate-500 dark:text-slate-400 hover:border-purple-200 transition-colors active:scale-90"
                     >
-                        <Bell className="w-[18px] h-[18px]" />
+                        <CustomIcon type="bell" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />
                         {unreadCount > 0 && (
                             <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-400 rounded-full border-2 border-white dark:border-slate-800 animate-pulse" />
                         )}
@@ -221,7 +218,7 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-1.5">
                                 <Link href="/wealth" className="text-slate-500 dark:text-slate-300 text-sm font-medium hover:text-purple-500 dark:hover:text-white transition-colors">Tài sản ròng</Link>
                                 <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
-                                    {hideBalance ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    {hideBalance ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" className="w-4 h-4" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" className="w-4 h-4" />}
                                 </button>
                             </div>
 
@@ -273,12 +270,12 @@ export default function DashboardPage() {
                                     : 'Chưa có sổ nào'}
                             </p>
                         </div>
-                        <ChevronRight className="anim-arrow-d1 w-4 h-4 text-purple-400 flex-shrink-0" />
+                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d1 w-4 h-4 text-purple-400 flex-shrink-0" />
                     </Link>
                     <Link href="/cards"
                         className="bg-white dark:bg-surface rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-500/40 hover:shadow-md transition-all active:scale-95 group">
                         {/* <div className="w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                            <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-300" />
+                            <CustomIcon type="creditCard" size={20} tile={false} color="currentColor" className="w-5 h-5 text-blue-600 dark:text-blue-300" />
                         </div> */}
                         <div className="flex-1 min-w-0">
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
@@ -291,7 +288,7 @@ export default function DashboardPage() {
                                     : 'Chưa có thẻ nào'}
                             </p>
                         </div>
-                        <ChevronRight className="anim-arrow-d2 w-4 h-4 text-purple-400 flex-shrink-0" />
+                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d2 w-4 h-4 text-purple-400 flex-shrink-0" />
                     </Link>
                 </div>
 
@@ -323,7 +320,7 @@ export default function DashboardPage() {
                 className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all duration-200"
                 style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
             >
-                <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
+                <CustomIcon type="plus" size={28} tile={false} color="currentColor" className="w-7 h-7 text-white" />
             </button>
 
             {/* ── Modals ───────────────────────────────────────────── */}

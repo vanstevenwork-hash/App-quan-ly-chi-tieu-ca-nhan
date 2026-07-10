@@ -1,10 +1,6 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo } from 'react';
-import {
-    Plus, RefreshCw, Trash2, Pencil, Star, MoreHorizontal, Info,
-    AlertTriangle, CreditCard,
-    Bitcoin, ChevronRight, ChevronDown, BadgeCheck,
-} from 'lucide-react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
@@ -68,7 +64,7 @@ function CardMenu({ onEdit, onDelete, onSetDefault, onViewDetail, isDefault }: {
         <div className="relative">
             <button onClick={() => setOpen(v => !v)}
                 className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition">
-                <MoreHorizontal className="w-3.5 h-3.5 text-white" />
+                <CustomIcon type="moreHorizontal" size={14} tile={false} color="currentColor" className="w-3.5 h-3.5 text-white" />
             </button>
             {open && (
                 <>
@@ -77,22 +73,22 @@ function CardMenu({ onEdit, onDelete, onSetDefault, onViewDetail, isDefault }: {
                         {onViewDetail && (
                             <button onClick={() => { setOpen(false); onViewDetail(); }}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-                                <Info className="w-4 h-4 text-purple-500" /> Chi tiết
+                                <CustomIcon type="info" size={16} tile={false} color="currentColor" className="w-4 h-4 text-purple-500" /> Chi tiết
                             </button>
                         )}
                         {!isDefault && (
                             <button onClick={() => { setOpen(false); onSetDefault(); }}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-                                <Star className="w-4 h-4 text-yellow-500" /> Đặt mặc định
+                                <CustomIcon type="star" size={16} tile={false} color="currentColor" className="w-4 h-4 text-yellow-500" /> Đặt mặc định
                             </button>
                         )}
                         <button onClick={() => { setOpen(false); onEdit(); }}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-                            <Pencil className="w-4 h-4 text-indigo-500" /> Chỉnh sửa
+                            <CustomIcon type="pencil" size={16} tile={false} color="currentColor" className="w-4 h-4 text-indigo-500" /> Chỉnh sửa
                         </button>
                         <button onClick={() => { setOpen(false); onDelete(); }}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10">
-                            <Trash2 className="w-4 h-4" /> Xoá
+                            <CustomIcon type="trash" size={16} tile={false} color="currentColor" className="w-4 h-4" /> Xoá
                         </button>
                     </div>
                 </>
@@ -150,7 +146,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
                 <div className="flex items-center gap-2">
                     {card.isDefault && (
                         <span className="bg-yellow-400/90 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <Star className="w-2.5 h-2.5" /> Mặc định
+                            <CustomIcon type="star" size={10} tile={false} color="currentColor" className="w-2.5 h-2.5" /> Mặc định
                         </span>
                     )}
                     <CardMenu onEdit={onEdit} onDelete={onDelete} onSetDefault={onSetDefault} onViewDetail={onViewDetail} isDefault={card.isDefault} />
@@ -237,12 +233,12 @@ function SavingsCard({ card, onEdit, onDelete }: {
                             {matDays <= 0 ? 'Đã đáo hạn' : matDays <= 30 ? `${matDays}N nữa` : 'Đang hoạt động'}
                         </span>
                     )}
-                    <div className="flex gap-1">
-                        <button onClick={onEdit} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-purple-100 hover:text-purple-600 transition">
-                            <Pencil className="w-3.5 h-3.5" />
+                    <div className="flex gap-1.5">
+                        <button onClick={onEdit} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-purple-100 dark:hover:bg-purple-900/40 active:scale-95 transition">
+                            <UtilityIcon type="pencil" size={16} tile={false} color="#8B5CF6" />
                         </button>
-                        <button onClick={onDelete} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-red-100 hover:text-red-500 transition">
-                            <Trash2 className="w-3.5 h-3.5" />
+                        <button onClick={onDelete} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 active:scale-95 transition">
+                            <UtilityIcon type="trash" size={16} tile={false} color="#EF4444" />
                         </button>
                     </div>
                 </div>
@@ -308,7 +304,7 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
                         />
                     ) : (
                         <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', iconBg)}>
-                            {isCrypto ? <Bitcoin className="w-5 h-5" /> : 
+                            {isCrypto ? <CustomIcon type="bitcoin" size={20} tile={false} color="currentColor" className="w-5 h-5" /> : 
                              isEWallet ? <UtilityIcon type="eWallet" size={20} tile={false} color="#8B5CF6" /> :
                              isSavings ? <UtilityIcon type="soTietKiem" size={20} tile={false} color="#F0A319" /> :
                              <UtilityIcon type="theGhiNo" size={20} tile={false} color="#3D7BF0" />}
@@ -318,7 +314,7 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
                 <div>
                     <div className="flex items-center gap-1.5">
                         <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{card.bankName}</p>
-                        {card.isDefault && <BadgeCheck className="w-3.5 h-3.5 text-indigo-500" />}
+                        {card.isDefault && <CustomIcon type="badgeCheck" size={14} tile={false} color="currentColor" className="w-3.5 h-3.5 text-indigo-500" />}
                     </div>
                     <p className="text-xs text-slate-400 dark:text-slate-500">••{card.cardNumber} · {card.cardHolder}</p>
                 </div>
@@ -339,7 +335,7 @@ function DeleteConfirm({ card, onConfirm, onCancel }: { card: Card; onConfirm: (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm px-4" onClick={onCancel}>
             <div className="bg-white dark:bg-surface w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl pb-10" onClick={e => e.stopPropagation()}>
                 <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center mx-auto">
-                    <Trash2 className="w-6 h-6 text-red-500" />
+                    <CustomIcon type="trash" size={24} tile={false} color="currentColor" className="w-6 h-6 text-red-500" />
                 </div>
                 <div className="text-center">
                     <h3 className="font-bold text-gray-900 dark:text-white text-lg">Xoá tài khoản</h3>
@@ -409,7 +405,7 @@ export default function AccountsPage() {
                 rightActions={
                     <button onClick={refetch}
                         className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all relative flex-shrink-0">
-                        <RefreshCw className="w-4 h-4" />
+                        <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                     </button>
                 }
             />
@@ -419,7 +415,7 @@ export default function AccountsPage() {
                 {!loading && error && (
                     <div className="px-5 pb-4">
                         <div className="flex items-center gap-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl p-4">
-                            <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                            <CustomIcon type="alertTriangle" size={20} tile={false} color="currentColor" className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
                                 <p className="font-bold text-sm text-red-700 dark:text-red-300">Không tải được dữ liệu</p>
                                 <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{error}</p>
@@ -471,19 +467,14 @@ export default function AccountsPage() {
                             {/* Breakdown — value on top, label below, split by dividers (Home style) */}
                             <div className="flex items-stretch justify-center mt-5">
                                 {[
-                                    { iconType: 'wallet', label: 'Tài sản', value: fmtShort(totalBalance), color: 'text-emerald-600 dark:text-emerald-400', colorRaw: '#10B981' },
-                                    { iconType: 'soTietKiem', label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400', colorRaw: '#3B82F6' },
-                                    { isLucide: true, icon: CreditCard, label: 'Dư nợ thẻ', value: totalDebt > 0 ? `-${fmtShort(totalDebt)}` : '0', color: 'text-red-500 dark:text-red-400' },
-                                ].map((item: any, i) => (
+                                    { label: 'Tài sản', value: fmtShort(totalBalance), color: 'text-emerald-600 dark:text-emerald-400' },
+                                    { label: 'Tiết kiệm', value: fmtShort(totalSavings), color: 'text-blue-600 dark:text-blue-400' },
+                                    { label: 'Dư nợ thẻ', value: totalDebt > 0 ? `-${fmtShort(totalDebt)}` : '0', color: 'text-red-500 dark:text-red-400' },
+                                ].map((item, i) => (
                                     <div key={item.label} className="flex flex-1 items-center min-w-0">
                                         {i > 0 && <div className="w-px h-9 self-center bg-slate-200 dark:bg-white/15 flex-shrink-0" />}
                                         <div className="flex-1 text-center min-w-0 px-1">
-                                            <p className={cn('inline-flex items-center gap-1 text-sm font-bold text-money', item.color)}>
-                                                {item.isLucide ? (
-                                                    <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                                                ) : (
-                                                    <UtilityIcon type={item.iconType} size={14} tile={false} color={item.colorRaw} className="flex-shrink-0" />
-                                                )}
+                                            <p className={cn('text-[15px] font-bold text-money tabular-nums', item.color)}>
                                                 {item.value}
                                             </p>
                                             <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 truncate">{item.label}</p>
@@ -537,7 +528,7 @@ export default function AccountsPage() {
                     {maturityAlerts.map(card => (
                         <div key={card._id} className="bg-white dark:bg-surface rounded-xl p-4 border border-orange-100 dark:border-orange-900/20 flex items-start gap-3 shadow-sm shadow-orange-500/5">
                             <div className="bg-orange-100 dark:bg-orange-900/20 p-2 rounded-full text-orange-600 dark:text-orange-400 flex-shrink-0">
-                                <AlertTriangle className="w-5 h-5" />
+                                <CustomIcon type="alertTriangle" size={20} tile={false} color="currentColor" className="w-5 h-5" />
                             </div>
                             <div className="flex-1">
                                 <p className="font-bold text-sm text-slate-800 dark:text-slate-200">Sổ tiết kiệm sắp đáo hạn</p>
@@ -560,7 +551,7 @@ export default function AccountsPage() {
                                             className="flex items-center gap-1.5 group"
                                         >
                                             <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Thẻ tín dụng</h2>
-                                            <ChevronDown className={cn(
+                                            <CustomIcon type="chevronDown" size={14} tile={false} color="currentColor" className={cn(
                                                 'w-3.5 h-3.5 text-slate-400 transition-transform',
                                                 !creditCardsExpanded && '-rotate-90'
                                             )} />
@@ -581,7 +572,7 @@ export default function AccountsPage() {
                                             <button onClick={() => openAdd('credit')}
                                                 className="snap-center shrink-0 w-40 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-surface/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
                                                 <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
-                                                    <Plus className="w-6 h-6" />
+                                                    <CustomIcon type="plus" size={24} tile={false} color="currentColor" className="w-6 h-6" />
                                                 </div>
                                                 <span className="text-xs font-bold uppercase tracking-tight">Thêm thẻ</span>
                                             </button>
@@ -593,14 +584,14 @@ export default function AccountsPage() {
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-                                                    <CreditCard className="w-5 h-5 text-purple-500" />
+                                                    <CustomIcon type="creditCard" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-500" />
                                                 </div>
                                                 <div className="text-left">
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{creditCards.length} thẻ tín dụng</p>
                                                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Tổng dư nợ: {fmt(totalDebt)}đ</p>
                                                 </div>
                                             </div>
-                                            <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                                            <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="w-4 h-4 text-slate-300 flex-shrink-0" />
                                         </button>
                                     )}
                                 </section>
@@ -615,7 +606,7 @@ export default function AccountsPage() {
                                             className="flex items-center gap-1.5 group"
                                         >
                                             <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Tài khoản thanh toán</h2>
-                                            <ChevronDown className={cn(
+                                            <CustomIcon type="chevronDown" size={14} tile={false} color="currentColor" className={cn(
                                                 'w-3.5 h-3.5 text-slate-400 transition-transform',
                                                 !paymentAccountsExpanded && '-rotate-90'
                                             )} />
@@ -652,7 +643,7 @@ export default function AccountsPage() {
                                                     </p>
                                                 </div>
                                             </div>
-                                            <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                                            <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="w-4 h-4 text-slate-300 flex-shrink-0" />
                                         </button>
                                     )
                                 ) : (
@@ -667,13 +658,13 @@ export default function AccountsPage() {
                                 <button onClick={() => openAdd('credit')}
                                     className="w-full flex items-center gap-4 p-5 bg-white dark:bg-surface rounded-[20px] border border-slate-100 dark:border-slate-800 shadow-sm hover:border-purple-300 dark:hover:border-purple-900 transition-all group">
                                     <div className="w-12 h-12 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <CreditCard className="w-6 h-6 text-purple-500" />
+                                        <CustomIcon type="creditCard" size={24} tile={false} color="currentColor" className="w-6 h-6 text-purple-500" />
                                     </div>
                                     <div className="text-left flex-1 min-w-0">
                                         <p className="font-bold text-slate-800 dark:text-slate-200">Thêm thẻ tín dụng</p>
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 font-medium truncate">Theo dõi dư nợ và hạn thanh toán ngay</p>
                                     </div>
-                                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
+                                    <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             )}
                         </>
@@ -686,7 +677,7 @@ export default function AccountsPage() {
                                 <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sổ tiết kiệm online</h2>
                                 <button onClick={() => openAdd('savings')}
                                     className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-all shadow-sm">
-                                    <Plus className="w-4 h-4" />
+                                    <CustomIcon type="plus" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                                 </button>
                             </div>
                             {savingsCards.length > 0 ? (

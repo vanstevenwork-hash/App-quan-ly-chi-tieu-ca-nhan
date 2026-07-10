@@ -1,16 +1,10 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import {
-    Plus, TrendingUp,
-    History, BarChart3, RefreshCw,
-    AlertTriangle, CalendarCheck, Percent,
-    Pencil, Trash2, Gift,
-} from 'lucide-react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
 import PageHeader from '@/components/PageHeader';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import api from '@/lib/api';
 
@@ -90,11 +84,11 @@ function SavingsSlide({ card, idx, onEdit, onDelete }: {
                     <div className="flex gap-1">
                         <button onClick={onEdit}
                             className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
-                            <Pencil className="w-3 h-3" />
+                            <CustomIcon type="pencil" size={12} tile={false} color="currentColor" className="w-3 h-3" />
                         </button>
                         <button onClick={onDelete}
                             className="w-7 h-7 rounded-full bg-red-400/30 hover:bg-red-400/50 flex items-center justify-center transition">
-                            <Trash2 className="w-3 h-3" />
+                            <CustomIcon type="trash" size={12} tile={false} color="currentColor" className="w-3 h-3" />
                         </button>
                     </div>
                 </div>
@@ -242,7 +236,7 @@ export default function SavingsPage() {
                     rightActions={
                         <button onClick={refresh}
                             className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
-                            <RefreshCw className="w-4 h-4" />
+                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                             {maturingSoon.length > 0 && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-white dark:border-slate-800" />
                             )}
@@ -295,7 +289,7 @@ export default function SavingsPage() {
                         <button onClick={() => { setEditCard(null); setShowForm(true); }}
                             className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-surface/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
                             <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                                <Plus className="w-6 h-6" />
+                                <CustomIcon type="plus" size={24} tile={false} color="currentColor" className="w-6 h-6" />
                             </div>
                             <span className="font-semibold text-sm">Thêm sổ mới</span>
                         </button>
@@ -307,9 +301,9 @@ export default function SavingsPage() {
                     <div className="bg-white/70 dark:bg-surface/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
                             { icon: <UtilityIcon type="soTietKiem" size={24} tile={false} color="#059669" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
-                            { icon: <RefreshCw className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: () => { setEditCard(null); setShowForm(true); } },
-                            { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, bg: '#FEF3C7', bgDark: '#78350F', label: 'Lịch sử', onClick: () => { } },
-                            { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, bg: '#EDE9FE', bgDark: '#4C1D95', label: 'Báo cáo', onClick: () => { } },
+                            { icon: <CustomIcon type="refreshCw" size={20} tile={false} color="currentColor" className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: () => { setEditCard(null); setShowForm(true); } },
+                            { icon: <CustomIcon type="history" size={20} tile={false} color="currentColor" className="w-5 h-5 text-orange-600 dark:text-orange-400" />, bg: '#FEF3C7', bgDark: '#78350F', label: 'Lịch sử', onClick: () => { } },
+                            { icon: <CustomIcon type="coPhieu" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-600 dark:text-purple-400" />, bg: '#EDE9FE', bgDark: '#4C1D95', label: 'Báo cáo', onClick: () => { } },
                         ].map(item => (
                             <button key={item.label} onClick={item.onClick}
                                 className="flex flex-col items-center gap-2 group">
@@ -327,7 +321,7 @@ export default function SavingsPage() {
                 {maturingSoon.length > 0 && (
                     <div className="px-5 mb-5">
                         <div className="flex items-start gap-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 rounded-2xl p-4">
-                            <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                            <CustomIcon type="alertTriangle" size={20} tile={false} color="currentColor" className="w-5 h-5 text-orange-500 dark:text-orange-400 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-bold text-sm text-orange-800 dark:text-orange-300">
                                     {maturingSoon.length} sổ sắp đáo hạn trong 30 ngày
@@ -357,7 +351,7 @@ export default function SavingsPage() {
                                 const urg = urgencyColor(days);
                                 return (
                                     <DetailRow
-                                        icon={<CalendarCheck className="w-5 h-5" style={{ color: urg }} />}
+                                        icon={<CustomIcon type="calendar" size={20} tile={false} color="currentColor" className="w-5 h-5" style={{ color: urg }} />}
                                         iconBg={`${urg}18`}
                                         title={`${upcoming.bankShortName} — Sắp đáo hạn`}
                                         sub={`Ngày đáo hạn: ${fmtDate(upcoming.maturityDate)}`}
@@ -381,7 +375,7 @@ export default function SavingsPage() {
 
                         {/* Total estimated interest */}
                         <DetailRow
-                            icon={<Percent className="w-5 h-5 text-emerald-500" />}
+                            icon={<CustomIcon type="percent" size={20} tile={false} color="currentColor" className="w-5 h-5 text-emerald-500" />}
                             iconBg={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? '#064E3B' : '#D1FAE5'}
                             title="Lãi tạm tính toàn bộ"
                             sub={`${savingsCards.length} sổ tiết kiệm`}
@@ -417,7 +411,7 @@ export default function SavingsPage() {
                                 </button>
                             </div>
                             <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-sm flex-shrink-0">
-                                <Gift className="w-8 h-8 text-white" />
+                                <CustomIcon type="thuong" size={32} tile={false} color="currentColor" className="w-8 h-8 text-white" />
                             </div>
                         </div>
                     </div>
@@ -429,7 +423,7 @@ export default function SavingsPage() {
                 onClick={() => { setEditCard(null); setShowForm(true); }}
                 className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
                 style={{ background: 'linear-gradient(135deg, #34D399, #059669)' }}>
-                <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
+                <CustomIcon type="plus" size={28} tile={false} color="currentColor" className="w-7 h-7 text-white" />
             </button>
 
             {/* ── Modal ───────────────────────────────────────── */}

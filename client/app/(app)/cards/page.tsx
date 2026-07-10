@@ -1,11 +1,6 @@
 'use client';
+import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import {
-    Plus,
-    History, BarChart3, Wallet, Trash2,
-    Gift,
-    BadgePercent, RefreshCw, CalendarDays,
-} from 'lucide-react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
@@ -159,7 +154,7 @@ export default function CardsPage() {
                     rightActions={
                         <button onClick={refetchCards}
                             className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
-                            <RefreshCw className="w-4 h-4" />
+                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                             {paymentAlerts.length > 0 && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800" />
                             )}
@@ -175,7 +170,7 @@ export default function CardsPage() {
                     </h1>
                     {totalDebt > 0 ? (
                         <div className="flex items-center justify-center gap-1 mt-2 text-indigo-600 dark:text-indigo-400 text-sm font-medium">
-                            <BadgePercent className="w-4 h-4" />
+                            <CustomIcon type="hoanTien" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                             <span>Hoàn tiền cả năm: <strong>{fmt(yearlyCashback)}₫</strong></span>
                         </div>
                     ) : (
@@ -202,9 +197,9 @@ export default function CardsPage() {
                     <div className="bg-white/70 dark:bg-surface/80 backdrop-blur-xl rounded-xl px-3.5 py-2.5 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
                             { icon: <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />, label: 'Thanh toán', bg: '#EEF2FF', bgDark: '#312E81', onClick: () => setShowPayment(true) },
-                            { icon: <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, label: 'Giao dịch', bg: '#D1FAE5', bgDark: '#064E3B', onClick: openAddModal },
-                            { icon: <History className="w-5 h-5 text-orange-600 dark:text-orange-400" />, label: 'Lịch sử', bg: '#FEF3C7', bgDark: '#78350F', onClick: () => historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
-                            { icon: <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />, label: 'Báo cáo', bg: '#EDE9FE', bgDark: '#4C1D95', onClick: () => router.push('/analytics') },
+                            { icon: <CustomIcon type="wallet" size={20} tile={false} color="currentColor" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, label: 'Giao dịch', bg: '#D1FAE5', bgDark: '#064E3B', onClick: openAddModal },
+                            { icon: <CustomIcon type="history" size={20} tile={false} color="currentColor" className="w-5 h-5 text-orange-600 dark:text-orange-400" />, label: 'Lịch sử', bg: '#FEF3C7', bgDark: '#78350F', onClick: () => historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+                            { icon: <CustomIcon type="coPhieu" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-600 dark:text-purple-400" />, label: 'Báo cáo', bg: '#EDE9FE', bgDark: '#4C1D95', onClick: () => router.push('/analytics') },
                         ].map((item: any) => (
                             <button key={item.label} onClick={item.onClick}
                                 className="flex flex-col items-center gap-2 group">
@@ -320,7 +315,7 @@ export default function CardsPage() {
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
-                                                    <CalendarDays className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                                    <CustomIcon type="calendar" size={16} tile={false} color="currentColor" className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{t.category}</p>
@@ -373,7 +368,7 @@ export default function CardsPage() {
                                 </button>
                             </div>
                             <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm flex-shrink-0">
-                                <Gift className="w-8 h-8 text-white" />
+                                <CustomIcon type="thuong" size={32} tile={false} color="currentColor" className="w-8 h-8 text-white" />
                             </div>
                         </div>
                     </div>
@@ -396,7 +391,7 @@ export default function CardsPage() {
                             <div className="w-10 h-1 bg-gray-200 dark:bg-slate-600 rounded-full mx-auto mb-5" />
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-                                    <Trash2 className="w-6 h-6 text-red-500" />
+                                    <CustomIcon type="trash" size={24} tile={false} color="currentColor" className="w-6 h-6 text-red-500" />
                                 </div>
                                 <div>
                                     <p className="font-bold text-slate-800 dark:text-slate-100 text-base uppercase">Xoá {typeText}?</p>
@@ -428,7 +423,7 @@ export default function CardsPage() {
                 onClick={() => { setEditCard(null); setShowForm(true); }}
                 className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
                 style={{ background: 'linear-gradient(135deg, #818CF8, #6C63FF)' }}>
-                <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
+                <CustomIcon type="plus" size={28} tile={false} color="currentColor" className="w-7 h-7 text-white" />
             </button>
 
             {/* ── Modals ──────────────────────────────────────── */}

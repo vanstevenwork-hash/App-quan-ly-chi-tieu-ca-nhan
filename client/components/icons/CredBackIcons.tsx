@@ -4,7 +4,7 @@ import React, { useId, type SVGProps } from 'react';
 /**
  * CredBack Premium Icon Set (v2) — purple edition
  * ------------------------------------------------
- * Ngôn ngữ thiết kế riêng, không theo style lucide-react:
+ 
  *  - Glyph solid đổ gradient dọc (tím nhạt → tím đậm, khớp --primary của app)
  *  - Chi tiết khoét âm bản bằng <mask> → trong suốt thật, đặt lên nền nào cũng đúng
  *  - Blob tím nhạt lệch góc phía sau tạo chiều sâu

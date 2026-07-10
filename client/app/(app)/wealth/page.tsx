@@ -12,6 +12,7 @@ import CardFormModal from '@/components/CardFormModal';
 import { useBanks } from '@/hooks/useBanks';
 import { useEffect } from 'react';
 import { E_WALLETS, CRYPTOS } from '@/lib/constants';
+import { getBankLogo } from '@/lib/bankLogos';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 
@@ -33,11 +34,12 @@ export default function WealthPage() {
         fetchBanks();
     }, [fetchBanks]);
 
-    // O(1) bank/e-wallet/crypto lookup by short name, instead of 3 chained .find() per card
+    // O(1) bank/e-wallet/crypto lookup by short name — keys uppercased so
+    // "CAKE" on the card still hits "Cake" from the API
     const banksByShortName = useMemo(() => {
         const map = new Map<string, { logo?: string }>();
         [...fetchedBanks, ...E_WALLETS, ...CRYPTOS].forEach((b: any) => {
-            const key = b.shortName ?? b.short;
+            const key = (b.shortName ?? b.short)?.toUpperCase();
             if (key && !map.has(key)) map.set(key, b);
         });
         return map;
@@ -54,13 +56,15 @@ export default function WealthPage() {
         };
 
         const cardSources = cards.map(c => {
-            const b = banksByShortName.get(c.bankShortName) as any;
+            const b = banksByShortName.get((c.bankShortName || '').toUpperCase()) as any;
+            // API logo first, then the static CDN map — same chain as accounts/cashback
+            const logoUrl = b?.logo || getBankLogo(c.bankShortName, c.bankName);
             return {
                 _id: c._id,
                 name: `${c.bankShortName} ${c.cardNumber ? '••' + c.cardNumber : ''}`.trim(),
                 category: c.cardType === 'savings' ? 'savings' : c.cardType === 'credit' ? 'credit' : c.cardType === 'eWallet' ? 'eWallet' : 'bank',
                 balance: c.cardType === 'credit' ? -(c.balance || 0) : c.balance,
-                icon: b?.logo ? <Image src={b.logo} width={32} height={32} className="w-8 h-8 object-contain bg-white p-1 rounded-md" alt="logo" /> : getFallbackIcon(c.cardType),
+                icon: logoUrl ? <Image src={logoUrl} width={32} height={32} className="w-8 h-8 object-contain bg-white p-1 rounded-md" alt="logo" /> : getFallbackIcon(c.cardType),
                 color: c.bankColor || '#3B82F6',
                 note: c.cardType === 'credit' ? 'Thẻ tín dụng' : c.cardType === 'savings' ? 'Sổ tiết kiệm' : 'Tài khoản',
                 isExternal: true,

@@ -122,6 +122,11 @@ export const EXTRAS = [
   { type: "smartphone", label: "Smartphone", color: "#10B981", tint: 0.14 },
   { type: "eWallet", label: "Ví điện tử", color: "#8B5CF6", tint: 0.14 },
   { type: "theGhiNo", label: "Thẻ ghi nợ", color: "#3D7BF0", tint: 0.14 },
+  { type: "percent", label: "Lãi suất", color: "#F59E0B", tint: 0.14 },
+  { type: "globe", label: "Ngôn ngữ", color: "#3B82F6", tint: 0.14 },
+  { type: "scanFace", label: "Face ID", color: "#8B5CF6", tint: 0.14 },
+  { type: "download", label: "Tải xuống", color: "#06B6D4", tint: 0.14 },
+  { type: "dollarSign", label: "Tiền tệ", color: "#22C55E", tint: 0.14 },
   { type: "bitcoin", label: "Bitcoin", color: "#F97316", tint: 0.14 },
   { type: "landmark", label: "Landmark", color: "#3B82F6", tint: 0.14 },
   { type: "briefcase", label: "Briefcase", color: "#06B6D4", tint: 0.14 },
@@ -283,14 +288,14 @@ const GLYPHS: Record<string, (C: string) => React.ReactNode> = {
     </>),
     // Sổ tiết kiệm: bìa sổ + gáy + nhãn, đồng xu ₫ chồng góc dưới phải
     soTietKiem: (C) => (<>
-        <rect x="7.9" y="6.6" width="9.7" height="11.2" rx="1.1" fill={C} opacity="0.5" />
-        <rect x="7" y="6" width="9.7" height="11.8" rx="1.1" fill={C} />
-        <rect x="8.9" y="6" width="1.2" height="11.8" fill={W} opacity="0.55" />
-        <rect x="10.6" y="8.2" width="4.8" height="0.7" rx="0.35" fill={W} />
-        <rect x="10.6" y="9.6" width="3.4" height="0.6" rx="0.3" fill={W} opacity="0.75" />
-        <circle cx="16" cy="15.5" r="3.1" fill={W} />
-        <circle cx="16" cy="15.5" r="2.5" fill={C} />
-        <text x="16" y="16.6" textAnchor="middle" fill={W} fontSize="3.2" fontWeight="800" fontFamily="system-ui,-apple-system,sans-serif">₫</text>
+        <rect x="7.2" y="5.8" width="12" height="13.8" rx="1.3" fill={C} opacity="0.5" />
+        <rect x="6" y="5" width="12" height="14.6" rx="1.3" fill={C} />
+        <rect x="8.4" y="5" width="1.5" height="14.6" fill={W} opacity="0.55" />
+        <rect x="10.7" y="7.1" width="6.2" height="0.9" rx="0.45" fill={W} />
+        <rect x="10.7" y="8.9" width="4.4" height="0.75" rx="0.38" fill={W} opacity="0.75" />
+        <circle cx="17.2" cy="16.5" r="4" fill={W} />
+        <circle cx="17.2" cy="16.5" r="3.25" fill={C} />
+        <text x="17.2" y="17.9" textAnchor="middle" fill={W} fontSize="4.2" fontWeight="800" fontFamily="system-ui,-apple-system,sans-serif">₫</text>
     </>),
     vang: (C) => (<>
         <rect x="8" y="8" width="12" height="6.5" rx="1.8" fill={C} opacity="0.55" />
@@ -573,32 +578,88 @@ const GLYPHS: Record<string, (C: string) => React.ReactNode> = {
             <circle cx="12" cy="17.6" r="1.3" fill={W} />
         </>
     ),
+    // Lãi suất: đồng xu 2 lớp lệch nhau, ký hiệu % khoét âm bản
+    percent: (C: string) => (
+        <>
+            <circle cx="9.6" cy="9.4" r="7" fill={C} opacity="0.45" />
+            <circle cx="12.8" cy="12.6" r="8" fill={C} />
+            <path d="M9.6 16 L16 9.4" stroke={W} strokeWidth="1.7" strokeLinecap="round" fill="none" />
+            <circle cx="10" cy="10" r="1.7" fill={W} />
+            <circle cx="10" cy="10" r="0.7" fill={C} />
+            <circle cx="15.5" cy="15.4" r="1.7" fill={W} />
+            <circle cx="15.5" cy="15.4" r="0.7" fill={C} />
+        </>
+    ),
+    // Ngôn ngữ: quả địa cầu + bong bóng chat "A" chồng góc, viền khoét tách lớp
+    globe: (C: string) => (
+        <>
+            <circle cx="10.8" cy="12.5" r="8.3" fill={C} />
+            <ellipse cx="10.8" cy="12.5" rx="3.7" ry="8.3" stroke={W} strokeWidth="1.25" fill="none" />
+            <path d="M2.7 12.5 H18.9" stroke={W} strokeWidth="1.25" />
+            <path d="M4 8.4 H17.6 M4 16.6 H17.6" stroke={W} strokeWidth="1" opacity="0.6" fill="none" />
+            <path d="M13.7 3.3 h5.9 a2.2 2.2 0 0 1 2.2 2.2 v3.4 a2.2 2.2 0 0 1 -2.2 2.2 h-1.1 l-2.1 2.2 v-2.2 h-2.7 a2.2 2.2 0 0 1 -2.2 -2.2 V5.5 a2.2 2.2 0 0 1 2.2 -2.2 Z" fill={W} />
+            <path d="M14.1 4.3 h5.1 a1.7 1.7 0 0 1 1.7 1.7 v3 a1.7 1.7 0 0 1 -1.7 1.7 h-1 l-1.3 1.4 v-1.4 h-1.8 a1.7 1.7 0 0 1 -1.7 -1.7 V6 a1.7 1.7 0 0 1 1.7 -1.7 Z" fill={C} />
+            <text x="16.65" y="9.4" textAnchor="middle" fill={W} fontSize="4.6" fontWeight="800" fontFamily="system-ui,-apple-system,sans-serif">A</text>
+        </>
+    ),
+    // Face ID: khung quét 4 góc + mặt cười trên tấm nền đặc
+    scanFace: (C: string) => (
+        <>
+            <path d="M3.6 8.2 V6.2 A2.6 2.6 0 0 1 6.2 3.6 H8.2 M15.8 3.6 h2 A2.6 2.6 0 0 1 20.4 6.2 V8.2 M20.4 15.8 v2 a2.6 2.6 0 0 1 -2.6 2.6 H15.8 M8.2 20.4 H6.2 A2.6 2.6 0 0 1 3.6 17.8 V15.8" stroke={C} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <rect x="7" y="7" width="10" height="10" rx="3.2" fill={C} />
+            <circle cx="10.2" cy="10.7" r="1" fill={W} />
+            <circle cx="13.8" cy="10.7" r="1" fill={W} />
+            <path d="M9.9 13.7 c1.2 1.15 3 1.15 4.2 0" stroke={W} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+        </>
+    ),
+    // Xuất dữ liệu: tờ tài liệu gấp góc + huy hiệu mũi tên tải xuống chồng góc
+    download: (C: string) => (
+        <>
+            <path d="M6.2 3.4 H13.6 L17.6 7.4 V17 a2.2 2.2 0 0 1 -2.2 2.2 H6.2 A2.2 2.2 0 0 1 4 17 V5.6 a2.2 2.2 0 0 1 2.2 -2.2 Z" fill={C} />
+            <path d="M13.6 3.4 V7.4 H17.6 Z" fill={W} opacity="0.85" />
+            <rect x="6.8" y="9.2" width="6" height="1.1" rx="0.55" fill={W} opacity="0.8" />
+            <rect x="6.8" y="11.6" width="4.4" height="1.1" rx="0.55" fill={W} opacity="0.6" />
+            <circle cx="16.3" cy="16.2" r="4.6" fill={W} />
+            <circle cx="16.3" cy="16.2" r="3.8" fill={C} />
+            <path d="M16.3 14 v3.3 M14.8 15.8 l1.5 1.5 1.5 -1.5" stroke={W} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </>
+    ),
+    // Tiền tệ: hai đồng xu ₫/$ chồng nhau kiểu quy đổi
+    dollarSign: (C: string) => (
+        <>
+            <circle cx="8.8" cy="8.8" r="6.2" fill={C} opacity="0.5" />
+            <text x="8.8" y="10.9" textAnchor="middle" fill={W} fontSize="6" fontWeight="800" opacity="0.8" fontFamily="system-ui,-apple-system,sans-serif">₫</text>
+            <circle cx="14.2" cy="13.8" r="7.2" fill={W} />
+            <circle cx="14.2" cy="13.8" r="6.5" fill={C} />
+            <text x="14.2" y="16.6" textAnchor="middle" fill={W} fontSize="8" fontWeight="800" fontFamily="system-ui,-apple-system,sans-serif">$</text>
+        </>
+    ),
     // Thẻ ghi nợ: 2 lớp thẻ + dải từ, chip, số thẻ và sóng contactless
     theGhiNo: (C: string) => (
         <>
-            <rect x="6.4" y="6.8" width="13.1" height="8.6" rx="1.2" fill={C} opacity="0.5" />
-            <rect x="5.4" y="7.8" width="13.1" height="8.6" rx="1.2" fill={C} />
-            <rect x="5.4" y="9.6" width="13.1" height="1.8" fill={W} />
-            <rect x="6.75" y="12.5" width="2.4" height="1.8" rx="0.4" fill={W} />
-            <rect x="7.1" y="12.85" width="1.7" height="1.05" rx="0.25" fill={C} opacity="0.55" />
-            <circle cx="10.6" cy="14.8" r="0.35" fill={W} />
-            <circle cx="11.6" cy="14.8" r="0.35" fill={W} />
-            <circle cx="12.65" cy="14.8" r="0.35" fill={W} />
-            <rect x="13.7" y="14.45" width="3.5" height="0.75" rx="0.38" fill={W} />
-            <g stroke={W} strokeWidth="0.5" strokeLinecap="round" fill="none">
-                <path d="M15.9 13 a1.05 1.05 0 0 1 0 -1.5" />
-                <path d="M16.9 13.5 a1.8 1.8 0 0 1 0 -2.5" />
+            <rect x="5.3" y="5.8" width="15.7" height="10.3" rx="1.45" fill={C} opacity="0.5" />
+            <rect x="4.1" y="7" width="15.7" height="10.3" rx="1.45" fill={C} />
+            <rect x="4.1" y="9.1" width="15.7" height="2.15" fill={W} />
+            <rect x="5.7" y="12.6" width="2.9" height="2.15" rx="0.48" fill={W} />
+            <rect x="6.1" y="13" width="2.05" height="1.25" rx="0.28" fill={C} opacity="0.55" />
+            <circle cx="10.3" cy="15.35" r="0.42" fill={W} />
+            <circle cx="11.5" cy="15.35" r="0.42" fill={W} />
+            <circle cx="12.8" cy="15.35" r="0.42" fill={W} />
+            <rect x="14" y="14.9" width="4.2" height="0.9" rx="0.45" fill={W} />
+            <g stroke={W} strokeWidth="0.6" strokeLinecap="round" fill="none">
+                <path d="M16.7 13.2 a1.26 1.26 0 0 1 0 -1.8" />
+                <path d="M17.9 13.8 a2.16 2.16 0 0 1 0 -3" />
             </g>
         </>
     ),
     // Ví điện tử: thân ví + thẻ thò ra, ngăn bấm bên phải và tia sét thanh toán nhanh
     eWallet: (C: string) => (
         <>
-            <rect x="7.5" y="6.1" width="9" height="3.3" rx="0.8" fill={C} opacity="0.55" />
-            <rect x="5.9" y="7.5" width="12.2" height="9.9" rx="1.4" fill={C} />
-            <path d="M18.1 10.9 H15 C14 10.9 13.2 11.7 13.2 12.7 C13.2 13.6 14 14.4 15 14.4 H18.1 Z" fill={W} />
-            <circle cx="15.1" cy="12.7" r="0.8" fill={C} />
-            <path d="M9.2 10.1 L7.8 13.1 H9.2 L8.5 15.8 L11.2 12.2 H9.7 L10.5 10.1 Z" fill={W} />
+            <rect x="6.4" y="4.6" width="11.3" height="4.1" rx="1" fill={C} opacity="0.55" />
+            <rect x="4.4" y="6.4" width="15.3" height="12.4" rx="1.75" fill={C} />
+            <path d="M19.7 10.6 H15.75 C14.5 10.6 13.5 11.6 13.5 12.85 C13.5 14.1 14.5 15.1 15.75 15.1 H19.7 Z" fill={W} />
+            <circle cx="15.9" cy="12.85" r="1" fill={C} />
+            <path d="M8.5 9.6 L6.75 13.4 H8.5 L7.6 16.75 L11 12.25 H9.1 L10.15 9.6 Z" fill={W} />
         </>
     ),
     smartphone: (C: string) => (

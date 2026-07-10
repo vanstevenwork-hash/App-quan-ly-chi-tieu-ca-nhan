@@ -51,8 +51,8 @@ function GoalsStatsAndFiltersBase({
     return (
         <>
             {/* ── One-line stats strip ────────────────────────── */}
-            <div className="px-5 mb-4">
-                <div className="rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm px-4 py-3.5 flex items-center justify-center flex-wrap gap-x-2 gap-y-1 text-sm">
+            <div className="px-5 mb-3">
+                <div className="rounded-xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm px-3 py-2.5 flex items-center justify-center flex-wrap gap-x-2 gap-y-1 text-[13px]">
                     <span><b className="text-slate-900 dark:text-white">{totalGoals}</b> <span className="text-slate-400 dark:text-slate-500 font-medium">mục tiêu</span></span>
                     <span className="text-slate-300 dark:text-slate-600">·</span>
                     <span><b className="text-slate-900 dark:text-white">{completedGoals}</b> <span className="text-slate-400 dark:text-slate-500 font-medium">hoàn thành</span></span>
@@ -61,28 +61,24 @@ function GoalsStatsAndFiltersBase({
                 </div>
             </div>
 
-            {/* ── Filter pills + sort ─────────────────────────── */}
-            <div className="px-5 mb-4 space-y-2.5">
-                <div className="flex gap-2 flex-wrap">
-                    {tabs.map(tab => (
-                        <button key={tab.id} onClick={() => onFilterChange(tab.id)}
-                            className={cn(
-                                'px-4 py-2 rounded-full text-sm font-bold border transition-all',
-                                filterTab === tab.id
-                                    ? 'bg-[#6C63FF] border-transparent text-white shadow-md shadow-[#6C63FF]/25'
-                                    : 'bg-white dark:bg-surface border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-[#6C63FF]/40'
-                            )}>
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-                <div className="flex justify-end">
-                    <button onClick={cycleSort}
-                        className="px-4 py-2 rounded-full text-sm font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-slate-600 dark:text-slate-300 flex items-center gap-1.5 active:scale-95 transition-all">
-                        Sắp xếp: {SORT_LABELS[sortBy]}
-                        <ActionIcon type="chevronDown" size={12} tile={false} color="currentColor" />
+            {/* ── Filter pills + sort — one compact row ───────── */}
+            <div className="px-5 mb-3 flex items-center gap-1.5 flex-wrap">
+                {tabs.map(tab => (
+                    <button key={tab.id} onClick={() => onFilterChange(tab.id)}
+                        className={cn(
+                            'px-3 py-1.5 rounded-full text-xs font-bold border transition-all',
+                            filterTab === tab.id
+                                ? 'bg-[#6C63FF] border-transparent text-white shadow-md shadow-[#6C63FF]/25'
+                                : 'bg-white dark:bg-surface border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-[#6C63FF]/40'
+                        )}>
+                        {tab.label}
                     </button>
-                </div>
+                ))}
+                <button onClick={cycleSort}
+                    className="ml-auto px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-slate-600 dark:text-slate-300 flex items-center gap-1 active:scale-95 transition-all">
+                    {SORT_LABELS[sortBy]}
+                    <ActionIcon type="chevronDown" size={11} tile={false} color="currentColor" />
+                </button>
             </div>
         </>
     );
