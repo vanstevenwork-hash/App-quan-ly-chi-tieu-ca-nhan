@@ -3,7 +3,8 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const {
     invite,
-    accept,
+    respond,
+    getIncoming,
     getMyShares,
     getCardShares,
     revoke,
@@ -12,7 +13,8 @@ const {
 router.use(protect);
 
 router.post('/invite', invite);
-router.post('/accept', accept);
+router.patch('/:id/respond', respond);
+router.get('/incoming', getIncoming);
 router.get('/my-shares', getMyShares);
 router.get('/card/:cardId', getCardShares);
 router.delete('/:id', revoke);

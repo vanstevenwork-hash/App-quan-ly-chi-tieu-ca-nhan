@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useAuthStore } from '@/store/useStore';
 import { authApi } from '@/lib/api';
-import { mockUser } from '@/lib/mockData';
 
 export default function RegisterPage() {
     const [name, setName] = useState('');
@@ -15,7 +14,7 @@ export default function RegisterPage() {
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+    const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; general?: string }>({});
     const router = useRouter();
     const login = useAuthStore(s => s.login);
 
@@ -30,13 +29,17 @@ export default function RegisterPage() {
         setErrors(errs);
         if (Object.keys(errs).length > 0) return;
         setLoading(true);
+        setErrors({});
         try {
             const res = await authApi.register({ name, email, password });
             login(res.data.user, res.data.token);
             router.push('/dashboard');
-        } catch {
-            login({ ...mockUser, name: name || mockUser.name, email: email || mockUser.email }, 'mock-token');
-            router.push('/dashboard');
+        } catch (err: any) {
+            // Never fake a successful registration on failure — that leaves the
+            // user thinking they have an account when nothing was created on
+            // the server, and login afterward fails with no explanation.
+            const msg = err?.response?.data?.message || 'Đăng ký thất bại, vui lòng thử lại';
+            setErrors({ general: msg });
         } finally {
             setLoading(false);
         }
@@ -95,6 +98,8 @@ export default function RegisterPage() {
                         </button>
                         {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
                     </div>
+
+                    {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
 
                     <Button
                         type="submit"

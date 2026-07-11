@@ -9,6 +9,8 @@ type PaymentCardProps = {
     cBg?: string;
     type: "credit" | "account";
     renderNetworkLogo?: (network: string) => React.ReactNode;
+    /** First name of the card's owner — shown as a small badge for shared (not your own) cards */
+    ownerLabel?: string;
 };
 
 export default function PaymentCard({
@@ -19,6 +21,7 @@ export default function PaymentCard({
     cBg,
     type,
     renderNetworkLogo,
+    ownerLabel,
 }: PaymentCardProps) {
     return (
         <div
@@ -34,6 +37,13 @@ export default function PaymentCard({
             {isSelected && (
                 <div className="absolute top-[-6px] right-[-6px] w-4 h-4 rounded-full border border-[#7f19e6] flex items-center justify-center bg-white dark:bg-surface">
                     <ActionIcon type="check" size={10} tile={false} color="#7f19e6" />
+                </div>
+            )}
+
+            {/* Shared-card owner badge */}
+            {ownerLabel && (
+                <div className="absolute top-[-6px] left-[-6px] px-1.5 py-[1px] rounded-full bg-indigo-500 text-white text-[8px] font-bold shadow-sm truncate max-w-[70%]">
+                    {ownerLabel}
                 </div>
             )}
 

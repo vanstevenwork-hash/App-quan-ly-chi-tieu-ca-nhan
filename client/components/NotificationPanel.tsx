@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuthStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 const TABS = [
     { label: 'Quan trọng', key: 'important', types: [] },
@@ -90,7 +91,20 @@ const fmtFull = (n: number) => n.toLocaleString('vi-VN');
 function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open: boolean; initialTab?: PanelTab }) {
     const { isAuthenticated } = useAuthStore();
     const { notifications, loading, markRead, markAllRead } = useNotifications();
-    const { creditAlerts, savingsAlerts, count: alertCount } = useImportantAlerts();
+    const { creditAlerts, savingsAlerts, shareInvites, respondToShare, count: alertCount } = useImportantAlerts();
+    const [respondingShareId, setRespondingShareId] = useState<string | null>(null);
+
+    const handleRespondShare = async (shareId: string, accept: boolean) => {
+        setRespondingShareId(shareId);
+        try {
+            await respondToShare(shareId, accept);
+            toast.success(accept ? 'Đã tham gia thẻ chung' : 'Đã từ chối lời mời');
+        } catch {
+            toast.error('Không thể xử lý lời mời, thử lại sau');
+        } finally {
+            setRespondingShareId(null);
+        }
+    };
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     useEffect(() => {
@@ -343,6 +357,36 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                             <div className="mb-4">
                                 <h4 className="px-5 py-2 text-[14px] font-medium text-gray-500 dark:text-slate-400">Cần chú ý</h4>
                                 <div className="flex flex-col space-y-2 px-3">
+                                    {shareInvites.map(item => (
+                                        <div key={item.share._id}
+                                            className="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-500/20">
+                                            <div className="flex gap-4">
+                                                <div className="w-12 h-12 rounded-full border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800">
+                                                    🤝
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[15px] font-bold text-gray-900 dark:text-white truncate">{item.owner?.name || 'Ai đó'} mời chia sẻ thẻ</p>
+                                                    <p className="text-[13.5px] text-slate-500 dark:text-slate-400 mt-1">{item.card.bankName} •••• {item.card.cardNumber}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 mt-3">
+                                                <button
+                                                    onClick={() => handleRespondShare(item.share._id, false)}
+                                                    disabled={respondingShareId !== null}
+                                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 active:scale-95 transition-all disabled:opacity-50"
+                                                >
+                                                    Từ chối
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRespondShare(item.share._id, true)}
+                                                    disabled={respondingShareId !== null}
+                                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50"
+                                                >
+                                                    {respondingShareId === item.share._id ? 'Đang xử lý…' : 'Chấp nhận'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
                                     {creditAlerts.map(({ card, dueThisCycle }) => {
                                         const logo = getMatchingLogo(card.bankName) || getMatchingLogo(card.bankShortName);
                                         return (

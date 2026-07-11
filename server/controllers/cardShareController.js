@@ -1,13 +1,9 @@
-const crypto = require('crypto');
 const CardShare = require('../models/CardShare');
 const Card = require('../models/Card');
 const User = require('../models/User');
-const sendEmail = require('../utils/sendEmail');
 const { createNotification } = require('./notificationController');
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
-
-// @desc  Invite someone to share a card
+// @desc  Invite a registered user to collaborate on a card
 // @route POST /api/card-shares/invite
 exports.invite = async (req, res) => {
     try {
@@ -15,89 +11,58 @@ exports.invite = async (req, res) => {
         if (!cardId || !email) {
             return res.status(400).json({ success: false, message: 'Thiếu cardId hoặc email' });
         }
+        const normalizedEmail = email.toLowerCase().trim();
 
-        // Only card owner can invite
+        // Only the card owner can invite
         const card = await Card.findOne({ _id: cardId, userId: req.user._id, isActive: true });
         if (!card) {
             return res.status(404).json({ success: false, message: 'Không tìm thấy thẻ hoặc bạn không phải chủ thẻ' });
         }
 
-        // Cannot share to yourself
-        if (email.toLowerCase() === req.user.email.toLowerCase()) {
+        if (normalizedEmail === req.user.email.toLowerCase()) {
             return res.status(400).json({ success: false, message: 'Không thể chia sẻ thẻ cho chính mình' });
         }
 
-        // Check if already shared/pending for this card+email
+        // Invitee must already have an account — no email-link flow, accept happens
+        // in-app authenticated as this user, so we resolve them up front.
+        const invitee = await User.findOne({ email: normalizedEmail });
+        if (!invitee) {
+            return res.status(404).json({ success: false, message: 'Người này chưa có tài khoản trong app' });
+        }
+
         const existing = await CardShare.findOne({
             cardId,
-            sharedWithEmail: email.toLowerCase(),
+            sharedWithUserId: invitee._id,
             status: { $in: ['pending', 'accepted'] },
         });
         if (existing) {
             return res.status(400).json({
                 success: false,
                 message: existing.status === 'accepted'
-                    ? 'Thẻ đã được chia sẻ với email này'
+                    ? 'Thẻ đã được chia sẻ với người này'
                     : 'Lời mời đang chờ được chấp nhận',
             });
         }
 
-        // Generate secure invite token
-        const inviteToken = crypto.randomBytes(32).toString('hex');
-
         const share = await CardShare.create({
             cardId,
             ownerId: req.user._id,
-            sharedWithEmail: email.toLowerCase(),
-            inviteToken,
+            sharedWithUserId: invitee._id,
+            sharedWithEmail: normalizedEmail,
         });
 
-        // Send invitation email
-        const inviteLink = `${FRONTEND_URL}/cards/accept-invite?token=${inviteToken}`;
-        const bankLabel = `${card.bankName} •••• ${card.cardNumber}`;
-
-        try {
-            await sendEmail({
-                email: email.toLowerCase(),
-                subject: `${req.user.name} mời bạn cùng quản lý thẻ — Zenith Finance`,
-                message: `${req.user.name} đã mời bạn cùng quản lý thẻ ${bankLabel}.\n\nBấm vào link sau để chấp nhận:\n${inviteLink}\n\nNếu bạn chưa có tài khoản Zenith Finance, hãy đăng ký trước rồi bấm link trên.`,
-                html: `
-                    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px;">
-                        <h2 style="color: #1e293b; margin-bottom: 8px;">Lời mời chia sẻ thẻ 💳</h2>
-                        <p style="color: #64748b; font-size: 15px; line-height: 1.6;">
-                            <strong style="color: #334155;">${req.user.name}</strong> đã mời bạn cùng quản lý thẻ
-                            <strong style="color: #334155;">${bankLabel}</strong> trên Zenith Finance.
-                        </p>
-                        <p style="color: #64748b; font-size: 14px;">
-                            Bạn sẽ có thể thêm, sửa và xóa giao dịch trên thẻ này.
-                        </p>
-                        <div style="text-align: center; margin: 28px 0;">
-                            <a href="${inviteLink}"
-                               style="display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 4px 14px rgba(99,102,241,0.3);">
-                                Chấp nhận lời mời
-                            </a>
-                        </div>
-                        <p style="color: #94a3b8; font-size: 12px; text-align: center;">
-                            Nếu bạn chưa có tài khoản, hãy đăng ký trước rồi bấm nút ở trên.
-                        </p>
-                    </div>
-                `,
-            });
-        } catch (emailErr) {
-            console.error('📧 Failed to send invite email:', emailErr.message);
-            // Still return success — the share is created, email might be logged to console
-        }
-
-        // Notify the owner
+        // Notify the invitee in-app — this is the entire invite channel, no email required.
         await createNotification({
-            userId: req.user._id.toString(),
-            title: 'Đã gửi lời mời chia sẻ thẻ',
-            message: `Lời mời đã được gửi đến ${email}`,
-            type: 'system',
-            icon: '📤',
+            userId: invitee._id.toString(),
+            title: 'Lời mời chia sẻ thẻ',
+            message: `${req.user.name} mời bạn cùng quản lý thẻ ${card.bankName} •••• ${card.cardNumber}`,
+            type: 'card_share_invite',
+            icon: '🤝',
             iconBg: '#EEF2FF',
-            relatedId: card._id,
-            relatedModel: 'Card',
+            isImportant: true,
+            relatedId: share._id,
+            relatedModel: 'CardShare',
+            actionUrl: '/cards',
         });
 
         res.status(201).json({ success: true, data: share });
@@ -107,63 +72,52 @@ exports.invite = async (req, res) => {
     }
 };
 
-// @desc  Accept a card share invitation
-// @route POST /api/card-shares/accept
-exports.accept = async (req, res) => {
+// @desc  Accept or decline a pending card-share invite (in-app, authenticated as the invitee)
+// @route PATCH /api/card-shares/:id/respond
+exports.respond = async (req, res) => {
     try {
-        const { token } = req.body;
-        if (!token) {
-            return res.status(400).json({ success: false, message: 'Thiếu token' });
-        }
-
-        const share = await CardShare.findOne({ inviteToken: token });
+        const { accept } = req.body;
+        const share = await CardShare.findOne({ _id: req.params.id, sharedWithUserId: req.user._id });
         if (!share) {
-            return res.status(404).json({ success: false, message: 'Lời mời không tồn tại hoặc đã hết hạn' });
+            return res.status(404).json({ success: false, message: 'Không tìm thấy lời mời' });
+        }
+        if (share.status !== 'pending') {
+            return res.status(400).json({ success: false, message: 'Lời mời này đã được xử lý' });
         }
 
-        if (share.status === 'accepted') {
-            return res.status(400).json({ success: false, message: 'Lời mời đã được chấp nhận trước đó' });
-        }
-
-        if (share.status === 'revoked') {
-            return res.status(400).json({ success: false, message: 'Lời mời đã bị thu hồi' });
-        }
-
-        // Assign the current logged-in user as the shared user
-        share.sharedWithUserId = req.user._id;
-        share.status = 'accepted';
+        share.status = accept ? 'accepted' : 'declined';
         await share.save();
 
-        // Populate card info for response
         const card = await Card.findById(share.cardId);
-
-        // Notify the card owner
         await createNotification({
             userId: share.ownerId.toString(),
-            title: 'Lời mời đã được chấp nhận!',
-            message: `${req.user.name} đã chấp nhận chia sẻ thẻ ${card ? card.bankName : ''}`,
+            title: accept ? 'Lời mời chia sẻ thẻ đã được chấp nhận' : 'Lời mời chia sẻ thẻ đã bị từ chối',
+            message: `${req.user.name} đã ${accept ? 'chấp nhận' : 'từ chối'} lời mời chia sẻ thẻ ${card ? card.bankName : ''}`,
             type: 'system',
-            icon: '🤝',
-            iconBg: '#ECFDF5',
-            relatedId: share.cardId,
-            relatedModel: 'Card',
-        });
-
-        // Notify the accepting user
-        await createNotification({
-            userId: req.user._id.toString(),
-            title: 'Đã chấp nhận chia sẻ thẻ',
-            message: `Bạn giờ có thể quản lý giao dịch trên thẻ ${card ? card.bankName : ''}`,
-            type: 'system',
-            icon: '💳',
-            iconBg: '#EEF2FF',
+            icon: accept ? '🤝' : '👋',
+            iconBg: accept ? '#ECFDF5' : '#FEF3C7',
             relatedId: share.cardId,
             relatedModel: 'Card',
         });
 
         res.json({ success: true, data: share, card });
     } catch (err) {
-        console.error('CardShare accept error:', err);
+        console.error('CardShare respond error:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Pending invites addressed to me
+// @route GET /api/card-shares/incoming
+exports.getIncoming = async (req, res) => {
+    try {
+        const shares = await CardShare.find({ sharedWithUserId: req.user._id, status: 'pending' })
+            .populate('cardId')
+            .populate('ownerId', 'name email avatar')
+            .sort({ createdAt: -1 });
+        const active = shares.filter(s => s.cardId && s.cardId.isActive);
+        res.json({ success: true, data: active });
+    } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 };
@@ -219,7 +173,7 @@ exports.revoke = async (req, res) => {
 
         // Owner can revoke, or the shared user can leave
         const isOwner = share.ownerId.toString() === req.user._id.toString();
-        const isSharedUser = share.sharedWithUserId && share.sharedWithUserId.toString() === req.user._id.toString();
+        const isSharedUser = share.sharedWithUserId.toString() === req.user._id.toString();
 
         if (!isOwner && !isSharedUser) {
             return res.status(403).json({ success: false, message: 'Không có quyền thực hiện' });
@@ -229,7 +183,7 @@ exports.revoke = async (req, res) => {
         await share.save();
 
         // Notify the other party
-        if (isOwner && share.sharedWithUserId) {
+        if (isOwner) {
             await createNotification({
                 userId: share.sharedWithUserId.toString(),
                 title: 'Quyền chia sẻ thẻ đã bị thu hồi',
@@ -240,7 +194,7 @@ exports.revoke = async (req, res) => {
                 relatedId: share.cardId,
                 relatedModel: 'Card',
             });
-        } else if (isSharedUser) {
+        } else {
             await createNotification({
                 userId: share.ownerId.toString(),
                 title: 'Người dùng đã rời khỏi thẻ chung',

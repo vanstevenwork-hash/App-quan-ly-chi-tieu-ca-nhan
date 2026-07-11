@@ -6,6 +6,7 @@ import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
 import { cn } from '@/lib/utils';
 import { useCards } from '@/hooks/useCards';
+import { useCardShares } from '@/hooks/useCardShares';
 import { useBanks } from '@/hooks/useBanks';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
@@ -31,7 +32,7 @@ export default function AddTransactionModal({
     const [amount, setAmount] = useState('');
     const [category, setCategory] = useState('');
     const [note, setNote] = useState('');
-    const [paymentTab, setPaymentTab] = useState<'cash' | 'account' | 'credit'>('cash');
+    const [paymentTab, setPaymentTab] = useState<'cash' | 'account' | 'credit' | 'shared'>('cash');
     const [selectedCardId, setSelectedCardId] = useState<string>('cash');
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
@@ -46,6 +47,7 @@ export default function AddTransactionModal({
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     const { cards } = useCards();
+    const { sharedCards } = useCardShares();
 
     useEffect(() => {
         fetchBanks();
@@ -58,6 +60,10 @@ export default function AddTransactionModal({
         c.bankName.toLowerCase().includes('ví') ||
         c.cardType === 'eWallet'
     );
+    // Cards someone else shared with me — kept in their own group, never merged
+    // into `cards` above so nothing here touches personal net-worth totals.
+    const sharedCardList = sharedCards.map(sc => sc.card);
+    const ownerNameByCardId = new Map(sharedCards.map(sc => [sc.card._id, sc.owner?.name?.split(' ').pop()]));
 
     useEffect(() => {
         if (open) {
@@ -72,9 +78,10 @@ export default function AddTransactionModal({
                     setPaymentTab('cash');
                 } else {
                     const cardIdStr = initialData.cardId?._id || initialData.cardId;
-                    // Try to find if it's debit or credit
+                    // Try to find if it's debit, credit, or a card shared with me
+                    const isShared = sharedCardList.find(c => c._id === cardIdStr);
                     const isCredit = creditCards.find(c => c._id === cardIdStr);
-                    setPaymentTab(isCredit ? 'credit' : 'account');
+                    setPaymentTab(isShared ? 'shared' : isCredit ? 'credit' : 'account');
                     setSelectedCardId(cardIdStr);
                 }
 
@@ -118,8 +125,12 @@ export default function AddTransactionModal({
             if (creditCards.length > 0 && (selectedCardId === 'cash' || !creditCards.find(c => c._id === selectedCardId))) {
                 setSelectedCardId(creditCards[0]._id);
             }
+        } else if (paymentTab === 'shared') {
+            if (sharedCardList.length > 0 && (selectedCardId === 'cash' || !sharedCardList.find(c => c._id === selectedCardId))) {
+                setSelectedCardId(sharedCardList[0]._id);
+            }
         }
-    }, [paymentTab, debitCards, creditCards, cards]);
+    }, [paymentTab, debitCards, creditCards, sharedCardList, cards]);
 
     const handleAmountInput = (v: string) => {
         setAmount(v.replace(/\D/g, ''));
@@ -357,10 +368,13 @@ export default function AddTransactionModal({
                             <button onClick={() => setPaymentTab('cash')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'cash' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tiền mặt</button>
                             <button onClick={() => setPaymentTab('account')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'account' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tài khoản</button>
                             <button onClick={() => setPaymentTab('credit')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'credit' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ tín dụng</button>
+                            {sharedCardList.length > 0 && (
+                                <button onClick={() => setPaymentTab('shared')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'shared' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ chung</button>
+                            )}
                         </div>
 
                         <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x py-1 pt-2">
-                            {(paymentTab === 'cash' ? cashCards : paymentTab === 'account' ? debitCards : creditCards).map(card => {
+                            {(paymentTab === 'cash' ? cashCards : paymentTab === 'account' ? debitCards : paymentTab === 'credit' ? creditCards : sharedCardList).map(card => {
                                 const isSelected = selectedCardId === card._id;
                                 const cBg = card.bankColor || '#3B82F6';
 
@@ -378,7 +392,10 @@ export default function AddTransactionModal({
                                 const selectedBankObj = fetchedBanks.find(b => b.shortName === card.bankShortName);
                                 const logoUrl = selectedBankObj?.logo || getBankLogo(card.bankShortName, card.bankName);
 
-                                if (paymentTab === 'credit') {
+                                // Shared cards: honor the underlying card's own type (credit vs debit/eWallet)
+                                const isCreditCard = paymentTab === 'credit' || (paymentTab === 'shared' && card.cardType === 'credit');
+
+                                if (isCreditCard) {
                                     return (
                                         <PaymentCard
                                             key={card._id}
@@ -389,11 +406,12 @@ export default function AddTransactionModal({
                                             cBg={cBg}
                                             type="credit"
                                             renderNetworkLogo={renderNetworkLogo}
+                                            ownerLabel={paymentTab === 'shared' ? ownerNameByCardId.get(card._id) : undefined}
                                         />
                                     );
                                 }
 
-                                // Render for Debit / E-Wallet / Cash
+                                // Render for Debit / E-Wallet / Cash / shared non-credit cards
                                 return (
                                     <PaymentCard
                                         key={card._id}
@@ -402,7 +420,8 @@ export default function AddTransactionModal({
                                         onSelect={setSelectedCardId}
                                         logoUrl={logoUrl}
                                         cBg={cBg}
-                                        type={paymentTab === 'cash' ? 'account' : 'account'}
+                                        type="account"
+                                        ownerLabel={paymentTab === 'shared' ? ownerNameByCardId.get(card._id) : undefined}
                                     />
                                 )
                             })}

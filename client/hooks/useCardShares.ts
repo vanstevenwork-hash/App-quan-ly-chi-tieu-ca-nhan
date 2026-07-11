@@ -19,8 +19,7 @@ export interface CardShare {
     sharedWithUserId?: string | { _id: string; name: string; email: string; avatar?: string };
     sharedWithEmail: string;
     permission: 'collaborative' | 'view-only';
-    status: 'pending' | 'accepted' | 'revoked';
-    inviteToken: string;
+    status: 'pending' | 'accepted' | 'declined' | 'revoked';
     createdAt: string;
     updatedAt: string;
 }
@@ -33,37 +32,48 @@ export interface SharedCardItem {
 
 interface CardShareStore {
     sharedCards: SharedCardItem[];
+    incomingInvites: SharedCardItem[];
     loading: boolean;
     hasFetched: boolean;
     error: string | null;
     fetch: (force?: boolean) => Promise<void>;
     reset: () => void;
     invite: (cardId: string, email: string) => Promise<any>;
-    accept: (token: string) => Promise<any>;
+    respond: (id: string, accept: boolean) => Promise<any>;
     revoke: (id: string) => Promise<void>;
     getCardShares: (cardId: string) => Promise<CardShare[]>;
 }
 
+const toItems = (list: any[]): SharedCardItem[] =>
+    list
+        .filter((s: any) => s.cardId) // card must exist
+        .map((s: any) => ({
+            share: s,
+            card: s.cardId as Card,
+            owner: s.ownerId as CardShareOwner,
+        }));
+
 export const useCardShareStore = create<CardShareStore>((set, get) => ({
     sharedCards: [],
+    incomingInvites: [],
     loading: false,
     hasFetched: false,
     error: null,
-    reset: () => set({ sharedCards: [], loading: false, hasFetched: false, error: null }),
+    reset: () => set({ sharedCards: [], incomingInvites: [], loading: false, hasFetched: false, error: null }),
     fetch: async (force = false) => {
         if (get().loading || (get().hasFetched && !force)) return;
         set({ loading: true, error: null });
         try {
-            const res = await cardSharesApi.getMyShares();
-            const data = res.data?.data || [];
-            const items: SharedCardItem[] = data
-                .filter((s: any) => s.cardId) // card must exist
-                .map((s: any) => ({
-                    share: s,
-                    card: s.cardId as Card,
-                    owner: s.ownerId as CardShareOwner,
-                }));
-            set({ sharedCards: items, hasFetched: true, loading: false });
+            const [sharedRes, incomingRes] = await Promise.all([
+                cardSharesApi.getMyShares(),
+                cardSharesApi.getIncoming(),
+            ]);
+            set({
+                sharedCards: toItems(sharedRes.data?.data || []),
+                incomingInvites: toItems(incomingRes.data?.data || []),
+                hasFetched: true,
+                loading: false,
+            });
         } catch {
             set({ error: 'Không thể tải danh sách thẻ chung', loading: false });
         }
@@ -72,8 +82,10 @@ export const useCardShareStore = create<CardShareStore>((set, get) => ({
         const res = await cardSharesApi.invite(cardId, email);
         return res.data?.data;
     },
-    accept: async (token: string) => {
-        const res = await cardSharesApi.accept(token);
+    respond: async (id: string, accept: boolean) => {
+        const res = await cardSharesApi.respond(id, accept);
+        // Drop it from incoming immediately; re-fetch to pick up the newly accepted card
+        set({ incomingInvites: get().incomingInvites.filter(i => i.share._id !== id) });
         await get().fetch(true);
         return res.data;
     },
@@ -98,10 +110,11 @@ export function useCardShares() {
 
     return {
         sharedCards: store.sharedCards,
+        incomingInvites: store.incomingInvites,
         loading: store.loading,
         error: store.error,
         invite: store.invite,
-        accept: store.accept,
+        respond: store.respond,
         revoke: store.revoke,
         getCardShares: store.getCardShares,
         refetch: () => store.fetch(true),

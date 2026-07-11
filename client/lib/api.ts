@@ -99,7 +99,8 @@ export const cardsApi = {
 // Card Shares
 export const cardSharesApi = {
     invite: (cardId: string, email: string) => api.post('/card-shares/invite', { cardId, email }),
-    accept: (token: string) => api.post('/card-shares/accept', { token }),
+    respond: (id: string, accept: boolean) => api.patch(`/card-shares/${id}/respond`, { accept }),
+    getIncoming: () => api.get('/card-shares/incoming'),
     getMyShares: () => api.get('/card-shares/my-shares'),
     getCardShares: (cardId: string) => api.get(`/card-shares/card/${cardId}`),
     revoke: (id: string) => api.delete(`/card-shares/${id}`),
