@@ -6,9 +6,12 @@ import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBanks } from '@/hooks/useBanks';
+import { useCardShares } from '@/hooks/useCardShares';
+import { useAuthStore } from '@/store/useStore';
 import { getBankLogo } from '@/lib/bankLogos';
 import CardFormModal from '@/components/CardFormModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
+import CardShareModal from '@/components/CardShareModal';
 import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import { resolveCardId, getCashbackAmount, getCappedCashbackTotal } from '@/lib/cashback';
@@ -63,15 +66,25 @@ export default function CardDetailPage() {
     const { cards, loading, updateCard, deleteCard, setDefaultCard } = useCards();
     const { transactions } = useTransactions();
     const { banks: fetchedBanks, fetchBanks } = useBanks();
+    const { sharedCards } = useCardShares();
+    const currentUser = useAuthStore(s => s.user);
 
     useEffect(() => { fetchBanks(); }, [fetchBanks]);
 
     const [showForm, setShowForm] = useState(false);
     const [showPayment, setShowPayment] = useState(false);
+    const [showShare, setShowShare] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [historyExpanded, setHistoryExpanded] = useState(false);
 
-    const card = useMemo(() => cards.find(c => c._id === params.id), [cards, params.id]);
+    // Check if this card is owned by me or shared with me
+    const ownCard = useMemo(() => cards.find(c => c._id === params.id), [cards, params.id]);
+    const sharedItem = useMemo(() => sharedCards.find(sc => sc.card._id === params.id), [sharedCards, params.id]);
+    const card = useMemo(() => ownCard || sharedItem?.card || null, [ownCard, sharedItem]);
+    const isOwner = !!ownCard;
+    const isShared = !!sharedItem;
+    const sharedOwnerName = sharedItem?.owner?.name || '';
+
     const accounts = useMemo(
         () => cards.filter(c => ['debit', 'eWallet', 'crypto'].includes(c.cardType)),
         [cards]
@@ -163,14 +176,14 @@ export default function CardDetailPage() {
         <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">
             <PageHeader
                 title={card.bankName}
-                subtitle="Chi tiết thẻ"
+                subtitle={isShared ? `Thẻ chung · ${sharedOwnerName}` : 'Chi tiết thẻ'}
                 backHref="/cards"
-                rightActions={
+                rightActions={isOwner ? (
                     <button onClick={() => setShowForm(true)}
                         className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0">
                         <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
                     </button>
-                }
+                ) : undefined}
             />
 
             <div className="px-5 pt-4 space-y-5">
@@ -237,26 +250,48 @@ export default function CardDetailPage() {
                 </div>
 
                 {/* ── Quick actions ─────────────────────────────── */}
+                {/* Shared card banner */}
+                {isShared && (
+                    <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-50/80 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800/40">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center flex-shrink-0">
+                            <span className="text-base">🤝</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">Thẻ chung</p>
+                            <p className="text-[11px] text-indigo-500 dark:text-indigo-400 truncate">
+                                Chia sẻ bởi {sharedOwnerName}
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3">
-                    {isCredit && card.balance > 0 && (
+                    {isCredit && card.balance > 0 && isOwner && (
                         <button onClick={() => setShowPayment(true)}
                             className="col-span-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-all">
                             <CustomIcon type="creditCard" size={16} tile={false} color="currentColor" /> Thanh toán ngay
                         </button>
                     )}
-                    {!card.isDefault && (
+                    {isOwner && (
+                        <button onClick={() => setShowShare(true)}
+                            className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-700 active:scale-[0.98] transition-all">
+                            <span className="text-base">🤝</span> Chia sẻ thẻ
+                        </button>
+                    )}
+                    {!card.isDefault && isOwner && (
                         <button onClick={() => setDefaultCard(card._id)}
                             className="flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-yellow-300 dark:hover:border-yellow-700 active:scale-[0.98] transition-all">
                             <CustomIcon type="star" size={16} tile={false} color="#F59E0B" /> Đặt mặc định
                         </button>
                     )}
-                    <button onClick={() => setDeleteConfirm(true)}
-                        className={cn(
-                            'flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 text-sm font-bold text-red-500 hover:border-red-300 dark:hover:border-red-900 active:scale-[0.98] transition-all',
-                            card.isDefault && 'col-span-2'
-                        )}>
-                        <CustomIcon type="trash" size={16} tile={false} color="currentColor" /> Xoá thẻ
-                    </button>
+                    {isOwner && (
+                        <button onClick={() => setDeleteConfirm(true)}
+                            className={cn(
+                                'flex items-center justify-center gap-2 py-3 rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 text-sm font-bold text-red-500 hover:border-red-300 dark:hover:border-red-900 active:scale-[0.98] transition-all',
+                            )}>
+                            <CustomIcon type="trash" size={16} tile={false} color="currentColor" /> Xoá thẻ
+                        </button>
+                    )}
                 </div>
 
                 {/* ── Installment breakdown ─────────────────────── */}
@@ -419,6 +454,12 @@ export default function CardDetailPage() {
                 onPaid={() => setShowPayment(false)}
                 creditCards={[card]}
                 accounts={accounts}
+            />
+            <CardShareModal
+                open={showShare}
+                onClose={() => setShowShare(false)}
+                cardId={card._id}
+                cardName={`${card.bankName} •••• ${card.cardNumber}`}
             />
 
             {deleteConfirm && (

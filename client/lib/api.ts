@@ -96,6 +96,15 @@ export const cardsApi = {
     updateBalance: (id: string, amount: number, action: 'add' | 'set') => api.patch(`/cards/${id}/balance`, { amount, action }),
 };
 
+// Card Shares
+export const cardSharesApi = {
+    invite: (cardId: string, email: string) => api.post('/card-shares/invite', { cardId, email }),
+    accept: (token: string) => api.post('/card-shares/accept', { token }),
+    getMyShares: () => api.get('/card-shares/my-shares'),
+    getCardShares: (cardId: string) => api.get(`/card-shares/card/${cardId}`),
+    revoke: (id: string) => api.delete(`/card-shares/${id}`),
+};
+
 // Cashback records (received/pending per card per month)
 export const cashbackApi = {
     getAll: () => api.get('/cashback-records'),

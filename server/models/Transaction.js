@@ -17,6 +17,8 @@ const transactionSchema = new mongoose.Schema({
     installmentMonths: { type: Number, default: 0 },
     installmentMonthly: { type: Number, default: 0 },
     installmentStartDate: { type: Date },
+    // Card sharing: track who created this transaction
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Transaction', transactionSchema);

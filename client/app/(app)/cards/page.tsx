@@ -6,6 +6,8 @@ import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBanks } from '@/hooks/useBanks';
+import { useCardShares } from '@/hooks/useCardShares';
+import { getBankLogo } from '@/lib/bankLogos';
 import CardFormModal from '@/components/CardFormModal';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
@@ -45,6 +47,7 @@ export default function CardsPage() {
     const { banks: fetchedBanks, fetchBanks } = useBanks();
     const router = useRouter();
     const historyRef = useRef<HTMLDivElement>(null);
+    const { sharedCards } = useCardShares();
 
     useEffect(() => { fetchBanks(); }, [fetchBanks]);
 
@@ -373,6 +376,57 @@ export default function CardsPage() {
                         </div>
                     </div>
                 </div>
+
+                {/* ── Shared Cards Section (Thẻ chung) ─────────── */}
+                {sharedCards.length > 0 && (
+                    <div className="px-5 mb-5">
+                        <div className="flex items-center justify-between mb-2.5">
+                            <div className="flex items-center gap-2">
+                                <span className="text-base">🤝</span>
+                                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Thẻ chung</h3>
+                            </div>
+                            <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
+                                {sharedCards.length} thẻ
+                            </span>
+                        </div>
+                        <div className="space-y-2">
+                            {sharedCards.map(({ share, card: sc, owner }) => {
+                                const logoUrl = (() => {
+                                    const bankByShort = fetchedBanks.find((b: any) => b.shortName?.toUpperCase() === sc.bankShortName?.toUpperCase());
+                                    return (bankByShort as any)?.logo || getBankLogo(sc.bankShortName, sc.bankName);
+                                })();
+                                const fmt2 = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+                                return (
+                                    <button
+                                        key={share._id}
+                                        onClick={() => router.push(`/cards/${sc._id}`)}
+                                        className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-indigo-100 dark:border-indigo-900/40 shadow-sm transition-all hover:border-indigo-300 dark:hover:border-indigo-700 active:scale-[0.98] text-left"
+                                    >
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white shadow-sm border border-gray-100 overflow-hidden">
+                                            {logoUrl ? (
+                                                <img src={logoUrl} alt={sc.bankName} className="w-full h-full object-contain p-1.5" />
+                                            ) : (
+                                                <span className="text-xs font-bold text-slate-500">{(sc.bankShortName || sc.bankName).substring(0, 3).toUpperCase()}</span>
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{sc.bankName}</p>
+                                            </div>
+                                            <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">
+                                                Chia sẻ bởi {owner?.name || 'N/A'}
+                                            </p>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{fmt2(sc.balance)}đ</p>
+                                            <p className="text-[10px] text-slate-400">•••• {sc.cardNumber}</p>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ── Delete Confirm Sheet ─────────────────────────── */}

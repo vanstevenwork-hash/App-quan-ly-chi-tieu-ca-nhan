@@ -1,6 +1,21 @@
 const Transaction = require('../models/Transaction');
 const Card = require('../models/Card');
+const CardShare = require('../models/CardShare');
 const { createNotification } = require('./notificationController');
+
+// Helper: check if user has collaborative access to a card
+async function hasCardAccess(userId, cardId) {
+    // Owner?
+    const ownCard = await Card.findOne({ _id: cardId, userId, isActive: true });
+    if (ownCard) return { allowed: true, card: ownCard, isOwner: true };
+    // Shared?
+    const share = await CardShare.findOne({ cardId, sharedWithUserId: userId, status: 'accepted' });
+    if (share) {
+        const card = await Card.findOne({ _id: cardId, isActive: true });
+        if (card) return { allowed: true, card, isOwner: false };
+    }
+    return { allowed: false, card: null, isOwner: false };
+}
 
 // GET /api/transactions
 exports.getTransactions = async (req, res) => {
@@ -48,43 +63,52 @@ exports.createTransaction = async (req, res) => {
         console.log('🚀 SERVER: createTransaction REACHED!');
         const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate, receiptImage } = req.body;
 
+        // Determine the userId for the transaction:
+        // If creating on a shared card, userId = card owner (so it shows up in card history)
+        let txUserId = req.user._id;
+        let accessResult = null;
+
+        if (paymentMethod === 'card' && cardId) {
+            accessResult = await hasCardAccess(req.user._id, cardId);
+            if (!accessResult.allowed) {
+                return res.status(403).json({ success: false, message: 'Không có quyền tạo giao dịch trên thẻ này' });
+            }
+            // Transaction belongs to the card owner so it appears in their history
+            txUserId = accessResult.card.userId;
+        }
+
         const t = await Transaction.create({
-            userId: req.user._id,
+            userId: txUserId,
             type, amount, category, note,
             date: date ? new Date(date) : new Date(),
             cardId, paymentMethod,
             receiptImage,
-            isInstallment, installmentMonths, installmentMonthly, installmentStartDate
+            isInstallment, installmentMonths, installmentMonthly, installmentStartDate,
+            createdBy: req.user._id,
         });
 
         console.log('--- CREATE TRANSACTION DEBUG ---');
         console.log('Body:', req.body);
         console.log('Payment Method:', paymentMethod);
         console.log('Card ID:', cardId);
+        console.log('Created By:', req.user._id, 'Tx User:', txUserId);
 
         // Update Card Balance
-        if (paymentMethod === 'card' && cardId) {
-            console.log('Attempting to find card with ID:', cardId);
-            const card = await Card.findOne({ _id: cardId, userId: req.user._id });
-            if (card) {
-                console.log('Card found:', card.bankShortName, 'Type:', card.cardType, 'Current Balance:', card.balance);
-                const isCredit = card.cardType === 'credit';
-                if (type === 'income') {
-                    // Income: Asset increases (+), Debt decreases (-)
-                    if (isCredit) card.balance -= Number(amount);
-                    else card.balance += Number(amount);
-                } else {
-                    // Expense: Asset decreases (-), Debt increases (+)
-                    if (isCredit) card.balance += Number(amount);
-                    else card.balance -= Number(amount);
-                }
-                console.log('New Balance to save:', card.balance);
-                await card.save();
-                console.log('Card balance saved successfully');
+        if (paymentMethod === 'card' && cardId && accessResult?.card) {
+            const card = accessResult.card;
+            console.log('Card found:', card.bankShortName, 'Type:', card.cardType, 'Current Balance:', card.balance);
+            const isCredit = card.cardType === 'credit';
+            if (type === 'income') {
+                if (isCredit) card.balance -= Number(amount);
+                else card.balance += Number(amount);
             } else {
-                console.log('❌ Card NOT FOUND for ID:', cardId, 'and User:', req.user._id);
+                if (isCredit) card.balance += Number(amount);
+                else card.balance -= Number(amount);
             }
-        } else {
+            console.log('New Balance to save:', card.balance);
+            await card.save();
+            console.log('Card balance saved successfully');
+        } else if (paymentMethod !== 'card' || !cardId) {
             console.log('Skipping card balance update: paymentMethod is', paymentMethod, 'and cardId is', cardId);
         }
 
@@ -109,15 +133,33 @@ exports.createTransaction = async (req, res) => {
 // PUT /api/transactions/:id
 exports.updateTransaction = async (req, res) => {
     try {
-        const old = await Transaction.findOne({ _id: req.params.id, userId: req.user._id });
+        // Find by id first, then check permission
+        const old = await Transaction.findById(req.params.id);
         if (!old) return res.status(404).json({ success: false, message: 'Không tìm thấy giao dịch' });
+
+        // Permission check: own transaction OR created by this user on a shared card
+        const isOwnTx = old.userId.toString() === req.user._id.toString();
+        const isCreator = old.createdBy && old.createdBy.toString() === req.user._id.toString();
+        if (!isOwnTx && !isCreator) {
+            return res.status(403).json({ success: false, message: 'Bạn chỉ được sửa giao dịch do mình tạo' });
+        }
+        // If shared card user, only allow editing transactions they created
+        if (!isOwnTx && isCreator) {
+            // Verify they still have access to the card
+            if (old.cardId) {
+                const access = await hasCardAccess(req.user._id, old.cardId);
+                if (!access.allowed) {
+                    return res.status(403).json({ success: false, message: 'Không còn quyền truy cập thẻ này' });
+                }
+            }
+        }
 
         const updated = await Transaction.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
         // Reconciliation: Revert OLD impact and apply NEW impact
         // 1. Revert Old
         if (old.paymentMethod === 'card' && old.cardId) {
-            const oldCard = await Card.findOne({ _id: old.cardId, userId: req.user._id });
+            const oldCard = await Card.findById(old.cardId);
             if (oldCard) {
                 const isCredit = oldCard.cardType === 'credit';
                 if (old.type === 'income') {
@@ -133,7 +175,7 @@ exports.updateTransaction = async (req, res) => {
 
         // 2. Apply New
         if (updated.paymentMethod === 'card' && updated.cardId) {
-            const newCard = await Card.findOne({ _id: updated.cardId, userId: req.user._id });
+            const newCard = await Card.findById(updated.cardId);
             if (newCard) {
                 const isCredit = newCard.cardType === 'credit';
                 if (updated.type === 'income') {
@@ -156,12 +198,19 @@ exports.updateTransaction = async (req, res) => {
 // DELETE /api/transactions/:id
 exports.deleteTransaction = async (req, res) => {
     try {
-        const t = await Transaction.findOne({ _id: req.params.id, userId: req.user._id });
+        const t = await Transaction.findById(req.params.id);
         if (!t) return res.status(404).json({ success: false, message: 'Không tìm thấy giao dịch' });
+
+        // Permission check: own transaction OR created by this user
+        const isOwnTx = t.userId.toString() === req.user._id.toString();
+        const isCreator = t.createdBy && t.createdBy.toString() === req.user._id.toString();
+        if (!isOwnTx && !isCreator) {
+            return res.status(403).json({ success: false, message: 'Bạn chỉ được xóa giao dịch do mình tạo' });
+        }
 
         // Revert balance before deleting
         if (t.paymentMethod === 'card' && t.cardId) {
-            const card = await Card.findOne({ _id: t.cardId, userId: req.user._id });
+            const card = await Card.findById(t.cardId);
             if (card) {
                 const isCredit = card.cardType === 'credit';
                 if (t.type === 'income') {

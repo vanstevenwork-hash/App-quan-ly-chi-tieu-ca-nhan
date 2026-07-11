@@ -19,6 +19,8 @@ export interface Transaction {
     installmentMonths?: number;
     installmentMonthly?: number;
     installmentStartDate?: string;
+    // Card sharing
+    createdBy?: string;
 }
 
 import { create } from 'zustand';
