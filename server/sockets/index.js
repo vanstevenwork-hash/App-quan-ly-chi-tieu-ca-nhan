@@ -105,6 +105,14 @@ module.exports = function attachGameSockets(io) {
                 if (!match || !isPlayerInMatch(match, userId)) {
                     return socket.emit('match:error', { message: 'Không tìm thấy ván đấu hoặc bạn không có quyền tham gia' });
                 }
+                // Dead matches (abandoned/declined) never produce a match:state —
+                // without an explicit error here, a client that lands on this match
+                // (e.g. a stale link, or clicking back in after leaving) waits on
+                // "connecting" forever with no signal telling it to stop.
+                if (match.status === 'abandoned' || match.status === 'declined') {
+                    return socket.emit('match:error', { message: 'Ván đấu đã kết thúc' });
+                }
+
                 socket.data.matchId = matchId;
                 socket.join(`match:${matchId}`);
                 addPresence(matchId, userId);

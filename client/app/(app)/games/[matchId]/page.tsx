@@ -146,8 +146,13 @@ function TableThrowEffects({
     now: number;
     currentUserId?: string;
 }) {
+    // Each stacked reaction is staggered by index*90ms and the longest animation
+    // (throw/impactBurst/impactLabel) runs 2.65s — so the last of up to 4 stacked
+    // items needs 3*90ms + 2650ms = 2920ms to actually finish. The old 2800ms
+    // cutoff removed it from the DOM before that, cutting the animation off
+    // mid-flight instead of letting it fade out. Give it real headroom instead.
     const visible = messages
-        .filter(message => THROW_REACTION_EMOJIS.includes(message.text) && now - new Date(message.at).getTime() < 2800)
+        .filter(message => THROW_REACTION_EMOJIS.includes(message.text) && now - new Date(message.at).getTime() < 3200)
         .slice(-4);
 
     if (visible.length === 0) return null;
@@ -234,6 +239,17 @@ export default function GameMatchPage() {
                     setLoadError('Ván đấu chưa bắt đầu — chờ đối thủ chấp nhận lời mời');
                     return;
                 }
+                // 'abandoned'/'declined' matches never get a socket match:state
+                // (the server only emits it for active/finished) — without this
+                // check the page spins on the loading state forever.
+                if (match?.status === 'abandoned') {
+                    setLoadError('Ván đấu đã kết thúc — một người chơi đã rời khỏi ván');
+                    return;
+                }
+                if (match?.status === 'declined') {
+                    setLoadError('Lời mời chơi đã bị từ chối');
+                    return;
+                }
                 const players = ((match?.players || []) as unknown[]).filter(
                     (p): p is MatchPlayerSummary => typeof p === 'object' && p !== null && '_id' in p && 'name' in p
                 );
@@ -250,9 +266,13 @@ export default function GameMatchPage() {
 
     useEffect(() => {
         if (errorMessage) {
+            // If we haven't received a match:state yet, this error is the reason
+            // why — surface it instead of leaving the page spinning forever.
+            if (!matchState) setLoadError(errorMessage);
             toast.error(errorMessage);
             clearError();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [errorMessage, clearError]);
 
     useEffect(() => { setSelectedIds([]); }, [matchState?.turnUserId, matchState?.lastPlayBy]);
@@ -585,8 +605,26 @@ export default function GameMatchPage() {
             {/* Your hand */}
             <div className="mx-5 mb-5 rounded-[28px] border border-white/10 bg-[#053c3f]/82 pt-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.28)] backdrop-blur">
                 <div className="flex items-center justify-between gap-3 px-5 mb-2">
-                    <span className="text-base font-black text-white">Bài của bạn <span className="text-emerald-300">({matchState.yourHand.length})</span></span>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                        <span className="flex-shrink-0 text-base font-black text-white">Bài của bạn <span className="text-emerald-300">({matchState.yourHand.length})</span></span>
+                        {selectedIds.length > 0 && (
+                            <span className={cn(
+                                'min-w-0 truncate rounded-full border px-2.5 py-1 text-[10px] font-black',
+                                isPhom
+                                    ? (canPlay ? 'border-emerald-300/35 bg-emerald-400/14 text-emerald-100' : 'border-amber-300/35 bg-amber-400/12 text-amber-100')
+                                    : selectionValidation.playable
+                                        ? 'border-emerald-300/35 bg-emerald-400/14 text-emerald-100'
+                                        : selectionValidation.valid
+                                            ? 'border-amber-300/35 bg-amber-400/12 text-amber-100'
+                                            : 'border-red-300/35 bg-red-400/12 text-red-100'
+                            )}>
+                                {isPhom
+                                    ? (selectedIds.length === 1 ? 'Lá rác · ' + (canPlay ? 'Có thể đánh' : 'Chờ lượt') : 'Chỉ đánh 1 lá/lượt')
+                                    : `${selectionValidation.label} · ${selectionValidation.message}`}
+                            </span>
+                        )}
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-3">
                         {selectedIds.length > 0 && (
                             <button onClick={() => setSelectedIds([])} className="text-xs font-bold text-emerald-200">Bỏ chọn</button>
                         )}
@@ -595,36 +633,6 @@ export default function GameMatchPage() {
                         </button>
                     </div>
                 </div>
-                {selectedIds.length > 0 && !isPhom && (
-                    <div className={cn(
-                        'mx-4 mb-2 rounded-2xl border px-3 py-2 text-xs font-black',
-                        selectionValidation.playable
-                            ? 'border-emerald-300/35 bg-emerald-400/14 text-emerald-100'
-                            : selectionValidation.valid
-                                ? 'border-amber-300/35 bg-amber-400/12 text-amber-100'
-                                : 'border-red-300/35 bg-red-400/12 text-red-100'
-                    )}>
-                        <div className="flex items-center justify-between gap-3">
-                            <span>{selectionValidation.label}</span>
-                            <span className="font-bold opacity-80">{selectedIds.length} lá</span>
-                        </div>
-                        <p className="mt-0.5 font-semibold opacity-80">{selectionValidation.message}</p>
-                    </div>
-                )}
-                {selectedIds.length > 0 && isPhom && (
-                    <div className={cn(
-                        'mx-4 mb-2 rounded-2xl border px-3 py-2 text-xs font-black',
-                        canPlay ? 'border-emerald-300/35 bg-emerald-400/14 text-emerald-100' : 'border-amber-300/35 bg-amber-400/12 text-amber-100'
-                    )}>
-                        <div className="flex items-center justify-between gap-3">
-                            <span>{selectedIds.length === 1 ? 'Lá rác đã chọn' : 'Phỏm chỉ đánh 1 lá/lượt'}</span>
-                            <span className="font-bold opacity-80">{selectedIds.length} lá</span>
-                        </div>
-                        <p className="mt-0.5 font-semibold opacity-80">
-                            {canPlay ? 'Có thể đánh lá này' : 'Chọn đúng 1 lá khi đến lượt đánh rác'}
-                        </p>
-                    </div>
-                )}
                 <Hand cards={matchState.yourHand} selectedIds={selectedIds} onToggle={handleToggle} />
                 <GameActions
                     canPlay={canPlay}
