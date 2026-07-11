@@ -5,29 +5,42 @@ const engines = require('../games');
 
 const GAME_LABELS = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
 
-// @desc  Invite a registered user to a 2-player game
+function normalizeTurnSeconds(value) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 30;
+    return Math.max(10, Math.min(120, Math.round(parsed)));
+}
+
+// @desc  Invite registered users to a 2-4 player game
 // @route POST /api/game-matches/invite
 exports.invite = async (req, res) => {
     try {
-        const { email, gameType } = req.body;
-        if (!email || !gameType) {
+        const { email, emails, gameType, turnSeconds } = req.body;
+        const rawEmails = Array.isArray(emails) ? emails : [email].filter(Boolean);
+        const normalizedEmails = Array.from(new Set(rawEmails.map(e => String(e).toLowerCase().trim()).filter(Boolean)));
+        if (normalizedEmails.length === 0 || !gameType) {
             return res.status(400).json({ success: false, message: 'Thiếu email hoặc gameType' });
+        }
+        if (normalizedEmails.length > 3) {
+            return res.status(400).json({ success: false, message: 'Một ván chỉ hỗ trợ tối đa 4 người chơi' });
         }
         if (!engines[gameType]) {
             return res.status(400).json({ success: false, message: 'Loại game không được hỗ trợ' });
         }
-        const normalizedEmail = email.toLowerCase().trim();
-        if (normalizedEmail === req.user.email.toLowerCase()) {
+        if (normalizedEmails.includes(req.user.email.toLowerCase())) {
             return res.status(400).json({ success: false, message: 'Không thể mời chính mình' });
         }
 
-        const invitee = await User.findOne({ email: normalizedEmail });
-        if (!invitee) {
-            return res.status(404).json({ success: false, message: 'Người này chưa có tài khoản trong app' });
+        const invitees = await User.find({ email: { $in: normalizedEmails } });
+        if (invitees.length !== normalizedEmails.length) {
+            const found = new Set(invitees.map(u => u.email.toLowerCase()));
+            const missing = normalizedEmails.filter(e => !found.has(e));
+            return res.status(404).json({ success: false, message: `Chưa có tài khoản: ${missing.join(', ')}` });
         }
 
+        const playerIds = [req.user._id, ...invitees.map(u => u._id)];
         const existing = await GameMatch.findOne({
-            players: { $all: [req.user._id, invitee._id] },
+            players: { $all: playerIds },
             gameType,
             status: { $in: ['pending_invite', 'active'] },
         });
@@ -40,11 +53,13 @@ exports.invite = async (req, res) => {
 
         const match = await GameMatch.create({
             gameType,
-            players: [req.user._id, invitee._id],
+            players: playerIds,
+            acceptedPlayerIds: [req.user._id],
             hostId: req.user._id,
+            settings: { turnSeconds: normalizeTurnSeconds(turnSeconds) },
         });
 
-        await createNotification({
+        await Promise.all(invitees.map(invitee => createNotification({
             userId: invitee._id.toString(),
             title: 'Lời mời chơi bài',
             message: `${req.user.name} mời bạn chơi ${GAME_LABELS[gameType] || gameType}`,
@@ -55,7 +70,7 @@ exports.invite = async (req, res) => {
             relatedId: match._id,
             relatedModel: 'GameMatch',
             actionUrl: `/games/${match._id}`,
-        });
+        })));
 
         res.status(201).json({ success: true, data: match });
     } catch (err) {
@@ -79,11 +94,17 @@ exports.respond = async (req, res) => {
         }
 
         if (accept) {
-            const engine = engines[match.gameType];
-            const playerIds = match.players.map(p => p.toString());
-            match.state = engine.dealHands(playerIds);
-            match.turnUserId = match.state.turnUserId;
-            match.status = 'active';
+            const acceptedIds = new Set((match.acceptedPlayerIds || []).map(id => id.toString()));
+            acceptedIds.add(req.user._id.toString());
+            match.acceptedPlayerIds = Array.from(acceptedIds);
+            const allAccepted = match.players.every(p => acceptedIds.has(p.toString()));
+            if (allAccepted) {
+                const engine = engines[match.gameType];
+                const playerIds = match.players.map(p => p.toString());
+                match.state = engine.dealHands(playerIds, { turnSeconds: match.settings?.turnSeconds || 30 });
+                match.turnUserId = match.state.turnUserId;
+                match.status = 'active';
+            }
         } else {
             match.status = 'declined';
         }
@@ -112,8 +133,14 @@ exports.respond = async (req, res) => {
 // @route GET /api/game-matches/incoming
 exports.getIncoming = async (req, res) => {
     try {
-        const matches = await GameMatch.find({ players: req.user._id, status: 'pending_invite', hostId: { $ne: req.user._id } })
+        const matches = await GameMatch.find({
+            players: req.user._id,
+            status: 'pending_invite',
+            hostId: { $ne: req.user._id },
+            acceptedPlayerIds: { $ne: req.user._id },
+        })
             .populate('hostId', 'name email avatar')
+            .populate('players', 'name email avatar')
             .sort({ createdAt: -1 });
         res.json({ success: true, data: matches });
     } catch (err) {
@@ -128,7 +155,14 @@ exports.getActive = async (req, res) => {
         const matches = await GameMatch.find({ players: req.user._id, status: 'active' })
             .populate('players', 'name email avatar')
             .sort({ updatedAt: -1 });
-        res.json({ success: true, data: matches });
+        const userId = req.user._id.toString();
+        const data = matches.map(match => {
+            const obj = match.toObject();
+            const engine = engines[match.gameType];
+            if (obj.state && engine) obj.state = engine.toPlayerView(match.state, userId);
+            return obj;
+        });
+        res.json({ success: true, data });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

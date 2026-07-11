@@ -5,9 +5,13 @@ const gameMatchSchema = new mongoose.Schema(
         gameType: { type: String, enum: ['tien_len', 'phom'], required: true },
         players: {
             type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-            validate: { validator: v => v.length === 2, message: 'GameMatch requires exactly 2 players' },
+            validate: { validator: v => v.length >= 2 && v.length <= 4, message: 'GameMatch requires 2 to 4 players' },
         },
+        acceptedPlayerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        settings: {
+            turnSeconds: { type: Number, default: 30, min: 10, max: 120 },
+        },
         status: {
             type: String,
             enum: ['pending_invite', 'active', 'finished', 'declined', 'abandoned'],

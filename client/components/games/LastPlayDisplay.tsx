@@ -10,18 +10,26 @@ interface LastPlayDisplayProps {
 export default function LastPlayDisplay({ lastPlay, isYourLead }: LastPlayDisplayProps) {
     if (!lastPlay) {
         return (
-            <div className="h-[68px] flex items-center justify-center">
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-                    {isYourLead ? 'Bạn được ra bài — chọn lá để đánh' : 'Bàn trống, đang chờ đối thủ ra bài'}
-                </p>
+            <div className="relative flex h-64 w-64 items-center justify-center rounded-full border border-teal-300/18 bg-teal-400/5 shadow-[inset_0_0_55px_rgba(45,212,191,0.08)]">
+                <div className="text-center text-teal-200/20">
+                    <div className="mb-1 text-3xl tracking-[0.12em]">♠ ♥ ♦ ♣</div>
+                    <div className="text-4xl font-black uppercase leading-none">Tiến lên</div>
+                    <div className="text-xl font-black uppercase">Miền Nam</div>
+                    <p className="mt-3 max-w-40 text-[11px] font-bold uppercase tracking-wide text-teal-100/28">
+                        {isYourLead ? 'Bạn mở bài' : 'Chờ đối thủ'}
+                    </p>
+                </div>
             </div>
         );
     }
     return (
-        <div className="flex items-center justify-center gap-1.5 h-[68px]">
+        <div className="relative flex h-64 w-64 items-center justify-center rounded-full border border-teal-300/18 bg-teal-400/5">
+            <div className="absolute inset-0 rounded-full shadow-[inset_0_0_55px_rgba(45,212,191,0.08)]" />
+            <div className="relative flex items-center justify-center -space-x-2">
             {lastPlay.cards.map(c => (
-                <PlayingCard key={c.id} rank={c.rank} suit={c.suit} />
+                <PlayingCard key={c.id} rank={c.rank} suit={c.suit} size="lg" />
             ))}
+            </div>
         </div>
     );
 }

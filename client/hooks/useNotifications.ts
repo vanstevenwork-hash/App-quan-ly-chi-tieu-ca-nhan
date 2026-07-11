@@ -1,7 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useEffect } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { registerStoreReset } from '@/store/useStore';
+import { useGameMatchListStore } from '@/hooks/useGameMatches';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -90,6 +91,9 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
                             if (state.notifications.some(n => n._id === payload.data._id)) return state;
                             return { notifications: [payload.data, ...state.notifications] };
                         });
+                        if (payload.data.type === 'game_invite') {
+                            void useGameMatchListStore.getState().fetch(true);
+                        }
                     }
                 } catch { /* ignore */ }
             };

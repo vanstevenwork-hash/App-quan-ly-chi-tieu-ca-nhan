@@ -10,7 +10,7 @@ interface HandProps {
 
 export default function Hand({ cards, selectedIds, onToggle }: HandProps) {
     return (
-        <div className="flex gap-1.5 overflow-x-auto pb-2 px-1 hide-scrollbar">
+        <div className="flex overflow-x-auto hide-scrollbar px-3 pb-3 pt-1">
             {cards.map(c => (
                 <PlayingCard
                     key={c.id}
@@ -18,6 +18,8 @@ export default function Hand({ cards, selectedIds, onToggle }: HandProps) {
                     suit={c.suit}
                     selected={selectedIds.includes(c.id)}
                     onClick={() => onToggle(c.id)}
+                    size="lg"
+                    className="-mr-2 last:mr-0"
                 />
             ))}
         </div>

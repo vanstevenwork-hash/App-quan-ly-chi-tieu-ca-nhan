@@ -16,11 +16,13 @@ const GAMES: { type: GameType; label: string }[] = [
     { type: 'tien_len', label: 'Tiến lên miền Nam' },
     { type: 'phom', label: 'Phỏm' },
 ];
+const TURN_SECONDS_OPTIONS = [15, 30, 45, 60];
 
 export default function GameInviteModal({ open, onClose, onInvited }: GameInviteModalProps) {
     const [mounted, setMounted] = useState(false);
     const [email, setEmail] = useState('');
     const [gameType, setGameType] = useState<GameType>('tien_len');
+    const [turnSeconds, setTurnSeconds] = useState(30);
     const [sending, setSending] = useState(false);
     const { invite } = useGameMatches();
 
@@ -28,19 +30,25 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
     useEffect(() => { if (open) setEmail(''); }, [open]);
 
     const handleInvite = async () => {
-        if (!email.trim()) return;
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        const emails = Array.from(new Set(email.split(/[\s,;]+/).map(item => item.trim().toLowerCase()).filter(Boolean)));
+        if (emails.length === 0) return;
+        if (emails.length > 3) {
+            toast.error('Một ván chỉ mời tối đa 3 người nữa');
+            return;
+        }
+        if (emails.some(item => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item))) {
             toast.error('Email không hợp lệ');
             return;
         }
         setSending(true);
         try {
-            await invite(email.trim().toLowerCase(), gameType);
+            await invite(emails, gameType, turnSeconds);
             toast.success('Đã gửi lời mời!');
             onInvited?.();
             onClose();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Không thể gửi lời mời');
+        } catch (err) {
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(message || 'Không thể gửi lời mời');
         }
         setSending(false);
     };
@@ -93,16 +101,37 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
 
                         <div>
                             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">
-                                Mời qua email
+                                Thời gian mỗi lượt
+                            </label>
+                            <div className="grid grid-cols-4 gap-2">
+                                {TURN_SECONDS_OPTIONS.map(seconds => (
+                                    <button
+                                        key={seconds}
+                                        onClick={() => setTurnSeconds(seconds)}
+                                        className={cn(
+                                            'py-2.5 rounded-xl text-xs font-bold border transition-all',
+                                            turnSeconds === seconds
+                                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                                : 'bg-gray-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-gray-200 dark:border-slate-700'
+                                        )}
+                                    >
+                                        {seconds}s
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">
+                                Mời qua email (tối đa 3 người)
                             </label>
                             <div className="flex gap-2">
-                                <input
-                                    type="email"
+                                <textarea
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleInvite()}
-                                    placeholder="email@example.com"
-                                    className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
+                                    placeholder="email1@example.com, email2@example.com"
+                                    rows={3}
+                                    className="flex-1 resize-none px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-300 dark:placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
                                 />
                                 <button
                                     onClick={handleInvite}
@@ -122,7 +151,7 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
                                 </button>
                             </div>
                             <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
-                                Người được mời phải đã có tài khoản trong app
+                                Nhập nhiều email bằng dấu phẩy, khoảng trắng hoặc xuống dòng
                             </p>
                         </div>
                     </div>

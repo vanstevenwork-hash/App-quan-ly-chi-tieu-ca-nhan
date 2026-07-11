@@ -100,7 +100,8 @@ export const cardsApi = {
 
 // Game Matches (real-time card games)
 export const gameMatchesApi = {
-    invite: (email: string, gameType: 'tien_len' | 'phom') => api.post('/game-matches/invite', { email, gameType }),
+    invite: (emails: string | string[], gameType: 'tien_len' | 'phom', turnSeconds = 30) =>
+        api.post('/game-matches/invite', { emails: Array.isArray(emails) ? emails : [emails], gameType, turnSeconds }),
     respond: (id: string, accept: boolean) => api.patch(`/game-matches/${id}/respond`, { accept }),
     getIncoming: () => api.get('/game-matches/incoming'),
     getActive: () => api.get('/game-matches/active'),

@@ -1,5 +1,6 @@
 'use client';
 import { memo } from 'react';
+import { useRouter } from 'next/navigation';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
@@ -64,7 +65,7 @@ function AlertCard({
 /** Card-share invite — the only alert type with real actions (Accept/Decline) instead of just navigating. */
 function ShareInviteCard({ item, onRespond }: {
     item: SharedCardItem;
-    onRespond: (id: string, accept: boolean) => Promise<any>;
+    onRespond: (id: string, accept: boolean) => Promise<unknown>;
 }) {
     return (
         <InviteCard
@@ -78,12 +79,14 @@ function ShareInviteCard({ item, onRespond }: {
 }
 
 const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
+type InviteResponse = { data?: { _id?: string } };
 
 /** Game invite — same accept/decline interaction as ShareInviteCard, for the new card-game feature. */
 function GameInviteCard({ item, onRespond }: {
     item: GameMatch;
-    onRespond: (id: string, accept: boolean) => Promise<any>;
+    onRespond: (id: string, accept: boolean) => Promise<InviteResponse>;
 }) {
+    const router = useRouter();
     const host = typeof item.hostId === 'object' ? item.hostId : null;
     return (
         <InviteCard
@@ -91,7 +94,11 @@ function GameInviteCard({ item, onRespond }: {
             iconBg="bg-purple-50 dark:bg-purple-500/15"
             title={`${host?.name || 'Ai đó'} mời chơi bài`}
             sub={GAME_LABELS[item.gameType] || item.gameType}
-            onAccept={async () => { await onRespond(item._id, true); toast.success('Đã chấp nhận, vào chơi thôi!'); }}
+            onAccept={async () => {
+                const res = await onRespond(item._id, true);
+                toast.success('Đã chấp nhận, vào chơi thôi!');
+                router.push(`/games/${res?.data?._id || item._id}`);
+            }}
             onDecline={async () => { await onRespond(item._id, false); toast.success('Đã từ chối lời mời'); }}
         />
     );
@@ -101,9 +108,9 @@ interface ImportantAlertsSectionProps {
     creditAlerts: { card: Card; dueThisCycle: number }[];
     savingsCards: Card[];
     shareInvites?: SharedCardItem[];
-    onRespondShare?: (id: string, accept: boolean) => Promise<any>;
+    onRespondShare?: (id: string, accept: boolean) => Promise<unknown>;
     gameInvites?: GameMatch[];
-    onRespondGame?: (id: string, accept: boolean) => Promise<any>;
+    onRespondGame?: (id: string, accept: boolean) => Promise<InviteResponse>;
     /** Full alert count (un-sliced) so the badge matches the notifications screen */
     totalCount?: number;
     /** Opens the notification panel on the "Quan trọng" tab */

@@ -10,6 +10,21 @@ import { toast } from 'sonner';
 
 const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
 
+function matchSummary(match: GameMatch) {
+    const state = match.state;
+    if (!state) return 'Đang chơi — bấm để tiếp tục';
+    const turnLabel = state.turnUserId === state.youAre ? 'Lượt bạn' : 'Lượt đối thủ';
+    const turnSeconds = state.turnSeconds || match.settings?.turnSeconds || 30;
+    const playerCount = Array.isArray(match.players) ? match.players.length : 0;
+
+    if (match.gameType === 'phom') {
+        const phase = state.phase === 'draw_or_eat' ? 'ăn/bốc' : state.phase === 'discard' ? 'đánh rác' : 'kết thúc';
+        return `${playerCount} người · ${turnLabel} · ${phase} · Rác ${state.deadwoodScore ?? 0}đ · Nọc ${state.stockCount ?? 0} · ${turnSeconds}s/lượt`;
+    }
+
+    return `${playerCount} người · ${turnLabel} · Bạn ${state.yourHand?.length ?? 0} lá · Đối thủ ${state.opponentHandCount ?? 0} lá · ${turnSeconds}s/lượt`;
+}
+
 export default function GamesLobbyPage() {
     const router = useRouter();
     const { incomingInvites, activeMatches, respond, refetch, loading } = useGameMatches();
@@ -87,7 +102,10 @@ export default function GamesLobbyPage() {
                                                 {GAME_LABELS[match.gameType] || match.gameType}
                                             </p>
                                             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                                                {opponent ? `Với ${opponent.name} — bấm để tiếp tục` : 'Đang chơi — bấm để tiếp tục'}
+                                                {opponent ? `Với ${opponent.name}` : 'Đang chơi'}
+                                            </p>
+                                            <p className="text-[11px] font-semibold text-indigo-500 dark:text-indigo-300 mt-1 truncate">
+                                                {matchSummary(match)}
                                             </p>
                                         </div>
                                     </button>

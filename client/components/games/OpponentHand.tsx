@@ -10,13 +10,15 @@ interface OpponentHandProps {
 export default function OpponentHand({ count }: OpponentHandProps) {
     const shown = Math.min(count, 13);
     return (
-        <div className="flex items-center gap-2">
-            <div className="flex -space-x-6">
+        <div className="flex items-center justify-end gap-3 min-w-0">
+            <div className="flex -space-x-7 overflow-hidden py-1 pl-1">
                 {Array.from({ length: shown }).map((_, i) => (
                     <PlayingCard key={i} rank="" suit="" faceDown size="sm" />
                 ))}
             </div>
-            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{count} lá</span>
+            <span className="rounded-xl bg-black/20 px-3 py-2 text-sm font-extrabold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] whitespace-nowrap">
+                {count} lá
+            </span>
         </div>
     );
 }

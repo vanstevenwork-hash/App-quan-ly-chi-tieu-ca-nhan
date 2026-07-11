@@ -1,11 +1,8 @@
 const { makeDeck, shuffle, sortHand } = require('../shared/card');
 
-// 2-player "tiến lên tay đôi" variant: full 52-card deck, split evenly (26 each).
-function dealTwoHands() {
+function dealHandsByPlayerCount(playerCount) {
     const deck = shuffle(makeDeck());
-    const hand0 = sortHand(deck.slice(0, 26));
-    const hand1 = sortHand(deck.slice(26, 52));
-    return [hand0, hand1];
+    return Array.from({ length: playerCount }, (_, index) => sortHand(deck.slice(index * 13, index * 13 + 13)));
 }
 
-module.exports = { dealTwoHands };
+module.exports = { dealHandsByPlayerCount };

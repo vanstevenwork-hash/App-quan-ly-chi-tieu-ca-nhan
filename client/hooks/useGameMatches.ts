@@ -21,6 +21,19 @@ export interface GameMatch {
     status: 'pending_invite' | 'active' | 'finished' | 'declined' | 'abandoned';
     turnUserId?: string;
     winnerId?: string;
+    settings?: { turnSeconds?: number };
+    state?: {
+        gameType?: GameType;
+        youAre?: string;
+        opponents?: { userId: string; handCount: number }[];
+        yourHand?: { id: string; rank: string; suit: string }[];
+        opponentHandCount?: number;
+        turnUserId?: string;
+        phase?: 'discard' | 'draw_or_eat' | 'finished';
+        stockCount?: number;
+        deadwoodScore?: number;
+        turnSeconds?: number;
+    };
     createdAt: string;
     updatedAt: string;
 }
@@ -33,8 +46,8 @@ interface GameMatchListStore {
     error: string | null;
     fetch: (force?: boolean) => Promise<void>;
     reset: () => void;
-    invite: (email: string, gameType: GameType) => Promise<GameMatch>;
-    respond: (id: string, accept: boolean) => Promise<any>;
+    invite: (emails: string | string[], gameType: GameType, turnSeconds?: number) => Promise<GameMatch>;
+    respond: (id: string, accept: boolean) => Promise<{ data?: GameMatch }>;
 }
 
 export const useGameMatchListStore = create<GameMatchListStore>((set, get) => ({
@@ -62,8 +75,8 @@ export const useGameMatchListStore = create<GameMatchListStore>((set, get) => ({
             set({ error: 'Không thể tải danh sách ván đấu', loading: false });
         }
     },
-    invite: async (email: string, gameType: GameType) => {
-        const res = await gameMatchesApi.invite(email, gameType);
+    invite: async (emails: string | string[], gameType: GameType, turnSeconds = 30) => {
+        const res = await gameMatchesApi.invite(emails, gameType, turnSeconds);
         return res.data?.data;
     },
     respond: async (id: string, accept: boolean) => {

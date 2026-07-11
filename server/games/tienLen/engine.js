@@ -1,14 +1,20 @@
 const { sortHand } = require('../shared/card');
-const { dealTwoHands } = require('./deck');
+const { dealHandsByPlayerCount } = require('./deck');
 const { classifyCombo, canBeat } = require('./combos');
 
 const THREE_SPADES_ID = '3_spades';
+const DEFAULT_TURN_SECONDS = 30;
+
+function nextTurnExpiresAt(turnSeconds = DEFAULT_TURN_SECONDS) {
+    return new Date(Date.now() + turnSeconds * 1000).toISOString();
+}
 
 // Pure, DB/socket-free state machine. `players` is [userId0, userId1] (strings).
-function dealHands(players) {
-    const [hand0, hand1] = dealTwoHands();
-    const hands = { [players[0]]: hand0, [players[1]]: hand1 };
-    const starter = hand0.some(c => c.id === THREE_SPADES_ID) ? players[0] : players[1];
+function dealHands(players, options = {}) {
+    const turnSeconds = options.turnSeconds || DEFAULT_TURN_SECONDS;
+    const dealtHands = dealHandsByPlayerCount(players.length);
+    const hands = Object.fromEntries(players.map((playerId, index) => [playerId, dealtHands[index]]));
+    const starter = players.find(playerId => hands[playerId].some(c => c.id === THREE_SPADES_ID)) || players[0];
 
     return {
         players,
@@ -16,13 +22,25 @@ function dealHands(players) {
         turnUserId: starter,
         lastPlay: null,
         lastPlayBy: null,
+        passedUserIds: [],
         isFirstMove: true,
         winnerId: null,
+        turnSeconds,
+        turnExpiresAt: nextTurnExpiresAt(turnSeconds),
     };
 }
 
-function otherPlayer(state, userId) {
-    return state.players.find(p => p !== userId);
+function nextPlayer(state, userId, extraPassedUserIds = []) {
+    const blocked = new Set(extraPassedUserIds);
+    const startIndex = state.players.indexOf(userId);
+    for (let offset = 1; offset <= state.players.length; offset++) {
+        const candidate = state.players[(startIndex + offset) % state.players.length];
+        if (candidate === state.winnerId) continue;
+        if (blocked.has(candidate)) continue;
+        if ((state.hands[candidate] || []).length === 0) continue;
+        return candidate;
+    }
+    return userId;
 }
 
 // { valid, error?, combo? }
@@ -49,13 +67,33 @@ function applyMove(state, move, byUserId) {
 
     if (move.type === 'pass') {
         if (!state.lastPlay) return { nextState: state, error: 'Không thể bỏ lượt khi đang được quyền ra bài' };
-        // 2-player shortcut: the only other player passing clears the trick immediately.
+        const passedUserIds = Array.from(new Set([...(state.passedUserIds || []), byUserId]));
+        const activeOpponents = state.players.filter(playerId =>
+            playerId !== state.lastPlayBy &&
+            (state.hands[playerId] || []).length > 0
+        );
+        const allOpponentsPassed = activeOpponents.every(playerId => passedUserIds.includes(playerId));
+
+        if (allOpponentsPassed) {
+            return {
+                nextState: {
+                    ...state,
+                    turnUserId: state.lastPlayBy,
+                    lastPlay: null,
+                    lastPlayBy: null,
+                    passedUserIds: [],
+                    turnExpiresAt: nextTurnExpiresAt(state.turnSeconds),
+                },
+                error: null,
+            };
+        }
+
         return {
             nextState: {
                 ...state,
-                turnUserId: state.lastPlayBy,
-                lastPlay: null,
-                lastPlayBy: null,
+                turnUserId: nextPlayer(state, byUserId, passedUserIds),
+                passedUserIds,
+                turnExpiresAt: nextTurnExpiresAt(state.turnSeconds),
             },
             error: null,
         };
@@ -76,9 +114,11 @@ function applyMove(state, move, byUserId) {
                 hands: { ...state.hands, [byUserId]: nextHand },
                 lastPlay: { type: combo.type, cards: combo.cards, power: combo.power },
                 lastPlayBy: byUserId,
-                turnUserId: winnerId ? state.turnUserId : otherPlayer(state, byUserId),
+                passedUserIds: [],
+                turnUserId: winnerId ? state.turnUserId : nextPlayer(state, byUserId),
                 isFirstMove: false,
                 winnerId,
+                turnExpiresAt: winnerId ? null : nextTurnExpiresAt(state.turnSeconds),
             },
             error: null,
         };
@@ -89,18 +129,23 @@ function applyMove(state, move, byUserId) {
 
 // Per-player redacted view — never leaks the opponent's actual hand.
 function toPlayerView(state, forUserId) {
-    const opponentId = otherPlayer(state, forUserId);
+    const opponents = state.players
+        .filter(playerId => playerId !== forUserId)
+        .map(playerId => ({ userId: playerId, handCount: (state.hands[playerId] || []).length }));
     return {
         gameType: 'tien_len',
         youAre: forUserId,
-        opponentId,
+        opponentId: opponents[0]?.userId || null,
+        opponents,
         yourHand: sortHand(state.hands[forUserId] || []),
-        opponentHandCount: (state.hands[opponentId] || []).length,
+        opponentHandCount: opponents[0]?.handCount || 0,
         lastPlay: state.lastPlay,
         lastPlayBy: state.lastPlayBy,
         turnUserId: state.turnUserId,
         isFirstMove: state.isFirstMove,
         winnerId: state.winnerId,
+        turnSeconds: state.turnSeconds || DEFAULT_TURN_SECONDS,
+        turnExpiresAt: state.turnExpiresAt || null,
     };
 }
 
