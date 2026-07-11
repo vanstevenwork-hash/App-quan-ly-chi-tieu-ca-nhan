@@ -27,7 +27,7 @@ function matchSummary(match: GameMatch) {
 
 export default function GamesLobbyPage() {
     const router = useRouter();
-    const { incomingInvites, activeMatches, respond, refetch, loading } = useGameMatches();
+    const { incomingInvites, sentInvites, activeMatches, respond, cancel, refetch, loading } = useGameMatches();
     const { user } = useAuthStore();
     const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -69,6 +69,39 @@ export default function GamesLobbyPage() {
                                         }}
                                         onDecline={async () => { await respond(item._id, false); toast.success('Đã từ chối lời mời'); }}
                                     />
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {sentInvites.length > 0 && (
+                    <div>
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white px-1 mb-2.5">Lời mời đã gửi</h3>
+                        <div className="space-y-2.5">
+                            {sentInvites.map(item => {
+                                const players = (item.players as GameMatchPlayer[]).filter(p => p._id !== user?._id);
+                                const names = players.map(p => p.name).join(', ');
+                                return (
+                                    <div key={item._id} className="flex items-center gap-3.5 p-4 rounded-[20px] bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 shadow-sm">
+                                        <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-xl flex-shrink-0">
+                                            ⏳
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
+                                                {GAME_LABELS[item.gameType] || item.gameType}
+                                            </p>
+                                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">
+                                                Đang chờ {names || 'người chơi'} chấp nhận
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={async () => { await cancel(item._id); toast.success('Đã hủy lời mời'); }}
+                                            className="text-xs font-bold text-red-500 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 active:scale-95 transition-all flex-shrink-0"
+                                        >
+                                            Hủy
+                                        </button>
+                                    </div>
                                 );
                             })}
                         </div>

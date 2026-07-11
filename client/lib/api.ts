@@ -53,6 +53,7 @@ export const authApi = {
     getProfile: () => api.get('/auth/profile'),
     updateProfile: (data: object) => api.put('/auth/profile', data),
     forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
+    checkEmail: (email: string) => api.get('/auth/check-email', { params: { email } }),
 };
 
 // Transactions
@@ -104,7 +105,9 @@ export const gameMatchesApi = {
         api.post('/game-matches/invite', { emails: Array.isArray(emails) ? emails : [emails], gameType, turnSeconds }),
     respond: (id: string, accept: boolean) => api.patch(`/game-matches/${id}/respond`, { accept }),
     getIncoming: () => api.get('/game-matches/incoming'),
+    getSent: () => api.get('/game-matches/sent'),
     getActive: () => api.get('/game-matches/active'),
+    cancel: (id: string) => api.delete(`/game-matches/${id}`),
     getById: (id: string) => api.get(`/game-matches/${id}`),
 };
 

@@ -40,6 +40,7 @@ export interface GameMatch {
 
 interface GameMatchListStore {
     incomingInvites: GameMatch[];
+    sentInvites: GameMatch[];
     activeMatches: GameMatch[];
     loading: boolean;
     hasFetched: boolean;
@@ -48,25 +49,29 @@ interface GameMatchListStore {
     reset: () => void;
     invite: (emails: string | string[], gameType: GameType, turnSeconds?: number) => Promise<GameMatch>;
     respond: (id: string, accept: boolean) => Promise<{ data?: GameMatch }>;
+    cancel: (id: string) => Promise<void>;
 }
 
 export const useGameMatchListStore = create<GameMatchListStore>((set, get) => ({
     incomingInvites: [],
+    sentInvites: [],
     activeMatches: [],
     loading: false,
     hasFetched: false,
     error: null,
-    reset: () => set({ incomingInvites: [], activeMatches: [], loading: false, hasFetched: false, error: null }),
+    reset: () => set({ incomingInvites: [], sentInvites: [], activeMatches: [], loading: false, hasFetched: false, error: null }),
     fetch: async (force = false) => {
         if (get().loading || (get().hasFetched && !force)) return;
         set({ loading: true, error: null });
         try {
-            const [incomingRes, activeRes] = await Promise.all([
+            const [incomingRes, sentRes, activeRes] = await Promise.all([
                 gameMatchesApi.getIncoming(),
+                gameMatchesApi.getSent(),
                 gameMatchesApi.getActive(),
             ]);
             set({
                 incomingInvites: incomingRes.data?.data || [],
+                sentInvites: sentRes.data?.data || [],
                 activeMatches: activeRes.data?.data || [],
                 hasFetched: true,
                 loading: false,
@@ -85,6 +90,10 @@ export const useGameMatchListStore = create<GameMatchListStore>((set, get) => ({
         await get().fetch(true);
         return res.data;
     },
+    cancel: async (id: string) => {
+        await gameMatchesApi.cancel(id);
+        set({ sentInvites: get().sentInvites.filter(i => i._id !== id) });
+    },
 }));
 registerStoreReset(() => useGameMatchListStore.getState().reset());
 
@@ -98,11 +107,13 @@ export function useGameMatches() {
 
     return {
         incomingInvites: store.incomingInvites,
+        sentInvites: store.sentInvites,
         activeMatches: store.activeMatches,
         loading: store.loading,
         error: store.error,
         invite: store.invite,
         respond: store.respond,
+        cancel: store.cancel,
         refetch: () => store.fetch(true),
     };
 }

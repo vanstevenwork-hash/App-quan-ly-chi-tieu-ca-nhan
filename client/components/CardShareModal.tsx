@@ -5,6 +5,9 @@ import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCardShareStore, type CardShare } from '@/hooks/useCardShares';
+import { authApi } from '@/lib/api';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface CardShareModalProps {
     open: boolean;
@@ -19,10 +22,28 @@ export default function CardShareModal({ open, onClose, cardId, cardName }: Card
     const [sending, setSending] = useState(false);
     const [shares, setShares] = useState<CardShare[]>([]);
     const [loadingShares, setLoadingShares] = useState(false);
+    const [emailCheck, setEmailCheck] = useState<{ loading: boolean; exists?: boolean; name?: string } | null>(null);
 
     const { invite, getCardShares, revoke } = useCardShareStore();
 
     useEffect(() => { setMounted(true); }, []);
+
+    // Debounced "does this account exist?" check, so the user finds out before
+    // sending rather than only after the invite call 404s.
+    useEffect(() => {
+        const addr = email.trim().toLowerCase();
+        if (!EMAIL_RE.test(addr)) { setEmailCheck(null); return; }
+        setEmailCheck({ loading: true });
+        const t = setTimeout(async () => {
+            try {
+                const res = await authApi.checkEmail(addr);
+                setEmailCheck({ loading: false, exists: res.data?.exists, name: res.data?.name });
+            } catch {
+                setEmailCheck({ loading: false });
+            }
+        }, 500);
+        return () => clearTimeout(t);
+    }, [email]);
 
     const fetchShares = useCallback(async () => {
         if (!cardId) return;
@@ -38,14 +59,19 @@ export default function CardShareModal({ open, onClose, cardId, cardName }: Card
         if (open && cardId) {
             fetchShares();
             setEmail('');
+            setEmailCheck(null);
         }
     }, [open, cardId, fetchShares]);
 
     const handleInvite = async () => {
-        if (!email.trim()) return;
-        // Basic email validation
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        const addr = email.trim().toLowerCase();
+        if (!addr) return;
+        if (!EMAIL_RE.test(addr)) {
             toast.error('Email không hợp lệ');
+            return;
+        }
+        if (emailCheck?.exists === false) {
+            toast.error('Email này chưa có tài khoản trong app');
             return;
         }
         setSending(true);
@@ -129,6 +155,22 @@ export default function CardShareModal({ open, onClose, cardId, cardName }: Card
                                     )}
                                 </button>
                             </div>
+                            {emailCheck && (
+                                <div className="flex items-center gap-2 text-xs mt-2">
+                                    {emailCheck.loading ? (
+                                        <span className="w-3 h-3 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin flex-shrink-0" />
+                                    ) : emailCheck.exists ? (
+                                        <span className="text-emerald-500 flex-shrink-0">✓</span>
+                                    ) : (
+                                        <span className="text-red-500 flex-shrink-0">✕</span>
+                                    )}
+                                    {!emailCheck.loading && (
+                                        <span className={cn('font-semibold', emailCheck.exists ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500')}>
+                                            {emailCheck.exists ? `Sẽ mời ${emailCheck.name}` : 'Chưa có tài khoản trong app'}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                             <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
                                 Người được mời có thể thêm/sửa/xóa giao dịch trên thẻ này
                             </p>

@@ -43,6 +43,26 @@ exports.login = async (req, res) => {
     }
 };
 
+// @desc  Check whether an email has a registered account — used before sending
+//        card-share/game invites so the UI can confirm "mời [Tên] tham gia?"
+//        instead of only finding out after the invite call fails with 404.
+// @route GET /api/auth/check-email?email=...
+exports.checkEmail = async (req, res) => {
+    try {
+        const email = (req.query.email || '').toString().toLowerCase().trim();
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Thiếu email' });
+        }
+        const user = await User.findOne({ email }).select('name avatar');
+        if (!user) {
+            return res.json({ success: true, exists: false });
+        }
+        res.json({ success: true, exists: true, name: user.name, avatar: user.avatar });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // @desc Get profile
 exports.getProfile = async (req, res) => {
     res.json({ success: true, user: req.user });

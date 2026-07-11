@@ -155,6 +155,7 @@ exports.getCardShares = async (req, res) => {
 
         const shares = await CardShare.find({
             cardId: req.params.cardId,
+            sharedWithUserId: { $ne: null },
             status: { $in: ['pending', 'accepted'] },
         }).populate('sharedWithUserId', 'name email avatar');
 
@@ -173,19 +174,29 @@ exports.revoke = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Không tìm thấy chia sẻ' });
         }
 
-        // Owner can revoke, or the shared user can leave
+        // Owner can revoke, or the shared user can leave. sharedWithUserId can be
+        // null on legacy pre-rework rows (from before it was a required field) —
+        // guard instead of crashing so those can still be cleaned up via revoke.
         const isOwner = share.ownerId.toString() === req.user._id.toString();
-        const isSharedUser = share.sharedWithUserId.toString() === req.user._id.toString();
+        const isSharedUser = !!share.sharedWithUserId && share.sharedWithUserId.toString() === req.user._id.toString();
 
         if (!isOwner && !isSharedUser) {
             return res.status(403).json({ success: false, message: 'Không có quyền thực hiện' });
         }
 
+        // A legacy row with no resolved user can never be accepted and its status
+        // can no longer be saved either (schema now requires sharedWithUserId) —
+        // just delete it outright instead of trying to mark it 'revoked'.
+        if (!share.sharedWithUserId) {
+            await CardShare.deleteOne({ _id: share._id });
+            return res.json({ success: true, message: 'Đã xóa lời mời không hợp lệ' });
+        }
+
         share.status = 'revoked';
         await share.save();
 
-        // Notify the other party
-        if (isOwner) {
+        // Notify the other party (skip if there's no resolved user to notify)
+        if (isOwner && share.sharedWithUserId) {
             await createNotification({
                 userId: share.sharedWithUserId.toString(),
                 title: 'Quyền chia sẻ thẻ đã bị thu hồi',

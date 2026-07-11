@@ -5,6 +5,10 @@ import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useGameMatches, type GameType } from '@/hooks/useGameMatches';
+import { authApi } from '@/lib/api';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+type EmailCheck = { loading: boolean; exists?: boolean; name?: string };
 
 interface GameInviteModalProps {
     open: boolean;
@@ -24,10 +28,33 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
     const [gameType, setGameType] = useState<GameType>('tien_len');
     const [turnSeconds, setTurnSeconds] = useState(30);
     const [sending, setSending] = useState(false);
+    const [checks, setChecks] = useState<Record<string, EmailCheck>>({});
     const { invite } = useGameMatches();
 
     useEffect(() => { setMounted(true); }, []);
-    useEffect(() => { if (open) setEmail(''); }, [open]);
+    useEffect(() => { if (open) { setEmail(''); setChecks({}); } }, [open]);
+
+    // Debounced "does this account exist?" check per email, so the user finds
+    // out before sending rather than only after the invite call 404s.
+    useEffect(() => {
+        const emails = Array.from(new Set(email.split(/[\s,;]+/).map(item => item.trim().toLowerCase()).filter(item => EMAIL_RE.test(item))));
+        if (emails.length === 0) return;
+        const toCheck = emails.filter(e => !(e in checks));
+        if (toCheck.length === 0) return;
+        setChecks(prev => ({ ...prev, ...Object.fromEntries(toCheck.map(e => [e, { loading: true }])) }));
+        const t = setTimeout(() => {
+            toCheck.forEach(async (e) => {
+                try {
+                    const res = await authApi.checkEmail(e);
+                    setChecks(prev => ({ ...prev, [e]: { loading: false, exists: res.data?.exists, name: res.data?.name } }));
+                } catch {
+                    setChecks(prev => ({ ...prev, [e]: { loading: false } }));
+                }
+            });
+        }, 500);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [email]);
 
     const handleInvite = async () => {
         const emails = Array.from(new Set(email.split(/[\s,;]+/).map(item => item.trim().toLowerCase()).filter(Boolean)));
@@ -36,8 +63,12 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
             toast.error('Một ván chỉ mời tối đa 3 người nữa');
             return;
         }
-        if (emails.some(item => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(item))) {
+        if (emails.some(item => !EMAIL_RE.test(item))) {
             toast.error('Email không hợp lệ');
+            return;
+        }
+        if (emails.some(item => checks[item]?.exists === false)) {
+            toast.error('Có email chưa đăng ký tài khoản trong app');
             return;
         }
         setSending(true);
@@ -153,6 +184,27 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
                             <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5">
                                 Nhập nhiều email bằng dấu phẩy, khoảng trắng hoặc xuống dòng
                             </p>
+                            {Object.keys(checks).length > 0 && (
+                                <div className="mt-2.5 space-y-1.5">
+                                    {Object.entries(checks).map(([addr, c]) => (
+                                        <div key={addr} className="flex items-center gap-2 text-xs">
+                                            {c.loading ? (
+                                                <span className="w-3 h-3 border-2 border-slate-200 border-t-slate-400 rounded-full animate-spin flex-shrink-0" />
+                                            ) : c.exists ? (
+                                                <span className="text-emerald-500 flex-shrink-0">✓</span>
+                                            ) : (
+                                                <span className="text-red-500 flex-shrink-0">✕</span>
+                                            )}
+                                            <span className="truncate text-slate-500 dark:text-slate-400">{addr}</span>
+                                            {!c.loading && (
+                                                <span className={cn('font-semibold flex-shrink-0', c.exists ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500')}>
+                                                    {c.exists ? `— ${c.name}` : '— chưa có tài khoản'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

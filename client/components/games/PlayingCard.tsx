@@ -18,10 +18,11 @@ interface PlayingCardProps {
 
 export default function PlayingCard({ rank, suit, faceDown, selected, onClick, size = 'md', className, style }: PlayingCardProps) {
     const isRed = RED_SUITS.has(suit);
+    // 20% smaller across the board for a more compact table layout
     const dimensions = {
-        sm: { width: 38, height: 54, radius: 'rounded-lg' },
-        md: { width: 58, height: 84, radius: 'rounded-xl' },
-        lg: { width: 68, height: 98, radius: 'rounded-xl' },
+        sm: { width: 30, height: 43, radius: 'rounded-lg' },
+        md: { width: 46, height: 67, radius: 'rounded-lg' },
+        lg: { width: 54, height: 78, radius: 'rounded-xl' },
     }[size];
 
     if (faceDown) {
@@ -36,7 +37,7 @@ export default function PlayingCard({ rank, suit, faceDown, selected, onClick, s
                 <div className="absolute inset-1 rounded-[inherit] border border-cyan-100/25" />
                 <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.24) 1px, transparent 1px)', backgroundSize: '10px 10px' }} />
                 <div className="relative w-full h-full flex items-center justify-center">
-                    <span className="block h-6 w-4 rotate-45 border-2 border-cyan-100/65" />
+                    <span className={cn('block rotate-45 border-2 border-cyan-100/65', size === 'sm' ? 'h-4 w-2.5' : 'h-5 w-3.5')} />
                 </div>
             </div>
         );
@@ -55,13 +56,13 @@ export default function PlayingCard({ rank, suit, faceDown, selected, onClick, s
             )}
             style={{ width: dimensions.width, height: dimensions.height, ...style }}
         >
-            <span className={cn('text-xl font-black self-start leading-none', size === 'sm' && 'text-sm', isRed ? 'text-red-500' : 'text-slate-900')}>
+            <span className={cn('text-lg font-black self-start leading-none', size === 'sm' && 'text-xs', isRed ? 'text-red-500' : 'text-slate-900')}>
                 {rank}
             </span>
-            <span className={cn('text-3xl leading-none', size === 'sm' && 'text-xl', isRed ? 'text-red-500' : 'text-slate-900')}>
+            <span className={cn('text-2xl leading-none', size === 'sm' && 'text-lg', isRed ? 'text-red-500' : 'text-slate-900')}>
                 {SUIT_SYMBOL[suit]}
             </span>
-            <span className={cn('text-xl font-black self-end leading-none rotate-180', size === 'sm' && 'text-sm', isRed ? 'text-red-500' : 'text-slate-900')}>
+            <span className={cn('text-lg font-black self-end leading-none rotate-180', size === 'sm' && 'text-xs', isRed ? 'text-red-500' : 'text-slate-900')}>
                 {rank}
             </span>
         </button>

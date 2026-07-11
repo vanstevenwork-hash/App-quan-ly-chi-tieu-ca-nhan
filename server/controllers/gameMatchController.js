@@ -39,8 +39,12 @@ exports.invite = async (req, res) => {
         }
 
         const playerIds = [req.user._id, ...invitees.map(u => u._id)];
+        // $all alone only checks that playerIds is a SUBSET of the match's players —
+        // combined with $size it becomes an exact-set match. Without $size, a stuck
+        // pending 3-player match [O,A,B] would falsely block a brand-new 2-player
+        // invite to just A (or just B), since {O,A} is a subset of {O,A,B}.
         const existing = await GameMatch.findOne({
-            players: { $all: playerIds },
+            players: { $all: playerIds, $size: playerIds.length },
             gameType,
             status: { $in: ['pending_invite', 'active'] },
         });
@@ -163,6 +167,38 @@ exports.getActive = async (req, res) => {
             return obj;
         });
         res.json({ success: true, data });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Pending invites I sent that are still awaiting a response
+// @route GET /api/game-matches/sent
+exports.getSent = async (req, res) => {
+    try {
+        const matches = await GameMatch.find({ hostId: req.user._id, status: 'pending_invite' })
+            .populate('players', 'name email avatar')
+            .sort({ createdAt: -1 });
+        res.json({ success: true, data: matches });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Cancel a pending invite you created — otherwise a stuck pending_invite
+//        match (e.g. nobody ever responded) permanently blocks any new invite
+//        that overlaps with its player set (see the exact-set check in invite()).
+// @route DELETE /api/game-matches/:id
+exports.cancel = async (req, res) => {
+    try {
+        const match = await GameMatch.findOne({ _id: req.params.id, hostId: req.user._id });
+        if (!match) return res.status(404).json({ success: false, message: 'Không tìm thấy ván đấu' });
+        if (match.status !== 'pending_invite') {
+            return res.status(400).json({ success: false, message: 'Chỉ có thể hủy lời mời đang chờ chấp nhận' });
+        }
+        match.status = 'abandoned';
+        await match.save();
+        res.json({ success: true, message: 'Đã hủy lời mời' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
