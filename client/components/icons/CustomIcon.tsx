@@ -316,10 +316,20 @@ const GLYPHS: Record<string, (C: string) => React.ReactNode> = {
         <rect x="10.2" y="8" width="3.6" height="12.5" rx="1.4" fill={C} />
         <rect x="15.9" y="4" width="3.6" height="16.5" rx="1.4" fill={C} />
     </>),
+    // Huy hiệu 8 cánh (như tem giảm giá) với dấu % khoét trắng
     hoanTien: (C) => (<>
-        <circle cx="12" cy="12" r="8.8" fill={C} />
-        <path d="M16.5 9.5 A5.5 5.5 0 1 0 17.5 13.5" stroke={W} strokeWidth="1.7" fill="none" strokeLinecap="round" />
-        <path d="M16.5 9.5 l2.8 -0.8 -0.9 2.8 Z" fill={W} />
+        <path d="M18.93 9.13
+                 A2.95 2.95 0 0 0 14.87 5.07
+                 A2.95 2.95 0 0 0 9.13 5.07
+                 A2.95 2.95 0 0 0 5.07 9.13
+                 A2.95 2.95 0 0 0 5.07 14.87
+                 A2.95 2.95 0 0 0 9.13 18.93
+                 A2.95 2.95 0 0 0 14.87 18.93
+                 A2.95 2.95 0 0 0 18.93 14.87
+                 A2.95 2.95 0 0 0 18.93 9.13 Z" fill={C} />
+        <path d="M15.4 8.6 8.6 15.4" stroke={W} strokeWidth="1.7" strokeLinecap="round" fill="none" />
+        <circle cx="9.25" cy="9.25" r="1.25" fill={W} />
+        <circle cx="14.75" cy="14.75" r="1.25" fill={W} />
     </>),
     affiliate: (C) => (<>
         <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill={C} />

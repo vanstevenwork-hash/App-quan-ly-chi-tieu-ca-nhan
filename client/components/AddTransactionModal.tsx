@@ -2,7 +2,7 @@
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { CATEGORIES } from '@/lib/mockData';
+import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
 import { cn } from '@/lib/utils';
 import { useCards } from '@/hooks/useCards';
@@ -13,6 +13,7 @@ import { ActionIcon } from '@/components/icons/ActionIcon';
 import { getBankLogo } from '@/lib/bankLogos';
 import PaymentCard from './cards/PaymentCard';
 import BillScanner from './BillScanner';
+import ImageUpload from './ImageUpload';
 
 interface AddTransactionModalProps {
     open: boolean;
@@ -160,15 +161,20 @@ export default function AddTransactionModal({
 
             console.log('Saving transaction payload:', payload);
 
+            const cat = CATEGORIES_MAP.get(category);
+            const categoryToastIcon = cat && (
+                <CategoryIcon type={cat.catIconType || 'khac'} size={22} tile={false} color={cat.color} />
+            );
+
             if (initialData?._id) {
                 await updateTransaction(initialData._id, payload);
-                toast.success('Đã cập nhật giao dịch!');
+                toast.success('Đã cập nhật giao dịch!', { icon: categoryToastIcon });
             } else {
                 await createTransaction(payload);
                 if (isInstallment && paymentTab === 'credit') {
-                    toast.success(`💳 Đã thêm trả góp! Mỗi tháng: ${monthlyPayment.toLocaleString('vi-VN')}₫`);
+                    toast.success(`Đã thêm trả góp! Mỗi tháng: ${monthlyPayment.toLocaleString('vi-VN')}₫`, { icon: categoryToastIcon });
                 } else {
-                    toast.success(type === 'income' ? '💰 Đã thêm thu nhập!' : '💸 Đã thêm chi tiêu!');
+                    toast.success(type === 'income' ? 'Đã thêm thu nhập!' : 'Đã thêm chi tiêu!', { icon: categoryToastIcon });
                 }
             }
             onSaved?.();
@@ -523,18 +529,18 @@ export default function AddTransactionModal({
                             placeholder="Thêm ghi chú..."></textarea>
                     </div>
 
-                    {/* Đính kèm hóa đơn block - Only show when there is an image */}
-                    {receiptImage && (
-                        <div className="flex flex-col gap-1.5 bg-white dark:bg-[#1A1D2D] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm pb-4">
-                            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Ảnh hóa đơn đính kèm</label>
+                    {/* Ảnh hóa đơn block — always visible: attach a photo directly, or let Quét Bill fill it in via OCR */}
+                    <div className="flex flex-col gap-1.5 bg-white dark:bg-[#1A1D2D] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm">
+                        <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Ảnh hóa đơn <span className="font-normal text-slate-400">(tùy chọn)</span></label>
+                        {receiptImage ? (
                             <div className="relative rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F111A] p-3 flex gap-4 items-center">
                                 <div className="w-16 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 flex-shrink-0 bg-slate-100 dark:bg-slate-800">
                                     <img src={receiptImage} alt="Receipt" className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Hóa đơn đã quét</p>
+                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Ảnh đã đính kèm</p>
                                     <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1">
-                                        <ActionIcon type="check" size={12} tile={false} color="#10B981" /> Tự động điền dữ liệu
+                                        <ActionIcon type="check" size={12} tile={false} color="#10B981" /> Sẽ lưu cùng giao dịch
                                     </p>
                                 </div>
                                 <button
@@ -544,8 +550,21 @@ export default function AddTransactionModal({
                                     <ActionIcon type="x" size={16} tile={false} color="#6B7280" />
                                 </button>
                             </div>
-                        </div>
-                    )}
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <ImageUpload onUpload={setReceiptImage} folder="chi_tieu/receipts" shape="square" size={64} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                        Đính kèm ảnh hóa đơn hoặc biên lai để lưu cùng giao dịch.
+                                    </p>
+                                    <button type="button" onClick={() => setShowScanner(true)}
+                                        className="text-[11px] font-bold text-[#7f19e6] dark:text-purple-400 mt-1 hover:underline">
+                                        Hoặc dùng Quét Bill để tự điền →
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 p-3 bg-white/90 dark:bg-[#0F111A]/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800">

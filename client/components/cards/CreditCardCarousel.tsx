@@ -99,12 +99,12 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                 </div>
                 <div className="flex gap-1">
                     <button onClick={onEdit}
-                        className="w-7 h-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition">
-                        <ActionIcon type="pencil" size={14} tile={false} color={ts.text} />
+                        className="w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition">
+                        <ActionIcon type="pencil" size={16} tile={false} color={ts.text} />
                     </button>
                     <button onClick={onDelete}
-                        className="w-7 h-7 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center transition">
-                        <ActionIcon type="trash" size={14} tile={false} color="#EF4444" />
+                        className="w-8 h-8 rounded-full bg-red-400/20 hover:bg-red-400/40 flex items-center justify-center transition">
+                        <ActionIcon type="trash" size={16} tile={false} color="#EF4444" />
                     </button>
                 </div>
             </div>

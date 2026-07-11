@@ -83,12 +83,12 @@ function SavingsSlide({ card, idx, onEdit, onDelete }: {
                     </span>
                     <div className="flex gap-1">
                         <button onClick={onEdit}
-                            className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
-                            <CustomIcon type="pencil" size={12} tile={false} color="currentColor" className="w-3 h-3" />
+                            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
+                            <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
                         </button>
                         <button onClick={onDelete}
-                            className="w-7 h-7 rounded-full bg-red-400/30 hover:bg-red-400/50 flex items-center justify-center transition">
-                            <CustomIcon type="trash" size={12} tile={false} color="currentColor" className="w-3 h-3" />
+                            className="w-8 h-8 rounded-full bg-red-400/30 hover:bg-red-400/50 flex items-center justify-center transition">
+                            <CustomIcon type="trash" size={16} tile={false} color="currentColor" />
                         </button>
                     </div>
                 </div>

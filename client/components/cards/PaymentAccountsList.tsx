@@ -60,14 +60,14 @@ function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
                         className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 transition-colors shadow-sm"
                         title="Chỉnh sửa"
                     >
-                        <ActionIcon type="pencil" size={14} tile={false} color="#6366F1" />
+                        <ActionIcon type="pencil" size={16} tile={false} color="#6366F1" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-red-100 hover:text-red-500 dark:hover:bg-red-900/40 transition-colors shadow-sm"
                         title="Xóa"
                     >
-                        <ActionIcon type="trash" size={14} tile={false} color="#EF4444" />
+                        <ActionIcon type="trash" size={16} tile={false} color="#EF4444" />
                     </button>
                 </div>
             </div>

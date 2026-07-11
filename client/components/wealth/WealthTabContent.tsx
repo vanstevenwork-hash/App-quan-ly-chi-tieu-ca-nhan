@@ -111,13 +111,13 @@ function WealthCard({ source, onEdit, onDelete, className }: {
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
                         className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors shadow-sm"
                     >
-                        <ActionIcon type="pencil" size={14} tile={false} color="#8B5CF6" />
+                        <ActionIcon type="pencil" size={16} tile={false} color="#8B5CF6" />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
                         className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm"
                     >
-                        <ActionIcon type="trash" size={14} tile={false} color="#EF4444" />
+                        <ActionIcon type="trash" size={16} tile={false} color="#EF4444" />
                     </button>
                 </div>
             </div>

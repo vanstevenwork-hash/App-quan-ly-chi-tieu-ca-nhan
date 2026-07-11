@@ -52,7 +52,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${manrope.className} antialiased bg-[#F0F2F8] dark:bg-surface-deep`}>
         <ThemeProvider />
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster
+          position="top-center"
+          richColors
+          closeButton
+          /* Clears not just the notch but this app's own in-page header row
+             (back button + title, ~56px tall) that sits right beneath it */
+          offset={{ top: 'calc(env(safe-area-inset-top) + 64px)' }}
+          mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 64px)' }}
+          toastOptions={{
+            style: { borderRadius: '16px', padding: '14px 16px', fontWeight: 600 },
+            className: 'shadow-lg',
+          }}
+        />
         {/* Safe-area (notch/Dynamic Island) clearance is handled by each page's own
             top element (PageHeader or header padding) — not here, to avoid double-padding
             once a sticky header also adds env(safe-area-inset-top). */}

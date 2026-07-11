@@ -17,11 +17,6 @@ import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 
-const CURRENCIES = [
-    { code: 'VND', label: 'Việt Nam Đồng', symbol: '₫' },
-    { code: 'USD', label: 'US Dollar', symbol: '$' },
-];
-
 const LANGUAGES = [
     { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
     { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -82,19 +77,12 @@ export default function SettingsPage() {
     const [nameInput, setNameInput] = useState('');
     const [savingName, setSavingName] = useState(false);
 
-    // Currency / language dialogs
-    const [showCurrencyDialog, setShowCurrencyDialog] = useState(false);
-    const [savingCurrency, setSavingCurrency] = useState(false);
+    // Language dialog
     const [showLanguageDialog, setShowLanguageDialog] = useState(false);
     const [savingLanguage, setSavingLanguage] = useState(false);
 
     // Security preferences — stored locally on this device
-    const [faceId, setFaceId] = useState(false);
     const [hideBalanceOnOpen, setHideBalanceOnOpen] = useState(false);
-    const [hasPin, setHasPin] = useState(false);
-    const [showPinDialog, setShowPinDialog] = useState(false);
-    const [pinInput, setPinInput] = useState('');
-    const [pinConfirm, setPinConfirm] = useState('');
 
     // Data refresh
     const [refreshing, setRefreshing] = useState(false);
@@ -104,9 +92,7 @@ export default function SettingsPage() {
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
     useEffect(() => {
-        setFaceId(localStorage.getItem('security.faceId') === '1');
         setHideBalanceOnOpen(localStorage.getItem('security.hideBalanceOnOpen') === '1');
-        setHasPin(!!localStorage.getItem('security.pin'));
         setLastSync(localStorage.getItem('data.lastSyncAt'));
     }, []);
 
@@ -142,21 +128,6 @@ export default function SettingsPage() {
         }
     };
 
-    const handleSelectCurrency = async (code: string) => {
-        if (code === (user?.currency || 'VND')) { setShowCurrencyDialog(false); return; }
-        setSavingCurrency(true);
-        try {
-            await authApi.updateProfile({ currency: code });
-            updateUser({ currency: code });
-            toast.success(`Đã đổi đơn vị tiền tệ sang ${code}`);
-            setShowCurrencyDialog(false);
-        } catch {
-            toast.error('Đổi đơn vị thất bại');
-        } finally {
-            setSavingCurrency(false);
-        }
-    };
-
     const handleSelectLanguage = async (code: string) => {
         if (code === (user?.language || 'vi')) { setShowLanguageDialog(false); return; }
         setSavingLanguage(true);
@@ -172,27 +143,10 @@ export default function SettingsPage() {
         }
     };
 
-    const toggleFaceId = (v: boolean) => {
-        setFaceId(v);
-        localStorage.setItem('security.faceId', v ? '1' : '0');
-        toast.success(v ? 'Đã bật mở khóa bằng Face ID' : 'Đã tắt mở khóa bằng Face ID');
-    };
-
     const toggleHideBalance = (v: boolean) => {
         setHideBalanceOnOpen(v);
         localStorage.setItem('security.hideBalanceOnOpen', v ? '1' : '0');
         toast.success(v ? 'Số dư sẽ được ẩn khi mở app' : 'Số dư sẽ hiển thị khi mở app');
-    };
-
-    const handleSavePin = () => {
-        if (!/^\d{4,6}$/.test(pinInput)) { toast.error('Mã PIN phải gồm 4–6 chữ số'); return; }
-        if (pinInput !== pinConfirm) { toast.error('Mã PIN nhập lại không khớp'); return; }
-        localStorage.setItem('security.pin', pinInput);
-        setHasPin(true);
-        setShowPinDialog(false);
-        setPinInput('');
-        setPinConfirm('');
-        toast.success('Đã cập nhật mã PIN');
     };
 
     const handleRefreshData = async () => {
@@ -243,7 +197,6 @@ export default function SettingsPage() {
     const initials = user?.name
         ? user.name.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase()
         : 'NN';
-    const currentCurrency = CURRENCIES.find(c => c.code === (user?.currency || 'VND')) || CURRENCIES[0];
     const currentLanguage = LANGUAGES.find(l => l.code === (user?.language || 'vi')) || LANGUAGES[0];
     const lastSyncLabel = lastSync
         ? `Đồng bộ lần cuối ${new Date(lastSync).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
@@ -357,12 +310,6 @@ export default function SettingsPage() {
                             }
                         />
                         <SettingItem
-                            icon={<CustomIcon type="dollarSign" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
-                            label="Đơn vị tiền tệ"
-                            value={`${currentCurrency.code} · ${currentCurrency.symbol}`}
-                            onClick={() => setShowCurrencyDialog(true)}
-                        />
-                        <SettingItem
                             icon={<CustomIcon type="globe" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
                             label="Ngôn ngữ"
                             value={currentLanguage.label}
@@ -375,18 +322,6 @@ export default function SettingsPage() {
                 <div>
                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.15em] mb-2.5 px-1">Bảo mật</p>
                     <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50 border border-transparent dark:border-slate-800/60', CARD_SHADOW)}>
-                        <SettingItem
-                            icon={<CustomIcon type="scanFace" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
-                            label="Mở khóa bằng Face ID"
-                            sublabel="Yêu cầu khi mở app"
-                            right={<Switch checked={faceId} onCheckedChange={toggleFaceId} />}
-                        />
-                        <SettingItem
-                            icon={<ActionIcon type="lock" size={18} tile={false} color="currentColor" />}
-                            label="Đổi mã PIN"
-                            sublabel={hasPin ? 'Đã thiết lập' : 'Chưa thiết lập'}
-                            onClick={() => setShowPinDialog(true)}
-                        />
                         <SettingItem
                             icon={<UtilityIcon type="shield" size={18} tile={false} color="currentColor" />}
                             label="Ẩn số dư khi mở app"
@@ -454,42 +389,6 @@ export default function SettingsPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Currency dialog */}
-            <Dialog open={showCurrencyDialog} onOpenChange={setShowCurrencyDialog}>
-                <DialogContent className="sm:max-w-md rounded-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Đơn vị tiền tệ</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-2">
-                        {CURRENCIES.map(c => {
-                            const active = c.code === (user?.currency || 'VND');
-                            return (
-                                <button
-                                    key={c.code}
-                                    onClick={() => handleSelectCurrency(c.code)}
-                                    disabled={savingCurrency}
-                                    className={cn(
-                                        'w-full flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left',
-                                        active
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:border-primary/40'
-                                    )}
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                        {c.symbol}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-bold text-foreground">{c.code}</p>
-                                        <p className="text-xs text-muted-foreground">{c.label}</p>
-                                    </div>
-                                    {active && <ActionIcon type="check" size={20} tile={false} color="#6C63FF" />}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </DialogContent>
-            </Dialog>
-
             {/* Language dialog */}
             <Dialog open={showLanguageDialog} onOpenChange={setShowLanguageDialog}>
                 <DialogContent className="sm:max-w-md rounded-2xl">
@@ -522,43 +421,6 @@ export default function SettingsPage() {
                             );
                         })}
                     </div>
-                </DialogContent>
-            </Dialog>
-
-            {/* PIN dialog */}
-            <Dialog open={showPinDialog} onOpenChange={(open) => { setShowPinDialog(open); if (!open) { setPinInput(''); setPinConfirm(''); } }}>
-                <DialogContent className="sm:max-w-md rounded-2xl">
-                    <DialogHeader>
-                        <DialogTitle>{hasPin ? 'Đổi mã PIN' : 'Thiết lập mã PIN'}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-3">
-                        <Input
-                            value={pinInput}
-                            onChange={e => setPinInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            placeholder="Mã PIN mới (4–6 chữ số)"
-                            className="rounded-xl h-12 text-center tracking-[0.5em] font-bold"
-                            type="password"
-                            inputMode="numeric"
-                            autoFocus
-                        />
-                        <Input
-                            value={pinConfirm}
-                            onChange={e => setPinConfirm(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                            placeholder="Nhập lại mã PIN"
-                            className="rounded-xl h-12 text-center tracking-[0.5em] font-bold"
-                            type="password"
-                            inputMode="numeric"
-                        />
-                        <p className="text-xs text-muted-foreground">Mã PIN được lưu trên thiết bị này để khóa ứng dụng.</p>
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setShowPinDialog(false)} className="rounded-xl">
-                            Hủy
-                        </Button>
-                        <Button onClick={handleSavePin} className="rounded-xl">
-                            Lưu mã PIN
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 

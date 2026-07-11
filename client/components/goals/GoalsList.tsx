@@ -139,12 +139,12 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
                             {!isCompleted && (
                                 <button onClick={() => { setMenuOpen(false); onEdit(); }}
                                     className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 flex items-center gap-2.5">
-                                    <CustomIcon type="pencil" size={14} tile={false} color="#8B5CF6" /> Chỉnh sửa
+                                    <CustomIcon type="pencil" size={16} tile={false} color="#8B5CF6" /> Chỉnh sửa
                                 </button>
                             )}
                             <button onClick={() => { setMenuOpen(false); onDelete(); }}
                                 className="w-full px-4 py-2.5 text-left text-sm font-semibold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5">
-                                <CustomIcon type="trash" size={14} tile={false} color="#EF4444" /> Xóa mục tiêu
+                                <CustomIcon type="trash" size={16} tile={false} color="#EF4444" /> Xóa mục tiêu
                             </button>
                         </div>
                     </>

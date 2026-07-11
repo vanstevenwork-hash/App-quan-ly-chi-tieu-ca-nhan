@@ -549,11 +549,11 @@ export default function AnalyticsPage() {
                                                 <div className="absolute inset-0 flex items-center justify-end gap-1.5 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
                                                     <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }}
                                                         className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 transition-all shadow-sm">
-                                                        <CustomIcon type="pencil" size={14} tile={false} color="currentColor" />
+                                                        <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
                                                     </button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleDelete(t._id); }}
                                                         className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-rose-100 hover:text-rose-500 dark:hover:bg-rose-900/40 transition-all shadow-sm">
-                                                        <CustomIcon type="trash" size={14} tile={false} color="currentColor" />
+                                                        <CustomIcon type="trash" size={16} tile={false} color="currentColor" />
                                                     </button>
                                                 </div>
                                             </div>
