@@ -36,6 +36,7 @@ const SHORTCUTS = [
     { href: '/wealth', label: 'Tài sản', isUtil: true, type: 'landmark', bg: 'bg-purple-50 dark:bg-purple-900/20', color: '#8B5CF6' },
     { href: '/savings', label: 'Tiết kiệm', isUtil: true, type: 'soTietKiem', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F0A319' },
     { href: '/games', label: 'Chơi bài với vợ/chồng', isUtil: true, type: 'playingCards', bg: 'bg-purple-50 dark:bg-purple-900/20', color: '#8B5CF6' },
+    { href: '/games/stats', label: 'Thống kê chơi bài', isUtil: true, type: 'trophy', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F59E0B' },
 ];
 
 const SettingItem = ({

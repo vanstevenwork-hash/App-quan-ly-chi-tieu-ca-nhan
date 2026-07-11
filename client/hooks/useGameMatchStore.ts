@@ -12,8 +12,14 @@ export interface CardId {
 }
 
 export interface LastPlay {
-    type: 'single' | 'pair' | 'triple' | 'straight' | 'quad' | 'three_pair_run' | 'four_pair_run' | 'discard';
+    type: 'single' | 'pair' | 'triple' | 'straight' | 'quad' | 'three_pair_run' | 'four_pair_run' | 'discard' | 'eat';
     cards: CardId[];
+}
+
+/** Wins-per-player tally across every finished match in a rematch chain. */
+export interface SeriesScore {
+    score: Record<string, number>;
+    roundsPlayed: number;
 }
 
 export interface MatchStateView {
@@ -38,6 +44,9 @@ export interface MatchStateView {
     deadwoodScore?: number;
     melds?: CardId[][];
     scores?: Record<string, number> | null;
+    /** Tiến Lên only, set once winnerId is set — rank 1 = winner, rest by cards left. */
+    rankings?: { userId: string; rank: number; cardsLeft: number }[] | null;
+    finalScores?: Record<string, { cardsLeft: number; heoLeft: number; cong: boolean; thoiBonus: number; score: number }> | null;
 }
 
 export interface GameChatMessage {
@@ -57,7 +66,7 @@ interface GameMatchStore {
     matchId: string | null;
     connectionStatus: ConnectionStatus;
     matchState: MatchStateView | null;
-    matchEnded: { winnerId: string | null; reason?: 'normal' | 'abandoned'; byUserId?: string } | null;
+    matchEnded: { winnerId: string | null; reason?: 'normal' | 'abandoned'; byUserId?: string; seriesScore?: SeriesScore | null } | null;
     chatMessages: GameChatMessage[];
     errorMessage: string | null;
     connect: (matchId: string) => void;
@@ -98,7 +107,7 @@ export const useGameMatchStore = create<GameMatchStore>((set, get) => ({
         socket.on('connect_error', () => set({ connectionStatus: 'error' }));
         socket.on('match:state', (state: MatchStateView) => set({ matchState: state }));
         socket.on('match:error', ({ message }: { message: string }) => set({ errorMessage: message }));
-        socket.on('match:ended', (payload: { winnerId: string | null; reason?: 'normal' | 'abandoned'; byUserId?: string }) => set({ matchEnded: payload }));
+        socket.on('match:ended', (payload: { winnerId: string | null; reason?: 'normal' | 'abandoned'; byUserId?: string; seriesScore?: SeriesScore | null }) => set({ matchEnded: payload }));
         socket.on('game:chat', (message: GameChatMessage) => {
             set(state => ({ chatMessages: [...state.chatMessages, message].slice(-40) }));
         });

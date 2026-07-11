@@ -1,16 +1,27 @@
+const { randomInt } = require('crypto');
 const { makeDeck, shuffle, sortHand } = require('../shared/card');
 
-// Deals the FULL 52-card deck round-robin — never a fixed 13/player. A fixed
-// slice(index*13, index*13+13) only uses playerCount*13 cards, so a 2-player
-// match would deal just 26 of 52 and silently discard the rest; if 3♠ (the
-// card the opening move is required to contain) fell in the discarded half,
-// neither player could ever legally open the match. Round-robin guarantees
-// every card is dealt to someone, for any player count (2-4).
+const THREE_SPADES_ID = '3_spades';
+
+// Fixed 13 cards per player (matches the standard deal everyone expects —
+// for 2 players that leaves 26 cards undealt/unused, same as a real deck).
+// The one thing we must never allow: 3♠ landing in the UNDEALT remainder,
+// because the opening move is required to contain it — if nobody was dealt
+// it, the match soft-locks with neither player able to legally open. So if
+// the shuffle puts it outside the dealt range, swap it into a random dealt
+// slot. This barely perturbs the shuffle (a single swap) and only ever
+// triggers when 3♠ would otherwise be unreachable.
 function dealHandsByPlayerCount(playerCount) {
     const deck = shuffle(makeDeck());
-    const hands = Array.from({ length: playerCount }, () => []);
-    deck.forEach((card, i) => hands[i % playerCount].push(card));
-    return hands.map(sortHand);
+    const dealtCount = playerCount * 13;
+
+    const threeSpadesIndex = deck.findIndex(c => c.id === THREE_SPADES_ID);
+    if (threeSpadesIndex >= dealtCount) {
+        const swapIndex = randomInt(0, dealtCount);
+        [deck[threeSpadesIndex], deck[swapIndex]] = [deck[swapIndex], deck[threeSpadesIndex]];
+    }
+
+    return Array.from({ length: playerCount }, (_, index) => sortHand(deck.slice(index * 13, index * 13 + 13)));
 }
 
 module.exports = { dealHandsByPlayerCount };

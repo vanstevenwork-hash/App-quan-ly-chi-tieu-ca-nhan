@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const GameMatch = require('../models/GameMatch');
 const User = require('../models/User');
 const { createNotification } = require('./notificationController');
@@ -11,6 +12,23 @@ function normalizeTurnSeconds(value) {
     if (!Number.isFinite(parsed)) return 30;
     return Math.max(10, Math.min(120, Math.round(parsed)));
 }
+
+// Tallies wins per player across every finished match in a rematch chain, so
+// the UI can show a running "Bạn 2 - 1 Đối thủ" score instead of the session
+// resetting to zero every time someone clicks "Chơi tiếp".
+async function computeSeriesScore(seriesId, players) {
+    if (!seriesId) return null;
+    const matches = await GameMatch.find({ seriesId, status: 'finished' }).select('winnerId');
+    const score = {};
+    players.forEach(p => { score[p.toString()] = 0; });
+    matches.forEach(m => {
+        if (!m.winnerId) return;
+        const key = m.winnerId.toString();
+        score[key] = (score[key] || 0) + 1;
+    });
+    return { score, roundsPlayed: matches.length };
+}
+exports.computeSeriesScore = computeSeriesScore;
 
 // @desc  Invite registered users to a 2-4 player game
 // @route POST /api/game-matches/invite
@@ -56,12 +74,17 @@ exports.invite = async (req, res) => {
             });
         }
 
+        // Pre-generate the _id so a fresh match can self-reference as the start
+        // of its own rematch series (seriesId === _id) in a single write.
+        const newMatchId = new mongoose.Types.ObjectId();
         const match = await GameMatch.create({
+            _id: newMatchId,
             gameType,
             players: playerIds,
             acceptedPlayerIds: [req.user._id],
             hostId: req.user._id,
             settings: { turnSeconds: normalizeTurnSeconds(turnSeconds) },
+            seriesId: newMatchId,
         });
 
         await Promise.all(invitees.map(invitee => createNotification({
@@ -246,6 +269,61 @@ exports.leave = async (req, res) => {
     }
 };
 
+// @desc  Start a new round with the same players/settings right after a
+//        finished match — reuses the existing invite/accept flow (the other
+//        player still has to explicitly accept) but skips the email lookup
+//        since both players are already known from the match just played.
+// @route POST /api/game-matches/:id/rematch
+exports.rematch = async (req, res) => {
+    try {
+        const previous = await GameMatch.findOne({ _id: req.params.id, players: req.user._id });
+        if (!previous) return res.status(404).json({ success: false, message: 'Không tìm thấy ván đấu' });
+        if (previous.status !== 'finished') {
+            return res.status(400).json({ success: false, message: 'Chỉ có thể chơi tiếp sau khi ván đã kết thúc' });
+        }
+
+        // Someone already requested a rematch off this match — hand back that
+        // same one instead of creating a duplicate (covers both players
+        // tapping "Chơi tiếp" around the same time).
+        const existingRematch = await GameMatch.findOne({ previousMatchId: previous._id });
+        if (existingRematch) {
+            return res.json({ success: true, data: existingRematch });
+        }
+
+        const seriesId = previous.seriesId || previous._id;
+        const newMatchId = new mongoose.Types.ObjectId();
+        const match = await GameMatch.create({
+            _id: newMatchId,
+            gameType: previous.gameType,
+            players: previous.players,
+            acceptedPlayerIds: [req.user._id],
+            hostId: req.user._id,
+            settings: previous.settings,
+            seriesId,
+            previousMatchId: previous._id,
+        });
+
+        const others = previous.players.filter(p => p.toString() !== req.user._id.toString());
+        await Promise.all(others.map(uid => createNotification({
+            userId: uid.toString(),
+            title: 'Muốn chơi tiếp!',
+            message: `${req.user.name} muốn chơi tiếp ván ${GAME_LABELS[previous.gameType] || previous.gameType}`,
+            type: 'game_invite',
+            icon: '🃏',
+            iconBg: '#EEF2FF',
+            isImportant: true,
+            relatedId: match._id,
+            relatedModel: 'GameMatch',
+            actionUrl: `/games/${match._id}`,
+        })));
+
+        res.status(201).json({ success: true, data: match });
+    } catch (err) {
+        console.error('GameMatch rematch error:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // @desc  Fetch one match (initial HTTP load before the socket takes over)
 // @route GET /api/game-matches/:id
 exports.getById = async (req, res) => {
@@ -261,7 +339,75 @@ exports.getById = async (req, res) => {
             state = engine.toPlayerView(match.state, req.user._id.toString());
         }
 
-        res.json({ success: true, data: { ...match.toObject(), state } });
+        const seriesScore = await computeSeriesScore(match.seriesId || match._id, match.players.map(p => p._id));
+
+        res.json({ success: true, data: { ...match.toObject(), state, seriesScore } });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Overall win/loss stats across every finished match (any series),
+//        broken down by game type and by opponent, for the Settings stats page.
+// @route GET /api/game-matches/stats
+exports.getStats = async (req, res) => {
+    try {
+        const uid = req.user._id.toString();
+        const matches = await GameMatch.find({ players: req.user._id, status: 'finished' })
+            .populate('players', 'name email avatar')
+            .sort({ updatedAt: -1 });
+
+        let wins = 0;
+        let losses = 0;
+        const byGameType = { tien_len: { played: 0, won: 0 }, phom: { played: 0, won: 0 } };
+        const byOpponent = new Map();
+
+        matches.forEach(match => {
+            const won = !!match.winnerId && match.winnerId.toString() === uid;
+            if (won) wins++; else losses++;
+
+            if (byGameType[match.gameType]) {
+                byGameType[match.gameType].played++;
+                if (won) byGameType[match.gameType].won++;
+            }
+
+            // A match can have up to 4 players — .find() would silently drop
+            // every opponent past the first, so 3-4 player matches under-counted
+            // everyone except whoever happened to be first in `players`.
+            const opponents = match.players.filter(p => p._id.toString() !== uid);
+            opponents.forEach(opponent => {
+                const key = opponent._id.toString();
+                if (!byOpponent.has(key)) {
+                    byOpponent.set(key, { userId: key, name: opponent.name, avatar: opponent.avatar, played: 0, won: 0, lost: 0 });
+                }
+                const record = byOpponent.get(key);
+                record.played++;
+                if (won) record.won++; else record.lost++;
+            });
+        });
+
+        const recentMatches = matches.slice(0, 15).map(match => {
+            const opponents = match.players.filter(p => p._id.toString() !== uid);
+            return {
+                _id: match._id,
+                gameType: match.gameType,
+                won: !!match.winnerId && match.winnerId.toString() === uid,
+                opponentName: opponents.map(p => p.name).join(', ') || null,
+                finishedAt: match.updatedAt,
+            };
+        });
+
+        res.json({
+            success: true,
+            data: {
+                totalMatches: matches.length,
+                wins,
+                losses,
+                byGameType,
+                byOpponent: Array.from(byOpponent.values()).sort((a, b) => b.played - a.played),
+                recentMatches,
+            },
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

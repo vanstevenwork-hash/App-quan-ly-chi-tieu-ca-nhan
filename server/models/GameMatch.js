@@ -26,10 +26,18 @@ const gameMatchSchema = new mongoose.Schema(
         }],
         winnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         finishedReason: { type: String, enum: ['normal', 'abandoned', 'declined'] },
+        // Chains rematches together so a running score can be tallied across a
+        // sitting without inventing a separate "session" collection. Set to
+        // this match's own _id at creation (a fresh match starts its own
+        // series); a rematch inherits the original match's seriesId.
+        seriesId: { type: mongoose.Schema.Types.ObjectId },
+        previousMatchId: { type: mongoose.Schema.Types.ObjectId, ref: 'GameMatch' },
     },
     { timestamps: true }
 );
 
 gameMatchSchema.index({ players: 1, status: 1 });
+gameMatchSchema.index({ seriesId: 1, status: 1 });
+gameMatchSchema.index({ previousMatchId: 1 });
 
 module.exports = mongoose.model('GameMatch', gameMatchSchema);

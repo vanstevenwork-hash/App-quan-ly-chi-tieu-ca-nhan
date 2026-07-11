@@ -1,13 +1,14 @@
 'use client';
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { gameMatchesApi } from '@/lib/api';
 import { useGameMatchStore } from '@/hooks/useGameMatchStore';
-import type { GameChatMessage } from '@/hooks/useGameMatchStore';
+import type { CardId, GameChatMessage } from '@/hooks/useGameMatchStore';
 import Hand from '@/components/games/Hand';
 import OpponentHand from '@/components/games/OpponentHand';
 import LastPlayDisplay from '@/components/games/LastPlayDisplay';
+import PlayingCard from '@/components/games/PlayingCard';
 import TurnIndicator from '@/components/games/TurnIndicator';
 import GameActions from '@/components/games/GameActions';
 import EndScreen from '@/components/games/EndScreen';
@@ -211,6 +212,43 @@ function TableThrowEffects({
     );
 }
 
+interface MoveEffect {
+    id: string;
+    kind: 'play' | 'eat';
+    mine: boolean;
+    cards: CardId[];
+    at: number;
+}
+
+// Đánh bài (play/discard) flies in toward the center from the acting player's
+// side (up from the bottom for me, down from the top for the opponent); Ăn
+// bài (eat) does the reverse, flying back out toward whoever picked it up.
+function MoveFlyEffects({ effects, now }: { effects: MoveEffect[]; now: number }) {
+    const visible = effects.filter(effect => now - effect.at < 650);
+    if (visible.length === 0) return null;
+
+    return (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center overflow-hidden">
+            {visible.map(effect => {
+                const isEat = effect.kind === 'eat';
+                // Mine sits at the bottom of the screen (positive Y), opponent at the top (negative Y).
+                const flyY = effect.mine ? 140 : -140;
+                return (
+                    <div
+                        key={effect.id}
+                        className={cn('absolute flex items-center justify-center -space-x-2', isEat ? 'animate-[flyOut_.55s_ease-in_forwards]' : 'animate-[flyIn_.5s_ease-out_forwards]')}
+                        style={{ '--fly-y': `${flyY}px` } as CSSProperties}
+                    >
+                        {effect.cards.map(c => (
+                            <PlayingCard key={c.id} rank={c.rank} suit={c.suit} size="lg" />
+                        ))}
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function GameMatchPage() {
     const params = useParams();
     const router = useRouter();
@@ -227,6 +265,9 @@ export default function GameMatchPage() {
     const [shakeUntil, setShakeUntil] = useState(0);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [handCollapsed, setHandCollapsed] = useState(false);
+    const [moveEffects, setMoveEffects] = useState<MoveEffect[]>([]);
+    const [rematchRequested, setRematchRequested] = useState(false);
+    const lastMoveSignatureRef = useRef<string | null>(null);
     const { user } = useAuthStore();
 
     const { connect, disconnect, matchState, matchEnded, connectionStatus, chatMessages, errorMessage, clearError, playCombo, pass, drawStock, eatDiscard, sendChat } = useGameMatchStore();
@@ -278,6 +319,26 @@ export default function GameMatchPage() {
 
     useEffect(() => { setSelectedIds([]); }, [matchState?.turnUserId, matchState?.lastPlayBy]);
 
+    // Spawn a one-shot fly animation whenever a genuinely new move lands —
+    // "đánh bài" flies up toward center, "ăn bài" flies back out from it.
+    useEffect(() => {
+        const lastPlay = matchState?.lastPlay;
+        if (!lastPlay) return;
+        const signature = `${matchState?.lastPlayBy}-${lastPlay.type}-${lastPlay.cards.map(c => c.id).join(',')}`;
+        if (lastMoveSignatureRef.current === signature) return;
+        lastMoveSignatureRef.current = signature;
+        setMoveEffects(prev => [
+            ...prev.slice(-3),
+            {
+                id: `${signature}-${Date.now()}`,
+                kind: lastPlay.type === 'eat' ? 'eat' : 'play',
+                mine: matchState?.lastPlayBy === matchState?.youAre,
+                cards: lastPlay.cards,
+                at: Date.now(),
+            },
+        ]);
+    }, [matchState?.lastPlay, matchState?.lastPlayBy, matchState?.youAre]);
+
     useEffect(() => {
         const timer = window.setInterval(() => setNow(Date.now()), 250);
         return () => window.clearInterval(timer);
@@ -301,6 +362,14 @@ export default function GameMatchPage() {
         : isYourTurn && selectionValidation.playable;
     const canDraw = isPhom && isYourTurn && matchState?.phase === 'draw_or_eat' && (matchState.stockCount || 0) > 0;
     const canEat = isPhom && isYourTurn && matchState?.phase === 'draw_or_eat' && !!matchState.canEatLastDiscard;
+    // Phỏm: pull completed melds to the front of the hand and mark their card
+    // ids so Hand can lift + ring them — otherwise a finished set/run is easy
+    // to miss buried among unrelated deadwood cards.
+    const melds = isPhom ? matchState?.melds || [] : [];
+    const meldedIds = new Set(melds.flat().map(c => c.id));
+    const displayHand = isPhom && matchState
+        ? [...melds.flat(), ...matchState.yourHand.filter(c => !meldedIds.has(c.id))]
+        : matchState?.yourHand || [];
     const turnDeadline = matchState?.turnExpiresAt ? new Date(matchState.turnExpiresAt).getTime() : 0;
     const secondsLeft = turnDeadline ? Math.max(0, Math.ceil((turnDeadline - now) / 1000)) : 0;
     const totalTurnSeconds = matchState?.turnSeconds || 30;
@@ -326,6 +395,31 @@ export default function GameMatchPage() {
         }
         disconnect();
         router.push('/games');
+    };
+
+    const handleRematch = async () => {
+        if (rematchRequested) return;
+        setRematchRequested(true);
+        try {
+            const res = await gameMatchesApi.rematch(matchId);
+            const newMatch = res.data?.data;
+            const iAmHost = newMatch?.hostId === user?._id;
+            if (!iAmHost) {
+                // The opponent already asked for a rematch (this is their pending
+                // match) — treat my own tap as accepting it, straight into play.
+                await gameMatchesApi.respond(newMatch._id, true);
+                toast.success('Đã chấp nhận, vào ván mới!');
+                disconnect();
+                router.push(`/games/${newMatch._id}`);
+            } else {
+                toast.success('Đã gửi yêu cầu chơi tiếp — đang chờ đối thủ chấp nhận');
+                disconnect();
+                router.push('/games');
+            }
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Không thể tạo ván mới');
+            setRematchRequested(false);
+        }
     };
 
     const handleSendChat = (text = chatText, kind: 'text' | 'emoji' = 'text', openChatAfterSend = chatOpen) => {
@@ -415,6 +509,18 @@ export default function GameMatchPage() {
                     54% { transform: translate(-3px, -1px); }
                     72% { transform: translate(2px, 1px); }
                 }
+                /* Đánh bài (play/discard) rides in from --fly-y toward center;
+                   Ăn bài (eat) rides out from center toward --fly-y. Direction
+                   (up vs down) is just the sign of --fly-y set inline per case. */
+                @keyframes flyIn {
+                    0% { opacity: 0; transform: translateY(var(--fly-y, 140px)) scale(0.7); }
+                    35% { opacity: 1; }
+                    100% { opacity: 1; transform: translateY(0) scale(1); }
+                }
+                @keyframes flyOut {
+                    0% { opacity: 1; transform: translateY(0) scale(1); }
+                    100% { opacity: 0; transform: translateY(var(--fly-y, 140px)) scale(0.7); }
+                }
             `}</style>
                 <div className="relative flex items-center justify-between px-6" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
                     <button onClick={() => router.push('/games')} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur">
@@ -485,6 +591,7 @@ export default function GameMatchPage() {
                 <div className="relative flex flex-1 flex-col items-center justify-center gap-3 px-4 pb-3 pt-4">
                     <TableChatReactions messages={chatMessages} now={now} currentUserId={user?._id} />
                     <TableThrowEffects messages={chatMessages} now={now} currentUserId={user?._id} />
+                    <MoveFlyEffects effects={moveEffects} now={now} />
                     <div className="absolute left-7 bottom-8 flex flex-col gap-7">
                         <RoundIconButton label="Chat" onClick={() => { setChatOpen(true); setEmojiOpen(false); }}>
                             <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true"><path d="M4 5.8C4 4.25 5.25 3 6.8 3h10.4C18.75 3 20 4.25 20 5.8v6.4c0 1.55-1.25 2.8-2.8 2.8H11l-4.15 3.46A.9.9 0 0 1 5.4 17.77V15A2.8 2.8 0 0 1 4 12.2V5.8Z" /><circle cx="8" cy="9" r="1" fill="#033d40" /><circle cx="12" cy="9" r="1" fill="#033d40" /><circle cx="16" cy="9" r="1" fill="#033d40" /></svg>
@@ -585,7 +692,11 @@ export default function GameMatchPage() {
                             <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M8.6 14.8A6 6 0 1 1 15.4 14.8c-.8.6-1.4 1.5-1.4 2.2h-4c0-.7-.6-1.6-1.4-2.2Z" /><path d="M4 12H2" /><path d="M22 12h-2" /><path d="m19.1 4.9-1.4 1.4" /><path d="m4.9 4.9 1.4 1.4" /></svg>
                         </RoundIconButton>
                     </div>
-                    <LastPlayDisplay lastPlay={matchState.lastPlay} isYourLead={isYourTurn && !matchState.lastPlay} />
+                    <LastPlayDisplay
+                        lastPlay={matchState.lastPlay}
+                        isYourLead={isYourTurn && !matchState.lastPlay}
+                        actionLabel={matchState.lastPlayBy === matchState.youAre ? 'Bạn vừa ăn' : `${opponentName} vừa ăn`}
+                    />
                     <TurnIndicator isYourTurn={isYourTurn} opponentName={opponentName} />
                     <TurnCountdown secondsLeft={secondsLeft} totalSeconds={totalTurnSeconds} active={showTurnCountdown} />
                     {isPhom && (
@@ -647,7 +758,7 @@ export default function GameMatchPage() {
                             </button>
                         </div>
                     </div>
-                    {!handCollapsed && <Hand cards={matchState.yourHand} selectedIds={selectedIds} onToggle={handleToggle} />}
+                    {!handCollapsed && <Hand cards={displayHand} selectedIds={selectedIds} onToggle={handleToggle} meldedIds={meldedIds} />}
                     <GameActions
                         canPlay={canPlay}
                         isYourTurn={isYourTurn}
@@ -660,7 +771,24 @@ export default function GameMatchPage() {
                     />
                 </div>
 
-                {matchEnded && <EndScreen youWon={matchEnded.winnerId === matchState.youAre} abandoned={matchEnded.reason === 'abandoned'} />}
+                {matchEnded && (() => {
+                    const opponentIdForScore = matchState.opponentId || matchState.opponents?.[0]?.userId;
+                    const score = matchEnded.seriesScore?.score;
+                    return (
+                        <EndScreen
+                            youWon={matchEnded.winnerId === matchState.youAre}
+                            abandoned={matchEnded.reason === 'abandoned'}
+                            myWins={score?.[matchState.youAre] ?? 0}
+                            opponentWins={opponentIdForScore ? (score?.[opponentIdForScore] ?? 0) : 0}
+                            onRematch={handleRematch}
+                            rematchRequested={rematchRequested}
+                            rankings={matchState.rankings}
+                            finalScores={matchState.finalScores}
+                            playerNames={playerNames}
+                            myUserId={matchState.youAre}
+                        />
+                    );
+                })()}
             </div>
         </div>
     );

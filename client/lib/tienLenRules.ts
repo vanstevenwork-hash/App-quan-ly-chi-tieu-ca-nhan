@@ -4,7 +4,7 @@ const SUITS = ['spades', 'clubs', 'diamonds', 'hearts'];
 const RANKS = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'];
 const THREE_SPADES_ID = '3_spades';
 
-export type ComboType = Exclude<LastPlay['type'], 'discard'>;
+export type ComboType = Exclude<LastPlay['type'], 'discard' | 'eat'>;
 
 export interface ClassifiedCombo {
     type: ComboType;

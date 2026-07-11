@@ -190,6 +190,12 @@ function eatDiscard(state, byUserId) {
             discardPile: discardPile.slice(0, -1),
             hands: { ...state.hands, [byUserId]: sortHand([...hand, discard]) },
             phase: 'discard',
+            // Without this, lastPlay stays stuck on whatever was last *discarded* —
+            // the center-table display would keep showing a card that's actually
+            // just been picked up into this player's hand, and the opponent gets
+            // no signal at all that an eat just happened (as opposed to a draw).
+            lastPlay: { type: 'eat', cards: [discard], power: discard },
+            lastPlayBy: byUserId,
             turnExpiresAt: nextTurnExpiresAt(state.turnSeconds),
         },
         error: null,

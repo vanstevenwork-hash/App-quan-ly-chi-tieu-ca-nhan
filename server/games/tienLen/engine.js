@@ -5,11 +5,20 @@ const { classifyCombo, canBeat } = require('./combos');
 const THREE_SPADES_ID = '3_spades';
 const DEFAULT_TURN_SECONDS = 30;
 
+// "Tính thối" v1 — no single nationwide-standard ruleset exists for this, so
+// this is a documented, reasonable convention rather than a claim of THE
+// official rule: each remaining card = 1 điểm, except each remaining heo
+// (con 2) counts as 2 điểm. Being "cóng" (never played a single card all
+// match) doubles the total. On top of that, every time a bomb chops a hand
+// containing heo(s), the chopped player owes an extra (heoCount * multiplier)
+// — quad and 3-đôi-thông = x2 per heo, 4-đôi-thông (the strongest bomb) = x3.
+const BOMB_HEO_MULTIPLIER = { quad: 2, three_pair_run: 2, four_pair_run: 3 };
+
 function nextTurnExpiresAt(turnSeconds = DEFAULT_TURN_SECONDS) {
     return new Date(Date.now() + turnSeconds * 1000).toISOString();
 }
 
-// Pure, DB/socket-free state machine. `players` is [userId0, userId1] (strings).
+// Pure, DB/socket-free state machine. `players` is [userId0, userId1, ...].
 function dealHands(players, options = {}) {
     const turnSeconds = options.turnSeconds || DEFAULT_TURN_SECONDS;
     const dealtHands = dealHandsByPlayerCount(players.length);
@@ -19,12 +28,18 @@ function dealHands(players, options = {}) {
     return {
         players,
         hands,
+        // Original deal size per player — needed at game-end to detect "cóng"
+        // (a player who never got to play a single card all match).
+        dealtHandSizes: Object.fromEntries(players.map(p => [p, hands[p].length])),
         turnUserId: starter,
         lastPlay: null,
         lastPlayBy: null,
         passedUserIds: [],
         isFirstMove: true,
         winnerId: null,
+        thoiEvents: [],
+        rankings: null,
+        finalScores: null,
         turnSeconds,
         turnExpiresAt: nextTurnExpiresAt(turnSeconds),
     };
@@ -58,6 +73,51 @@ function validatePlay(hand, cardIds, lastPlay, isFirstMove) {
         return { valid: false, error: 'Bài không đủ lớn để chặt nước trước' };
     }
     return { valid: true, combo };
+}
+
+// Did this bomb just chop a heo-holding play? Returns the heo count chopped
+// (1 for a lone 2, 2 for a pair of 2s), or null if this wasn't a heo-chop
+// (e.g. a bigger bomb chopping a smaller bomb — no heo directly involved).
+function heoChoppedBy(comboType, lastPlay) {
+    if (!lastPlay || !(comboType in BOMB_HEO_MULTIPLIER)) return null;
+    if (lastPlay.type === 'single' && lastPlay.cards[0]?.rank === '2') return 1;
+    if (lastPlay.type === 'pair' && lastPlay.cards.every(c => c.rank === '2')) return 2;
+    return null;
+}
+
+// Rank 1 = winner (emptied hand first); everyone else ranked by cards left,
+// fewest first — this is the "kết thúc ngay, xếp hạng theo số lá còn lại"
+// convention (not full play-out to determine bét), matching what was asked.
+function computeRankings(players, hands, winnerId) {
+    const others = players.filter(p => p !== winnerId);
+    others.sort((a, b) => (hands[a]?.length || 0) - (hands[b]?.length || 0));
+    return [winnerId, ...others].map((userId, index) => ({
+        userId,
+        rank: index + 1,
+        cardsLeft: hands[userId]?.length || 0,
+    }));
+}
+
+function computeFinalScores(state, hands) {
+    const scores = {};
+    state.players.forEach(userId => {
+        const hand = hands[userId] || [];
+        const heoCount = hand.filter(c => c.rank === '2').length;
+        const nonHeoCount = hand.length - heoCount;
+        const isCong = hand.length > 0 && hand.length === (state.dealtHandSizes?.[userId] ?? hand.length);
+        const baseScore = (nonHeoCount * 1 + heoCount * 2) * (isCong ? 2 : 1);
+        const thoiBonus = (state.thoiEvents || [])
+            .filter(event => event.againstUserId === userId)
+            .reduce((sum, event) => sum + event.heoCount * (BOMB_HEO_MULTIPLIER[event.comboType] || 1), 0);
+        scores[userId] = {
+            cardsLeft: hand.length,
+            heoLeft: heoCount,
+            cong: isCong,
+            thoiBonus,
+            score: baseScore + thoiBonus,
+        };
+    });
+    return scores;
 }
 
 // Returns { nextState, error }. Never mutates `state` in place.
@@ -106,18 +166,30 @@ function applyMove(state, move, byUserId) {
 
         const playedIds = new Set(combo.cards.map(c => c.id));
         const nextHand = hand.filter(c => !playedIds.has(c.id));
+        const nextHands = { ...state.hands, [byUserId]: nextHand };
         const winnerId = nextHand.length === 0 ? byUserId : null;
+
+        const heoChopCount = heoChoppedBy(combo.type, state.lastPlay);
+        const thoiEvents = heoChopCount
+            ? [...(state.thoiEvents || []), { againstUserId: state.lastPlayBy, comboType: combo.type, heoCount: heoChopCount }]
+            : (state.thoiEvents || []);
+
+        const rankings = winnerId ? computeRankings(state.players, nextHands, winnerId) : null;
+        const finalScores = winnerId ? computeFinalScores({ ...state, thoiEvents }, nextHands) : null;
 
         return {
             nextState: {
                 ...state,
-                hands: { ...state.hands, [byUserId]: nextHand },
+                hands: nextHands,
                 lastPlay: { type: combo.type, cards: combo.cards, power: combo.power },
                 lastPlayBy: byUserId,
                 passedUserIds: [],
                 turnUserId: winnerId ? state.turnUserId : nextPlayer(state, byUserId),
                 isFirstMove: false,
                 winnerId,
+                thoiEvents,
+                rankings,
+                finalScores,
                 turnExpiresAt: winnerId ? null : nextTurnExpiresAt(state.turnSeconds),
             },
             error: null,
@@ -144,6 +216,8 @@ function toPlayerView(state, forUserId) {
         turnUserId: state.turnUserId,
         isFirstMove: state.isFirstMove,
         winnerId: state.winnerId,
+        rankings: state.rankings || null,
+        finalScores: state.finalScores || null,
         turnSeconds: state.turnSeconds || DEFAULT_TURN_SECONDS,
         turnExpiresAt: state.turnExpiresAt || null,
     };

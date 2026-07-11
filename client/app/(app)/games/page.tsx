@@ -7,6 +7,7 @@ import GameInviteModal from '@/components/games/GameInviteModal';
 import InviteCard from '@/components/InviteCard';
 import { useAuthStore } from '@/store/useStore';
 import { useNotifications } from '@/hooks/useNotifications';
+import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { toast } from 'sonner';
 
 const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
@@ -48,7 +49,20 @@ export default function GamesLobbyPage() {
 
     return (
         <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">
-            <PageHeader title="Chơi bài" subtitle="Với vợ/chồng" backHref="/settings" />
+            <PageHeader
+                title="Chơi bài"
+                subtitle="Với vợ/chồng"
+                backHref="/settings"
+                rightActions={(
+                    <button
+                        onClick={() => router.push('/games/stats')}
+                        className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center active:scale-95 transition-all flex-shrink-0"
+                        aria-label="Thống kê"
+                    >
+                        <UtilityIcon type="trophy" size={18} tile={false} color="#F59E0B" />
+                    </button>
+                )}
+            />
 
             <div className="px-5 pt-2 space-y-5">
                 <button

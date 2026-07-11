@@ -2,6 +2,7 @@ const { verifyAuthToken } = require('../utils/authToken');
 const GameMatch = require('../models/GameMatch');
 const engines = require('../games');
 const { setIO } = require('./emitter');
+const { computeSeriesScore } = require('../controllers/gameMatchController');
 
 // matchId(string) -> Set<userId(string)> currently connected — presence only,
 // never authoritative for game state (that's the DB). Fine to lose on restart.
@@ -163,7 +164,8 @@ module.exports = function attachGameSockets(io) {
                 await emitStateToPlayers(gamesNsp, match);
                 if (match.status === 'finished') {
                     clearTurnTimer(matchId);
-                    gamesNsp.to(`match:${matchId}`).emit('match:ended', { winnerId: match.winnerId.toString() });
+                    const seriesScore = await computeSeriesScore(match.seriesId || match._id, match.players);
+                    gamesNsp.to(`match:${matchId}`).emit('match:ended', { winnerId: match.winnerId.toString(), reason: 'normal', seriesScore });
                 } else {
                     scheduleTurnTimeout(match);
                 }
