@@ -18,11 +18,11 @@ interface PlayingCardProps {
 
 export default function PlayingCard({ rank, suit, faceDown, selected, onClick, size = 'md', className, style }: PlayingCardProps) {
     const isRed = RED_SUITS.has(suit);
-    // Another 20% smaller on top of the previous pass (~36% smaller than original)
+    // +5% back up from the previous (~36% smaller than original) pass
     const dimensions = {
-        sm: { width: 24, height: 34, radius: 'rounded-md' },
-        md: { width: 37, height: 54, radius: 'rounded-lg' },
-        lg: { width: 43, height: 62, radius: 'rounded-lg' },
+        sm: { width: 25, height: 36, radius: 'rounded' },
+        md: { width: 39, height: 57, radius: 'rounded-md' },
+        lg: { width: 45, height: 65, radius: 'rounded-md' },
     }[size];
 
     if (faceDown) {
@@ -49,7 +49,8 @@ export default function PlayingCard({ rank, suit, faceDown, selected, onClick, s
             onClick={onClick}
             disabled={!onClick}
             className={cn(
-                'flex-shrink-0 rounded-lg bg-gradient-to-br from-white to-slate-100 border border-white/80 shadow-[0_8px_12px_rgba(0,0,0,0.28)] flex flex-col items-center justify-between px-1 py-1 transition-transform',
+                'flex-shrink-0 bg-gradient-to-br from-white to-slate-100 border border-white/80 shadow-[0_8px_12px_rgba(0,0,0,0.28)] flex flex-col items-center justify-between px-1 py-1 transition-transform',
+                dimensions.radius,
                 selected ? '-translate-y-3 ring-2 ring-emerald-300 border-emerald-200 shadow-[0_0_22px_rgba(45,212,191,0.42)]' : '',
                 onClick && 'active:scale-95 cursor-pointer',
                 className

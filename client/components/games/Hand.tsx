@@ -19,7 +19,7 @@ export default function Hand({ cards, selectedIds, onToggle }: HandProps) {
                     selected={selectedIds.includes(c.id)}
                     onClick={() => onToggle(c.id)}
                     size="lg"
-                    className="-mr-2 last:mr-0"
+                    className="-mr-1 last:mr-0"
                 />
             ))}
         </div>

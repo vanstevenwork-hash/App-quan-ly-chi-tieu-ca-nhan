@@ -11,7 +11,7 @@ export default function OpponentHand({ count }: OpponentHandProps) {
     const shown = Math.min(count, 13);
     return (
         <div className="flex items-center justify-end gap-3 min-w-0">
-            <div className="flex -space-x-7 overflow-hidden py-1 pl-1">
+            <div className="flex -space-x-3 overflow-hidden py-1 pl-1">
                 {Array.from({ length: shown }).map((_, i) => (
                     <PlayingCard key={i} rank="" suit="" faceDown size="sm" />
                 ))}
