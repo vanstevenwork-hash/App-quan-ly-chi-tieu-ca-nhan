@@ -1,10 +1,12 @@
 'use client';
-import { memo, useState } from 'react';
+import { memo } from 'react';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
 import type { SharedCardItem } from '@/hooks/useCardShares';
+import type { GameMatch } from '@/hooks/useGameMatches';
+import InviteCard from '@/components/InviteCard';
 import { toast } from 'sonner';
 
 const fmtFull = (n: number) => n.toLocaleString('vi-VN');
@@ -64,52 +66,34 @@ function ShareInviteCard({ item, onRespond }: {
     item: SharedCardItem;
     onRespond: (id: string, accept: boolean) => Promise<any>;
 }) {
-    const [busy, setBusy] = useState<'accept' | 'decline' | null>(null);
-
-    const handle = async (accept: boolean) => {
-        setBusy(accept ? 'accept' : 'decline');
-        try {
-            await onRespond(item.share._id, accept);
-            toast.success(accept ? `Đã tham gia thẻ ${item.card.bankName}` : 'Đã từ chối lời mời');
-        } catch {
-            toast.error('Không thể xử lý lời mời, thử lại sau');
-        } finally {
-            setBusy(null);
-        }
-    };
-
     return (
-        <div className="w-full bg-white dark:bg-surface rounded-xl border border-indigo-100 dark:border-indigo-500/25 shadow-sm px-4 py-3.5">
-            <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 bg-indigo-50 dark:bg-indigo-500/15">
-                    <span className="text-lg leading-none">🤝</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
-                        {item.owner?.name || 'Ai đó'} mời chia sẻ thẻ
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                        {item.card.bankName} •••• {item.card.cardNumber}
-                    </p>
-                </div>
-            </div>
-            <div className="flex gap-2 mt-3">
-                <button
-                    onClick={() => handle(false)}
-                    disabled={busy !== null}
-                    className="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 active:scale-95 transition-all disabled:opacity-50"
-                >
-                    {busy === 'decline' ? 'Đang xử lý…' : 'Từ chối'}
-                </button>
-                <button
-                    onClick={() => handle(true)}
-                    disabled={busy !== null}
-                    className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50"
-                >
-                    {busy === 'accept' ? 'Đang xử lý…' : 'Chấp nhận'}
-                </button>
-            </div>
-        </div>
+        <InviteCard
+            icon={<span className="text-lg leading-none">🤝</span>}
+            title={`${item.owner?.name || 'Ai đó'} mời chia sẻ thẻ`}
+            sub={`${item.card.bankName} •••• ${item.card.cardNumber}`}
+            onAccept={async () => { await onRespond(item.share._id, true); toast.success(`Đã tham gia thẻ ${item.card.bankName}`); }}
+            onDecline={async () => { await onRespond(item.share._id, false); toast.success('Đã từ chối lời mời'); }}
+        />
+    );
+}
+
+const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
+
+/** Game invite — same accept/decline interaction as ShareInviteCard, for the new card-game feature. */
+function GameInviteCard({ item, onRespond }: {
+    item: GameMatch;
+    onRespond: (id: string, accept: boolean) => Promise<any>;
+}) {
+    const host = typeof item.hostId === 'object' ? item.hostId : null;
+    return (
+        <InviteCard
+            icon={<span className="text-lg leading-none">🃏</span>}
+            iconBg="bg-purple-50 dark:bg-purple-500/15"
+            title={`${host?.name || 'Ai đó'} mời chơi bài`}
+            sub={GAME_LABELS[item.gameType] || item.gameType}
+            onAccept={async () => { await onRespond(item._id, true); toast.success('Đã chấp nhận, vào chơi thôi!'); }}
+            onDecline={async () => { await onRespond(item._id, false); toast.success('Đã từ chối lời mời'); }}
+        />
     );
 }
 
@@ -118,14 +102,16 @@ interface ImportantAlertsSectionProps {
     savingsCards: Card[];
     shareInvites?: SharedCardItem[];
     onRespondShare?: (id: string, accept: boolean) => Promise<any>;
+    gameInvites?: GameMatch[];
+    onRespondGame?: (id: string, accept: boolean) => Promise<any>;
     /** Full alert count (un-sliced) so the badge matches the notifications screen */
     totalCount?: number;
     /** Opens the notification panel on the "Quan trọng" tab */
     onOpen: () => void;
 }
 
-function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites = [], onRespondShare, totalCount, onOpen }: ImportantAlertsSectionProps) {
-    if (creditAlerts.length === 0 && savingsCards.length === 0 && shareInvites.length === 0) return null;
+function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites = [], onRespondShare, gameInvites = [], onRespondGame, totalCount, onOpen }: ImportantAlertsSectionProps) {
+    if (creditAlerts.length === 0 && savingsCards.length === 0 && shareInvites.length === 0 && gameInvites.length === 0) return null;
 
     return (
         <section className="anim-fade-up-d2">
@@ -133,7 +119,7 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
                 <h2 className="text-base font-bold text-slate-800 dark:text-white">Thông báo quan trọng</h2>
                 <button onClick={onOpen} className="flex items-center gap-1 group">
                     <span className="w-6 h-6 rounded-full bg-primary/15 text-primary dark:bg-purple-500/25 dark:text-purple-300 flex items-center justify-center text-xs font-bold">
-                        {totalCount ?? (creditAlerts.length + savingsCards.length + shareInvites.length)}
+                        {totalCount ?? (creditAlerts.length + savingsCards.length + shareInvites.length + gameInvites.length)}
                     </span>
                     <ActionIcon type="chevronRight" size={16} tile={false} color="#94A3B8" className="group-hover:text-purple-500 transition-colors" />
                 </button>
@@ -141,6 +127,9 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
             <div className="space-y-2.5 max-h-[280px] overflow-y-auto hide-scrollbar pb-2">
                 {onRespondShare && shareInvites.map(item => (
                     <ShareInviteCard key={item.share._id} item={item} onRespond={onRespondShare} />
+                ))}
+                {onRespondGame && gameInvites.map(item => (
+                    <GameInviteCard key={item._id} item={item} onRespond={onRespondGame} />
                 ))}
                 {creditAlerts.map(({ card, dueThisCycle }) => (
                     <AlertCard

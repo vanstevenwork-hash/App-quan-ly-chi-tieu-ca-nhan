@@ -7,9 +7,11 @@ import { cn } from '@/lib/utils';
 import { useNotifications, type NotificationItem } from '@/hooks/useNotifications';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { TYPE_MAP, renderNotifIcon } from '@/components/NotificationPanel';
+import InviteCard from '@/components/InviteCard';
 import { toast } from 'sonner';
 
 const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
 
 const TABS = [
     { label: 'Tất cả', key: 'all' },
@@ -33,26 +35,13 @@ const timeAgo = (dateStr: string) => {
 
 function NotificationsContent() {
     const { notifications, loading, error, unreadCount, markRead, markAllRead } = useNotifications();
-    const { creditAlerts, savingsAlerts, shareInvites, respondToShare, count: alertCount } = useImportantAlerts();
+    const { creditAlerts, savingsAlerts, shareInvites, respondToShare, gameInvites, respondToGame, count: alertCount } = useImportantAlerts();
     const searchParams = useSearchParams();
     const initialTab = searchParams.get('tab');
     const [activeTab, setActiveTab] = useState<'all' | 'important' | 'transaction'>(
         initialTab === 'important' || initialTab === 'transaction' ? initialTab : 'all'
     );
     const router = useRouter();
-    const [respondingShareId, setRespondingShareId] = useState<string | null>(null);
-
-    const handleRespondShare = async (shareId: string, accept: boolean) => {
-        setRespondingShareId(shareId);
-        try {
-            await respondToShare(shareId, accept);
-            toast.success(accept ? 'Đã tham gia thẻ chung' : 'Đã từ chối lời mời');
-        } catch {
-            toast.error('Không thể xử lý lời mời, thử lại sau');
-        } finally {
-            setRespondingShareId(null);
-        }
-    };
 
     const filtered = useMemo(() => notifications.filter((n) => {
         if (activeTab === 'important') return n.isImportant;
@@ -126,33 +115,32 @@ function NotificationsContent() {
                 <div className="divide-y divide-gray-50 dark:divide-slate-800/50 border-b border-gray-50 dark:border-slate-800/50">
                     {shareInvites.map(item => (
                         <div key={item.share._id} className="px-5 py-4">
-                            <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-indigo-50 dark:bg-indigo-500/15">
-                                    🤝
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm leading-snug font-bold text-foreground">{item.owner?.name || 'Ai đó'} mời chia sẻ thẻ</p>
-                                    <p className="text-xs mt-0.5 text-muted-foreground">{item.card.bankName} •••• {item.card.cardNumber}</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 mt-3 pl-16">
-                                <button
-                                    onClick={() => handleRespondShare(item.share._id, false)}
-                                    disabled={respondingShareId !== null}
-                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 active:scale-95 transition-all disabled:opacity-50"
-                                >
-                                    Từ chối
-                                </button>
-                                <button
-                                    onClick={() => handleRespondShare(item.share._id, true)}
-                                    disabled={respondingShareId !== null}
-                                    className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50"
-                                >
-                                    {respondingShareId === item.share._id ? 'Đang xử lý…' : 'Chấp nhận'}
-                                </button>
-                            </div>
+                            <InviteCard
+                                icon={<span className="text-lg leading-none">🤝</span>}
+                                title={`${item.owner?.name || 'Ai đó'} mời chia sẻ thẻ`}
+                                sub={`${item.card.bankName} •••• ${item.card.cardNumber}`}
+                                onAccept={async () => { await respondToShare(item.share._id, true); toast.success(`Đã tham gia thẻ ${item.card.bankName}`); }}
+                                onDecline={async () => { await respondToShare(item.share._id, false); toast.success('Đã từ chối lời mời'); }}
+                                className="border-none shadow-none px-0 py-0"
+                            />
                         </div>
                     ))}
+                    {gameInvites.map(item => {
+                        const host = typeof item.hostId === 'object' ? item.hostId : null;
+                        return (
+                            <div key={item._id} className="px-5 py-4">
+                                <InviteCard
+                                    icon={<span className="text-lg leading-none">🃏</span>}
+                                    iconBg="bg-purple-50 dark:bg-purple-500/15"
+                                    title={`${host?.name || 'Ai đó'} mời chơi bài`}
+                                    sub={GAME_LABELS[item.gameType] || item.gameType}
+                                    onAccept={async () => { await respondToGame(item._id, true); toast.success('Đã chấp nhận, vào chơi thôi!'); }}
+                                    onDecline={async () => { await respondToGame(item._id, false); toast.success('Đã từ chối lời mời'); }}
+                                    className="border-none shadow-none px-0 py-0"
+                                />
+                            </div>
+                        );
+                    })}
                     {creditAlerts.map(({ card, dueThisCycle }) => (
                         <button key={card._id}
                             onClick={() => router.push(`/cards/${card._id}`)}

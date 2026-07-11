@@ -70,7 +70,7 @@ export default function DashboardPage() {
         ? user.name.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase()
         : 'NN';
 
-    const { creditAlerts: allCreditAlerts, savingsAlerts, shareInvites, respondToShare, count: importantCount } = useImportantAlerts();
+    const { creditAlerts: allCreditAlerts, savingsAlerts, shareInvites, respondToShare, gameInvites, respondToGame, count: importantCount } = useImportantAlerts();
     const creditAlerts = useMemo(() => allCreditAlerts.slice(0, 2), [allCreditAlerts]);
     const savingsCards = useMemo(() => savingsAlerts.slice(0, 1), [savingsAlerts]);
 
@@ -299,6 +299,8 @@ export default function DashboardPage() {
                     savingsCards={savingsCards}
                     shareInvites={shareInvites}
                     onRespondShare={respondToShare}
+                    gameInvites={gameInvites}
+                    onRespondGame={respondToGame}
                     totalCount={importantCount}
                     onOpen={() => { setNotiTab('important'); setShowNoti(true); }}
                 />

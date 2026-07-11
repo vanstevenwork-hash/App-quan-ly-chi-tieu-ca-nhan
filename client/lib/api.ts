@@ -2,6 +2,8 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/useStore';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// Socket.io attaches to the raw HTTP server, not under /api — strip the suffix.
+export const SOCKET_URL = API_URL.replace(/\/api\/?$/, '');
 
 const api = axios.create({
     baseURL: API_URL,
@@ -94,6 +96,15 @@ export const cardsApi = {
     setDefault: (id: string) => api.patch(`/cards/${id}/set-default`),
     pay: (id: string, amount: number, sourceId?: string) => api.patch(`/cards/${id}/pay`, { amount, sourceId }),
     updateBalance: (id: string, amount: number, action: 'add' | 'set') => api.patch(`/cards/${id}/balance`, { amount, action }),
+};
+
+// Game Matches (real-time card games)
+export const gameMatchesApi = {
+    invite: (email: string, gameType: 'tien_len' | 'phom') => api.post('/game-matches/invite', { email, gameType }),
+    respond: (id: string, accept: boolean) => api.patch(`/game-matches/${id}/respond`, { accept }),
+    getIncoming: () => api.get('/game-matches/incoming'),
+    getActive: () => api.get('/game-matches/active'),
+    getById: (id: string) => api.get(`/game-matches/${id}`),
 };
 
 // Card Shares

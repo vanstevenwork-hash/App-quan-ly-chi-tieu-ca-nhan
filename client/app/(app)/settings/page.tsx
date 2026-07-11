@@ -35,6 +35,7 @@ const SHORTCUTS = [
     { href: '/cashback', label: 'Hoàn tiền', isUtil: true, type: 'hoanTien', bg: 'bg-emerald-50 dark:bg-emerald-900/20', color: '#10B981' },
     { href: '/wealth', label: 'Tài sản', isUtil: true, type: 'landmark', bg: 'bg-purple-50 dark:bg-purple-900/20', color: '#8B5CF6' },
     { href: '/savings', label: 'Tiết kiệm', isUtil: true, type: 'soTietKiem', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F0A319' },
+    { href: '/games', label: 'Chơi bài với vợ/chồng', isUtil: true, type: 'playingCards', bg: 'bg-purple-50 dark:bg-purple-900/20', color: '#8B5CF6' },
 ];
 
 const SettingItem = ({

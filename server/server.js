@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -50,6 +52,7 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/day-notes', require('./routes/dayNotes'));
 app.use('/api/ocr', require('./routes/ocr'));
 app.use('/api/cashback-records', require('./routes/cashback'));
+app.use('/api/game-matches', require('./routes/gameMatches'));
 
 // ===== SSE Stream endpoint =====
 // GET /api/notifications/stream  (auth via ?token=... query param)
@@ -103,11 +106,19 @@ const connectDB = async () => {
 
 connectDB();
 
+// ===== Socket.io — real-time game matches =====
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: true, credentials: true },
+});
+require('./sockets')(io);
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Local Access: http://localhost:${PORT}`);
   console.log(`📚 Swagger UI: http://localhost:${PORT}/api-docs`);
+  console.log(`🃏 Socket.io /games namespace ready`);
 });
 
 module.exports = app;

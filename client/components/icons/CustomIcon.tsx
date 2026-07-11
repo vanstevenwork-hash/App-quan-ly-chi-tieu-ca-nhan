@@ -109,6 +109,7 @@ export const UTILITIES = [
     { type: 'bell',         label: 'Thông báo',   color: '#6C63FF' },
     { type: 'checkCircle',  label: 'Đã nhận',     color: '#10B981' },
     { type: 'clock',        label: 'Đang chờ',    color: '#F59E0B' },
+    { type: 'playingCards', label: 'Chơi bài',    color: '#8B5CF6' },
 ];
 
 export const UTILITY_MAP = Object.fromEntries(UTILITIES.map((u) => [u.type, u]));
@@ -330,6 +331,12 @@ const GLYPHS: Record<string, (C: string) => React.ReactNode> = {
         <path d="M15.4 8.6 8.6 15.4" stroke={W} strokeWidth="1.7" strokeLinecap="round" fill="none" />
         <circle cx="9.25" cy="9.25" r="1.25" fill={W} />
         <circle cx="14.75" cy="14.75" r="1.25" fill={W} />
+    </>),
+    // Two fanned playing cards with a spade glyph on the front card
+    playingCards: (C) => (<>
+        <rect x="4.2" y="3.4" width="11" height="15.5" rx="2.3" fill={C} opacity="0.55" transform="rotate(-11 9.7 11.15)" />
+        <rect x="8.3" y="4.6" width="11" height="15.5" rx="2.3" fill={C} />
+        <text x="13.8" y="15.2" fontSize="10" fontWeight="700" fill={W} textAnchor="middle" fontFamily="sans-serif">♠</text>
     </>),
     affiliate: (C) => (<>
         <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" fill={C} />

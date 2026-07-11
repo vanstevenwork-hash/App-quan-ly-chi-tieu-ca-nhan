@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCardShares, type SharedCardItem } from '@/hooks/useCardShares';
+import { useGameMatches, type GameMatch } from '@/hooks/useGameMatches';
 import { getDueThisCycle } from '@/lib/cardDue';
 
 export interface CreditAlert {
@@ -18,6 +19,7 @@ export function useImportantAlerts() {
     const { cards } = useCards();
     const { transactions } = useTransactions();
     const { incomingInvites, respond } = useCardShares();
+    const { incomingInvites: gameInvites, respond: respondToGame } = useGameMatches();
 
     const creditAlerts = useMemo<CreditAlert[]>(
         () => cards
@@ -33,12 +35,15 @@ export function useImportantAlerts() {
     );
 
     const shareInvites: SharedCardItem[] = incomingInvites;
+    const gameInviteAlerts: GameMatch[] = gameInvites;
 
     return {
         creditAlerts,
         savingsAlerts,
         shareInvites,
         respondToShare: respond,
-        count: creditAlerts.length + savingsAlerts.length + shareInvites.length,
+        gameInvites: gameInviteAlerts,
+        respondToGame,
+        count: creditAlerts.length + savingsAlerts.length + shareInvites.length + gameInviteAlerts.length,
     };
 }
