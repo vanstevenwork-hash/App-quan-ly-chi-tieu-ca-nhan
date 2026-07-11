@@ -220,6 +220,7 @@ export default function GameMatchPage() {
     const [chatText, setChatText] = useState('');
     const [now, setNow] = useState(() => Date.now());
     const [shakeUntil, setShakeUntil] = useState(0);
+    const [settingsOpen, setSettingsOpen] = useState(false);
     const { user } = useAuthStore();
 
     const { connect, disconnect, matchState, matchEnded, connectionStatus, chatMessages, errorMessage, clearError, playCombo, pass, drawStock, eatDiscard, sendChat } = useGameMatchStore();
@@ -292,6 +293,18 @@ export default function GameMatchPage() {
         if (selectedIds.length === 0) return;
         playCombo(selectedIds);
         setSelectedIds([]);
+    };
+
+    const handleLeaveMatch = async () => {
+        setSettingsOpen(false);
+        try {
+            await gameMatchesApi.leave(matchId);
+        } catch {
+            // Already abandoned/finished server-side or a transient error — either
+            // way the user explicitly asked to leave, so still take them out.
+        }
+        disconnect();
+        router.push('/games');
     };
 
     const handleSendChat = (text = chatText, kind: 'text' | 'emoji' = 'text', openChatAfterSend = chatOpen) => {
@@ -393,14 +406,34 @@ export default function GameMatchPage() {
                     <button className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur" aria-label="Trợ giúp">
                         <span className="text-2xl font-black leading-none">?</span>
                     </button>
-                    <button className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur" aria-label="Cài đặt">
-                        <ActionIcon type="settings" size={25} tile={false} color="#fff" />
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setSettingsOpen(prev => !prev)}
+                            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur"
+                            aria-label="Cài đặt"
+                        >
+                            <ActionIcon type="settings" size={25} tile={false} color="#fff" />
+                        </button>
+                        {settingsOpen && (
+                            <>
+                                <div className="fixed inset-0 z-30" onClick={() => setSettingsOpen(false)} />
+                                <div className="absolute right-0 top-14 z-40 w-48 overflow-hidden rounded-2xl border border-white/12 bg-[#032f34] shadow-[0_18px_45px_rgba(0,0,0,0.4),inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+                                    <button
+                                        onClick={handleLeaveMatch}
+                                        className="flex w-full items-center gap-2.5 px-4 py-3.5 text-left text-sm font-bold text-red-300 active:bg-white/8"
+                                    >
+                                        <ActionIcon type="logOut" size={18} tile={false} color="currentColor" />
+                                        Thoát ván đấu
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Opponents */}
-            <div className="mt-12 flex items-start gap-3 overflow-x-auto px-5 hide-scrollbar">
+            <div className="mt-6 flex items-start gap-3 overflow-x-auto px-5 hide-scrollbar">
                 {(matchState.opponents?.length ? matchState.opponents : matchState.opponentId ? [{ userId: matchState.opponentId, handCount: matchState.opponentHandCount }] : []).map((opponent, index) => {
                     const name = playerNames[opponent.userId] || (index === 0 ? opponentName : `Đối thủ ${index + 1}`);
                     return (
@@ -428,7 +461,7 @@ export default function GameMatchPage() {
             </div>
 
             {/* Center table */}
-            <div className="relative flex flex-1 flex-col items-center justify-center gap-6 px-4 pb-3 pt-8">
+            <div className="relative flex flex-1 flex-col items-center justify-center gap-3 px-4 pb-3 pt-4">
                 <TableChatReactions messages={chatMessages} now={now} currentUserId={user?._id} />
                 <TableThrowEffects messages={chatMessages} now={now} currentUserId={user?._id} />
                 <div className="absolute left-7 bottom-8 flex flex-col gap-7">
@@ -605,7 +638,7 @@ export default function GameMatchPage() {
                 />
             </div>
 
-            {matchEnded && <EndScreen youWon={matchEnded.winnerId === matchState.youAre} />}
+            {matchEnded && <EndScreen youWon={matchEnded.winnerId === matchState.youAre} abandoned={matchEnded.reason === 'abandoned'} />}
             </div>
         </div>
     );

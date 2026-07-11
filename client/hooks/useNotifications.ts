@@ -91,7 +91,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
                             if (state.notifications.some(n => n._id === payload.data._id)) return state;
                             return { notifications: [payload.data, ...state.notifications] };
                         });
-                        if (payload.data.type === 'game_invite') {
+                        // Refresh the game-match store on any game-related notification —
+                        // covers both the invitee receiving a fresh invite (type: 'game_invite')
+                        // AND the host getting notified that their invite was accepted/declined
+                        // (type: 'system', relatedModel: 'GameMatch') — without this, the host's
+                        // "Lời mời đã gửi" / "Ván đang chơi" lists never update on their own.
+                        if (payload.data.type === 'game_invite' || payload.data.relatedModel === 'GameMatch') {
                             void useGameMatchListStore.getState().fetch(true);
                         }
                     }

@@ -57,7 +57,7 @@ interface GameMatchStore {
     matchId: string | null;
     connectionStatus: ConnectionStatus;
     matchState: MatchStateView | null;
-    matchEnded: { winnerId: string } | null;
+    matchEnded: { winnerId: string | null; reason?: 'normal' | 'abandoned'; byUserId?: string } | null;
     chatMessages: GameChatMessage[];
     errorMessage: string | null;
     connect: (matchId: string) => void;
@@ -98,7 +98,7 @@ export const useGameMatchStore = create<GameMatchStore>((set, get) => ({
         socket.on('connect_error', () => set({ connectionStatus: 'error' }));
         socket.on('match:state', (state: MatchStateView) => set({ matchState: state }));
         socket.on('match:error', ({ message }: { message: string }) => set({ errorMessage: message }));
-        socket.on('match:ended', (payload: { winnerId: string }) => set({ matchEnded: payload }));
+        socket.on('match:ended', (payload: { winnerId: string | null; reason?: 'normal' | 'abandoned'; byUserId?: string }) => set({ matchEnded: payload }));
         socket.on('game:chat', (message: GameChatMessage) => {
             set(state => ({ chatMessages: [...state.chatMessages, message].slice(-40) }));
         });

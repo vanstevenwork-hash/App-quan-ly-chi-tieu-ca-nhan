@@ -8,6 +8,7 @@ const {
     getSent,
     getActive,
     cancel,
+    leave,
     getById,
 } = require('../controllers/gameMatchController');
 
@@ -18,6 +19,7 @@ router.patch('/:id/respond', respond);
 router.get('/incoming', getIncoming);
 router.get('/sent', getSent);
 router.get('/active', getActive);
+router.post('/:id/leave', leave);
 router.delete('/:id', cancel);
 router.get('/:id', getById);
 

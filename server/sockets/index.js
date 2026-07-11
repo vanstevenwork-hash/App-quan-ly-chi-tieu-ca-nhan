@@ -1,6 +1,7 @@
 const { verifyAuthToken } = require('../utils/authToken');
 const GameMatch = require('../models/GameMatch');
 const engines = require('../games');
+const { setIO } = require('./emitter');
 
 // matchId(string) -> Set<userId(string)> currently connected — presence only,
 // never authoritative for game state (that's the DB). Fine to lose on restart.
@@ -30,6 +31,7 @@ async function emitStateToPlayers(nsp, match) {
 }
 
 module.exports = function attachGameSockets(io) {
+    setIO(io);
     const gamesNsp = io.of('/games');
 
     function clearTurnTimer(matchId) {

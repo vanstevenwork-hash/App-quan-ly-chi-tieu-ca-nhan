@@ -10,7 +10,7 @@ interface HandProps {
 
 export default function Hand({ cards, selectedIds, onToggle }: HandProps) {
     return (
-        <div className="flex overflow-x-auto hide-scrollbar px-3 pb-3 pt-1">
+        <div className="flex overflow-x-auto overflow-y-visible hide-scrollbar px-3 pb-3 pt-4">
             {cards.map(c => (
                 <PlayingCard
                     key={c.id}

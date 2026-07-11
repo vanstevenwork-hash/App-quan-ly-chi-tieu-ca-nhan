@@ -2,6 +2,7 @@ const GameMatch = require('../models/GameMatch');
 const User = require('../models/User');
 const { createNotification } = require('./notificationController');
 const engines = require('../games');
+const { emitToMatch } = require('../sockets/emitter');
 
 const GAME_LABELS = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
 
@@ -199,6 +200,47 @@ exports.cancel = async (req, res) => {
         match.status = 'abandoned';
         await match.save();
         res.json({ success: true, message: 'Đã hủy lời mời' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Deliberately leave an active match — marks it abandoned and tells the
+//        other player(s) both live (socket, if they're in the match room) and
+//        via a persisted notification (if they're not currently connected).
+// @route POST /api/game-matches/:id/leave
+exports.leave = async (req, res) => {
+    try {
+        const match = await GameMatch.findOne({ _id: req.params.id, players: req.user._id });
+        if (!match) return res.status(404).json({ success: false, message: 'Không tìm thấy ván đấu' });
+        if (match.status !== 'active') {
+            return res.status(400).json({ success: false, message: 'Ván đấu không ở trạng thái đang chơi' });
+        }
+
+        match.status = 'abandoned';
+        match.finishedReason = 'abandoned';
+        await match.save();
+
+        const others = match.players.filter(p => p.toString() !== req.user._id.toString());
+        await Promise.all(others.map(uid => createNotification({
+            userId: uid.toString(),
+            title: 'Đối thủ đã rời ván đấu',
+            message: `${req.user.name} đã rời khỏi ván ${GAME_LABELS[match.gameType] || match.gameType}`,
+            type: 'system',
+            icon: '🚪',
+            iconBg: '#FEE2E2',
+            relatedId: match._id,
+            relatedModel: 'GameMatch',
+            actionUrl: '/games',
+        })));
+
+        emitToMatch(match._id.toString(), 'match:ended', {
+            winnerId: null,
+            reason: 'abandoned',
+            byUserId: req.user._id.toString(),
+        });
+
+        res.json({ success: true, message: 'Đã rời ván đấu' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

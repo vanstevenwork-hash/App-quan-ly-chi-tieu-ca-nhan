@@ -108,6 +108,7 @@ export const gameMatchesApi = {
     getSent: () => api.get('/game-matches/sent'),
     getActive: () => api.get('/game-matches/active'),
     cancel: (id: string) => api.delete(`/game-matches/${id}`),
+    leave: (id: string) => api.post(`/game-matches/${id}/leave`),
     getById: (id: string) => api.get(`/game-matches/${id}`),
 };
 

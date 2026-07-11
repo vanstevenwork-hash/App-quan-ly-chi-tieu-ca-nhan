@@ -1,11 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import { useGameMatches, type GameMatch, type GameMatchPlayer } from '@/hooks/useGameMatches';
 import GameInviteModal from '@/components/games/GameInviteModal';
 import InviteCard from '@/components/InviteCard';
 import { useAuthStore } from '@/store/useStore';
+import { useNotifications } from '@/hooks/useNotifications';
 import { toast } from 'sonner';
 
 const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
@@ -30,6 +31,20 @@ export default function GamesLobbyPage() {
     const { incomingInvites, sentInvites, activeMatches, respond, cancel, refetch, loading } = useGameMatches();
     const { user } = useAuthStore();
     const [inviteOpen, setInviteOpen] = useState(false);
+    useNotifications(); // ensures the SSE stream is connected so accept/decline pushes refresh the lists below
+
+    // Auto-enter the match the moment an invite you SENT gets accepted — without
+    // this, the host has no signal at all and has to manually refresh/click in.
+    const prevSentIdsRef = useRef<Set<string>>(new Set());
+    useEffect(() => {
+        const currentSentIds = new Set(sentInvites.map(i => i._id));
+        const justActivated = activeMatches.find(m => prevSentIdsRef.current.has(m._id) && !currentSentIds.has(m._id));
+        prevSentIdsRef.current = currentSentIds;
+        if (justActivated) {
+            toast.success('Đối thủ đã chấp nhận, vào chơi thôi!');
+            router.push(`/games/${justActivated._id}`);
+        }
+    }, [sentInvites, activeMatches, router]);
 
     return (
         <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">

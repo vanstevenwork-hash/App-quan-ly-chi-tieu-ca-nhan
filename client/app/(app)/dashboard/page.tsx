@@ -8,6 +8,7 @@ import NotificationPanel from '@/components/NotificationPanel';
 import SpendingTrendChart from '@/components/dashboard/SpendingTrendChart';
 import RecentTransactionsList from '@/components/dashboard/RecentTransactionsList';
 import ImportantAlertsSection from '@/components/dashboard/ImportantAlertsSection';
+import GameInvitePopupModal from '@/components/games/GameInvitePopupModal';
 import { useAuthStore, useUIStore } from '@/store/useStore';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
@@ -337,6 +338,7 @@ export default function DashboardPage() {
                 autoOpenScanner={autoOpenScanner}
             />
             <NotificationPanel open={showNoti} onClose={() => setShowNoti(false)} initialTab={notiTab} />
+            <GameInvitePopupModal invites={gameInvites} onRespond={respondToGame} />
             <TransactionDetailModal
                 open={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
