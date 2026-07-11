@@ -7,6 +7,7 @@ const {
     getIncoming,
     getMyShares,
     getCardShares,
+    getCashback,
     revoke,
 } = require('../controllers/cardShareController');
 
@@ -17,6 +18,7 @@ router.patch('/:id/respond', respond);
 router.get('/incoming', getIncoming);
 router.get('/my-shares', getMyShares);
 router.get('/card/:cardId', getCardShares);
+router.get('/:cardId/cashback', getCashback);
 router.delete('/:id', revoke);
 
 module.exports = router;

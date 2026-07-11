@@ -1,7 +1,9 @@
 const CardShare = require('../models/CardShare');
 const Card = require('../models/Card');
 const User = require('../models/User');
+const Transaction = require('../models/Transaction');
 const { createNotification } = require('./notificationController');
+const { hasCardAccess } = require('../utils/cardAccess');
 
 // @desc  Invite a registered user to collaborate on a card
 // @route POST /api/card-shares/invite
@@ -208,6 +210,55 @@ exports.revoke = async (req, res) => {
         }
 
         res.json({ success: true, message: 'Đã thu hồi chia sẻ' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  This month's real cashback for a card — combines spend from BOTH the
+//        owner and whoever it's shared with, so the cap is applied correctly
+//        (the bank doesn't care who swiped). Available to the owner or any
+//        accepted shared user.
+// @route GET /api/card-shares/:cardId/cashback
+exports.getCashback = async (req, res) => {
+    try {
+        const { cardId } = req.params;
+        const access = await hasCardAccess(req.user._id, cardId);
+        if (!access.allowed) {
+            return res.status(403).json({ success: false, message: 'Không có quyền xem thẻ này' });
+        }
+        const card = access.card;
+
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        const txs = await Transaction.find({
+            cardId,
+            paymentMethod: 'card',
+            type: 'expense',
+            date: { $gte: start, $lte: end },
+        }).select('amount');
+
+        const totalSpend = txs.reduce((s, t) => s + t.amount, 0);
+        const rawCashback = totalSpend * (card.cashbackRate || 0) / 100;
+        const cap = card.cashbackCap || 0;
+        const cashbackEarned = cap > 0 ? Math.min(rawCashback, cap) : rawCashback;
+
+        res.json({
+            success: true,
+            data: {
+                cardId: card._id,
+                bankName: card.bankName,
+                cashbackRate: card.cashbackRate || 0,
+                cashbackCap: cap,
+                month: now.getMonth(),
+                year: now.getFullYear(),
+                totalSpend,
+                cashbackEarned,
+                capped: cap > 0 && rawCashback > cap,
+            },
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

@@ -7,9 +7,11 @@ import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, LabelList } from 'r
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCashbackRecords } from '@/hooks/useCashbackRecords';
+import { useCardShares } from '@/hooks/useCardShares';
 import { useBanks } from '@/hooks/useBanks';
 import { getBankLogo } from '@/lib/bankLogos';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { cardSharesApi } from '@/lib/api';
 import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -63,8 +65,36 @@ export default function CashbackPage() {
     const [updatingKey, setUpdatingKey] = useState<string | null>(null);
     const [viewTab, setViewTab] = useState<'month' | 'card'>('month');
     const { banks: fetchedBanks, fetchBanks } = useBanks();
+    const { sharedCards } = useCardShares();
 
     useEffect(() => { fetchBanks(); }, [fetchBanks]);
+
+    // This month's real (combined owner + invitee spend) cashback for every card
+    // shared with me — fetched from the same endpoint the Cards page badge uses,
+    // so the number here is always identical to what the card owner sees.
+    type SharedCashback = { cardId: string; bankName: string; cashbackEarned: number; capped: boolean };
+    const [sharedCashback, setSharedCashback] = useState<SharedCashback[]>([]);
+    useEffect(() => {
+        if (sharedCards.length === 0) { setSharedCashback([]); return; }
+        let alive = true;
+        Promise.all(sharedCards.map(sc =>
+            cardSharesApi.getCashback(sc.card._id)
+                .then(res => res.data?.data)
+                .catch(() => null)
+        )).then(results => {
+            if (!alive) return;
+            setSharedCashback(
+                results.filter(Boolean).map((d: any) => ({
+                    cardId: d.cardId, bankName: d.bankName, cashbackEarned: d.cashbackEarned, capped: d.capped,
+                }))
+            );
+        });
+        return () => { alive = false; };
+    }, [sharedCards]);
+    const sharedCashbackTotal = useMemo(
+        () => sharedCashback.reduce((s, c) => s + c.cashbackEarned, 0),
+        [sharedCashback]
+    );
 
     // O(1) fast path for the common exact-shortName match; falls back to the
     // original substring scan only for the rare case a card's shortName doesn't match.
@@ -278,8 +308,13 @@ export default function CashbackPage() {
                             <UtilityIcon type="coins" size={32} tile={false} />
                         </div>
                         <p className="text-slate-800 dark:text-white text-[30px] font-bold tracking-tight leading-none">
-                            {fmt(totalReceived + totalPending)}<span className="text-lg text-slate-400 font-medium ml-0.5">₫</span>
+                            {fmt(totalReceived + totalPending + sharedCashbackTotal)}<span className="text-lg text-slate-400 font-medium ml-0.5">₫</span>
                         </p>
+                        {sharedCashbackTotal > 0 && (
+                            <p className="text-xs text-indigo-500 dark:text-indigo-400 font-semibold mt-1">
+                                Gồm +{fmt(sharedCashbackTotal)}₫ từ thẻ chung
+                            </p>
+                        )}
 
                         <div className="flex items-center gap-4 mt-5">
                             <div className="flex-1 flex items-center gap-2.5">
@@ -297,6 +332,18 @@ export default function CashbackPage() {
                                     <p className="text-sm font-bold text-amber-600 dark:text-amber-400">{fmt(totalPending)}₫</p>
                                 </div>
                             </div>
+                            {sharedCashbackTotal > 0 && (
+                                <>
+                                    <div className="w-px h-9 bg-slate-200 dark:bg-white/15" />
+                                    <div className="flex-1 flex items-center gap-2.5">
+                                        <UtilityIcon type="coins" size={32} tile />
+                                        <div>
+                                            <p className="text-[10px] text-slate-400 font-medium">Thẻ chung</p>
+                                            <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{fmt(sharedCashbackTotal)}₫</p>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -376,7 +423,7 @@ export default function CashbackPage() {
                             {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 dark:bg-surface animate-pulse" />)}
                         </div>
                     ) : viewTab === 'card' ? (
-                        currentMonthCards.length === 0 ? (
+                        currentMonthCards.length === 0 && sharedCashback.length === 0 ? (
                             <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700 p-6 text-center">
                                 <p className="text-sm text-slate-400">Chưa có hoàn tiền trong tháng {curMonth.month + 1}</p>
                             </div>
@@ -445,6 +492,25 @@ export default function CashbackPage() {
                                                     )}
                                                 </div>
                                             )}
+                                        </div>
+                                    );
+                                })}
+                                {sharedCashback.filter(c => c.cashbackEarned > 0).map(sc => {
+                                    const owner = sharedCards.find(x => x.card._id === sc.cardId)?.owner;
+                                    return (
+                                        <div key={sc.cardId} className="rounded-[20px] bg-white dark:bg-surface border border-indigo-100 dark:border-indigo-500/25 shadow-sm p-4">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                                                    <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[15px] font-bold text-slate-800 dark:text-white truncate">{sc.bankName}</p>
+                                                    <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5">
+                                                        Thẻ chung{owner ? ` · của ${owner.name}` : ''}{sc.capped ? ' · đã chạm trần' : ''}
+                                                    </p>
+                                                </div>
+                                                <span className="text-[15px] font-bold text-indigo-600 dark:text-indigo-400 tabular-nums flex-shrink-0">+{fmt(sc.cashbackEarned)}đ</span>
+                                            </div>
                                         </div>
                                     );
                                 })}

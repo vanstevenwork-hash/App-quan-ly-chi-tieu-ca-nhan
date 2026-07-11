@@ -1,21 +1,7 @@
 const Transaction = require('../models/Transaction');
 const Card = require('../models/Card');
-const CardShare = require('../models/CardShare');
 const { createNotification } = require('./notificationController');
-
-// Helper: check if user has collaborative access to a card
-async function hasCardAccess(userId, cardId) {
-    // Owner?
-    const ownCard = await Card.findOne({ _id: cardId, userId, isActive: true });
-    if (ownCard) return { allowed: true, card: ownCard, isOwner: true };
-    // Shared?
-    const share = await CardShare.findOne({ cardId, sharedWithUserId: userId, status: 'accepted' });
-    if (share) {
-        const card = await Card.findOne({ _id: cardId, isActive: true });
-        if (card) return { allowed: true, card, isOwner: false };
-    }
-    return { allowed: false, card: null, isOwner: false };
-}
+const { hasCardAccess } = require('../utils/cardAccess');
 
 // GET /api/transactions
 exports.getTransactions = async (req, res) => {

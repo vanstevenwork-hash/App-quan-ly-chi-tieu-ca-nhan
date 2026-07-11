@@ -7,6 +7,7 @@ import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBanks } from '@/hooks/useBanks';
 import { useCardShares } from '@/hooks/useCardShares';
+import { cardSharesApi } from '@/lib/api';
 import { getBankLogo } from '@/lib/bankLogos';
 import CardFormModal from '@/components/CardFormModal';
 import AddTransactionModal from '@/components/AddTransactionModal';
@@ -29,6 +30,28 @@ const fmtShort = (n: number) => {
     if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}tr`;
     return `${Math.round(n / 1_000)}k`;
 };
+
+// ── Real cashback for a shared card: combines the owner's + my own spend on
+// it this month, so the shared cap is reflected correctly (a partial number
+// counting only "my" transactions could easily be wrong or misleadingly high).
+function SharedCardCashbackBadge({ cardId }: { cardId: string }) {
+    const [data, setData] = useState<{ cashbackEarned: number; capped: boolean } | null>(null);
+
+    useEffect(() => {
+        let alive = true;
+        cardSharesApi.getCashback(cardId)
+            .then(res => { if (alive) setData(res.data?.data || null); })
+            .catch(() => { if (alive) setData(null); });
+        return () => { alive = false; };
+    }, [cardId]);
+
+    if (!data || data.cashbackEarned <= 0) return null;
+    return (
+        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5 truncate">
+            🪙 +{fmt(data.cashbackEarned)}đ hoàn tiền tháng này{data.capped ? ' · đã chạm trần' : ''}
+        </p>
+    );
+}
 
 // ── Days until next payment -------------------------------------------------
 function daysUntilPayment(paymentDueDay: number): number | null {
@@ -356,26 +379,6 @@ export default function CardsPage() {
                     </div>
                 )}
 
-                {/* ── Promo banner ────────────────────────────── */}
-                <div className="px-5">
-                    <div className="relative overflow-hidden rounded-xl p-4 text-white shadow-lg"
-                        style={{ background: 'linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)' }}>
-                        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full pointer-events-none" />
-                        <div className="relative z-10 flex justify-between items-center">
-                            <div>
-                                <p className="text-xs font-semibold opacity-80 mb-1">Ưu đãi thẻ</p>
-                                <p className="font-bold text-lg leading-tight">Hoàn tiền không giới hạn<br />với thẻ chính</p>
-                                <button onClick={() => setShowPayment(true)}
-                                    className="mt-3 bg-white text-indigo-700 text-xs font-bold py-1.5 px-3 rounded-xl shadow-sm hover:bg-indigo-50 transition">
-                                    Thanh toán ngay
-                                </button>
-                            </div>
-                            <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm flex-shrink-0">
-                                <CustomIcon type="thuong" size={32} tile={false} color="currentColor" className="w-8 h-8 text-white" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 {/* ── Shared Cards Section (Thẻ chung) ─────────── */}
                 {sharedCards.length > 0 && (
@@ -416,6 +419,7 @@ export default function CardsPage() {
                                             <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">
                                                 Chia sẻ bởi {owner?.name || 'N/A'}
                                             </p>
+                                            <SharedCardCashbackBadge cardId={sc._id} />
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="text-sm font-bold text-slate-800 dark:text-slate-100">{fmt2(sc.balance)}đ</p>
