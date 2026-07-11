@@ -15,34 +15,41 @@ interface GameActionsProps {
 export default function GameActions({ canPlay, isYourTurn, onPlay, gameType = 'tien_len', canEat = false, canDraw = false, onEat, onDraw }: GameActionsProps) {
     const isPhom = gameType === 'phom';
 
+    // Tiến Lên only has one action here ("Đánh bài" — pass lives on the round
+    // side button); the old "Sắp xếp"/"Đổi bài" placeholders did nothing and
+    // just took up space, so they only render for Phỏm where they're real.
     return (
         <div className="flex items-center gap-3 px-4 pb-5 pt-2" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.25rem)' }}>
-            <button
-                type="button"
-                onClick={isPhom ? onEat : undefined}
-                disabled={!isPhom || !canEat}
-                className={cn(
-                    'flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[22px] border py-3.5 text-base font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]',
-                    isPhom && canEat
-                        ? 'border-amber-200/30 bg-amber-300/20 text-amber-100 active:scale-95'
-                        : 'border-white/10 bg-white/6 text-white/45'
-                )}
-            >
-                {isPhom ? 'Ăn bài' : 'Sắp xếp'}
-            </button>
-            <button
-                type="button"
-                onClick={isPhom ? onDraw : undefined}
-                disabled={!isPhom || !canDraw}
-                className={cn(
-                    'flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[22px] border py-3.5 text-base font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]',
-                    isPhom && canDraw
-                        ? 'border-cyan-200/30 bg-cyan-300/16 text-cyan-100 active:scale-95'
-                        : 'border-white/10 bg-white/6 text-white/45'
-                )}
-            >
-                {isPhom ? 'Bốc nọc' : 'Đổi bài'}
-            </button>
+            {isPhom && (
+                <button
+                    type="button"
+                    onClick={onEat}
+                    disabled={!canEat}
+                    className={cn(
+                        'flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[22px] border py-3.5 text-base font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]',
+                        canEat
+                            ? 'border-amber-200/30 bg-amber-300/20 text-amber-100 active:scale-95'
+                            : 'border-white/10 bg-white/6 text-white/45'
+                    )}
+                >
+                    Ăn bài
+                </button>
+            )}
+            {isPhom && (
+                <button
+                    type="button"
+                    onClick={onDraw}
+                    disabled={!canDraw}
+                    className={cn(
+                        'flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[22px] border py-3.5 text-base font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]',
+                        canDraw
+                            ? 'border-cyan-200/30 bg-cyan-300/16 text-cyan-100 active:scale-95'
+                            : 'border-white/10 bg-white/6 text-white/45'
+                    )}
+                >
+                    Bốc nọc
+                </button>
+            )}
             <button
                 onClick={onPlay}
                 disabled={!isYourTurn || !canPlay}

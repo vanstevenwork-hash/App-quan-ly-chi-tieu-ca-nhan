@@ -75,11 +75,15 @@ function TurnCountdown({
     totalSeconds: number;
     active: boolean;
 }) {
-    if (!active) return null;
     const progress = Math.max(0, Math.min(100, (secondsLeft / totalSeconds) * 100));
 
+    // Always occupy the slot (invisible instead of unmounted) — popping in and
+    // out after every play shifted the whole table layout up/down.
     return (
-        <div className="flex items-center justify-center gap-2 rounded-full border border-white/10 bg-black/18 px-4 py-2 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+        <div className={cn(
+            'flex items-center justify-center gap-2 rounded-full border border-white/10 bg-black/18 px-4 py-2 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] transition-opacity duration-200',
+            !active && 'invisible'
+        )}>
             <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-xs font-black">
                 <span
                     className="absolute inset-0 rounded-full"
@@ -140,77 +144,87 @@ function TableChatReactions({
     );
 }
 
+// One projectile: measures real start/end anchors once on mount, then flies
+// point-to-point with an arc. When I throw: from the bottom-right "tail"
+// corner (near my action buttons) INTO the opponent's avatar. When the
+// opponent throws: from their avatar down into my hand panel.
+function ThrowProjectile({ message, currentUserId, primaryOpponentId }: {
+    message: GameChatMessage;
+    currentUserId?: string;
+    primaryOpponentId?: string | null;
+}) {
+    const [coords, setCoords] = useState<{ sx: number; sy: number; dx: number; dy: number } | null>(null);
+
+    useEffect(() => {
+        const isMine = message.byUserId === currentUserId;
+        const centerOf = (el: Element | null) => {
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        };
+        let start; let end;
+        if (isMine) {
+            start = { x: window.innerWidth - 52, y: window.innerHeight - 220 };
+            end = centerOf(primaryOpponentId ? document.querySelector(`[data-avatar="${primaryOpponentId}"]`) : null)
+                || { x: 62, y: 150 };
+        } else {
+            start = centerOf(document.querySelector(`[data-avatar="${message.byUserId}"]`)) || { x: 62, y: 150 };
+            const mine = document.querySelector('[data-my-anchor]')?.getBoundingClientRect();
+            end = mine ? { x: mine.left + mine.width * 0.72, y: mine.top + 26 } : { x: window.innerWidth - 80, y: window.innerHeight - 240 };
+        }
+        setCoords({ sx: start.x - 20, sy: start.y - 20, dx: end.x - start.x, dy: end.y - start.y });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [message.id]);
+
+    if (!coords) return null;
+    const meta = THROW_REACTIONS.find(item => item.emoji === message.text) || THROW_REACTIONS[0];
+
+    return (
+        <div className="pointer-events-none fixed inset-0 z-30">
+            <div
+                className="absolute text-4xl drop-shadow-[0_10px_16px_rgba(0,0,0,0.4)] animate-[throwArc_.85s_cubic-bezier(.32,.45,.4,1)_forwards]"
+                style={{ left: coords.sx, top: coords.sy, '--dx': `${coords.dx}px`, '--dy': `${coords.dy}px` } as CSSProperties}
+            >
+                {message.text}
+            </div>
+            <div
+                className="absolute h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 opacity-0 animate-[impactPop_.55s_ease-out_.72s_forwards]"
+                style={{ left: coords.sx + 20 + coords.dx, top: coords.sy + 20 + coords.dy, borderColor: meta.accent, boxShadow: `0 0 24px ${meta.accent}` }}
+            />
+            <div
+                className="absolute -translate-x-1/2 rounded-full border border-white/12 bg-black/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white opacity-0 shadow-lg backdrop-blur animate-[impactPop_.6s_ease-out_.78s_forwards]"
+                style={{ left: coords.sx + 20 + coords.dx, top: coords.sy + 20 + coords.dy - 46 }}
+            >
+                {meta.label}
+            </div>
+        </div>
+    );
+}
+
 function TableThrowEffects({
     messages,
     now,
     currentUserId,
+    primaryOpponentId,
 }: {
     messages: GameChatMessage[];
     now: number;
     currentUserId?: string;
+    primaryOpponentId?: string | null;
 }) {
-    // Each stacked reaction is staggered by index*90ms and the longest animation
-    // (throw/impactBurst/impactLabel) runs 2.65s — so the last of up to 4 stacked
-    // items needs 3*90ms + 2650ms = 2920ms to actually finish. The old 2800ms
-    // cutoff removed it from the DOM before that, cutting the animation off
-    // mid-flight instead of letting it fade out. Give it real headroom instead.
+    // Projectile .85s + impact .55s starting at .72s ≈ 1.3s total; keep headroom.
     const visible = messages
-        .filter(message => THROW_REACTION_EMOJIS.includes(message.text) && now - new Date(message.at).getTime() < 3200)
-        .slice(-4);
+        .filter(message => THROW_REACTION_EMOJIS.includes(message.text) && now - new Date(message.at).getTime() < 1600)
+        .slice(-3);
 
     if (visible.length === 0) return null;
 
     return (
-        <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-            {visible.map((message, index) => {
-                const isMine = message.byUserId === currentUserId;
-                const meta = THROW_REACTIONS.find(item => item.emoji === message.text) || THROW_REACTIONS[0];
-                return (
-                    <div key={message.id}>
-                        <div
-                            className={cn(
-                                'absolute top-[47%] h-2 w-28 rounded-full opacity-0 blur-[1px]',
-                                isMine
-                                    ? 'left-[22%] animate-[trailToOpponent_2.35s_ease-out_forwards]'
-                                    : 'right-[22%] animate-[trailToMe_2.35s_ease-out_forwards]'
-                            )}
-                            style={{ animationDelay: `${index * 90}ms`, background: `linear-gradient(90deg, transparent, ${meta.accent}, transparent)` }}
-                        />
-                        <div
-                            className={cn(
-                                'absolute top-[44%] text-5xl drop-shadow-[0_12px_18px_rgba(0,0,0,0.38)]',
-                                isMine
-                                    ? 'left-[18%] animate-[throwToOpponent_2.65s_cubic-bezier(.22,.8,.25,1)_forwards]'
-                                    : 'right-[18%] animate-[throwToMe_2.65s_cubic-bezier(.22,.8,.25,1)_forwards]'
-                            )}
-                            style={{ animationDelay: `${index * 90}ms` }}
-                        >
-                            <span className="inline-block animate-[projectileSpin_.55s_linear_infinite]">{message.text}</span>
-                        </div>
-                        <div
-                            className={cn(
-                                'absolute top-[44%] h-20 w-20 rounded-full border-2 opacity-0',
-                                isMine
-                                    ? 'right-[15%] animate-[impactBurst_2.65s_ease-out_forwards]'
-                                    : 'left-[15%] animate-[impactBurst_2.65s_ease-out_forwards]'
-                            )}
-                            style={{ animationDelay: `${index * 90}ms`, borderColor: meta.accent, boxShadow: `0 0 28px ${meta.accent}` }}
-                        />
-                        <div
-                            className={cn(
-                                'absolute top-[37%] rounded-full border border-white/12 bg-black/26 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-white opacity-0 shadow-lg backdrop-blur',
-                                isMine
-                                    ? 'right-[14%] animate-[impactLabel_2.65s_ease-out_forwards]'
-                                    : 'left-[14%] animate-[impactLabel_2.65s_ease-out_forwards]'
-                            )}
-                            style={{ animationDelay: `${index * 90}ms` }}
-                        >
-                            {meta.label}
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
+        <>
+            {visible.map(message => (
+                <ThrowProjectile key={message.id} message={message} currentUserId={currentUserId} primaryOpponentId={primaryOpponentId} />
+            ))}
+        </>
     );
 }
 
@@ -364,11 +378,25 @@ export default function GameMatchPage() {
     useEffect(() => {
         const latest = chatMessages[chatMessages.length - 1];
         if (latest && latest.byUserId !== user?._id && THROW_REACTION_EMOJIS.includes(latest.text)) {
-            setShakeUntil(Date.now() + 520);
+            // Delay the table shake so it lands together with the projectile
+            // impact (~0.75s of flight), not the instant the message arrives.
+            const timer = window.setTimeout(() => setShakeUntil(Date.now() + 520), 750);
+            return () => window.clearTimeout(timer);
         }
     }, [chatMessages, user?._id]);
 
     const isPhom = matchState?.gameType === 'phom';
+    const primaryOpponentId = matchState?.opponents?.[0]?.userId || matchState?.opponentId || null;
+    // While one of MY throws is mid/end-flight, wobble + ring the target avatar.
+    const opponentHitId = (() => {
+        for (let i = chatMessages.length - 1; i >= 0; i--) {
+            const m = chatMessages[i];
+            if (!THROW_REACTION_EMOJIS.includes(m.text) || m.byUserId !== user?._id) continue;
+            const dt = now - new Date(m.at).getTime();
+            if (dt >= 650 && dt <= 1600) return primaryOpponentId;
+        }
+        return null;
+    })();
     const gameTitle = isPhom ? 'Phỏm' : 'Tiến lên miền Nam';
     const isYourTurn = matchState?.turnUserId === matchState?.youAre;
     const canPass = isYourTurn && !!matchState?.lastPlay;
@@ -481,43 +509,31 @@ export default function GameMatchPage() {
                     76% { opacity: 1; transform: translateY(-8px) scale(1); }
                     100% { opacity: 0; transform: translateY(-22px) scale(0.96); }
                 }
-                @keyframes throwToOpponent {
-                    0% { opacity: 0; transform: translate(0, 44px) scale(.75) rotate(-18deg); }
-                    12% { opacity: 1; }
-                    46% { transform: translate(32vw, -72px) scale(1.18) rotate(24deg); }
-                    82% { opacity: 1; transform: translate(58vw, 22px) scale(1) rotate(52deg); }
-                    100% { opacity: 0; transform: translate(62vw, 8px) scale(.55) rotate(72deg); }
+                /* Point-to-point throw: --dx/--dy are the measured vector from the
+                   thrower's corner to the target avatar; the mid-keyframe lifts
+                   -90px for an arc, spinning as it travels. */
+                @keyframes throwArc {
+                    0% { opacity: 0; transform: translate(0, 0) scale(.5) rotate(0deg); }
+                    10% { opacity: 1; }
+                    55% { transform: translate(calc(var(--dx) * .55), calc(var(--dy) * .55 - 90px)) scale(1.25) rotate(220deg); }
+                    88% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(.95) rotate(360deg); }
+                    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.7) rotate(380deg); }
                 }
-                @keyframes throwToMe {
-                    0% { opacity: 0; transform: translate(0, 44px) scale(.75) rotate(18deg); }
-                    12% { opacity: 1; }
-                    46% { transform: translate(-32vw, -72px) scale(1.18) rotate(-24deg); }
-                    82% { opacity: 1; transform: translate(-58vw, 22px) scale(1) rotate(-52deg); }
-                    100% { opacity: 0; transform: translate(-62vw, 8px) scale(.55) rotate(-72deg); }
+                @keyframes impactPop {
+                    0% { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+                    30% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
                 }
-                @keyframes projectileSpin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
+                /* Avatar getting hit: quick wobble + a ping ring around it */
+                @keyframes avatarHit {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                    20% { transform: translate(-3px, 2px) rotate(-7deg); }
+                    45% { transform: translate(3px, -2px) rotate(6deg); }
+                    70% { transform: translate(-2px, 1px) rotate(-3deg); }
                 }
-                @keyframes trailToOpponent {
-                    0%, 12% { opacity: 0; transform: translate(0, 38px) scaleX(.2) rotate(-10deg); }
-                    42% { opacity: .9; transform: translate(28vw, -54px) scaleX(1.2) rotate(-10deg); }
-                    84%, 100% { opacity: 0; transform: translate(56vw, 4px) scaleX(.35) rotate(-10deg); }
-                }
-                @keyframes trailToMe {
-                    0%, 12% { opacity: 0; transform: translate(0, 38px) scaleX(.2) rotate(10deg); }
-                    42% { opacity: .9; transform: translate(-28vw, -54px) scaleX(1.2) rotate(10deg); }
-                    84%, 100% { opacity: 0; transform: translate(-56vw, 4px) scaleX(.35) rotate(10deg); }
-                }
-                @keyframes impactBurst {
-                    0%, 66% { opacity: 0; transform: scale(.35); }
-                    76% { opacity: .95; transform: scale(.75); }
-                    100% { opacity: 0; transform: scale(1.8); }
-                }
-                @keyframes impactLabel {
-                    0%, 68% { opacity: 0; transform: translateY(8px) scale(.92); }
-                    78% { opacity: 1; transform: translateY(0) scale(1); }
-                    100% { opacity: 0; transform: translateY(-10px) scale(.98); }
+                @keyframes hitRing {
+                    0% { opacity: .95; transform: scale(.55); }
+                    100% { opacity: 0; transform: scale(1.7); }
                 }
                 @keyframes tableHit {
                     0%, 100% { transform: translate(0, 0); }
@@ -599,12 +615,23 @@ export default function GameMatchPage() {
                         return (
                             <div key={opponent.userId} className="min-w-[210px] rounded-2xl border border-white/10 bg-white/6 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
                                 <div className="mb-2 flex items-center gap-3">
-                                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border-2 border-teal-200/75 bg-slate-900 shadow-[0_0_24px_rgba(45,212,191,0.24)]">
-                                        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-700 to-black" />
-                                        <span className="relative flex h-full w-full items-center justify-center text-xl font-black text-white/75">
-                                            {name.charAt(0).toUpperCase()}
-                                        </span>
-                                        <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-[#033d40] bg-emerald-400" />
+                                    <div
+                                        data-avatar={opponent.userId}
+                                        className={cn(
+                                            'relative h-16 w-16 flex-shrink-0',
+                                            opponentHitId === opponent.userId && 'animate-[avatarHit_.5s_ease-in-out_infinite]'
+                                        )}
+                                    >
+                                        <div className="relative h-full w-full overflow-hidden rounded-full border-2 border-teal-200/75 bg-slate-900 shadow-[0_0_24px_rgba(45,212,191,0.24)]">
+                                            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-700 to-black" />
+                                            <span className="relative flex h-full w-full items-center justify-center text-xl font-black text-white/75">
+                                                {name.charAt(0).toUpperCase()}
+                                            </span>
+                                            <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-[#033d40] bg-emerald-400" />
+                                        </div>
+                                        {opponentHitId === opponent.userId && (
+                                            <span className="pointer-events-none absolute -inset-1.5 rounded-full border-2 border-amber-300 animate-[hitRing_.55s_ease-out_infinite]" />
+                                        )}
                                     </div>
                                     <div className="min-w-0 flex-shrink-0">
                                         <p className="max-w-[120px] truncate text-sm font-black text-white">{name}</p>
@@ -623,7 +650,7 @@ export default function GameMatchPage() {
                 {/* Center table */}
                 <div className="relative flex flex-1 flex-col items-center justify-center gap-3 px-4 pb-3 pt-4">
                     <TableChatReactions messages={chatMessages} now={now} currentUserId={user?._id} />
-                    <TableThrowEffects messages={chatMessages} now={now} currentUserId={user?._id} />
+                    <TableThrowEffects messages={chatMessages} now={now} currentUserId={user?._id} primaryOpponentId={primaryOpponentId} />
                     <MoveFlyEffects effects={moveEffects} now={now} />
                     <div className="absolute left-7 bottom-8 flex flex-col gap-7">
                         <RoundIconButton label="Chat" onClick={() => { setChatOpen(true); setEmojiOpen(false); }}>
