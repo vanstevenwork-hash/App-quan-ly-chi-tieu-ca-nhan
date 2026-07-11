@@ -44,21 +44,26 @@ function classifyCombo(cards: CardId[]): ClassifiedCombo | null {
         return null;
     }
 
+    // 6 and 8 cards are ambiguous lengths: they could be a pair-run (đôi thông)
+    // OR a plain 6/8-card straight. Try the pair-run shape first, but fall
+    // through to the straight check when it doesn't match — an early
+    // `return null` here made 6- and 8-card straights unplayable.
     if (sorted.length === 6 || sorted.length === 8) {
-        const pairs: CardId[][] = [];
-        for (let i = 0; i < sorted.length; i += 2) {
-            const first = sorted[i];
-            const second = sorted[i + 1];
-            if (!second || first.rank !== second.rank) return null;
-            if (rankValue(first.rank) === rankValue('2')) return null;
-            pairs.push([first, second]);
-        }
-
-        for (let i = 1; i < pairs.length; i++) {
-            if (rankValue(pairs[i][0].rank) !== rankValue(pairs[i - 1][0].rank) + 1) return null;
-        }
-
-        return { type: sorted.length === 6 ? 'three_pair_run' : 'four_pair_run', cards: sorted, power };
+        const pairRun = ((): ClassifiedCombo | null => {
+            const pairs: CardId[][] = [];
+            for (let i = 0; i < sorted.length; i += 2) {
+                const first = sorted[i];
+                const second = sorted[i + 1];
+                if (!second || first.rank !== second.rank) return null;
+                if (rankValue(first.rank) === rankValue('2')) return null;
+                pairs.push([first, second]);
+            }
+            for (let i = 1; i < pairs.length; i++) {
+                if (rankValue(pairs[i][0].rank) !== rankValue(pairs[i - 1][0].rank) + 1) return null;
+            }
+            return { type: sorted.length === 6 ? 'three_pair_run' : 'four_pair_run', cards: sorted, power };
+        })();
+        if (pairRun) return pairRun;
     }
 
     if (sorted.length >= 3) {

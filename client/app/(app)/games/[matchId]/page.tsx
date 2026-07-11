@@ -12,6 +12,8 @@ import PlayingCard from '@/components/games/PlayingCard';
 import TurnIndicator from '@/components/games/TurnIndicator';
 import GameActions from '@/components/games/GameActions';
 import EndScreen from '@/components/games/EndScreen';
+import GameRulesModal from '@/components/games/GameRulesModal';
+import GameStatsModal from '@/components/games/GameStatsModal';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { useAuthStore } from '@/store/useStore';
 import { validateSelection } from '@/lib/tienLenRules';
@@ -224,7 +226,8 @@ interface MoveEffect {
 // side (up from the bottom for me, down from the top for the opponent); Ăn
 // bài (eat) does the reverse, flying back out toward whoever picked it up.
 function MoveFlyEffects({ effects, now }: { effects: MoveEffect[]; now: number }) {
-    const visible = effects.filter(effect => now - effect.at < 650);
+    // Cutoff must outlast the longest animation (flyOut .7s) or the last frames get clipped.
+    const visible = effects.filter(effect => now - effect.at < 800);
     if (visible.length === 0) return null;
 
     return (
@@ -236,11 +239,23 @@ function MoveFlyEffects({ effects, now }: { effects: MoveEffect[]; now: number }
                 return (
                     <div
                         key={effect.id}
-                        className={cn('absolute flex items-center justify-center -space-x-2', isEat ? 'animate-[flyOut_.55s_ease-in_forwards]' : 'animate-[flyIn_.5s_ease-out_forwards]')}
+                        className={cn(
+                            'absolute flex items-center justify-center -space-x-2',
+                            isEat
+                                ? 'animate-[flyOut_.7s_cubic-bezier(.55,0,.85,.36)_forwards] drop-shadow-[0_0_18px_rgba(251,191,36,0.55)]'
+                                : 'animate-[flyIn_.6s_cubic-bezier(.22,.9,.32,1.1)_forwards] drop-shadow-[0_16px_26px_rgba(0,0,0,0.45)]'
+                        )}
                         style={{ '--fly-y': `${flyY}px` } as CSSProperties}
                     >
-                        {effect.cards.map(c => (
-                            <PlayingCard key={c.id} rank={c.rank} suit={c.suit} size="lg" />
+                        {effect.cards.map((c, i) => (
+                            <PlayingCard
+                                key={c.id}
+                                rank={c.rank}
+                                suit={c.suit}
+                                size="lg"
+                                className={isEat ? 'ring-2 ring-amber-300' : undefined}
+                                style={{ transform: `rotate(${(i - (effect.cards.length - 1) / 2) * 5}deg)` }}
+                            />
                         ))}
                     </div>
                 );
@@ -267,6 +282,8 @@ export default function GameMatchPage() {
     const [handCollapsed, setHandCollapsed] = useState(false);
     const [moveEffects, setMoveEffects] = useState<MoveEffect[]>([]);
     const [rematchRequested, setRematchRequested] = useState(false);
+    const [rulesOpen, setRulesOpen] = useState(false);
+    const [statsOpen, setStatsOpen] = useState(false);
     const lastMoveSignatureRef = useRef<string | null>(null);
     const { user } = useAuthStore();
 
@@ -511,15 +528,20 @@ export default function GameMatchPage() {
                 }
                 /* Đánh bài (play/discard) rides in from --fly-y toward center;
                    Ăn bài (eat) rides out from center toward --fly-y. Direction
-                   (up vs down) is just the sign of --fly-y set inline per case. */
+                   (up vs down) is just the sign of --fly-y set inline per case.
+                   flyIn: slight tilt + blur while airborne, overshoot at 60%,
+                   settle-bounce at 80% — reads as a card landing on felt.
+                   flyOut: quick pop up/scale first (grab), then slide away. */
                 @keyframes flyIn {
-                    0% { opacity: 0; transform: translateY(var(--fly-y, 140px)) scale(0.7); }
-                    35% { opacity: 1; }
-                    100% { opacity: 1; transform: translateY(0) scale(1); }
+                    0% { opacity: 0; transform: translateY(var(--fly-y, 140px)) scale(0.55) rotate(-9deg); filter: blur(3px); }
+                    60% { opacity: 1; transform: translateY(-7px) scale(1.08) rotate(2deg); filter: blur(0); }
+                    80% { transform: translateY(3px) scale(0.97) rotate(-1deg); }
+                    100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); filter: blur(0); }
                 }
                 @keyframes flyOut {
-                    0% { opacity: 1; transform: translateY(0) scale(1); }
-                    100% { opacity: 0; transform: translateY(var(--fly-y, 140px)) scale(0.7); }
+                    0% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); filter: blur(0); }
+                    28% { opacity: 1; transform: translateY(calc(var(--fly-y, 140px) * -0.12)) scale(1.14) rotate(5deg); }
+                    100% { opacity: 0; transform: translateY(var(--fly-y, 140px)) scale(0.4) rotate(16deg); filter: blur(2px); }
                 }
             `}</style>
                 <div className="relative flex items-center justify-between px-6" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
@@ -530,7 +552,11 @@ export default function GameMatchPage() {
                         {gameTitle}
                     </span>
                     <div className="flex items-center gap-3">
-                        <button className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur" aria-label="Trợ giúp">
+                        <button
+                            onClick={() => setRulesOpen(true)}
+                            className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur"
+                            aria-label="Luật chơi"
+                        >
                             <span className="text-2xl font-black leading-none">?</span>
                         </button>
                         <div className="relative">
@@ -544,7 +570,14 @@ export default function GameMatchPage() {
                             {settingsOpen && (
                                 <>
                                     <div className="fixed inset-0 z-30" onClick={() => setSettingsOpen(false)} />
-                                    <div className="absolute right-0 top-14 z-40 w-48 overflow-hidden rounded-2xl border border-white/12 bg-[#032f34] shadow-[0_18px_45px_rgba(0,0,0,0.4),inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+                                    <div className="absolute right-0 top-14 z-40 w-48 overflow-hidden rounded-2xl border border-white/12 bg-[#032f34] shadow-[0_18px_45px_rgba(0,0,0,0.4),inset_0_0_0_1px_rgba(255,255,255,0.05)] divide-y divide-white/8">
+                                        <button
+                                            onClick={() => { setSettingsOpen(false); setStatsOpen(true); }}
+                                            className="flex w-full items-center gap-2.5 px-4 py-3.5 text-left text-sm font-bold text-white/85 active:bg-white/8"
+                                        >
+                                            <span className="text-base leading-none">🏆</span>
+                                            Thống kê
+                                        </button>
                                         <button
                                             onClick={handleLeaveMatch}
                                             className="flex w-full items-center gap-2.5 px-4 py-3.5 text-left text-sm font-bold text-red-300 active:bg-white/8"
@@ -701,6 +734,8 @@ export default function GameMatchPage() {
                     <TurnCountdown secondsLeft={secondsLeft} totalSeconds={totalTurnSeconds} active={showTurnCountdown} />
                     {isPhom && (
                         <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/16 px-4 py-2 text-xs font-black text-white/75">
+                            <span className="text-amber-200">Lượt {matchState.yourDiscardsDone ?? 0}/{matchState.maxDiscards ?? 4}</span>
+                            <span className="h-1 w-1 rounded-full bg-white/35" />
                             <span>Nọc: {matchState.stockCount ?? 0}</span>
                             <span className="h-1 w-1 rounded-full bg-white/35" />
                             <span>Điểm rác: {matchState.deadwoodScore ?? 0}</span>
@@ -771,6 +806,8 @@ export default function GameMatchPage() {
                     />
                 </div>
 
+                <GameRulesModal open={rulesOpen} onClose={() => setRulesOpen(false)} gameType={matchState.gameType} />
+                <GameStatsModal open={statsOpen} onClose={() => setStatsOpen(false)} />
                 {matchEnded && (() => {
                     const opponentIdForScore = matchState.opponentId || matchState.opponents?.[0]?.userId;
                     const score = matchEnded.seriesScore?.score;

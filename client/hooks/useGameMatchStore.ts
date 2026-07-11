@@ -39,6 +39,8 @@ export interface MatchStateView {
     phase?: 'discard' | 'draw_or_eat' | 'finished';
     stockCount?: number;
     discardCount?: number;
+    yourDiscardsDone?: number;
+    maxDiscards?: number;
     lastDiscard?: CardId | null;
     canEatLastDiscard?: boolean;
     deadwoodScore?: number;

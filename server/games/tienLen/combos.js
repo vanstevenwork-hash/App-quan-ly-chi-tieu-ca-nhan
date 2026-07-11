@@ -17,25 +17,29 @@ function classifyCombo(cards) {
         return null;
     }
 
+    // 6/8 cards can be a pair-run (đôi thông) OR a plain 6/8-card straight —
+    // try the pair-run shape but FALL THROUGH to the straight check on
+    // mismatch. Early-returning null here made 6/8-card straights unplayable.
     if (sorted.length === 6 || sorted.length === 8) {
-        const pairs = [];
-        for (let i = 0; i < sorted.length; i += 2) {
-            const a = sorted[i];
-            const b = sorted[i + 1];
-            if (!b || a.rank !== b.rank) return null;
-            if (rankValue(a.rank) === rankValue('2')) return null;
-            pairs.push([a, b]);
-        }
-
-        for (let i = 1; i < pairs.length; i++) {
-            if (rankValue(pairs[i][0].rank) !== rankValue(pairs[i - 1][0].rank) + 1) return null;
-        }
-
-        return {
-            type: sorted.length === 6 ? 'three_pair_run' : 'four_pair_run',
-            cards: sorted,
-            power,
-        };
+        const pairRun = (() => {
+            const pairs = [];
+            for (let i = 0; i < sorted.length; i += 2) {
+                const a = sorted[i];
+                const b = sorted[i + 1];
+                if (!b || a.rank !== b.rank) return null;
+                if (rankValue(a.rank) === rankValue('2')) return null;
+                pairs.push([a, b]);
+            }
+            for (let i = 1; i < pairs.length; i++) {
+                if (rankValue(pairs[i][0].rank) !== rankValue(pairs[i - 1][0].rank) + 1) return null;
+            }
+            return {
+                type: sorted.length === 6 ? 'three_pair_run' : 'four_pair_run',
+                cards: sorted,
+                power,
+            };
+        })();
+        if (pairRun) return pairRun;
     }
 
     if (sorted.length >= 3) {

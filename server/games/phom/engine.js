@@ -148,10 +148,16 @@ function dealHands(players, options = {}) {
         isFirstMove: false,
         winnerId: null,
         scores: null,
+        // Standard Phỏm plays exactly 4 rounds — each player discards 4 times,
+        // then hands are scored. Without this cap the game would keep drawing
+        // until the whole 33-card stock ran dry.
+        discardCounts: Object.fromEntries(players.map(p => [p, 0])),
         turnSeconds,
         turnExpiresAt: nextTurnExpiresAt(turnSeconds),
     };
 }
+
+const MAX_DISCARDS_PER_PLAYER = 4;
 
 function drawStock(state, byUserId) {
     if (state.phase !== 'draw_or_eat') return { nextState: state, error: 'Bạn chưa được bốc bài' };
@@ -210,11 +216,20 @@ function discardCard(state, byUserId, cardId) {
 
     const nextHand = hand.filter(c => c.id !== card.id);
     const deadwood = bestDeadwood(nextHand);
-    const winnerId = deadwood.score === 0 ? byUserId : null;
+    const winnerId = deadwood.score === 0 ? byUserId : null; // "ù" — zero deadwood ends immediately
     let scores = null;
     let finalWinnerId = winnerId;
 
-    if (!winnerId && (state.stock || []).length === 0) {
+    const discardCounts = {
+        ...(state.discardCounts || Object.fromEntries(state.players.map(p => [p, 0]))),
+        [byUserId]: ((state.discardCounts || {})[byUserId] || 0) + 1,
+    };
+    // Round limit: once everyone has discarded 4 times the hand is over and
+    // scored — this is what actually ends a normal Phỏm game, NOT stock
+    // exhaustion (kept below only as a safety net for weird states).
+    const roundLimitReached = state.players.every(p => (discardCounts[p] || 0) >= MAX_DISCARDS_PER_PLAYER);
+
+    if (!winnerId && (roundLimitReached || (state.stock || []).length === 0)) {
         const scored = scoreHands({ ...state, hands: { ...state.hands, [byUserId]: nextHand } });
         scores = scored.scores;
         finalWinnerId = scored.winnerId;
@@ -225,6 +240,7 @@ function discardCard(state, byUserId, cardId) {
             ...state,
             hands: { ...state.hands, [byUserId]: sortHand(nextHand) },
             discardPile: [...(state.discardPile || []), card],
+            discardCounts,
             lastPlay: { type: 'discard', cards: [card], power: card },
             lastPlayBy: byUserId,
             turnUserId: finalWinnerId ? state.turnUserId : nextPlayer(state, byUserId),
@@ -277,6 +293,8 @@ function toPlayerView(state, forUserId) {
         phase: state.phase,
         stockCount: state.stock?.length || 0,
         discardCount: state.discardPile?.length || 0,
+        yourDiscardsDone: (state.discardCounts || {})[forUserId] || 0,
+        maxDiscards: 4,
         lastDiscard,
         canEatLastDiscard: state.turnUserId === forUserId && state.phase === 'draw_or_eat' && canEatDiscard(hand, lastDiscard),
         deadwoodScore: deadwood.score,
