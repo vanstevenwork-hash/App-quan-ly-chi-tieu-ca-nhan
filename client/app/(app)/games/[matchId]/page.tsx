@@ -6,7 +6,6 @@ import { gameMatchesApi } from '@/lib/api';
 import { useGameMatchStore } from '@/hooks/useGameMatchStore';
 import type { CardId, GameChatMessage } from '@/hooks/useGameMatchStore';
 import Hand from '@/components/games/Hand';
-import OpponentHand from '@/components/games/OpponentHand';
 import LastPlayDisplay from '@/components/games/LastPlayDisplay';
 import PlayingCard from '@/components/games/PlayingCard';
 import TurnIndicator from '@/components/games/TurnIndicator';
@@ -848,47 +847,74 @@ export default function GameMatchPage() {
                     </div>
                 </div>
 
-                {/* Opponents */}
-                <div className="mt-6 flex items-start gap-3 overflow-x-auto px-5 hide-scrollbar">
-                    {(matchState.opponents?.length ? matchState.opponents : matchState.opponentId ? [{ userId: matchState.opponentId, handCount: matchState.opponentHandCount }] : []).map((opponent, index) => {
-                        const name = playerNames[opponent.userId] || (index === 0 ? opponentName : `Đối thủ ${index + 1}`);
-                        return (
-                            <div key={opponent.userId} className="min-w-[210px] rounded-2xl border border-white/10 bg-white/6 p-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
-                                <div className="mb-2 flex items-center gap-3">
+                {/* Table: opponents seated around an oval, play area in the middle */}
+                <div className="relative flex flex-1 flex-col items-center justify-center gap-3 px-4 pb-3 pt-3">
+                    {/* Oval felt */}
+                    <div className="pointer-events-none absolute inset-x-2 top-1 bottom-2 rounded-[46%] border-2 border-amber-300/20 bg-[radial-gradient(circle_at_50%_42%,rgba(20,184,166,0.16),transparent_62%)] shadow-[inset_0_0_55px_rgba(0,0,0,0.38)]" />
+
+                    {/* Opponent seats around the table (you are the hand at the bottom) */}
+                    {(() => {
+                        const opps = matchState.opponents?.length
+                            ? matchState.opponents
+                            : matchState.opponentId ? [{ userId: matchState.opponentId, handCount: matchState.opponentHandCount }] : [];
+                        const POS: Record<string, string> = {
+                            top: 'top-0 left-1/2 -translate-x-1/2',
+                            left: 'left-0 top-1/2 -translate-y-1/2',
+                            right: 'right-0 top-1/2 -translate-y-1/2',
+                        };
+                        const LAYOUT: Record<number, string[]> = { 1: ['top'], 2: ['left', 'right'], 3: ['top', 'left', 'right'] };
+                        const layout = LAYOUT[opps.length] || ['top'];
+                        return opps.map((opponent, index) => {
+                            const name = playerNames[opponent.userId] || (index === 0 ? opponentName : `Đối thủ ${index + 1}`);
+                            const isTheirTurn = matchState.turnUserId === opponent.userId;
+                            const isHit = opponentHitId === opponent.userId;
+                            const fan = Math.max(1, Math.min(opponent.handCount, 5));
+                            return (
+                                <div key={opponent.userId} className={cn('absolute z-10 flex w-[108px] flex-col items-center gap-1', POS[layout[index]] || POS.top)}>
+                                    {/* face-down mini fan */}
+                                    <div className="relative h-7 w-14">
+                                        {Array.from({ length: fan }).map((_, i) => (
+                                            <div
+                                                key={i}
+                                                className="absolute left-1/2 top-0 h-9 w-6 origin-bottom rounded-[4px] border border-white/25 bg-gradient-to-br from-[#0e7a6e] to-[#04302f] shadow-[0_2px_5px_rgba(0,0,0,0.3)]"
+                                                style={{ transform: `translateX(-50%) rotate(${(i - (fan - 1) / 2) * 12}deg)` }}
+                                            >
+                                                <span className="absolute inset-0 flex items-center justify-center text-[8px] text-white/30">◆</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                     <div
                                         data-avatar={opponent.userId}
-                                        className={cn(
-                                            'relative h-16 w-16 flex-shrink-0',
-                                            opponentHitId === opponent.userId && 'animate-[avatarHit_.5s_ease-in-out_infinite]'
-                                        )}
+                                        className={cn('relative', isHit && 'animate-[avatarHit_.5s_ease-in-out_infinite]')}
                                     >
-                                        <div className="relative h-full w-full overflow-hidden rounded-full border-2 border-teal-200/75 bg-slate-900 shadow-[0_0_24px_rgba(45,212,191,0.24)]">
+                                        <div className={cn(
+                                            'relative h-14 w-14 overflow-hidden rounded-full border-2 bg-slate-900',
+                                            isTheirTurn
+                                                ? 'border-amber-300 shadow-[0_0_22px_rgba(251,191,36,0.6)]'
+                                                : 'border-teal-200/70 shadow-[0_0_18px_rgba(45,212,191,0.24)]'
+                                        )}>
                                             <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-700 to-black" />
-                                            <span className="relative flex h-full w-full items-center justify-center text-xl font-black text-white/75">
+                                            <span className="relative flex h-full w-full items-center justify-center text-lg font-black text-white/75">
                                                 {name.charAt(0).toUpperCase()}
                                             </span>
-                                            <span className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-[#033d40] bg-emerald-400" />
+                                            <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#023034] bg-emerald-400" />
                                         </div>
-                                        {opponentHitId === opponent.userId && (
+                                        {isHit && (
                                             <span className="pointer-events-none absolute -inset-1.5 rounded-full border-2 border-amber-300 animate-[hitRing_.55s_ease-out_infinite]" />
                                         )}
                                     </div>
-                                    <div className="min-w-0 flex-shrink-0">
-                                        <p className="max-w-[120px] truncate text-sm font-black text-white">{name}</p>
-                                        <p className="mt-1 flex items-center gap-1.5 text-base font-black text-amber-300">
-                                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-[10px] text-amber-900 shadow">₫</span>
-                                            {opponent.handCount} lá
-                                        </p>
-                                    </div>
+                                    <p className="max-w-full truncate text-xs font-black text-white">{name}</p>
+                                    <span className={cn(
+                                        'rounded-full px-2 py-0.5 text-[10px] font-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]',
+                                        isTheirTurn ? 'bg-amber-400/20 text-amber-100' : 'bg-black/30 text-amber-200'
+                                    )}>
+                                        {opponent.handCount} lá
+                                    </span>
                                 </div>
-                                <OpponentHand count={opponent.handCount} />
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        });
+                    })()}
 
-                {/* Center table */}
-                <div className="relative flex flex-1 flex-col items-center justify-center gap-3 px-4 pb-3 pt-4">
                     <TableChatReactions messages={chatMessages} now={now} currentUserId={user?._id} />
                     <TableThrowEffects messages={chatMessages} now={now} currentUserId={user?._id} primaryOpponentId={primaryOpponentId} />
                     <MoveFlyEffects effects={moveEffects} now={now} />
@@ -1017,7 +1043,7 @@ export default function GameMatchPage() {
                 </div>
 
                 {/* Your hand */}
-                <div className="mx-5 mb-5 rounded-[28px] border border-white/10 bg-[#053c3f]/82 pt-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.28)] backdrop-blur">
+                <div data-my-anchor className="mx-5 mb-5 rounded-[28px] border border-white/10 bg-[#053c3f]/82 pt-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05),0_18px_45px_rgba(0,0,0,0.28)] backdrop-blur">
                     <div className="flex items-center justify-between gap-3 px-4 mb-2">
                         <div className="flex min-w-0 items-center gap-2">
                             <span className="flex-shrink-0 text-base font-black text-white">Số lá <span className="text-emerald-300">({matchState.yourHand.length})</span></span>
