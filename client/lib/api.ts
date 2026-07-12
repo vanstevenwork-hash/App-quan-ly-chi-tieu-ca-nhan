@@ -103,8 +103,8 @@ export const cardsApi = {
 export const gameMatchesApi = {
     invite: (emails: string | string[], gameType: 'tien_len' | 'phom', turnSeconds = 30) =>
         api.post('/game-matches/invite', { emails: Array.isArray(emails) ? emails : [emails], gameType, turnSeconds }),
-    createRoom: (gameType: 'tien_len' | 'phom', turnSeconds = 30) =>
-        api.post('/game-matches/room', { gameType, turnSeconds }),
+    createRoom: (gameType: 'tien_len' | 'phom', turnSeconds = 30, maxPlayers = 2) =>
+        api.post('/game-matches/room', { gameType, turnSeconds, maxPlayers }),
     joinByCode: (code: string) => api.post(`/game-matches/join/${code}`),
     respond: (id: string, accept: boolean) => api.patch(`/game-matches/${id}/respond`, { accept }),
     getIncoming: () => api.get('/game-matches/incoming'),

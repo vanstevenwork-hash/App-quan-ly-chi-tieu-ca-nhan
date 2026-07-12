@@ -299,6 +299,7 @@ export default function GameMatchPage() {
     const [rulesOpen, setRulesOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
     const [waitingRoom, setWaitingRoom] = useState<{ joinCode?: string } | null>(null);
+    const [roomCount, setRoomCount] = useState<{ joined: number; max: number }>({ joined: 1, max: 2 });
     const [linkCopied, setLinkCopied] = useState(false);
     const lastMoveSignatureRef = useRef<string | null>(null);
     const { user } = useAuthStore();
@@ -316,6 +317,7 @@ export default function GameMatchPage() {
                     // the link and the game auto-starts (server emits match:refresh).
                     if (match.joinCode) {
                         setWaitingRoom({ joinCode: match.joinCode });
+                        setRoomCount({ joined: match.players?.length || 1, max: match.settings?.maxPlayers || 2 });
                         connect(matchId);
                         return;
                     }
@@ -357,6 +359,21 @@ export default function GameMatchPage() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [errorMessage, clearError]);
+
+    // While waiting for a link room to fill, poll the headcount so the UI shows
+    // "2/4 người" live (the socket only pushes state once it actually starts).
+    useEffect(() => {
+        if (!waitingRoom || matchState) return;
+        const poll = setInterval(() => {
+            gameMatchesApi.getById(matchId)
+                .then(res => {
+                    const m = res.data?.data;
+                    if (m) setRoomCount({ joined: m.players?.length || 1, max: m.settings?.maxPlayers || 2 });
+                })
+                .catch(() => { /* transient — keep last known count */ });
+        }, 2500);
+        return () => clearInterval(poll);
+    }, [waitingRoom, matchState, matchId]);
 
     // A room that started from the waiting-room path never fetched player names
     // (the join happened after mount) — backfill them once the game goes live.
@@ -530,7 +547,10 @@ export default function GameMatchPage() {
                 <div className="relative flex flex-col items-center gap-2">
                     <div className="text-5xl">🃏</div>
                     <h1 className="text-xl font-black">Phòng đã sẵn sàng</h1>
-                    <p className="text-sm text-white/50">Gửi link cho bạn bè — ai mở link vào là bắt đầu chơi ngay.</p>
+                    <p className="text-sm text-white/50">Gửi link cho bạn bè — đủ {roomCount.max} người là bắt đầu.</p>
+                    <span className="mt-1 rounded-full border border-amber-300/40 bg-amber-400/15 px-3 py-1 text-xs font-black text-amber-200">
+                        {roomCount.joined}/{roomCount.max} người
+                    </span>
                 </div>
 
                 <div className="relative w-full max-w-sm space-y-3">
@@ -550,7 +570,7 @@ export default function GameMatchPage() {
 
                 <div className="relative flex items-center gap-2 text-white/45">
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
-                    <span className="text-xs font-bold">Đang chờ người chơi vào phòng…</span>
+                    <span className="text-xs font-bold">Đang chờ đủ {roomCount.max} người…</span>
                 </div>
 
                 <button onClick={() => { disconnect(); router.push('/games'); }} className="relative text-xs font-bold text-white/40">Hủy phòng</button>
@@ -633,10 +653,10 @@ export default function GameMatchPage() {
                     100% { opacity: 0; transform: translateY(var(--fly-y, 140px)) scale(0.4) rotate(16deg); filter: blur(2px); }
                 }
             `}</style>
-                <div className="relative flex items-center justify-between px-6" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-                    <button onClick={() => router.push('/games')} className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/10 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),0_10px_24px_rgba(0,0,0,0.22)] backdrop-blur">
-                        <ActionIcon type="arrowLeft" size={24} tile={false} color="#fff" />
-                    </button>
+                {/* No back arrow on purpose: leaving mid-game must go through
+                    Settings → "Thoát ván đấu" so the opponent gets notified you
+                    left, instead of a silent navigate-away. */}
+                <div className="relative flex items-center justify-end px-6" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
                     <span className="pointer-events-none absolute left-1/2 top-[calc(env(safe-area-inset-top)+1.7rem)] w-44 -translate-x-1/2 text-center text-lg font-black uppercase tracking-wide text-white drop-shadow">
                         {gameTitle}
                     </span>

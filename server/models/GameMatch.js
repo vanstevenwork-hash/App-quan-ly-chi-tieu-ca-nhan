@@ -17,6 +17,10 @@ const gameMatchSchema = new mongoose.Schema(
         hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         settings: {
             turnSeconds: { type: Number, default: 30, min: 10, max: 120 },
+            // Target headcount for an open (share-link) room — the game only
+            // deals & starts once this many players have joined, so a 3-4 player
+            // room doesn't kick off the moment the first person clicks the link.
+            maxPlayers: { type: Number, default: 2, min: 2, max: 4 },
         },
         status: {
             type: String,

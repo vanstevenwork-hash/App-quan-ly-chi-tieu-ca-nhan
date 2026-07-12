@@ -125,16 +125,20 @@ exports.invite = async (req, res) => {
 // @route POST /api/game-matches/room
 exports.createRoom = async (req, res) => {
     try {
-        const { gameType, turnSeconds } = req.body;
+        const { gameType, turnSeconds, maxPlayers } = req.body;
         if (!gameType || !engines[gameType]) {
             return res.status(400).json({ success: false, message: 'Loại game không được hỗ trợ' });
         }
+        const targetPlayers = Math.max(2, Math.min(4, Math.round(Number(maxPlayers) || 2)));
 
+        // Reuse an existing empty open room of the same type + headcount so
+        // repeated "Share" taps don't pile up dead rooms.
         const existing = await GameMatch.findOne({
             hostId: req.user._id,
             gameType,
             status: 'pending_invite',
             players: { $size: 1 },
+            'settings.maxPlayers': targetPlayers,
             joinCode: { $ne: null },
         });
         if (existing) {
@@ -148,7 +152,7 @@ exports.createRoom = async (req, res) => {
             players: [req.user._id],
             acceptedPlayerIds: [req.user._id],
             hostId: req.user._id,
-            settings: { turnSeconds: normalizeTurnSeconds(turnSeconds) },
+            settings: { turnSeconds: normalizeTurnSeconds(turnSeconds), maxPlayers: targetPlayers },
             seriesId: newMatchId,
             joinCode: await generateJoinCode(),
         });
@@ -179,15 +183,17 @@ exports.joinByCode = async (req, res) => {
         if (match.status !== 'pending_invite') {
             return res.status(400).json({ success: false, message: 'Ván đã bắt đầu hoặc đã kết thúc' });
         }
-        if (match.players.length >= 4) {
+        const targetPlayers = Math.max(2, Math.min(4, match.settings?.maxPlayers || 2));
+        if (match.players.length >= targetPlayers) {
             return res.status(400).json({ success: false, message: 'Phòng đã đủ người' });
         }
 
         match.players.push(req.user._id);
         match.acceptedPlayerIds.push(req.user._id);
 
-        // Two players present → deal and start immediately.
-        if (match.players.length >= 2) {
+        // Only start once the room hits its configured headcount — a 3-4 player
+        // room stays open until enough people have joined.
+        if (match.players.length >= targetPlayers) {
             const engine = engines[match.gameType];
             const playerIds = match.players.map(p => p.toString());
             match.state = engine.dealHands(playerIds, { turnSeconds: match.settings?.turnSeconds || 30 });

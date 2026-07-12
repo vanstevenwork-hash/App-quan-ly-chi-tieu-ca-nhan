@@ -66,6 +66,7 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
     const [mounted, setMounted] = useState(false);
     const [gameType, setGameType] = useState<GameType>('tien_len');
     const [turnSeconds, setTurnSeconds] = useState(30);
+    const [maxPlayers, setMaxPlayers] = useState(2);
     const [emails, setEmails] = useState<string[]>([]);
     const [draft, setDraft] = useState('');
     const [checks, setChecks] = useState<Record<string, EmailCheck>>({});
@@ -81,7 +82,7 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
         if (sharing) return;
         setSharing(true);
         try {
-            const res = await gameMatchesApi.createRoom(gameType, turnSeconds);
+            const res = await gameMatchesApi.createRoom(gameType, turnSeconds, maxPlayers);
             const match = res.data?.data;
             const link = `${window.location.origin}/games/join/${match.joinCode}`;
             const shareData = { title: 'Mời chơi bài', text: 'Vào chơi bài với mình nhé!', url: link };
@@ -261,11 +262,33 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
                             </div>
                         </div>
 
-                        {/* 3. Mời qua email */}
+                        {/* Số người chơi — chỉ áp dụng khi tạo link mời (phòng chờ đủ người mới bắt đầu) */}
+                        <div>
+                            <SectionHeader icon="👥" index={3} title="Số người chơi (khi mời qua link)" />
+                            <div className="grid grid-cols-3 gap-2">
+                                {[2, 3, 4].map(count => (
+                                    <button
+                                        key={count}
+                                        onClick={() => setMaxPlayers(count)}
+                                        className={cn(
+                                            'rounded-xl border py-2.5 text-sm font-black transition-all active:scale-95',
+                                            maxPlayers === count
+                                                ? 'border-amber-300/70 bg-gradient-to-b from-violet-500 to-violet-800 text-white shadow-[0_6px_18px_rgba(124,58,237,0.4)]'
+                                                : 'border-white/10 bg-white/[0.05] text-white/60'
+                                        )}
+                                    >
+                                        {count} người
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="mt-1.5 text-[11px] text-white/35">Phòng link sẽ chờ đủ {maxPlayers} người rồi mới bắt đầu.</p>
+                        </div>
+
+                        {/* 4. Mời qua email */}
                         <div>
                             <SectionHeader
                                 icon="✉️"
-                                index={3}
+                                index={4}
                                 title={`Mời qua email (tối đa ${MAX_INVITEES} người)`}
                                 right={<span className="text-xs font-black text-amber-300/90">{emails.length}/{MAX_INVITEES}</span>}
                             />
