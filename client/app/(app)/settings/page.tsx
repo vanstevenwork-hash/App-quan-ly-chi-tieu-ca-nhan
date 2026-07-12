@@ -30,13 +30,11 @@ const TILE_SHADOW = 'shadow-[0_1px_2px_rgba(17,12,46,0.04),0_8px_16px_-6px_rgba(
 
 // Real pages that are NOT on the bottom nav — settings doubles as their hub
 const SHORTCUTS = [
-    { href: '/notifications', label: 'Thông báo', isUtil: true, type: 'bell', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F59E0B' },
     { href: '/cards', label: 'Quản lý thẻ', isAction: true, type: 'creditCard', bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: '#6366F1' },
     { href: '/cashback', label: 'Hoàn tiền', isUtil: true, type: 'hoanTien', bg: 'bg-emerald-50 dark:bg-emerald-900/20', color: '#10B981' },
     { href: '/wealth', label: 'Tài sản', isUtil: true, type: 'landmark', bg: 'bg-purple-50 dark:bg-purple-900/20', color: '#8B5CF6' },
     { href: '/savings', label: 'Tiết kiệm', isUtil: true, type: 'soTietKiem', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F0A319' },
     { href: '/games', label: 'Chơi bài với vợ/chồng', isUtil: true, type: 'playingCards', bg: 'bg-purple-50 dark:bg-purple-900/20', color: '#8B5CF6' },
-    { href: '/games/stats', label: 'Thống kê chơi bài', isUtil: true, type: 'trophy', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F59E0B' },
 ];
 
 const SettingItem = ({
@@ -222,7 +220,7 @@ export default function SettingsPage() {
                     </span>
                     <div className="relative flex-shrink-0">
                         {avatarUrl ? (
-                            <div className="relative rounded-full shadow-[0_10px_18px_-6px_rgba(109,40,217,0.45)] ring-[3px] ring-white dark:ring-slate-800">
+                            <div className="relative w-16 h-16 rounded-full shadow-[0_10px_18px_-6px_rgba(109,40,217,0.45)] ring-[3px] ring-white dark:ring-slate-800">
                                 <ImageUpload
                                     currentUrl={avatarUrl}
                                     onUpload={handleAvatarUpload}

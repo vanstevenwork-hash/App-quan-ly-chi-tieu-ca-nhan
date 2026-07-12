@@ -296,7 +296,10 @@ function WealthTabContentBase({
                 <h2 className="font-bold text-lg text-gray-800 dark:text-white">
                     {activeTab === 'accounts' ? 'Danh sách tài khoản' : activeTab === 'savings' ? 'Sổ tiết kiệm' : 'Tài sản khác'}
                 </h2>
-                <button onClick={onAddClick} className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">Thêm mới</button>
+                <button onClick={onAddClick} aria-label="Thêm mới"
+                    className="flex items-center justify-center w-7 h-7 rounded-lg text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all">
+                    <ActionIcon type="plus" size={14} tile={false} color="currentColor" />
+                </button>
             </div>
 
             {/* ════════ TAB: ACCOUNTS ════════ */}

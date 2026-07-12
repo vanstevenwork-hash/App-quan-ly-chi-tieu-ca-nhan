@@ -5,8 +5,14 @@ const gameMatchSchema = new mongoose.Schema(
         gameType: { type: String, enum: ['tien_len', 'phom'], required: true },
         players: {
             type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-            validate: { validator: v => v.length >= 2 && v.length <= 4, message: 'GameMatch requires 2 to 4 players' },
+            // Min 1: an "open room" created for a share-link starts with just the
+            // host and fills up as people join via the link (never deals until 2+).
+            validate: { validator: v => v.length >= 1 && v.length <= 4, message: 'GameMatch requires 1 to 4 players' },
         },
+        // Short code backing the shareable join link (/games/join/:code). Only
+        // set on open rooms; sparse so targeted email-invite matches (no code)
+        // don't collide on the unique index.
+        joinCode: { type: String, unique: true, sparse: true },
         acceptedPlayerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
         hostId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         settings: {

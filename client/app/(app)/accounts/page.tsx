@@ -556,7 +556,10 @@ export default function AccountsPage() {
                                                 !creditCardsExpanded && '-rotate-90'
                                             )} />
                                         </button>
-                                        <button onClick={() => router.push("/cards")} className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">Xem tất cả</button>
+                                        <button onClick={() => router.push("/cards")} aria-label="Xem tất cả"
+                                            className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-purple-600 dark:text-purple-300 border border-purple-200/60 dark:border-white/10 bg-purple-50 dark:bg-slate-900/60 shadow-sm hover:bg-purple-100 dark:hover:bg-slate-800/70 transition-all">
+                                            <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" />
+                                        </button>
                                     </div>
 
                                     {creditCardsExpanded ? (
@@ -614,9 +617,9 @@ export default function AccountsPage() {
                                     ) : (
                                         <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tài khoản thanh toán</h2>
                                     )}
-                                    <button onClick={() => openAdd('debit')}
-                                        className="text-[10px] font-bold text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 px-2.5 py-1 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all uppercase tracking-tight">
-                                        Thêm mới
+                                    <button onClick={() => openAdd('debit')} aria-label="Thêm mới"
+                                        className="flex items-center justify-center w-7 h-7 rounded-lg text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all">
+                                        <CustomIcon type="plus" size={14} tile={false} color="currentColor" />
                                     </button>
                                 </div>
                                 {debitCards.length > 0 ? (

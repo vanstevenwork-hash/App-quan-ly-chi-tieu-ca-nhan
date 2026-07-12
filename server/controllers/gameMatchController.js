@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require('mongoose');
 const GameMatch = require('../models/GameMatch');
 const User = require('../models/User');
@@ -11,6 +12,16 @@ function normalizeTurnSeconds(value) {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return 30;
     return Math.max(10, Math.min(120, Math.round(parsed)));
+}
+
+// URL-safe short code; retries on the (astronomically rare) collision.
+async function generateJoinCode() {
+    for (let attempt = 0; attempt < 5; attempt++) {
+        const code = crypto.randomBytes(6).toString('base64url'); // ~8 chars
+        const exists = await GameMatch.exists({ joinCode: code });
+        if (!exists) return code;
+    }
+    throw new Error('Không tạo được mã phòng, thử lại');
 }
 
 // Tallies wins per player across every finished match in a rematch chain, so
@@ -103,6 +114,109 @@ exports.invite = async (req, res) => {
         res.status(201).json({ success: true, data: match });
     } catch (err) {
         console.error('GameMatch invite error:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Create an OPEN room the host shares via link — starts with just the
+//        host and a joinCode; the first person to open the link fills it to 2
+//        and the game auto-starts. Reuses an existing empty open room of the
+//        same game type so repeated "Share" taps don't pile up dead rooms.
+// @route POST /api/game-matches/room
+exports.createRoom = async (req, res) => {
+    try {
+        const { gameType, turnSeconds } = req.body;
+        if (!gameType || !engines[gameType]) {
+            return res.status(400).json({ success: false, message: 'Loại game không được hỗ trợ' });
+        }
+
+        const existing = await GameMatch.findOne({
+            hostId: req.user._id,
+            gameType,
+            status: 'pending_invite',
+            players: { $size: 1 },
+            joinCode: { $ne: null },
+        });
+        if (existing) {
+            return res.json({ success: true, data: existing });
+        }
+
+        const newMatchId = new mongoose.Types.ObjectId();
+        const match = await GameMatch.create({
+            _id: newMatchId,
+            gameType,
+            players: [req.user._id],
+            acceptedPlayerIds: [req.user._id],
+            hostId: req.user._id,
+            settings: { turnSeconds: normalizeTurnSeconds(turnSeconds) },
+            seriesId: newMatchId,
+            joinCode: await generateJoinCode(),
+        });
+
+        res.status(201).json({ success: true, data: match });
+    } catch (err) {
+        console.error('GameMatch createRoom error:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Join an open room via its share code. Idempotent for players already
+//        in; adds newcomers if there's room; auto-deals & activates once the
+//        room reaches 2 players.
+// @route POST /api/game-matches/join/:code
+exports.joinByCode = async (req, res) => {
+    try {
+        const match = await GameMatch.findOne({ joinCode: req.params.code });
+        if (!match) return res.status(404).json({ success: false, message: 'Phòng không tồn tại hoặc đã hết hạn' });
+
+        const uid = req.user._id.toString();
+        const alreadyIn = match.players.some(p => p.toString() === uid);
+
+        // Already a player — just let them back in (reconnect / re-open link).
+        if (alreadyIn) {
+            return res.json({ success: true, data: { _id: match._id } });
+        }
+        if (match.status !== 'pending_invite') {
+            return res.status(400).json({ success: false, message: 'Ván đã bắt đầu hoặc đã kết thúc' });
+        }
+        if (match.players.length >= 4) {
+            return res.status(400).json({ success: false, message: 'Phòng đã đủ người' });
+        }
+
+        match.players.push(req.user._id);
+        match.acceptedPlayerIds.push(req.user._id);
+
+        // Two players present → deal and start immediately.
+        if (match.players.length >= 2) {
+            const engine = engines[match.gameType];
+            const playerIds = match.players.map(p => p.toString());
+            match.state = engine.dealHands(playerIds, { turnSeconds: match.settings?.turnSeconds || 30 });
+            match.turnUserId = match.state.turnUserId;
+            match.status = 'active';
+        }
+        await match.save();
+
+        // Nudge everyone already sitting in the room (e.g. the waiting host) to
+        // re-request their per-player state now that the match is live.
+        emitToMatch(match._id.toString(), 'match:refresh', {});
+
+        if (match.hostId.toString() !== uid) {
+            await createNotification({
+                userId: match.hostId.toString(),
+                title: 'Có người vào phòng!',
+                message: `${req.user.name} đã tham gia ván ${GAME_LABELS[match.gameType] || match.gameType}`,
+                type: 'system',
+                icon: '🃏',
+                iconBg: '#ECFDF5',
+                relatedId: match._id,
+                relatedModel: 'GameMatch',
+                actionUrl: `/games/${match._id}`,
+            });
+        }
+
+        res.json({ success: true, data: { _id: match._id } });
+    } catch (err) {
+        console.error('GameMatch joinByCode error:', err);
         res.status(500).json({ success: false, message: err.message });
     }
 };

@@ -179,9 +179,9 @@ function SpendingTrendChartBase({ transactions }: SpendingTrendChartProps) {
         <section>
             <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
-                <Link href="/analytics"
-                    className="flex items-center gap-0.5 text-sm font-semibold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity">
-                    Xem chi tiết <ActionIcon type="chevronRight" size={14} tile={false} color="currentColor" />
+                <Link href="/analytics" aria-label="Xem chi tiết"
+                    className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-purple-600 dark:text-purple-300 border border-purple-200/60 dark:border-white/10 bg-purple-50 dark:bg-slate-900/60 shadow-sm hover:bg-purple-100 dark:hover:bg-slate-800/70 transition-all">
+                    <ActionIcon type="arrowRight" size={16} tile={false} color="currentColor" />
                 </Link>
             </div>
 
@@ -192,7 +192,7 @@ function SpendingTrendChartBase({ transactions }: SpendingTrendChartProps) {
                         <button key={r.key}
                             onClick={() => setRange(r.key)}
                             className={cn(
-                                'px-5 py-1.5 rounded-xl text-sm font-bold transition-all',
+                                'px-5 py-1.5 rounded-[8px] text-sm font-bold transition-all',
                                 range === r.key
                                     ? 'bg-[#6C63FF] text-white shadow-md shadow-[#6C63FF]/25'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'

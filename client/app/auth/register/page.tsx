@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,9 @@ export default function RegisterPage() {
     const router = useRouter();
     const login = useAuthStore(s => s.login);
 
+    const [authSuffix, setAuthSuffix] = useState('');
+    useEffect(() => { setAuthSuffix(window.location.search); }, []);
+
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         const errs: { name?: string; email?: string; password?: string } = {};
@@ -33,7 +36,8 @@ export default function RegisterPage() {
         try {
             const res = await authApi.register({ name, email, password });
             login(res.data.user, res.data.token);
-            router.push('/dashboard');
+            const redirect = new URLSearchParams(window.location.search).get('redirect');
+            router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
         } catch (err: any) {
             // Never fake a successful registration on failure — that leaves the
             // user thinking they have an account when nothing was created on
@@ -115,7 +119,7 @@ export default function RegisterPage() {
 
             <div className="text-center py-8">
                 <span className="text-muted-foreground text-sm">Đã có tài khoản? </span>
-                <Link href="/auth/login" className="text-primary font-semibold text-sm hover:underline">
+                <Link href={`/auth/login${authSuffix}`} className="text-primary font-semibold text-sm hover:underline">
                     Đăng nhập
                 </Link>
             </div>

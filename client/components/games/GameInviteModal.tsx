@@ -1,11 +1,12 @@
 'use client';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useGameMatches, type GameType } from '@/hooks/useGameMatches';
-import { authApi } from '@/lib/api';
+import { authApi, gameMatchesApi } from '@/lib/api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_INVITEES = 3;
@@ -69,8 +70,35 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
     const [draft, setDraft] = useState('');
     const [checks, setChecks] = useState<Record<string, EmailCheck>>({});
     const [sending, setSending] = useState(false);
+    const [sharing, setSharing] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
     const { invite } = useGameMatches();
+
+    // Create an open room, hand out its share link, and drop the host into the
+    // waiting room. No email needed — anyone who opens the link joins & plays.
+    const handleShareLink = async () => {
+        if (sharing) return;
+        setSharing(true);
+        try {
+            const res = await gameMatchesApi.createRoom(gameType, turnSeconds);
+            const match = res.data?.data;
+            const link = `${window.location.origin}/games/join/${match.joinCode}`;
+            const shareData = { title: 'Mời chơi bài', text: 'Vào chơi bài với mình nhé!', url: link };
+            if (typeof navigator !== 'undefined' && navigator.share) {
+                try { await navigator.share(shareData); } catch { /* user cancelled — link still in waiting room */ }
+            } else {
+                try { await navigator.clipboard.writeText(link); toast.success('Đã copy link mời, gửi cho bạn bè nhé!'); }
+                catch { toast.success('Đã tạo phòng — copy link trong phòng chờ'); }
+            }
+            onClose();
+            router.push(`/games/${match._id}`);
+        } catch (err) {
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(message || 'Không tạo được phòng');
+        }
+        setSharing(false);
+    };
 
     useEffect(() => { setMounted(true); }, []);
     useEffect(() => {
@@ -288,15 +316,28 @@ export default function GameInviteModal({ open, onClose, onInvited }: GameInvite
                                         />
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => { commitDraft(); inputRef.current?.focus(); }}
-                                    className="h-[46px] w-[46px] flex-shrink-0 rounded-2xl bg-gradient-to-b from-violet-500 to-violet-800 text-lg text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)] active:scale-95"
-                                    aria-label="Thêm email"
-                                >
-                                    👤+
-                                </button>
+                                <div className="flex flex-shrink-0 flex-col gap-2">
+                                    <button
+                                        onClick={() => { commitDraft(); inputRef.current?.focus(); }}
+                                        className="flex h-[46px] w-[46px] items-center justify-center rounded-2xl bg-gradient-to-b from-violet-500 to-violet-800 text-lg text-white shadow-[0_8px_20px_rgba(124,58,237,0.4)] active:scale-95"
+                                        aria-label="Thêm email"
+                                    >
+                                        👤+
+                                    </button>
+                                    <button
+                                        onClick={handleShareLink}
+                                        disabled={sharing}
+                                        className="flex h-[46px] w-[46px] items-center justify-center rounded-2xl border border-amber-300/40 bg-amber-400/15 text-amber-200 shadow-[inset_0_0_0_1px_rgba(240,194,75,0.1)] active:scale-95 disabled:opacity-60"
+                                        aria-label="Tạo link mời"
+                                        title="Tạo link mời"
+                                    >
+                                        {sharing
+                                            ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-amber-200/40 border-t-amber-200" />
+                                            : <span className="text-lg">🔗</span>}
+                                    </button>
+                                </div>
                             </div>
-                            <p className="mt-1.5 text-[11px] text-white/35">Nhập nhiều email bằng dấu phẩy, khoảng trắng hoặc xuống dòng.</p>
+                            <p className="mt-1.5 text-[11px] text-white/35">Nhập email để mời, hoặc bấm 🔗 tạo link mời gửi cho bạn bè.</p>
                         </div>
 
                         {/* CTA */}

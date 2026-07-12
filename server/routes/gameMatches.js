@@ -3,6 +3,8 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const {
     invite,
+    createRoom,
+    joinByCode,
     respond,
     getIncoming,
     getSent,
@@ -17,6 +19,8 @@ const {
 router.use(protect);
 
 router.post('/invite', invite);
+router.post('/room', createRoom);
+router.post('/join/:code', joinByCode);
 router.patch('/:id/respond', respond);
 router.get('/incoming', getIncoming);
 router.get('/sent', getSent);

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
+import { ActionIcon } from '@/components/icons/ActionIcon';
 import { resolveCardId } from '@/lib/cashback';
 import type { Card } from '@/hooks/useCards';
 
@@ -110,9 +111,9 @@ function RecentTransactionsListBase({ transactions, cards, onSelectTx, onAddFirs
         <section>
             <div className="flex justify-between items-center mb-3">
                 <h2 className="text-lg font-bold text-slate-800 dark:text-white">Giao dịch gần đây</h2>
-                <Link href="/analytics"
-                    className="text-sm font-semibold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity">
-                    Lịch sử ›
+                <Link href="/analytics" aria-label="Lịch sử"
+                    className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-purple-600 dark:text-purple-300 border border-purple-200/60 dark:border-white/10 bg-purple-50 dark:bg-slate-900/60 shadow-sm hover:bg-purple-100 dark:hover:bg-slate-800/70 transition-all">
+                    <ActionIcon type="arrowRight" size={16} tile={false} color="currentColor" />
                 </Link>
             </div>
             {transactions.length === 0 ? (

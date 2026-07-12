@@ -88,7 +88,10 @@ function PaymentAccountsListBase({ accounts, findApiBank, onEdit, onDelete, onAd
         <div className="px-6 mb-6">
             <div className="flex items-center justify-between mb-2.5">
                 <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Tài khoản & Ví</h3>
-                <button onClick={onAddNew} className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all">Thêm mới</button>
+                <button onClick={onAddNew} aria-label="Thêm mới"
+                    className="flex items-center justify-center w-7 h-7 rounded-lg text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all">
+                    <ActionIcon type="plus" size={14} tile={false} color="currentColor" />
+                </button>
             </div>
             <div className="space-y-2.5">
                 {accounts.length > 0 ? accounts.map(acc => {

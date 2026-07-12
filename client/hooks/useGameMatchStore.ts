@@ -107,6 +107,9 @@ export const useGameMatchStore = create<GameMatchStore>((set, get) => ({
             socket.emit('match:join', { matchId });
         });
         socket.on('connect_error', () => set({ connectionStatus: 'error' }));
+        // Fired when an open room fills up and the match goes live while we were
+        // sitting in it (e.g. the waiting host) — re-request our per-player state.
+        socket.on('match:refresh', () => socket.emit('match:join', { matchId }));
         socket.on('match:state', (state: MatchStateView) => set({ matchState: state }));
         socket.on('match:error', ({ message }: { message: string }) => set({ errorMessage: message }));
         socket.on('match:ended', (payload: { winnerId: string | null; reason?: 'normal' | 'abandoned'; byUserId?: string; seriesScore?: SeriesScore | null }) => set({ matchEnded: payload }));

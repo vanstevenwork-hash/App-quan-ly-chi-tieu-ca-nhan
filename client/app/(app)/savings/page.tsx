@@ -266,8 +266,9 @@ export default function SavingsPage() {
                     <div className="flex items-center justify-between pr-6 mb-4">
                         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Sổ của tôi</h2>
                         <Link href="/accounts?tab=savings"
-                            className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-900/20 px-2.5 py-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-all uppercase tracking-tight">
-                            Xem tất cả
+                            aria-label="Xem tất cả"
+                            className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-emerald-600 dark:text-emerald-300 border border-emerald-200/60 dark:border-white/10 bg-emerald-50 dark:bg-slate-900/60 shadow-sm hover:bg-emerald-100 dark:hover:bg-slate-800/70 transition-all">
+                            <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" />
                         </Link>
                     </div>
                     <div className="flex gap-4 overflow-x-auto pb-4 snap-x pr-6"

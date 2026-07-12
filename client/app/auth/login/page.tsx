@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,11 @@ export default function LoginPage() {
     const router = useRouter();
     const login = useAuthStore(s => s.login);
 
+    // Carry any ?redirect (e.g. a shared game link) over to the register page too,
+    // so a brand-new user can sign up and still land straight in the game.
+    const [authSuffix, setAuthSuffix] = useState('');
+    useEffect(() => { setAuthSuffix(window.location.search); }, []);
+
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         const errs: { email?: string; password?: string } = {};
@@ -44,7 +49,9 @@ export default function LoginPage() {
         try {
             const res = await authApi.login({ email, password });
             login(res.data.user, res.data.token);
-            router.push('/dashboard');
+            // Return to the page that bounced them here (e.g. a shared game link).
+            const redirect = new URLSearchParams(window.location.search).get('redirect');
+            router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
         } catch (err: any) {
             const msg = err?.response?.data?.message || 'Email hoặc mật khẩu không đúng';
             setErrors({ general: msg });
@@ -200,7 +207,7 @@ export default function LoginPage() {
             {/* Register link */}
             <div className="text-center py-8">
                 <span className="text-muted-foreground text-sm">Chưa có tài khoản? </span>
-                <Link href="/auth/register" className="text-primary font-semibold text-sm hover:underline">
+                <Link href={`/auth/register${authSuffix}`} className="text-primary font-semibold text-sm hover:underline">
                     Đăng ký ngay
                 </Link>
             </div>

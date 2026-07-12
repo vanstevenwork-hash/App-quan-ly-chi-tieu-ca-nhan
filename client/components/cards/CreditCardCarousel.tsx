@@ -184,8 +184,9 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                         </span>
                     )}
                 </div>
-                <Link href="/accounts" className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 px-2.5 py-1 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-all tracking-tight">
-                    Xem tất cả
+                <Link href="/accounts" aria-label="Xem tất cả"
+                    className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-white/10 bg-indigo-50 dark:bg-slate-900/60 shadow-sm hover:bg-indigo-100 dark:hover:bg-slate-800/70 transition-all">
+                    <ActionIcon type="arrowRight" size={16} tile={false} color="currentColor" />
                 </Link>
             </div>
             <div className="flex gap-4 overflow-x-auto pb-4 snap-x pr-6"

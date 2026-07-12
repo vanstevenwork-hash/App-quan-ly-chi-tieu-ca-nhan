@@ -298,6 +298,8 @@ export default function GameMatchPage() {
     const [rematchRequested, setRematchRequested] = useState(false);
     const [rulesOpen, setRulesOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
+    const [waitingRoom, setWaitingRoom] = useState<{ joinCode?: string } | null>(null);
+    const [linkCopied, setLinkCopied] = useState(false);
     const lastMoveSignatureRef = useRef<string | null>(null);
     const { user } = useAuthStore();
 
@@ -309,6 +311,14 @@ export default function GameMatchPage() {
             .then(res => {
                 const match = res.data?.data;
                 if (match?.status === 'pending_invite') {
+                    // Open room (has joinCode): sit in a waiting room, connect the
+                    // socket, and flip to the board the moment someone joins via
+                    // the link and the game auto-starts (server emits match:refresh).
+                    if (match.joinCode) {
+                        setWaitingRoom({ joinCode: match.joinCode });
+                        connect(matchId);
+                        return;
+                    }
                     setLoadError('Ván đấu chưa bắt đầu — chờ đối thủ chấp nhận lời mời');
                     return;
                 }
@@ -347,6 +357,24 @@ export default function GameMatchPage() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [errorMessage, clearError]);
+
+    // A room that started from the waiting-room path never fetched player names
+    // (the join happened after mount) — backfill them once the game goes live.
+    useEffect(() => {
+        if (!matchState || Object.keys(playerNames).length > 0) return;
+        gameMatchesApi.getById(matchId)
+            .then(res => {
+                const players = ((res.data?.data?.players || []) as unknown[]).filter(
+                    (p): p is MatchPlayerSummary => typeof p === 'object' && p !== null && '_id' in p && 'name' in p
+                );
+                if (players.length === 0) return;
+                setPlayerNames(Object.fromEntries(players.map(p => [p._id, p.name])));
+                const opp = players.find(p => p._id !== matchState.youAre);
+                if (opp) setOpponentName(opp.name);
+            })
+            .catch(() => { /* names are cosmetic — ignore */ });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [matchState, matchId]);
 
     useEffect(() => { setSelectedIds([]); }, [matchState?.turnUserId, matchState?.lastPlayBy]);
 
@@ -481,6 +509,51 @@ export default function GameMatchPage() {
             <div className="min-h-screen flex flex-col items-center justify-center gap-3 px-6 text-center">
                 <p className="text-sm text-slate-400">{loadError}</p>
                 <button onClick={() => router.push('/games')} className="text-sm font-bold text-indigo-600">Quay lại</button>
+            </div>
+        );
+    }
+
+    // Waiting room: open room created via "Share link", nobody has joined yet.
+    if (waitingRoom && !matchState) {
+        const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/games/join/${waitingRoom.joinCode}`;
+        const copyLink = async () => {
+            try { await navigator.clipboard.writeText(shareUrl); setLinkCopied(true); toast.success('Đã copy link'); setTimeout(() => setLinkCopied(false), 2000); }
+            catch { toast.error('Không copy được, hãy copy thủ công'); }
+        };
+        const shareLink = async () => {
+            if (navigator.share) { try { await navigator.share({ title: 'Mời chơi bài', text: 'Vào chơi bài với mình nhé!', url: shareUrl }); } catch { /* cancelled */ } }
+            else copyLink();
+        };
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center bg-[#0c0819] text-white">
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_30%_10%,rgba(124,58,237,0.3),transparent_55%)]" />
+                <div className="relative flex flex-col items-center gap-2">
+                    <div className="text-5xl">🃏</div>
+                    <h1 className="text-xl font-black">Phòng đã sẵn sàng</h1>
+                    <p className="text-sm text-white/50">Gửi link cho bạn bè — ai mở link vào là bắt đầu chơi ngay.</p>
+                </div>
+
+                <div className="relative w-full max-w-sm space-y-3">
+                    <div className="flex items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.06] px-3 py-3">
+                        <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold text-white/70">{shareUrl}</span>
+                        <button onClick={copyLink} className="flex-shrink-0 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-black text-white active:scale-95">
+                            {linkCopied ? 'Đã copy' : 'Copy'}
+                        </button>
+                    </div>
+                    <button
+                        onClick={shareLink}
+                        className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#F5CE62] to-[#DDA72C] py-3.5 text-[15px] font-black text-[#3a2a05] shadow-[0_14px_34px_rgba(240,194,75,0.3)] active:scale-[0.98]"
+                    >
+                        🔗 Chia sẻ link mời
+                    </button>
+                </div>
+
+                <div className="relative flex items-center gap-2 text-white/45">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+                    <span className="text-xs font-bold">Đang chờ người chơi vào phòng…</span>
+                </div>
+
+                <button onClick={() => { disconnect(); router.push('/games'); }} className="relative text-xs font-bold text-white/40">Hủy phòng</button>
             </div>
         );
     }

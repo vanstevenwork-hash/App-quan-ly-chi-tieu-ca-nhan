@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/useStore';
 
 // (app)/* routes render with zero protection today — anyone (or a stale
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/useStore';
 // "/" -> "/auth/login" redirect entirely.
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
     const router = useRouter();
+    const pathname = usePathname();
     const isAuthenticated = useAuthStore(s => s.isAuthenticated);
     const [mounted, setMounted] = useState(false);
 
@@ -18,9 +19,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (mounted && !isAuthenticated) {
-            router.replace('/auth/login');
+            // Preserve where they were headed (e.g. a shared /games/join/<code>
+            // link) so login can drop them right back there.
+            const search = typeof window !== 'undefined' ? window.location.search : '';
+            const dest = `${pathname || ''}${search}`;
+            const isDefault = !pathname || pathname === '/dashboard';
+            router.replace(isDefault ? '/auth/login' : `/auth/login?redirect=${encodeURIComponent(dest)}`);
         }
-    }, [mounted, isAuthenticated, router]);
+    }, [mounted, isAuthenticated, router, pathname]);
 
     if (!mounted || !isAuthenticated) {
         return (
