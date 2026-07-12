@@ -50,7 +50,10 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
     card: Card; idx: number; bankLogoUrl?: string;
     onEdit: () => void; onDelete: () => void; onPay: () => void;
 }) {
-    const usedPct = card.creditLimit > 0 ? Math.min((card.balance / card.creditLimit) * 100, 100) : 0;
+    const isPooled = card.sharedLimit && (card.sharedGroupSize ?? 1) > 1;
+    const effLimit = isPooled ? (card.effectiveCreditLimit ?? card.creditLimit) : card.creditLimit;
+    const effBalance = isPooled ? (card.groupBalance ?? card.balance) : card.balance;
+    const usedPct = effLimit > 0 ? Math.min((effBalance / effLimit) * 100, 100) : 0;
     const dueDays = daysUntilPayment(card.paymentDueDay);
     const isUrgent = dueDays !== null && dueDays <= 5;
     const ts = cardTextStyle(card.color);
@@ -134,11 +137,11 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                 )}
             </div>
 
-            {card.creditLimit > 0 && (
+            {effLimit > 0 && (
                 <>
                     <div className="flex justify-between text-[10px] mb-1.5" style={{ color: ts.subtext }}>
-                        <span>Đã dùng {usedPct.toFixed(0)}%</span>
-                        <span>Hạn mức:<span className="text-base ml-0.5 font-bold">{fmtShort(card.creditLimit)}</span></span>
+                        <span>Đã dùng {usedPct.toFixed(0)}%{isPooled ? ' 🔗' : ''}</span>
+                        <span>Hạn mức:<span className="text-base ml-0.5 font-bold">{fmtShort(effLimit)}</span></span>
                     </div>
                     <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-2">
                         <div className="h-full rounded-full transition-all"

@@ -165,7 +165,12 @@ export default function CardDetailPage() {
         );
     }
 
-    const usedPct = card.creditLimit > 0 ? Math.min((card.balance / card.creditLimit) * 100, 100) : 0;
+    // When this card shares a limit with sibling cards of the same bank, the
+    // real cap/usage is the pooled group total, not this card's own fields.
+    const isPooled = card.sharedLimit && (card.sharedGroupSize ?? 1) > 1;
+    const effLimit = isPooled ? (card.effectiveCreditLimit ?? card.creditLimit) : card.creditLimit;
+    const effBalance = isPooled ? (card.groupBalance ?? card.balance) : card.balance;
+    const usedPct = effLimit > 0 ? Math.min((effBalance / effLimit) * 100, 100) : 0;
     const dueDays = daysUntilPayment(card.paymentDueDay);
     const isUrgent = dueDays !== null && dueDays <= 5;
     const ts = cardTextStyle(card.color);
@@ -235,16 +240,21 @@ export default function CardDetailPage() {
                         )}
                     </div>
 
-                    {isCredit && card.creditLimit > 0 && (
+                    {isCredit && effLimit > 0 && (
                         <>
                             <div className="flex justify-between text-[11px] mb-1.5" style={{ color: ts.subtext }}>
-                                <span>Đã dùng {usedPct.toFixed(0)}%</span>
-                                <span>Hạn mức: <strong className="text-sm">{fmtShort(card.creditLimit)}</strong></span>
+                                <span>Đã dùng {usedPct.toFixed(0)}%{isPooled ? ' (chung hạn mức)' : ''}</span>
+                                <span>Hạn mức: <strong className="text-sm">{fmtShort(effLimit)}</strong></span>
                             </div>
                             <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
                                 <div className="h-full rounded-full transition-all"
                                     style={{ width: `${usedPct}%`, backgroundColor: usedPct > 80 ? '#FCA5A5' : ts.subtext }} />
                             </div>
+                            {isPooled && (
+                                <p className="text-[10px] mt-1.5" style={{ color: ts.subtext }}>
+                                    🔗 Chung hạn mức với {(card.sharedGroupSize ?? 1) - 1} thẻ khác cùng ngân hàng
+                                </p>
+                            )}
                         </>
                     )}
                 </div>

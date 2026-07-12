@@ -118,6 +118,18 @@ export const gameMatchesApi = {
     getById: (id: string) => api.get(`/game-matches/${id}`),
 };
 
+// Expense Shares (chia bill cho 1 giao dịch mình đã trả)
+export const expenseSharesApi = {
+    create: (data: { transactionId: string; receiveCardId: string; participants: { name: string; amount: number }[] }) =>
+        api.post('/expense-shares', data),
+    getByTransaction: (transactionId: string) => api.get(`/expense-shares/transaction/${transactionId}`),
+    update: (id: string, data: { participants?: { name: string; amount: number; status?: string }[]; receiveCardId?: string }) =>
+        api.put(`/expense-shares/${id}`, data),
+    markParticipantPaid: (id: string, participantId: string) =>
+        api.patch(`/expense-shares/${id}/participants/${participantId}/pay`),
+    delete: (id: string) => api.delete(`/expense-shares/${id}`),
+};
+
 // Card Shares
 export const cardSharesApi = {
     invite: (cardId: string, email: string) => api.post('/card-shares/invite', { cardId, email }),

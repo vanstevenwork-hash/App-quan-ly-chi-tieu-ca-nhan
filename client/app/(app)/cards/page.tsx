@@ -64,7 +64,7 @@ function daysUntilPayment(paymentDueDay: number): number | null {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CardsPage() {
-    const { cards, totalDebt, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch: refetchCards } = useCards();
+    const { cards, totalDebt, totalCreditLimit, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch: refetchCards } = useCards();
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const { transactions, refetch: refetchTx } = useTransactions();
     const { banks: fetchedBanks, fetchBanks } = useBanks();
@@ -252,7 +252,7 @@ export default function CardsPage() {
                 <PaymentAlertsCard
                     paymentAlerts={paymentAlerts}
                     creditCardsCount={creditCards.length}
-                    totalCreditLimit={creditCards.reduce((s, c) => s + c.creditLimit, 0)}
+                    totalCreditLimit={totalCreditLimit}
                 />
 
                 {/* ── Cashback section ─────────────────────────── */}

@@ -1,0 +1,26 @@
+const mongoose = require('mongoose');
+
+// One "chia bill" record per transaction: the list of people who owe the
+// payer their portion, plus which of the payer's accounts collects the
+// transfer. There is no per-participant login/token — the payer fills this
+// in, gets a receipt-style view to screenshot and send into a group chat,
+// and manually marks people paid after checking their bank statement.
+const participantSchema = new mongoose.Schema({
+    name: { type: String, required: true, trim: true },
+    amount: { type: Number, required: true, min: 0 },
+    status: { type: String, enum: ['pending', 'paid'], default: 'pending' },
+    paidAt: { type: Date, default: null },
+}, { _id: true });
+
+const expenseShareSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    transactionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction', required: true, unique: true },
+    totalAmount: { type: Number, required: true }, // snapshot of the transaction amount at share time
+    receiveCardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card', required: true },
+    participants: {
+        type: [participantSchema],
+        validate: { validator: v => v.length > 0, message: 'Cần ít nhất 1 người tham gia' },
+    },
+}, { timestamps: true });
+
+module.exports = mongoose.model('ExpenseShare', expenseShareSchema);

@@ -13,6 +13,19 @@ export interface Card {
     cardNetwork: 'visa' | 'mastercard' | 'jcb' | 'amex' | 'napas' | 'other' | '';
     balance: number;
     creditLimit: number;
+    // True if this card pools its limit with sibling credit cards of the
+    // same bank that also opt in (see server/controllers/cardController.js
+    // attachSharedLimitInfo). effectiveCreditLimit/groupBalance/sharedGroupSize
+    // are derived server-side per request — fall back to creditLimit/balance/1
+    // when absent (e.g. mock data).
+    sharedLimit: boolean;
+    effectiveCreditLimit?: number;
+    groupBalance?: number;
+    sharedGroupSize?: number;
+    // Full account number + a saved QR code image — only used to render the
+    // "chia bill" receipt, never shown in the regular card list UI.
+    receiveAccountNumber: string;
+    receiveQrImage: string;
     color: string;
     bankColor: string;
     isDefault: boolean;
@@ -40,6 +53,9 @@ export interface CardFormData {
     cardNetwork: 'visa' | 'mastercard' | 'jcb' | 'amex' | 'napas' | 'other' | '';
     balance: number;
     creditLimit: number;
+    sharedLimit: boolean;
+    receiveAccountNumber: string;
+    receiveQrImage: string;
     color: string;
     bankColor: string;
     isDefault: boolean;
@@ -63,6 +79,7 @@ interface CardStore {
     cards: Card[];
     totalBalance: number;
     totalDebt: number;
+    totalCreditLimit: number;
     loading: boolean;
     error: string | null;
     hasFetched: boolean;
@@ -78,10 +95,11 @@ export const useCardStore = create<CardStore>((set, get) => ({
     cards: [],
     totalBalance: 0,
     totalDebt: 0,
+    totalCreditLimit: 0,
     loading: false,
     error: null,
     hasFetched: false,
-    reset: () => set({ cards: [], totalBalance: 0, totalDebt: 0, loading: false, error: null, hasFetched: false }),
+    reset: () => set({ cards: [], totalBalance: 0, totalDebt: 0, totalCreditLimit: 0, loading: false, error: null, hasFetched: false }),
     fetch: async (force = false) => {
         if (get().loading || (get().hasFetched && !force)) return;
         set({ loading: true, error: null });
@@ -91,6 +109,7 @@ export const useCardStore = create<CardStore>((set, get) => ({
                 cards: res.data?.data || [],
                 totalBalance: res.data?.totalBalance || 0,
                 totalDebt: res.data?.totalDebt || 0,
+                totalCreditLimit: res.data?.totalCreditLimit || 0,
                 hasFetched: true,
                 loading: false
             });
@@ -101,7 +120,8 @@ export const useCardStore = create<CardStore>((set, get) => ({
                 const { mockCards } = await import('@/lib/mockData');
                 const totalBalance = mockCards.filter(c => c.cardType !== 'credit').reduce((s, c) => s + c.balance, 0);
                 const totalDebt = mockCards.filter(c => c.cardType === 'credit').reduce((s, c) => s + c.balance, 0);
-                set({ cards: mockCards as any, totalBalance, totalDebt, hasFetched: true, loading: false });
+                const totalCreditLimit = mockCards.filter(c => c.cardType === 'credit').reduce((s, c) => s + c.creditLimit, 0);
+                set({ cards: mockCards as any, totalBalance, totalDebt, totalCreditLimit, hasFetched: true, loading: false });
             } else {
                 set({ error: 'Không thể tải danh sách thẻ', loading: false });
             }
@@ -114,7 +134,10 @@ export const useCardStore = create<CardStore>((set, get) => ({
     },
     updateCard: async (id: string, data: Partial<CardFormData>) => {
         const res = await cardsApi.update(id, data);
-        set({ cards: get().cards.map(c => c._id === id ? { ...c, ...res.data.data } : c) });
+        // A shared-limit edit can change derived group fields (effectiveCreditLimit,
+        // groupBalance) on sibling cards too — refetch the whole list rather than
+        // patching just this one card in place.
+        await get().fetch(true);
         return res.data?.data;
     },
     deleteCard: async (id: string) => {
@@ -140,6 +163,7 @@ export function useCards() {
         cards: store.cards,
         totalBalance: store.totalBalance,
         totalDebt: store.totalDebt,
+        totalCreditLimit: store.totalCreditLimit,
         loading: store.loading,
         error: store.error,
         createCard: store.createCard,

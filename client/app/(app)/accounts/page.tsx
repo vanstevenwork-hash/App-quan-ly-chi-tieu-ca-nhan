@@ -104,7 +104,10 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
 }) {
     const gradient = getCardGradient(card, idx);
     const ts = cardTextStyle(card.color);
-    const usedPct = card.creditLimit > 0 ? (card.balance / card.creditLimit) * 100 : 0;
+    const isPooled = card.sharedLimit && (card.sharedGroupSize ?? 1) > 1;
+    const effLimit = isPooled ? (card.effectiveCreditLimit ?? card.creditLimit) : card.creditLimit;
+    const effBalance = isPooled ? (card.groupBalance ?? card.balance) : card.balance;
+    const usedPct = effLimit > 0 ? (effBalance / effLimit) * 100 : 0;
     const dueDays = card.paymentDueDay
         ? (() => {
             const now = new Date();
@@ -166,11 +169,11 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
                     </div>
                 )}
             </div>
-            {card.creditLimit > 0 && (
+            {effLimit > 0 && (
                 <>
                     <div className="flex justify-between text-[10px] mb-1" style={{ color: ts.subtext }}>
-                        <span>Đã dùng {usedPct.toFixed(0)}%</span>
-                        <span>Hạn mức: {fmtShort(card.creditLimit)}</span>
+                        <span>Đã dùng {usedPct.toFixed(0)}%{isPooled ? ' (chung hạn mức)' : ''}</span>
+                        <span>Hạn mức: {fmtShort(effLimit)}</span>
                     </div>
                     <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all"

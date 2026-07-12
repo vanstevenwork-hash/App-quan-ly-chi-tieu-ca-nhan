@@ -12,6 +12,7 @@ import { useCards } from '@/hooks/useCards';
 import { toast } from 'sonner';
 import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 import Image from 'next/image';
+import ImageUpload from '@/components/ImageUpload';
 
 const CARD_TYPES = [
     { value: 'credit', label: 'Thẻ tín dụng', iconType: 'creditCard', color: '#6C63FF', desc: 'Thanh toán sau, có hạn mức' },
@@ -58,7 +59,8 @@ interface CardFormModalProps {
 
 const EMPTY: CardFormData = {
     bankName: '', bankShortName: '', cardType: 'debit',
-    cardNumber: '', cardHolder: '', cardNetwork: '', balance: 0, creditLimit: 0,
+    cardNumber: '', cardHolder: '', cardNetwork: '', balance: 0, creditLimit: 0, sharedLimit: false,
+    receiveAccountNumber: '', receiveQrImage: '',
     color: '#6C63FF', bankColor: '#1B4FD8', isDefault: false,
     interestRate: 0, depositDate: '', maturityDate: '', term: 12,
     paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, expirationDate: '', note: '',
@@ -72,7 +74,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
     const [saving, setSaving] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const { banks: fetchedBanks, fetchBanks } = useBanks();
-    const { deleteCard } = useCards();
+    const { cards: allCards, deleteCard } = useCards();
     const [searchBank, setSearchBank] = useState('');
 
     useEffect(() => {
@@ -91,6 +93,9 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                     cardNetwork: editCard.cardNetwork || '',
                     balance: editCard.balance,
                     creditLimit: editCard.creditLimit,
+                    sharedLimit: editCard.sharedLimit || false,
+                    receiveAccountNumber: editCard.receiveAccountNumber || '',
+                    receiveQrImage: editCard.receiveQrImage || '',
                     color: editCard.color,
                     bankColor: editCard.bankColor,
                     isDefault: editCard.isDefault,
@@ -140,7 +145,9 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
             if (!form.depositDate) errs.depositDate = 'Vui lòng nhập ngày gửi';
             if (!form.interestRate || form.interestRate <= 0) errs.interestRate = 'Lãi suất phải lớn hơn 0';
         } else {
-            if (isCredit && form.creditLimit > 0 && form.balance > form.creditLimit)
+            // Skip this check when sharing a limit — the real cap is the max
+            // across the whole bank group, not this single card's own field.
+            if (isCredit && !form.sharedLimit && form.creditLimit > 0 && form.balance > form.creditLimit)
                 errs.balance = 'Dư nợ không được lớn hơn hạn mức';
             if (isCredit && (form.statementDay < 0 || form.statementDay > 31))
                 errs.statementDay = 'Ngày sao kê phải từ 1–31';
@@ -174,6 +181,17 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
     const isEdit = !!editCard;
     const isSavings = form.cardType === 'savings';
     const isCredit = form.cardType === 'credit';
+
+    // Other credit cards from the same bank that already have sharing on —
+    // shown as a preview of who this card would pool its limit with.
+    const sharedSiblings = (isCredit && form.sharedLimit && form.bankShortName)
+        ? allCards.filter(c =>
+            c._id !== editCard?._id &&
+            c.cardType === 'credit' &&
+            c.sharedLimit &&
+            (c.bankShortName || c.bankName) === form.bankShortName
+        )
+        : [];
 
     const handleDelete = async () => {
         if (!editCard) return;
@@ -615,6 +633,26 @@ duration-200
                                             placeholder="50.000.000"
                                             className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                     </div>
+
+                                    {/* Shared limit toggle */}
+                                    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <div onClick={() => set('sharedLimit', !form.sharedLimit)}
+                                                className={cn('w-12 h-7 rounded-full transition-colors relative flex-shrink-0', form.sharedLimit ? 'bg-[#7f19e6]' : 'bg-slate-200 dark:bg-slate-700')}>
+                                                <div className={cn('w-5 h-5 bg-white rounded-full absolute top-1 transition-all shadow-sm', form.sharedLimit ? 'left-6' : 'left-1')} />
+                                            </div>
+                                            <span className="text-sm font-bold text-[#000000] dark:text-white">Chung hạn mức cùng ngân hàng</span>
+                                        </label>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            Bật nếu ngân hàng này cấp chung 1 hạn mức cho nhiều thẻ (vd: thẻ chính + thẻ phụ). Hạn mức hiển thị sẽ lấy giá trị cao nhất trong các thẻ cùng ngân hàng có bật switch này.
+                                        </p>
+                                        {form.sharedLimit && sharedSiblings.length > 0 && (
+                                            <p className="text-xs text-[#7f19e6] dark:text-purple-400 font-semibold mt-2">
+                                                Sẽ chung hạn mức với: {sharedSiblings.map(c => c.bankName).join(', ')}
+                                            </p>
+                                        )}
+                                    </div>
+
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ngày sao kê</p>
@@ -695,6 +733,32 @@ duration-200
                                     <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ghi chú</p>
                                     <Input value={form.note} onChange={e => set('note', e.target.value)}
                                         placeholder="Ghi chú tuỳ ý..." className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                </div>
+                            )}
+
+                            {/* Receive info for splitting bills (chia bill) — separate from the
+                                display-only 4-digit cardNumber, only used to render a QR receipt */}
+                            {!isSavings && (
+                                <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-1">Thông tin nhận tiền (chia bill)</p>
+                                    <p className="text-xs text-slate-400 mb-3">Dùng khi bạn chia bill một giao dịch — lưu 1 lần, dùng lại cho các lần chia sau.</p>
+                                    <div className="flex gap-3 items-start">
+                                        <ImageUpload
+                                            currentUrl={form.receiveQrImage}
+                                            onUpload={url => set('receiveQrImage', url)}
+                                            folder="chi_tieu/qr"
+                                            shape="square"
+                                            size={72}
+                                            placeholder="QR"
+                                        />
+                                        <div className="flex-1">
+                                            <p className="text-xs font-bold text-[#000000] dark:text-white mb-1.5">Số tài khoản đầy đủ</p>
+                                            <Input value={form.receiveAccountNumber}
+                                                onChange={e => set('receiveAccountNumber', e.target.value.replace(/\s/g, ''))}
+                                                placeholder="VD: 0123456789"
+                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
+import ExpenseShareModal from '@/components/ExpenseShareModal';
 
 interface Transaction {
     _id: string;
@@ -36,6 +37,7 @@ interface TransactionDetailModalProps {
 
 export default function TransactionDetailModal({ transaction, open, onClose, onEdit, onDelete }: TransactionDetailModalProps) {
     const [showLightbox, setShowLightbox] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
     // Bank logo URLs 404 for some banks — fall back to the wallet glyph instead
     // of a broken <img>. Reset per transaction so a past failure doesn't stick.
     const [logoFailed, setLogoFailed] = useState(false);
@@ -233,6 +235,15 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
 
                 {/* Bottom Actions — one primary button, delete as a plain text link below (no "..." menu) */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 pb-4 bg-white/90 dark:bg-[#0F111A]/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 space-y-2">
+                    {!isIncome && (
+                        <button
+                            onClick={() => setShowShareModal(true)}
+                            className="w-full flex items-center justify-center h-11 gap-2 rounded-xl border border-[#7f19e6]/30 bg-[#7f19e6]/8 text-[#7f19e6] text-sm font-bold active:scale-[0.98] transition-all"
+                        >
+                            <ActionIcon type="user" size={16} tile={false} color="currentColor" />
+                            Chia sẻ hoá đơn
+                        </button>
+                    )}
                     <button
                         onClick={() => onEdit?.(transaction)}
                         className="w-full flex items-center justify-center h-12 gap-2 rounded-xl bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white text-sm font-bold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.98] transition-all"
@@ -247,6 +258,12 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                         Xóa giao dịch này
                     </button>
                 </div>
+
+                <ExpenseShareModal
+                    open={showShareModal}
+                    onClose={() => setShowShareModal(false)}
+                    transaction={transaction}
+                />
             </DialogContent>
         </Dialog>
     );

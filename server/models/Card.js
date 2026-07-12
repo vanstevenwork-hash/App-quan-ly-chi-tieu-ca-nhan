@@ -14,6 +14,16 @@ const cardSchema = new mongoose.Schema({
     cardNetwork: { type: String, enum: ['visa', 'mastercard', 'jcb', 'amex', 'napas', 'other', ''], default: '' },
     balance: { type: Number, default: 0 },
     creditLimit: { type: Number, default: 0 },
+    // When true, this card pools its credit limit with sibling credit cards
+    // of the same bank (same userId + bankShortName) that also have this on —
+    // common for banks that issue a main + supplementary card under one
+    // shared limit. The effective limit becomes the max across the group.
+    sharedLimit: { type: Boolean, default: false },
+    // Full bank account/card number + a saved QR code image, used only to
+    // render the "chia bill" receipt (ExpenseShare) — never shown in the
+    // regular card list UI (which only ever shows the last-4 cardNumber).
+    receiveAccountNumber: { type: String, default: '' },
+    receiveQrImage: { type: String, default: '' },
     color: { type: String, default: '#6C63FF' },
     bankColor: { type: String, default: '#1B4FD8' },
     isDefault: { type: Boolean, default: false },

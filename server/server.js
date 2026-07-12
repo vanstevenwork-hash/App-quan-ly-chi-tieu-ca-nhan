@@ -46,6 +46,7 @@ app.use('/api/goals', require('./routes/goals'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/cards', require('./routes/cards'));
 app.use('/api/card-shares', require('./routes/cardShares'));
+app.use('/api/expense-shares', require('./routes/expenseShares'));
 app.use('/api/wealth', require('./routes/wealth'));
 app.use('/api/banks', require('./routes/banks'));
 app.use('/api/upload', require('./routes/upload'));

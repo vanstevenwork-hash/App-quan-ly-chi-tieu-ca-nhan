@@ -1,18 +1,67 @@
 const Card = require('../models/Card');
 const { createNotification } = require('./notificationController');
 
+// Groups credit cards that have sharedLimit=true by bank (bankShortName ||
+// bankName) and attaches derived fields: effectiveCreditLimit (max limit in
+// the group), groupBalance (sum of debt across the group), sharedGroupSize
+// (how many cards are pooled together, including itself). Cards not opted
+// into sharing — or alone in their group — just mirror their own values.
+function attachSharedLimitInfo(cards) {
+    const groups = new Map();
+    cards.forEach(c => {
+        if (c.cardType !== 'credit' || !c.sharedLimit) return;
+        const key = c.bankShortName || c.bankName;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(c);
+    });
+
+    const infoByCardId = new Map();
+    groups.forEach(group => {
+        const effectiveCreditLimit = Math.max(...group.map(c => c.creditLimit || 0));
+        const groupBalance = group.reduce((sum, c) => sum + (c.balance || 0), 0);
+        group.forEach(c => {
+            infoByCardId.set(c._id.toString(), { effectiveCreditLimit, groupBalance, sharedGroupSize: group.length });
+        });
+    });
+
+    return cards.map(c => {
+        const info = infoByCardId.get(c._id.toString());
+        const obj = c.toObject ? c.toObject() : c;
+        return {
+            ...obj,
+            effectiveCreditLimit: info ? info.effectiveCreditLimit : obj.creditLimit,
+            groupBalance: info ? info.groupBalance : obj.balance,
+            sharedGroupSize: info ? info.sharedGroupSize : 1,
+        };
+    });
+}
+
 // @desc  Get all cards for user
 // @route GET /api/cards
 exports.getAll = async (req, res) => {
     try {
-        const cards = await Card.find({ userId: req.user.id, isActive: true }).sort({ isDefault: -1, createdAt: -1 });
+        const rawCards = await Card.find({ userId: req.user.id, isActive: true }).sort({ isDefault: -1, createdAt: -1 });
+        const cards = attachSharedLimitInfo(rawCards);
         const totalBalance = cards
             .filter(c => c.cardType !== 'credit')
             .reduce((sum, c) => sum + c.balance, 0);
         const totalDebt = cards
             .filter(c => c.cardType === 'credit')
             .reduce((sum, c) => sum + c.balance, 0);
-        res.json({ success: true, data: cards, totalBalance, totalDebt });
+        // Dedupe shared groups so a pooled limit isn't counted once per card.
+        const countedGroups = new Set();
+        const totalCreditLimit = cards
+            .filter(c => c.cardType === 'credit')
+            .reduce((sum, c) => {
+                if (c.sharedLimit && c.sharedGroupSize > 1) {
+                    const key = c.bankShortName || c.bankName;
+                    if (countedGroups.has(key)) return sum;
+                    countedGroups.add(key);
+                    return sum + c.effectiveCreditLimit;
+                }
+                return sum + (c.creditLimit || 0);
+            }, 0);
+        res.json({ success: true, data: cards, totalBalance, totalDebt, totalCreditLimit });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -28,7 +77,8 @@ exports.create = async (req, res) => {
             // Savings fields
             interestRate, depositDate, maturityDate, term,
             // Credit fields
-            paymentDueDay, statementDay, cashbackRate, cashbackCap,
+            paymentDueDay, statementDay, cashbackRate, cashbackCap, sharedLimit,
+            receiveAccountNumber, receiveQrImage,
             note,
         } = req.body;
 
@@ -53,6 +103,9 @@ exports.create = async (req, res) => {
             statementDay: statementDay || 0,
             cashbackRate: cashbackRate || 0,
             cashbackCap: cashbackCap || 0,
+            sharedLimit: sharedLimit || false,
+            receiveAccountNumber: receiveAccountNumber || '',
+            receiveQrImage: receiveQrImage || '',
             note: note || '',
         });
         // Notification for card/savings creation
@@ -93,7 +146,8 @@ exports.update = async (req, res) => {
             'bankName', 'bankShortName', 'cardType', 'cardHolder',
             'balance', 'creditLimit', 'color', 'bankColor',
             'interestRate', 'depositDate', 'maturityDate', 'term',
-            'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'note',
+            'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'sharedLimit',
+            'receiveAccountNumber', 'receiveQrImage', 'note',
         ];
         fields.forEach(f => { if (req.body[f] !== undefined) card[f] = req.body[f]; });
         if (req.body.cardNumber) card.cardNumber = String(req.body.cardNumber).slice(-4);
