@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 type MatchPlayerSummary = {
     _id: string;
     name: string;
+    avatar?: string;
 };
 
 const QUICK_MESSAGES = ['Hay lắm', 'Đợi chút', 'Tới đi', 'Mạnh tay quá'];
@@ -298,9 +299,11 @@ export default function GameMatchPage() {
     const [rematchRequested, setRematchRequested] = useState(false);
     const [rulesOpen, setRulesOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
-    const [waitingRoom, setWaitingRoom] = useState<{ joinCode?: string } | null>(null);
+    const [waitingRoom, setWaitingRoom] = useState<{ joinCode?: string; hostId?: string; gameType?: 'tien_len' | 'phom' } | null>(null);
     const [roomCount, setRoomCount] = useState<{ joined: number; max: number }>({ joined: 1, max: 2 });
+    const [roomPlayers, setRoomPlayers] = useState<MatchPlayerSummary[]>([]);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [starting, setStarting] = useState(false);
     const lastMoveSignatureRef = useRef<string | null>(null);
     const { user } = useAuthStore();
 
@@ -316,8 +319,11 @@ export default function GameMatchPage() {
                     // socket, and flip to the board the moment someone joins via
                     // the link and the game auto-starts (server emits match:refresh).
                     if (match.joinCode) {
-                        setWaitingRoom({ joinCode: match.joinCode });
+                        setWaitingRoom({ joinCode: match.joinCode, hostId: match.hostId, gameType: match.gameType });
                         setRoomCount({ joined: match.players?.length || 1, max: match.settings?.maxPlayers || 2 });
+                        setRoomPlayers(((match.players || []) as unknown[]).filter(
+                            (p): p is MatchPlayerSummary => typeof p === 'object' && p !== null && '_id' in p && 'name' in p
+                        ));
                         connect(matchId);
                         return;
                     }
@@ -368,7 +374,11 @@ export default function GameMatchPage() {
             gameMatchesApi.getById(matchId)
                 .then(res => {
                     const m = res.data?.data;
-                    if (m) setRoomCount({ joined: m.players?.length || 1, max: m.settings?.maxPlayers || 2 });
+                    if (!m) return;
+                    setRoomCount({ joined: m.players?.length || 1, max: m.settings?.maxPlayers || 2 });
+                    setRoomPlayers(((m.players || []) as unknown[]).filter(
+                        (p): p is MatchPlayerSummary => typeof p === 'object' && p !== null && '_id' in p && 'name' in p
+                    ));
                 })
                 .catch(() => { /* transient — keep last known count */ });
         }, 2500);
@@ -487,6 +497,17 @@ export default function GameMatchPage() {
         router.push('/games');
     };
 
+    const handleStartNow = async () => {
+        if (starting) return;
+        setStarting(true);
+        try {
+            await gameMatchesApi.startNow(matchId);
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Không thể bắt đầu ngay');
+            setStarting(false);
+        }
+    };
+
     const handleRematch = async () => {
         if (rematchRequested) return;
         setRematchRequested(true);
@@ -530,7 +551,9 @@ export default function GameMatchPage() {
         );
     }
 
-    // Waiting room: open room created via "Share link", nobody has joined yet.
+    // Waiting room: an open room created via "Share link" — sit at the table
+    // (same felt/seat layout as the live game) until it fills up or the host
+    // starts it early, then it flips straight to the board.
     if (waitingRoom && !matchState) {
         const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/games/join/${waitingRoom.joinCode}`;
         const copyLink = async () => {
@@ -541,39 +564,163 @@ export default function GameMatchPage() {
             if (navigator.share) { try { await navigator.share({ title: 'Mời chơi bài', text: 'Vào chơi bài với mình nhé!', url: shareUrl }); } catch { /* cancelled */ } }
             else copyLink();
         };
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center gap-6 px-6 text-center bg-[#0c0819] text-white">
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_30%_10%,rgba(124,58,237,0.3),transparent_55%)]" />
-                <div className="relative flex flex-col items-center gap-2">
-                    <div className="text-5xl">🃏</div>
-                    <h1 className="text-xl font-black">Phòng đã sẵn sàng</h1>
-                    <p className="text-sm text-white/50">Gửi link cho bạn bè — đủ {roomCount.max} người là bắt đầu.</p>
-                    <span className="mt-1 rounded-full border border-amber-300/40 bg-amber-400/15 px-3 py-1 text-xs font-black text-amber-200">
-                        {roomCount.joined}/{roomCount.max} người
-                    </span>
-                </div>
+        const cancelRoom = () => { disconnect(); router.push('/games'); };
 
-                <div className="relative w-full max-w-sm space-y-3">
-                    <div className="flex items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.06] px-3 py-3">
-                        <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold text-white/70">{shareUrl}</span>
-                        <button onClick={copyLink} className="flex-shrink-0 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-black text-white active:scale-95">
-                            {linkCopied ? 'Đã copy' : 'Copy'}
+        const isPhomRoom = waitingRoom.gameType === 'phom';
+        const title = isPhomRoom ? 'PHỎM' : 'TIẾN LÊN MIỀN NAM';
+        const ruleName = isPhomRoom ? 'Phỏm' : 'Tiến lên miền Nam';
+        const isHost = waitingRoom.hostId === user?._id;
+        const full = roomCount.joined >= roomCount.max;
+
+        const me: MatchPlayerSummary | undefined =
+            roomPlayers.find(p => p._id === user?._id) || (user ? { _id: user._id, name: user.name } : undefined);
+        const others = roomPlayers
+            .filter(p => p._id !== user?._id)
+            .sort((a, b) => (b._id === waitingRoom.hostId ? 1 : 0) - (a._id === waitingRoom.hostId ? 1 : 0));
+
+        const POS: Record<string, string> = {
+            top: 'top-0 left-1/2 -translate-x-1/2',
+            bottom: 'bottom-0 left-1/2 -translate-x-1/2',
+            left: 'left-0 top-1/2 -translate-y-1/2',
+            right: 'right-0 top-1/2 -translate-y-1/2',
+        };
+        const OTHER_POS: Record<number, string[]> = { 2: ['top'], 3: ['left', 'right'], 4: ['top', 'left', 'right'] };
+        const otherPos = OTHER_POS[roomCount.max] || OTHER_POS[2];
+
+        const renderSeat = (posClass: string, player?: MatchPlayerSummary, key?: string) => {
+            const isHostSeat = !!player && player._id === waitingRoom.hostId;
+            const isYou = !!player && player._id === user?._id;
+            return (
+                <div key={key} className={cn('absolute flex w-[104px] flex-col items-center gap-1.5', posClass)}>
+                    {player ? (
+                        <>
+                            <div className="relative h-7 w-14">
+                                {[-16, 0, 16].map((r, i) => (
+                                    <div
+                                        key={i}
+                                        className="absolute left-1/2 top-0 h-9 w-6 origin-bottom rounded-[4px] border border-white/25 bg-gradient-to-br from-[#0e7a6e] to-[#04302f] shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+                                        style={{ transform: `translateX(-50%) rotate(${r}deg)` }}
+                                    >
+                                        <span className="absolute inset-0 flex items-center justify-center text-[9px] text-white/35">◆</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="relative">
+                                {isHostSeat && <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-lg leading-none">👑</span>}
+                                <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-teal-200/70 bg-slate-900 shadow-[0_0_20px_rgba(45,212,191,0.28)]">
+                                    {player.avatar
+                                        ? <img src={player.avatar} alt="" className="h-full w-full object-cover" />
+                                        : <span className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-700 to-black text-lg font-black text-white/75">{player.name.charAt(0).toUpperCase()}</span>}
+                                </div>
+                            </div>
+                            <p className="max-w-full truncate text-xs font-black text-white">{isYou ? 'Bạn' : player.name}</p>
+                            <span className="flex items-center gap-1 rounded-full border border-emerald-300/30 bg-emerald-400/12 px-2 py-0.5 text-[10px] font-black text-emerald-200">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> SẴN SÀNG
+                            </span>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/[0.04]">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/15 border-t-white/45" />
+                            </div>
+                            <p className="text-[11px] font-bold text-white/40">Đang chờ…</p>
+                        </>
+                    )}
+                </div>
+            );
+        };
+
+        return (
+            <div className="relative min-h-screen overflow-hidden bg-[#033d40] text-white">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(20,184,166,0.28),transparent_38%),radial-gradient(circle_at_20%_8%,rgba(45,212,191,0.16),transparent_26%),linear-gradient(180deg,#053f42_0%,#034247_45%,#012d35_100%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0,rgba(0,0,0,0.14)_65%,rgba(0,0,0,0.34)_100%)]" />
+
+                <div className="relative z-10 flex min-h-screen flex-col">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
+                        <button onClick={cancelRoom} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/10 backdrop-blur" aria-label="Rời phòng">
+                            <ActionIcon type="arrowLeft" size={22} tile={false} color="#fff" />
+                        </button>
+                        <span className="truncate px-2 text-base font-black uppercase tracking-wide text-white drop-shadow">{title}</span>
+                        <button onClick={() => setRulesOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-full border border-white/12 bg-white/10 backdrop-blur" aria-label="Luật chơi">
+                            <span className="text-xl font-black leading-none">?</span>
                         </button>
                     </div>
-                    <button
-                        onClick={shareLink}
-                        className="flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-b from-[#F5CE62] to-[#DDA72C] py-3.5 text-[15px] font-black text-[#3a2a05] shadow-[0_14px_34px_rgba(240,194,75,0.3)] active:scale-[0.98]"
-                    >
-                        🔗 Chia sẻ link mời
-                    </button>
+
+                    {/* Room-code pill */}
+                    <div className="mt-2 flex justify-center px-5">
+                        <div className="flex items-center gap-2 rounded-full border border-white/12 bg-black/25 px-4 py-1.5 text-xs font-bold text-white/70">
+                            <span>Mã phòng: <span className="font-black tracking-widest text-amber-200">{waitingRoom.joinCode}</span></span>
+                            <span className="h-1 w-1 rounded-full bg-white/30" />
+                            <span>Luật: {ruleName}</span>
+                        </div>
+                    </div>
+
+                    {/* Table with seats */}
+                    <div className="relative mx-auto my-4 w-full max-w-[380px] flex-1 px-6">
+                        <div className="absolute inset-x-4 inset-y-8 rounded-[46%] border-2 border-amber-300/25 bg-[radial-gradient(circle_at_50%_40%,rgba(20,184,166,0.22),transparent_62%)] shadow-[inset_0_0_60px_rgba(0,0,0,0.4),0_0_0_6px_rgba(0,0,0,0.15)]" />
+                        <span className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[62%] text-[120px] leading-none text-white/[0.04]">♠</span>
+
+                        {/* Center info */}
+                        <div className="absolute left-1/2 top-1/2 flex w-[64%] max-w-[230px] -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 text-center">
+                            <h2 className="text-lg font-black tracking-[0.22em] text-white/90">PHÒNG CHỜ</h2>
+                            <p className="text-[11px] font-semibold text-white/45">
+                                {full ? 'Tất cả đã sẵn sàng!' : `Vui lòng đợi đủ ${roomCount.max} người để bắt đầu`}
+                            </p>
+                            <div className="mt-1.5 w-full rounded-2xl border border-white/10 bg-black/30 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)]">
+                                <p className="flex items-center justify-center gap-1.5 text-[15px] font-black text-white">
+                                    <span>👥</span>
+                                    <span className="text-emerald-300">{roomCount.joined}</span>/<span>{roomCount.max}</span>
+                                    <span className="tracking-wide">NGƯỜI</span>
+                                </p>
+                                <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] font-bold text-white/55">
+                                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/15 border-t-white/50" />
+                                    {full ? 'Đang bắt đầu…' : 'Đang chờ thêm người…'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Seats: you at the bottom, others fill the rest */}
+                        {renderSeat(POS.bottom, me, 'me')}
+                        {otherPos.map((pos, i) => renderSeat(POS[pos], others[i], pos))}
+                    </div>
+
+                    {/* Controls */}
+                    <div className="px-5 pb-6" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
+                        <div className="mb-3 flex items-center gap-2 rounded-2xl border border-white/12 bg-white/[0.06] px-3 py-2.5">
+                            <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold text-white/70">{shareUrl}</span>
+                            <button onClick={copyLink} className="flex-shrink-0 rounded-xl bg-white/10 px-3 py-1.5 text-xs font-black text-white active:scale-95">
+                                {linkCopied ? 'Đã copy' : 'Copy'}
+                            </button>
+                        </div>
+                        {isHost ? (
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={shareLink}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/[0.06] py-3.5 text-sm font-black text-white active:scale-[0.98]"
+                                >
+                                    🔗 Mời
+                                </button>
+                                <button
+                                    onClick={handleStartNow}
+                                    disabled={starting || full || roomCount.joined < 2}
+                                    className="flex flex-[1.5] items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[#F5CE62] to-[#DDA72C] py-3.5 text-[15px] font-black text-[#3a2a05] shadow-[0_14px_34px_rgba(240,194,75,0.3)] active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
+                                >
+                                    {starting || full
+                                        ? 'Đang bắt đầu…'
+                                        : roomCount.joined < 2 ? 'Chờ thêm người' : '▶ Bắt đầu'}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] py-3.5 text-xs font-bold text-white/50">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/15 border-t-white/45" />
+                                Đang chờ chủ phòng bắt đầu…
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                <div className="relative flex items-center gap-2 text-white/45">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
-                    <span className="text-xs font-bold">Đang chờ đủ {roomCount.max} người…</span>
-                </div>
-
-                <button onClick={() => { disconnect(); router.push('/games'); }} className="relative text-xs font-bold text-white/40">Hủy phòng</button>
+                <GameRulesModal open={rulesOpen} onClose={() => setRulesOpen(false)} gameType={waitingRoom.gameType || 'tien_len'} />
             </div>
         );
     }

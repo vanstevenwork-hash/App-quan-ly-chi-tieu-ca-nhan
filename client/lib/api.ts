@@ -106,6 +106,7 @@ export const gameMatchesApi = {
     createRoom: (gameType: 'tien_len' | 'phom', turnSeconds = 30, maxPlayers = 2) =>
         api.post('/game-matches/room', { gameType, turnSeconds, maxPlayers }),
     joinByCode: (code: string) => api.post(`/game-matches/join/${code}`),
+    startNow: (id: string) => api.post(`/game-matches/${id}/start`),
     respond: (id: string, accept: boolean) => api.patch(`/game-matches/${id}/respond`, { accept }),
     getIncoming: () => api.get('/game-matches/incoming'),
     getSent: () => api.get('/game-matches/sent'),

@@ -227,6 +227,35 @@ exports.joinByCode = async (req, res) => {
     }
 };
 
+// @desc  Host starts an open room immediately (before it's full), as long as
+//        at least 2 people have joined.
+// @route POST /api/game-matches/:id/start
+exports.startNow = async (req, res) => {
+    try {
+        const match = await GameMatch.findOne({ _id: req.params.id, hostId: req.user._id });
+        if (!match) return res.status(404).json({ success: false, message: 'Không tìm thấy phòng hoặc bạn không phải chủ phòng' });
+        if (match.status !== 'pending_invite') {
+            return res.status(400).json({ success: false, message: 'Ván đã bắt đầu hoặc đã kết thúc' });
+        }
+        if (match.players.length < 2) {
+            return res.status(400).json({ success: false, message: 'Cần ít nhất 2 người để bắt đầu' });
+        }
+
+        const engine = engines[match.gameType];
+        const playerIds = match.players.map(p => p.toString());
+        match.state = engine.dealHands(playerIds, { turnSeconds: match.settings?.turnSeconds || 30 });
+        match.turnUserId = match.state.turnUserId;
+        match.status = 'active';
+        await match.save();
+
+        emitToMatch(match._id.toString(), 'match:refresh', {});
+        res.json({ success: true, data: { _id: match._id } });
+    } catch (err) {
+        console.error('GameMatch startNow error:', err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // @desc  Accept or decline a pending game invite
 // @route PATCH /api/game-matches/:id/respond
 exports.respond = async (req, res) => {

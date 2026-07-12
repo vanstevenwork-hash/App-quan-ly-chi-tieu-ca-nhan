@@ -5,6 +5,7 @@ const {
     invite,
     createRoom,
     joinByCode,
+    startNow,
     respond,
     getIncoming,
     getSent,
@@ -21,6 +22,7 @@ router.use(protect);
 router.post('/invite', invite);
 router.post('/room', createRoom);
 router.post('/join/:code', joinByCode);
+router.post('/:id/start', startNow);
 router.patch('/:id/respond', respond);
 router.get('/incoming', getIncoming);
 router.get('/sent', getSent);
