@@ -36,6 +36,21 @@ function attachSharedLimitInfo(cards) {
     });
 }
 
+// Writes the max creditLimit across a shared-limit bank group back onto every
+// card in that group, so the DB value itself stays in sync (not just the
+// derived effectiveCreditLimit computed at read time in attachSharedLimitInfo).
+// Called after any create/update/removal that could change a group's members
+// or its max limit.
+async function syncSharedLimitGroup(userId, bankShortName) {
+    if (!bankShortName) return;
+    const group = await Card.find({ userId, cardType: 'credit', sharedLimit: true, isActive: true, bankShortName });
+    if (group.length < 2) return; // nothing to pool when alone (or empty)
+    const maxLimit = Math.max(...group.map(c => c.creditLimit || 0));
+    await Promise.all(
+        group.filter(c => c.creditLimit !== maxLimit).map(c => { c.creditLimit = maxLimit; return c.save(); })
+    );
+}
+
 // @desc  Get all cards for user
 // @route GET /api/cards
 exports.getAll = async (req, res) => {
@@ -108,6 +123,7 @@ exports.create = async (req, res) => {
             receiveQrImage: receiveQrImage || '',
             note: note || '',
         });
+        if (card.cardType === 'credit' && card.sharedLimit) await syncSharedLimitGroup(req.user.id, card.bankShortName);
         // Notification for card/savings creation
         const typeLabel = {
             credit: 'Thẻ tín dụng',
@@ -141,6 +157,8 @@ exports.update = async (req, res) => {
     try {
         const card = await Card.findOne({ _id: req.params.id, userId: req.user.id });
         if (!card) return res.status(404).json({ success: false, message: 'Không tìm thấy thẻ' });
+        const oldBankShortName = card.bankShortName;
+        const wasShared = card.sharedLimit;
 
         const fields = [
             'bankName', 'bankShortName', 'cardType', 'cardHolder',
@@ -153,6 +171,15 @@ exports.update = async (req, res) => {
         if (req.body.cardNumber) card.cardNumber = String(req.body.cardNumber).slice(-4);
 
         await card.save();
+
+        // Keep every card's stored creditLimit in sync with its shared-limit
+        // group (not just the derived effectiveCreditLimit read at GET time).
+        if (card.cardType === 'credit' && card.sharedLimit) await syncSharedLimitGroup(req.user.id, card.bankShortName);
+        // Left the group or switched banks — re-max the group left behind so
+        // it doesn't keep holding a limit only this card used to justify.
+        if (wasShared && (oldBankShortName !== card.bankShortName || !card.sharedLimit))
+            await syncSharedLimitGroup(req.user.id, oldBankShortName);
+
         res.json({ success: true, data: card });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
@@ -168,6 +195,7 @@ exports.remove = async (req, res) => {
 
         card.isActive = false;
         await card.save();
+        if (card.cardType === 'credit' && card.sharedLimit) await syncSharedLimitGroup(req.user.id, card.bankShortName);
 
         // If deleted card was default, set another card as default
         if (card.isDefault) {

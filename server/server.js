@@ -99,9 +99,28 @@ const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ MongoDB Connected');
+    await dropStaleIndexes();
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
+  }
+};
+
+// One-off cleanup for indexes left over from earlier schema versions that no
+// longer match the current model (e.g. `CardShare` used to have a unique
+// `inviteToken` field from an older token-based invite design — since removed
+// in favor of resolving the invitee by email, but MongoDB never auto-drops
+// indexes for fields that vanish from the schema). A stale *unique* index on
+// an all-null field makes every 2nd document collide with E11000. Safe to run
+// on every boot: dropIndex is a no-op error (ignored) once already cleaned up.
+const dropStaleIndexes = async () => {
+  try {
+    await mongoose.connection.collection('cardshares').dropIndex('inviteToken_1');
+    console.log('🧹 Dropped stale index cardshares.inviteToken_1');
+  } catch (err) {
+    // IndexNotFound (code 27) just means it's already clean — expected on
+    // most boots after the first successful cleanup.
+    if (err.codeName !== 'IndexNotFound') console.error('Index cleanup warning:', err.message);
   }
 };
 

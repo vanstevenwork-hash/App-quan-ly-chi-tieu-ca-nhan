@@ -287,7 +287,7 @@ export default function CalendarPage() {
                     <div className="hidden dark:block absolute -top-20 -right-20 w-52 h-52 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
                     <div className="hidden dark:block absolute -bottom-16 -left-16 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
 
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-4 relative z-10">Tổng quan tháng {viewDate.month + 1}</p>
+                    {/* <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400 mb-4 relative z-10">Tổng quan tháng {viewDate.month + 1}</p> */}
 
                     <div className="flex items-center justify-between relative z-10">
                         {/* Left: Chi tiêu */}
@@ -367,8 +367,8 @@ export default function CalendarPage() {
                 </div>
 
                 {/* ── Calendar Grid ── */}
-                <div className="bg-slate-200 dark:bg-surface rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div className="grid grid-cols-7 gap-[1px]">
+                <div className="bg-white dark:bg-surface-deep rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div className="grid grid-cols-7">
                         {/* Day headers */}
                         {DAYS.map((d, i) => (
                             <div key={d} className={cn(

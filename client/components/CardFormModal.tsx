@@ -618,6 +618,16 @@ duration-200
                                                 maxLength={5}
                                                 placeholder="MM/YY" className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                         </div>
+                                        {isCredit && (
+                                            <div>
+                                                <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hạn mức tín dụng (VND)</p>
+                                                <Input type="text"
+                                                    value={form.creditLimit ? new Intl.NumberFormat('vi-VN').format(form.creditLimit) : ''}
+                                                    onChange={e => { set('creditLimit', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
+                                                    placeholder="50.000.000"
+                                                    className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -625,15 +635,6 @@ duration-200
                             {/* Credit Specific Details */}
                             {isCredit && (
                                 <>
-                                    <div>
-                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hạn mức tín dụng (VND)</p>
-                                        <Input type="text"
-                                            value={form.creditLimit ? new Intl.NumberFormat('vi-VN').format(form.creditLimit) : ''}
-                                            onChange={e => { set('creditLimit', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
-                                            placeholder="50.000.000"
-                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
-                                    </div>
-
                                     {/* Shared limit toggle */}
                                     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                                         <label className="flex items-center gap-3 cursor-pointer">

@@ -83,8 +83,11 @@ function DayCellBase({ day, dayData, isSelected, isToday, filterType, onSelect, 
                     </span>
                 )}
 
-                {/* Show + button or content indicators */}
-                {(!hasTx && combinedImages.length === 0) ? (
+                {/* Quick-add "+" only makes sense on today — past days clutter the
+                    grid with a dashed circle on every empty cell, and future
+                    days can't have a transaction yet anyway. Backdating still
+                    works via the main Add Transaction flow's free date picker. */}
+                {isToday && ((!hasTx && combinedImages.length === 0) ? (
                     <div
                         className="w-5 h-5 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover/day:bg-purple-100 group-hover/day:text-purple-600 transition-all shadow-sm border border-dashed border-slate-200 dark:border-slate-700"
                         onClick={(e) => onPlus(day, e)}
@@ -100,7 +103,7 @@ function DayCellBase({ day, dayData, isSelected, isToday, filterType, onSelect, 
                             <ActionIcon type="plus" size={16} tile={false} color="currentColor" />
                         </div>
                     </div>
-                )}
+                ))}
             </div>
         </button>
     );

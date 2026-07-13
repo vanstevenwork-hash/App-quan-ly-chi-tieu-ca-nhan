@@ -131,6 +131,29 @@ export function NavCardIcon({ blob = true, mono = false, color = '#94A3B8', ...p
     );
 }
 
+/* ---------------- Tài sản (stacked coins — distinct from the flat
+   card glyph above and from the "landmark" building icon used for the
+   Settings → Tài sản/wealth shortcut) ---------------- */
+export function NavAssetIcon({ blob = true, mono = false, color = '#94A3B8', ...props }: IconProps) {
+    const { gradId, maskId } = useIconIds();
+    const fill = fillOf(mono, color, gradId);
+    return (
+        <Svg {...props}>
+            <defs>
+                {!mono && <Grad id={gradId} />}
+                <mask id={maskId}>
+                    <rect width="24" height="24" fill="white" />
+                    <ellipse cx="12" cy="8.4" rx="3.4" ry="1.3" fill="black" opacity="0.85" />
+                </mask>
+            </defs>
+            {blob && <circle cx="5.4" cy="5.8" r="4.4" fill={BLOB} />}
+            <ellipse cx="12" cy="17.3" rx="8.2" ry="3" fill={fill} opacity="0.5" />
+            <ellipse cx="12" cy="13.7" rx="8.2" ry="3" fill={fill} opacity="0.75" />
+            <ellipse cx="12" cy="10.1" rx="8.2" ry="3" fill={fill} mask={`url(#${maskId})`} />
+        </Svg>
+    );
+}
+
 /* ---------------- Mục tiêu (Goal / Target) ---------------- */
 export function NavGoalIcon({ blob = true, mono = false, color = '#94A3B8', ...props }: IconProps) {
     const { gradId, maskId } = useIconIds();

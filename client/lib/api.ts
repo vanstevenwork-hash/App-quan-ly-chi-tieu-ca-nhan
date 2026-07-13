@@ -120,10 +120,10 @@ export const gameMatchesApi = {
 
 // Expense Shares (chia bill cho 1 giao dịch mình đã trả)
 export const expenseSharesApi = {
-    create: (data: { transactionId: string; receiveCardId: string; participants: { name: string; amount: number }[] }) =>
+    create: (data: { transactionId: string; receiveCardId: string; participants: { name: string; amount: number; note?: string }[] }) =>
         api.post('/expense-shares', data),
     getByTransaction: (transactionId: string) => api.get(`/expense-shares/transaction/${transactionId}`),
-    update: (id: string, data: { participants?: { name: string; amount: number; status?: string }[]; receiveCardId?: string }) =>
+    update: (id: string, data: { participants?: { name: string; amount: number; note?: string; status?: string }[]; receiveCardId?: string }) =>
         api.put(`/expense-shares/${id}`, data),
     markParticipantPaid: (id: string, participantId: string) =>
         api.patch(`/expense-shares/${id}/participants/${participantId}/pay`),

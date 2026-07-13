@@ -8,6 +8,10 @@ const mongoose = require('mongoose');
 const participantSchema = new mongoose.Schema({
     name: { type: String, required: true, trim: true },
     amount: { type: Number, required: true, min: 0 },
+    // Optional detail of what this person's portion covers (e.g. "phở + trà đá")
+    // — lets one transaction that mixes food and drinks be split with a
+    // breakdown per person instead of forcing 2 separate transactions.
+    note: { type: String, default: '', trim: true },
     status: { type: String, enum: ['pending', 'paid'], default: 'pending' },
     paidAt: { type: Date, default: null },
 }, { _id: true });

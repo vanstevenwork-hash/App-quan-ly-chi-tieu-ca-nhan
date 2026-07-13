@@ -17,7 +17,7 @@ exports.create = async (req, res) => {
 
         if (!Array.isArray(participants) || participants.length === 0)
             return res.status(400).json({ success: false, message: 'Cần ít nhất 1 người tham gia' });
-        const cleaned = participants.map(p => ({ name: String(p.name || '').trim(), amount: Number(p.amount) || 0 }));
+        const cleaned = participants.map(p => ({ name: String(p.name || '').trim(), amount: Number(p.amount) || 0, note: String(p.note || '').trim() }));
         if (cleaned.some(p => !p.name || p.amount <= 0))
             return res.status(400).json({ success: false, message: 'Tên và số tiền không hợp lệ' });
         const sum = cleaned.reduce((s, p) => s + p.amount, 0);
@@ -73,6 +73,7 @@ exports.update = async (req, res) => {
             const cleaned = participants.map(p => ({
                 name: String(p.name || '').trim(),
                 amount: Number(p.amount) || 0,
+                note: String(p.note || '').trim(),
                 status: p.status === 'paid' ? 'paid' : 'pending',
                 paidAt: p.status === 'paid' ? (p.paidAt || new Date()) : null,
             }));

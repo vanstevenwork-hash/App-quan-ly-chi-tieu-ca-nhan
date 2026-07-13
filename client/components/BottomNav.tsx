@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { NavHomeIcon, NavCalendarIcon, NavCardIcon, NavGoalIcon, NavSettingsIcon } from './icons/CredBackIcons';
+import { NavHomeIcon, NavCalendarIcon, NavAssetIcon, NavGoalIcon, NavSettingsIcon } from './icons/CredBackIcons';
 
 type NavItem = {
     href: string;
@@ -12,7 +12,7 @@ type NavItem = {
 const navItems: NavItem[] = [
     { href: '/dashboard', icon: NavHomeIcon, label: 'Tổng quan' },
     { href: '/calendar', icon: NavCalendarIcon, label: 'Lịch' },
-    { href: '/accounts', icon: NavCardIcon, label: 'Tài khoản' },
+    { href: '/accounts', icon: NavAssetIcon, label: 'Tài sản' },
     { href: '/goals', icon: NavGoalIcon, label: 'Mục tiêu' },
     { href: '/settings', icon: NavSettingsIcon, label: 'Cài đặt' },
 ];
