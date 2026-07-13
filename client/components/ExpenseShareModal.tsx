@@ -70,8 +70,31 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
     const [receiveCardId, setReceiveCardId] = useState('');
     const receiptRef = useRef<HTMLDivElement>(null);
     const [saveImgLoading, setSaveImgLoading] = useState(false);
+    // The QR is hosted on Cloudinary (cross-origin) — a plain <img crossOrigin>
+    // is fragile: if the browser already cached the same URL without CORS mode
+    // (e.g. loaded elsewhere without the attribute), it can silently fail to
+    // load at all. Fetching it once as a blob and displaying it as a data URL
+    // sidesteps both that and the canvas-taint issue when exporting to PNG.
+    const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
     const receivableCards = cards.filter(c => c.receiveQrImage && c.cardType !== 'savings');
+
+    useEffect(() => {
+        const url = share?.receiveCardId.receiveQrImage;
+        if (!url) { setQrDataUrl(null); return; }
+        let cancelled = false;
+        fetch(url)
+            .then(res => res.blob())
+            .then(blob => new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            }))
+            .then(dataUrl => { if (!cancelled) setQrDataUrl(dataUrl); })
+            .catch(() => { if (!cancelled) setQrDataUrl(null); }); // fall back to the plain URL below
+        return () => { cancelled = true; };
+    }, [share?.receiveCardId.receiveQrImage]);
 
     useEffect(() => {
         if (!open || !transaction) return;
@@ -177,10 +200,10 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
         setSaveImgLoading(true);
         try {
             const { toPng } = await import('html-to-image');
-            // cacheBust + the QR <img>'s crossOrigin="anonymous" are both needed —
-            // without them the cross-origin QR image gets dropped from the
-            // exported PNG (browsers taint the canvas on cross-origin draws).
-            const dataUrl = await toPng(receiptRef.current, { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true });
+            // The QR <img> renders from a same-origin data: URL (see qrDataUrl
+            // above), so it never taints the canvas — no cacheBust/crossOrigin
+            // dance needed here.
+            const dataUrl = await toPng(receiptRef.current, { pixelRatio: 2, backgroundColor: '#ffffff' });
             const link = document.createElement('a');
             link.download = `chia-bill-${transaction._id.slice(-6)}.png`;
             link.href = dataUrl;
@@ -353,9 +376,8 @@ duration-200
                                     {share.receiveCardId.receiveQrImage && (
                                         <div className="mt-4 flex items-center gap-3">
                                             <img
-                                                src={share.receiveCardId.receiveQrImage}
+                                                src={qrDataUrl || share.receiveCardId.receiveQrImage}
                                                 alt="QR"
-                                                crossOrigin="anonymous"
                                                 className="w-20 h-20 rounded-xl object-cover flex-shrink-0 border border-slate-100"
                                             />
                                             <div className="min-w-0">
