@@ -6,6 +6,7 @@ const {
     getByTransaction,
     update,
     markParticipantPaid,
+    unmarkParticipantPaid,
     remove,
 } = require('../controllers/expenseShareController');
 
@@ -15,6 +16,7 @@ router.post('/', create);
 router.get('/transaction/:transactionId', getByTransaction);
 router.put('/:id', update);
 router.patch('/:id/participants/:participantId/pay', markParticipantPaid);
+router.patch('/:id/participants/:participantId/unpay', unmarkParticipantPaid);
 router.delete('/:id', remove);
 
 module.exports = router;

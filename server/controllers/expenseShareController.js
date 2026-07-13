@@ -126,7 +126,7 @@ exports.markParticipantPaid = async (req, res) => {
         await receiveCard.save();
 
         const transaction = await Transaction.findById(share.transactionId);
-        await Transaction.create({
+        const reimbursement = await Transaction.create({
             userId: req.user.id,
             type: 'income',
             amount: participant.amount,
@@ -136,6 +136,47 @@ exports.markParticipantPaid = async (req, res) => {
             cardId: receiveCard._id,
             paymentMethod: 'transfer',
         });
+        participant.reimbursementTransactionId = reimbursement._id;
+        await share.save();
+
+        await share.populate('receiveCardId', 'bankName bankShortName receiveAccountNumber receiveQrImage cardHolder');
+        res.json({ success: true, data: share });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Undo a "paid" confirmation — reverses the balance bump and deletes
+//        the reimbursement transaction created when it was marked paid, so
+//        an accidental tap (or a payment that turned out to bounce) doesn't
+//        leave the books out of sync.
+// @route PATCH /api/expense-shares/:id/participants/:participantId/unpay
+exports.unmarkParticipantPaid = async (req, res) => {
+    try {
+        const share = await ExpenseShare.findOne({ _id: req.params.id, userId: req.user.id });
+        if (!share) return res.status(404).json({ success: false, message: 'Không tìm thấy bản chia' });
+
+        const participant = share.participants.id(req.params.participantId);
+        if (!participant) return res.status(404).json({ success: false, message: 'Không tìm thấy người này' });
+        if (participant.status !== 'paid') return res.status(400).json({ success: false, message: 'Người này chưa được xác nhận' });
+
+        const receiveCard = await Card.findOne({ _id: share.receiveCardId, userId: req.user.id });
+        if (receiveCard) {
+            // Reverse the earlier balance bump — credit cards had their debt
+            // reduced, so undoing means adding that debt back.
+            if (receiveCard.cardType === 'credit') receiveCard.balance += participant.amount;
+            else receiveCard.balance = Math.max(0, receiveCard.balance - participant.amount);
+            await receiveCard.save();
+        }
+
+        if (participant.reimbursementTransactionId) {
+            await Transaction.deleteOne({ _id: participant.reimbursementTransactionId, userId: req.user.id });
+        }
+
+        participant.status = 'pending';
+        participant.paidAt = null;
+        participant.reimbursementTransactionId = null;
+        await share.save();
 
         await share.populate('receiveCardId', 'bankName bankShortName receiveAccountNumber receiveQrImage cardHolder');
         res.json({ success: true, data: share });

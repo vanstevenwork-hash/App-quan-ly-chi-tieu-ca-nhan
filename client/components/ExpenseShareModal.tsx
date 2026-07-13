@@ -142,6 +142,22 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
         }
     };
 
+    // Undo — reverses the balance bump and deletes the reimbursement
+    // transaction created by handleMarkPaid, so an accidental tap doesn't
+    // leave stray income entries behind.
+    const handleUnmarkPaid = async (participantId: string) => {
+        if (!share) return;
+        if (!confirm('Bỏ xác nhận đã nhận tiền? Giao dịch hoàn tiền tương ứng sẽ bị xoá.')) return;
+        try {
+            const res = await expenseSharesApi.unmarkParticipantPaid(share._id, participantId);
+            setShare(res.data.data);
+            toast.success('Đã bỏ xác nhận');
+            onSettled?.();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Không thể bỏ xác nhận');
+        }
+    };
+
     const handleDelete = async () => {
         if (!share) return;
         if (!confirm('Xoá bản chia bill này?')) return;
@@ -193,7 +209,7 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="
-fixed inset-x-0 bottom-0 top-[20vh] z-50
+fixed inset-x-0 bottom-0 top-[5vh] z-50
 gap-0 w-full max-w-md mx-auto
 !translate-x-0 !translate-y-0
 bg-white dark:bg-surface
@@ -389,9 +405,10 @@ duration-200
                                                     </div>
                                                 </div>
                                                 {p.status === 'paid' ? (
-                                                    <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1.5 rounded-full flex items-center gap-1 flex-shrink-0">
+                                                    <button onClick={() => handleUnmarkPaid(p._id)} title="Bấm để bỏ xác nhận"
+                                                        className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2.5 py-1.5 rounded-full flex items-center gap-1 flex-shrink-0 active:scale-95">
                                                         <ActionIcon type="check" size={12} tile={false} color="currentColor" /> Đã nhận
-                                                    </span>
+                                                    </button>
                                                 ) : (
                                                     <button onClick={() => handleMarkPaid(p._id)}
                                                         className="text-xs font-bold text-white bg-[#7f19e6] px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0">

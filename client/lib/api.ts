@@ -127,6 +127,8 @@ export const expenseSharesApi = {
         api.put(`/expense-shares/${id}`, data),
     markParticipantPaid: (id: string, participantId: string) =>
         api.patch(`/expense-shares/${id}/participants/${participantId}/pay`),
+    unmarkParticipantPaid: (id: string, participantId: string) =>
+        api.patch(`/expense-shares/${id}/participants/${participantId}/unpay`),
     delete: (id: string) => api.delete(`/expense-shares/${id}`),
 };
 

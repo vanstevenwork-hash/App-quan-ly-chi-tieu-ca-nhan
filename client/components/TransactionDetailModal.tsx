@@ -88,7 +88,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                     <div className="h-[5px] w-12 rounded-full bg-slate-300 dark:bg-slate-600/80 hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors"></div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-3 hide-scrollbar">
+                <div className="flex-1 overflow-y-auto px-4 pb-44 space-y-3 hide-scrollbar">
                     {/* Header (Icon, Amount, Category) */}
                     <div className="flex flex-col items-center mt-1">
                         {transaction.receiptImage ? (

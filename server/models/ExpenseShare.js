@@ -14,6 +14,10 @@ const participantSchema = new mongoose.Schema({
     note: { type: String, default: '', trim: true },
     status: { type: String, enum: ['pending', 'paid'], default: 'pending' },
     paidAt: { type: Date, default: null },
+    // Links to the income Transaction created when this participant was
+    // marked paid, so un-marking can delete that exact entry and reverse
+    // the balance bump instead of leaving a stray transaction behind.
+    reimbursementTransactionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction', default: null },
 }, { _id: true });
 
 const expenseShareSchema = new mongoose.Schema({
