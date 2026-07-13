@@ -185,6 +185,37 @@ exports.unmarkParticipantPaid = async (req, res) => {
     }
 };
 
+// @desc  Return the receiving card's QR image as a base64 data URL. The QR
+//        lives on Cloudinary (cross-origin from the browser's point of view),
+//        which makes both <img crossOrigin> and client-side fetch() fragile —
+//        and html-to-image silently drops any image it can't inline, so the
+//        saved PNG loses the QR. Proxying the bytes through our own API frees
+//        the client from CORS entirely (the server fetch has no such limits).
+// @route GET /api/expense-shares/:id/qr
+exports.getQrDataUrl = async (req, res) => {
+    try {
+        const share = await ExpenseShare.findOne({ _id: req.params.id, userId: req.user.id })
+            .populate('receiveCardId', 'receiveQrImage');
+        if (!share) return res.status(404).json({ success: false, message: 'Không tìm thấy bản chia' });
+        const url = share.receiveCardId?.receiveQrImage;
+        if (!url) return res.status(404).json({ success: false, message: 'Tài khoản nhận chưa có ảnh QR' });
+
+        const axios = require('axios');
+        // Some CDNs (and Wikipedia-style hosts) reject requests with no/blank
+        // User-Agent — send a browser-like one so the proxy fetch isn't 403'd.
+        const resp = await axios.get(url, {
+            responseType: 'arraybuffer',
+            timeout: 15000,
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CredBackBot/1.0)' },
+        });
+        const contentType = resp.headers['content-type'] || 'image/png';
+        const dataUrl = `data:${contentType};base64,${Buffer.from(resp.data).toString('base64')}`;
+        res.json({ success: true, dataUrl });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
 // @desc  Delete a share record
 // @route DELETE /api/expense-shares/:id
 exports.remove = async (req, res) => {

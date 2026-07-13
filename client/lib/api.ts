@@ -129,6 +129,7 @@ export const expenseSharesApi = {
         api.patch(`/expense-shares/${id}/participants/${participantId}/pay`),
     unmarkParticipantPaid: (id: string, participantId: string) =>
         api.patch(`/expense-shares/${id}/participants/${participantId}/unpay`),
+    getQrDataUrl: (id: string) => api.get(`/expense-shares/${id}/qr`),
     delete: (id: string) => api.delete(`/expense-shares/${id}`),
 };
 

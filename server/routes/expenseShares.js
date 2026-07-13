@@ -7,6 +7,7 @@ const {
     update,
     markParticipantPaid,
     unmarkParticipantPaid,
+    getQrDataUrl,
     remove,
 } = require('../controllers/expenseShareController');
 
@@ -14,6 +15,7 @@ router.use(protect);
 
 router.post('/', create);
 router.get('/transaction/:transactionId', getByTransaction);
+router.get('/:id/qr', getQrDataUrl);
 router.put('/:id', update);
 router.patch('/:id/participants/:participantId/pay', markParticipantPaid);
 router.patch('/:id/participants/:participantId/unpay', unmarkParticipantPaid);

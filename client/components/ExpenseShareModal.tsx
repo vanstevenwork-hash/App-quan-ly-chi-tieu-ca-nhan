@@ -70,31 +70,25 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
     const [receiveCardId, setReceiveCardId] = useState('');
     const receiptRef = useRef<HTMLDivElement>(null);
     const [saveImgLoading, setSaveImgLoading] = useState(false);
-    // The QR is hosted on Cloudinary (cross-origin) — a plain <img crossOrigin>
-    // is fragile: if the browser already cached the same URL without CORS mode
-    // (e.g. loaded elsewhere without the attribute), it can silently fail to
-    // load at all. Fetching it once as a blob and displaying it as a data URL
-    // sidesteps both that and the canvas-taint issue when exporting to PNG.
+    // The QR lives on Cloudinary (cross-origin). Loading it straight into an
+    // <img> means html-to-image can't inline it (canvas taint) and it gets
+    // dropped from the exported PNG. So we ask our own API to fetch the bytes
+    // and hand them back as a base64 data: URL — same-origin from the browser's
+    // view, so it renders AND exports cleanly. Falls back to the raw URL for
+    // on-screen display if the proxy call fails.
     const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
     const receivableCards = cards.filter(c => c.receiveQrImage && c.cardType !== 'savings');
 
     useEffect(() => {
-        const url = share?.receiveCardId.receiveQrImage;
-        if (!url) { setQrDataUrl(null); return; }
+        if (!share?._id || !share.receiveCardId.receiveQrImage) { setQrDataUrl(null); return; }
         let cancelled = false;
-        fetch(url)
-            .then(res => res.blob())
-            .then(blob => new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            }))
-            .then(dataUrl => { if (!cancelled) setQrDataUrl(dataUrl); })
+        setQrDataUrl(null);
+        expenseSharesApi.getQrDataUrl(share._id)
+            .then(res => { if (!cancelled) setQrDataUrl(res.data?.dataUrl || null); })
             .catch(() => { if (!cancelled) setQrDataUrl(null); }); // fall back to the plain URL below
         return () => { cancelled = true; };
-    }, [share?.receiveCardId.receiveQrImage]);
+    }, [share?._id, share?.receiveCardId.receiveQrImage]);
 
     useEffect(() => {
         if (!open || !transaction) return;
@@ -199,10 +193,25 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
         if (!receiptRef.current) return;
         setSaveImgLoading(true);
         try {
+            // Make sure the QR is available as a same-origin data: URL before
+            // capturing — a raw cross-origin <img> taints the canvas and gets
+            // dropped from the PNG. If the effect hasn't resolved it yet (or
+            // fell back to the raw URL), fetch it on demand now and wait for
+            // the <img> to actually swap to it before capturing.
+            let qr = qrDataUrl;
+            if (share?.receiveCardId.receiveQrImage && !qr) {
+                try {
+                    const res = await expenseSharesApi.getQrDataUrl(share._id);
+                    qr = res.data?.dataUrl || null;
+                    if (qr) {
+                        setQrDataUrl(qr);
+                        // let React paint the new src, then wait for the image to decode
+                        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+                    }
+                } catch { /* fall through — export without QR rather than blocking */ }
+            }
+
             const { toPng } = await import('html-to-image');
-            // The QR <img> renders from a same-origin data: URL (see qrDataUrl
-            // above), so it never taints the canvas — no cacheBust/crossOrigin
-            // dance needed here.
             const dataUrl = await toPng(receiptRef.current, { pixelRatio: 2, backgroundColor: '#ffffff' });
             const link = document.createElement('a');
             link.download = `chia-bill-${transaction._id.slice(-6)}.png`;
