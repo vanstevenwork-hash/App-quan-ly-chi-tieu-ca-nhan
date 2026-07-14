@@ -1,5 +1,6 @@
 const Transaction = require('../models/Transaction');
 const Card = require('../models/Card');
+const CardShare = require('../models/CardShare');
 const { createNotification } = require('./notificationController');
 const { hasCardAccess } = require('../utils/cardAccess');
 
@@ -7,7 +8,7 @@ const { hasCardAccess } = require('../utils/cardAccess');
 exports.getTransactions = async (req, res) => {
     try {
         const { type, category, month, year, startDate, endDate, limit = 20, page = 1 } = req.query;
-        const filter = { userId: req.user._id };
+        const filter = {};
         if (type) filter.type = type;
         if (category) filter.category = category;
         if (startDate && endDate) {
@@ -20,6 +21,16 @@ exports.getTransactions = async (req, res) => {
             const e = new Date(year, month, 0, 23, 59, 59);
             filter.date = { $gte: s, $lte: e };
         }
+        // Visibility: my own transactions PLUS every transaction on a card that
+        // has been shared with me (accepted) — a shared card is treated as "our"
+        // spending, so both spouses see all activity on it. Transactions on
+        // cards I own that are shared out already carry my userId (owner), so
+        // they're covered by the first clause.
+        const sharedShares = await CardShare.find({ sharedWithUserId: req.user._id, status: 'accepted' }).select('cardId');
+        const sharedCardIds = sharedShares.map(s => s.cardId);
+        filter.$or = [{ userId: req.user._id }];
+        if (sharedCardIds.length) filter.$or.push({ cardId: { $in: sharedCardIds } });
+
         const transactions = await Transaction.find(filter)
             .populate('cardId')
             .sort({ date: -1 })

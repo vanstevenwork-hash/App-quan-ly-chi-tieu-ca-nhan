@@ -170,6 +170,26 @@ export default function CashbackPage() {
             .sort((a, b) => b.displayAmount - a.displayAmount);
     }, [creditCards, rawMonthly, records, curMonth]);
 
+    // Complete roster of every credit card (own + shared) with this month's
+    // cashback — a bottom reference list so no card is hidden, unlike the tabs
+    // above which drop cards with no activity.
+    const allCardsCashback = useMemo(() => {
+        const own = creditCards.map(card => {
+            const rm = rawMonthly.find(r => r.card._id === card._id && r.year === curMonth.year && r.month === curMonth.month);
+            const record = records.find(r => r.cardId === card._id && r.year === curMonth.year && r.month === curMonth.month);
+            const est = rm?.estimatedAmount ?? 0;
+            const status: 'pending' | 'received' = record?.status || 'pending';
+            const amount = status === 'received' ? (record?.receivedAmount ?? est) : est;
+            return { key: card._id, name: `${card.bankName} •••• ${card.cardNumber}`, sub: `Hoàn ${card.cashbackRate || 0}%`, logo: getCardLogo(card) as string | null, amount, shared: false };
+        });
+        const shared = sharedCashback.map(sc => {
+            const owner = sharedCards.find(x => x.card._id === sc.cardId)?.owner;
+            return { key: sc.cardId, name: sc.bankName, sub: `Thẻ chung${owner ? ` · của ${owner.name}` : ''}`, logo: null as string | null, amount: sc.cashbackEarned, shared: true };
+        });
+        return [...own, ...shared].sort((a, b) => b.amount - a.amount);
+    }, [creditCards, rawMonthly, records, curMonth, sharedCashback, sharedCards, getCardLogo]);
+    const allCardsCashbackTotal = useMemo(() => allCardsCashback.reduce((s, c) => s + c.amount, 0), [allCardsCashback]);
+
     // Insight: when cards hit their monthly cap, suggest the best card to move spending to
     const insight = useMemo(() => {
         const rows = creditCards.map(card => {
@@ -632,6 +652,42 @@ export default function CashbackPage() {
                         </div>
                     )}
                 </div>
+
+                {/* All cards — complete roster with this month's cashback (own + shared) */}
+                {allCardsCashback.length > 0 && (
+                    <div>
+                        <div className="flex items-center justify-between mb-2.5 px-1">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Tất cả thẻ hoàn tiền</h3>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Tháng {curMonth.month + 1}</span>
+                        </div>
+                        <div className="bg-white dark:bg-surface rounded-[20px] border border-gray-100 dark:border-slate-700 shadow-sm divide-y divide-gray-50 dark:divide-slate-700/40 overflow-hidden">
+                            {allCardsCashback.map(c => (
+                                <div key={c.key} className="flex items-center gap-3 px-4 py-3">
+                                    {c.logo ? (
+                                        <Image src={c.logo} width={40} height={40} alt={c.name}
+                                            className="w-10 h-10 rounded-xl object-contain bg-white p-1 border border-gray-100 dark:border-slate-700 flex-shrink-0" />
+                                    ) : (
+                                        <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', c.shared ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'bg-slate-100 dark:bg-slate-800')}>
+                                            <ActionIcon type="creditCard" size={16} tile={false} color={c.shared ? '#6366F1' : '#94A3B8'} />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{c.name}</p>
+                                        <p className={cn('text-xs mt-0.5 truncate', c.shared ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500')}>{c.sub}</p>
+                                    </div>
+                                    <span className={cn('text-sm font-bold tabular-nums flex-shrink-0',
+                                        c.amount > 0 ? (c.shared ? 'text-indigo-600 dark:text-indigo-400' : 'text-emerald-600 dark:text-emerald-400') : 'text-slate-300 dark:text-slate-600')}>
+                                        {c.amount > 0 ? `+${fmt(c.amount)}đ` : '0đ'}
+                                    </span>
+                                </div>
+                            ))}
+                            <div className="flex items-center justify-between px-4 py-3 bg-slate-50/70 dark:bg-white/[0.03]">
+                                <span className="text-sm font-bold text-slate-500 dark:text-slate-300">Tổng cộng</span>
+                                <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmt(allCardsCashbackTotal)}đ</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -17,6 +17,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { useSharedCashback } from '@/hooks/useSharedCashback';
 import Link from 'next/link';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -56,7 +57,10 @@ export default function DashboardPage() {
     );
 
     const creditCardsForCashback = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
-    const monthCashback = useMemo(() => {
+    // Shared cards (e.g. my wife's credit card) are our spending too — fold
+    // their cashback into the dashboard badge alongside my own cards'.
+    const { sharedCashbackTotal } = useSharedCashback();
+    const ownCashback = useMemo(() => {
         const now = new Date();
         return creditCardsForCashback.reduce((sum, card) => {
             const cardMonthTxs = transactions.filter(t => {
@@ -67,6 +71,7 @@ export default function DashboardPage() {
             return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap);
         }, 0);
     }, [creditCardsForCashback, transactions]);
+    const monthCashback = ownCashback + sharedCashbackTotal;
     const initials = user?.name
         ? user.name.split(' ').map(n => n[0]).slice(-2).join('').toUpperCase()
         : 'NN';

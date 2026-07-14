@@ -7,6 +7,29 @@ import { UtilityIcon } from '@/components/icons/UtilityIcon';
 
 const fmtFull = (n: number) => Math.round(n).toLocaleString('vi-VN');
 
+// Unsigned short amount for limit captions: "150tr" · "54tr" · "113tr"
+const fmtLimit = (n: number) => {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1).replace('.', ',')}tỷ`;
+    if (abs >= 1_000_000) return `${Math.round(abs / 1_000_000)}tr`;
+    if (abs >= 1_000) return `${Math.round(abs / 1_000)}k`;
+    return `${Math.round(abs)}`;
+};
+
+// Debt-vs-limit utilisation → bar/text colour (higher reads hotter).
+const usageColor = (pct: number) => (pct >= 80 ? '#EF4444' : pct >= 50 ? '#F59E0B' : '#6366F1');
+
+// Pooled ("hạn mức chung", max limit across the group) vs plain multi-card
+// ("tổng", sum of limits). Credit balances are stored negative, so debt = |sum|.
+function creditGroupStats(items: WealthSourceUI[]) {
+    const isShared = items.some(i => i.sharedLimit);
+    const limit = isShared
+        ? Math.max(...items.map(i => i.effectiveCreditLimit ?? i.creditLimit ?? 0))
+        : items.reduce((s, i) => s + (i.creditLimit || 0), 0);
+    const debt = items.reduce((s, i) => s + Math.abs(i.balance), 0);
+    return { isShared, limit, debt };
+}
+
 // Compact signed totals for section headers: "-260,9tr" · "+4,42tr"
 const fmtShortSigned = (n: number) => {
     const abs = Math.abs(n);
@@ -52,6 +75,25 @@ function LogoTile({ icon, color }: { icon: React.ReactNode; color: string }) {
     );
 }
 
+/** Bank logo at a chosen size — clean logo on white, falling back to a solid
+ *  colour chip with the bank code. No border ring (matches the cashback page). */
+function BankTile({ logoUrl, text, color, size }: { logoUrl?: string; text: string; color: string; size: number }) {
+    const [err, setErr] = useState(false);
+    const radius = size >= 40 ? 'rounded-2xl' : 'rounded-xl';
+    if (logoUrl && !err) {
+        return (
+            <img src={logoUrl} alt="" onError={() => setErr(true)} style={{ width: size, height: size }}
+                className={cn(radius, 'object-contain bg-white p-1 shrink-0')} />
+        );
+    }
+    return (
+        <div style={{ width: size, height: size, backgroundColor: color }}
+            className={cn(radius, 'flex items-center justify-center shrink-0 font-black text-white')}>
+            <span style={{ fontSize: Math.round(size * 0.28) }}>{(text || '?').slice(0, 3).toUpperCase()}</span>
+        </div>
+    );
+}
+
 /** "4 thẻ ▾" pill next to the title — the disclosure lives here, away from the money column. */
 function GroupChip({ count, unit, expanded }: { count: number; unit: string; expanded: boolean }) {
     return (
@@ -88,35 +130,53 @@ function WealthCard({ source, onEdit, onDelete, className }: {
     // External cards derive their note from the category — only user-written notes add info
     const subtitle = !source.isExternal && source.note && source.note !== label
         ? `${label} · ${source.note}`
-        : label;
+        : (source.note || label);
+
+    const isCard = !!source.bankShortName;
+    const isCredit = source.cardType === 'credit';
+    const limit = source.creditLimit || 0;
+    const pct = limit > 0 ? Math.min((Math.abs(source.balance) / limit) * 100, 100) : 0;
+    const barColor = usageColor(pct);
 
     return (
         <div className={cn(
             'group relative flex items-center gap-3.5 p-3.5 rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-500/40 transition-all',
             className
         )}>
-            <LogoTile icon={source.icon} color={source.color} />
+            {isCard
+                ? <BankTile logoUrl={source.logoUrl} text={source.bankShortName!} color={source.color} size={42} />
+                : <LogoTile icon={source.icon} color={source.color} />}
             <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-slate-800 dark:text-white text-[15px] truncate">{source.name}</h4>
+                <h4 className="font-bold text-slate-800 dark:text-white text-[15px] truncate">
+                    {isCard ? (
+                        <>{source.bankShortName}{source.cardNumber && <span className="text-slate-400 dark:text-slate-500 font-semibold"> •••• {source.cardNumber}</span>}</>
+                    ) : source.name}
+                </h4>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">{subtitle}</p>
             </div>
 
-            {/* Amount at rest, edit/delete slide in on hover — the resting column stays flush right */}
-            <div className="relative flex items-center justify-end min-w-[96px] h-10 overflow-hidden flex-shrink-0">
-                <div className="transition-all duration-300 group-hover:-translate-y-full group-hover:opacity-0">
+            {/* Amount (+ credit bar) at rest; edit/delete cross-fade in on hover */}
+            <div className="relative flex flex-col items-end justify-center min-w-[112px] flex-shrink-0 self-stretch">
+                <div className="w-full text-right transition-opacity duration-300 group-hover:opacity-0">
                     <AmountCell value={source.balance} />
+                    {isCredit && limit > 0 && (
+                        <div className="mt-1.5 w-28 ml-auto">
+                            <div className="h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                            </div>
+                            <p className="text-[11px] font-bold mt-1" style={{ color: barColor }}>
+                                {pct.toFixed(0)}% <span className="text-slate-400 font-medium">· hạn mức {fmtLimit(limit)}</span>
+                            </p>
+                        </div>
+                    )}
                 </div>
-                <div className="absolute inset-0 flex items-center justify-end gap-2 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors shadow-sm"
-                    >
+                <div className="absolute inset-0 flex items-center justify-end gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors shadow-sm">
                         <ActionIcon type="pencil" size={16} tile={false} color="#8B5CF6" />
                     </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm">
                         <ActionIcon type="trash" size={16} tile={false} color="#EF4444" />
                     </button>
                 </div>
@@ -125,35 +185,88 @@ function WealthCard({ source, onEdit, onDelete, className }: {
     );
 }
 
-function GroupedWealthCard({ title, icon, color, items, onEdit, onDelete }: {
-    title: string; icon: React.ReactNode; color: string; items: WealthSourceUI[];
+// A member row inside a group's recessed panel. Drops the bank name (the parent
+// already shows it) → "•••• 3652 · Max"; smaller tile/text than the parent.
+function ChildRow({ source, bankShort, credit, isFirst, onEdit, onDelete }: {
+    source: WealthSourceUI; bankShort: string; credit: { isShared: boolean; limit: number } | null;
+    isFirst: boolean; onEdit: () => void; onDelete: () => void;
+}) {
+    const suffix = source.cardLabel && source.cardLabel !== bankShort ? ` · ${source.cardLabel}` : '';
+    const isCredit = source.cardType === 'credit';
+    const limit = credit?.isShared ? credit.limit : (source.creditLimit || 0);
+    const pct = limit > 0 ? Math.min((Math.abs(source.balance) / limit) * 100, 100) : 0;
+    const barColor = usageColor(pct);
+
+    return (
+        <div className={cn('group/c relative flex items-center gap-3 pl-4 pr-3 py-2.5', !isFirst && 'border-t border-slate-200/70 dark:border-white/5')}>
+            <BankTile logoUrl={source.logoUrl} text={source.bankShortName || bankShort} color={source.color} size={30} />
+            <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                    •••• {source.cardNumber}<span className="text-slate-400 dark:text-slate-400 font-semibold">{suffix}</span>
+                </p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 truncate">{source.note}</p>
+            </div>
+            <div className="relative flex flex-col items-end justify-center min-w-[100px] flex-shrink-0 self-stretch">
+                <div className="w-full text-right transition-opacity duration-300 group-hover/c:opacity-0">
+                    <span className={cn('text-[13px] font-black tracking-tight tabular-nums',
+                        source.balance < 0 ? 'text-red-500 dark:text-red-400' : source.balance > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400')}>
+                        {fmtFull(source.balance)}
+                    </span>
+                    {isCredit && limit > 0 && (
+                        <div className="mt-1 w-24 ml-auto">
+                            <div className="h-1 rounded-full bg-slate-200/70 dark:bg-white/10 overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                            </div>
+                            <p className="text-[10px] font-bold mt-0.5" style={{ color: barColor }}>
+                                {pct.toFixed(0)}% <span className="text-slate-400 font-medium">{credit?.isShared ? 'hạn mức chung' : 'hạn mức'}</span>
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <div className="absolute inset-0 flex items-center justify-end gap-1.5 opacity-0 transition-opacity duration-300 group-hover/c:opacity-100">
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                        className="w-7 h-7 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                        <ActionIcon type="pencil" size={14} tile={false} color="#8B5CF6" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                        className="w-7 h-7 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm">
+                        <ActionIcon type="trash" size={14} tile={false} color="#EF4444" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function GroupedWealthCard({ title, color, items, onEdit, onDelete }: {
+    title: string; icon?: React.ReactNode; color: string; items: WealthSourceUI[];
     onEdit: (s: WealthSourceUI) => void; onDelete: (s: WealthSourceUI) => void;
 }) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const totalBalance = items.reduce((sum, item) => sum + item.balance, 0);
 
     if (items.length === 1) {
         return <WealthCard source={items[0]} onEdit={() => onEdit(items[0])} onDelete={() => onDelete(items[0])} />;
     }
 
+    const totalBalance = items.reduce((sum, item) => sum + item.balance, 0);
     const cardType = items[0].cardType;
     const unit = cardType === 'credit' ? 'thẻ' : cardType === 'savings' ? 'sổ' : 'mục';
     const subtitle = cardType === 'credit' ? 'Nhóm thẻ tín dụng'
         : cardType === 'savings' ? 'Nhóm sổ tiết kiệm' : 'Nhóm tài khoản';
+    const logoUrl = items[0].logoUrl;
+    const isCredit = cardType === 'credit';
+    const credit = isCredit ? creditGroupStats(items) : null;
+    const pct = credit && credit.limit > 0 ? Math.min((credit.debt / credit.limit) * 100, 100) : 0;
+    const barColor = usageColor(pct);
 
     return (
-        <div className="space-y-2">
+        <div className={cn(
+            'rounded-2xl bg-white dark:bg-surface border shadow-sm overflow-hidden transition-all',
+            isExpanded ? 'border-purple-200 dark:border-purple-500/40' : 'border-gray-100 dark:border-slate-800'
+        )}>
             {/* Whole row is the toggle; the ▾ lives inside the chip next to the title */}
-            <button
-                onClick={() => setIsExpanded(v => !v)}
-                className={cn(
-                    'w-full text-left flex items-center gap-3.5 p-3.5 rounded-2xl bg-white dark:bg-surface border shadow-sm transition-all',
-                    isExpanded
-                        ? 'border-purple-200 dark:border-purple-500/40 ring-1 ring-purple-100 dark:ring-purple-900/30'
-                        : 'border-gray-100 dark:border-slate-800 hover:border-purple-100 dark:hover:border-purple-800'
-                )}
-            >
-                <LogoTile icon={icon} color={color} />
+            <button onClick={() => setIsExpanded(v => !v)} className="w-full text-left flex items-center gap-3.5 p-3.5">
+                <BankTile logoUrl={logoUrl} text={title} color={color} size={42} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
                         <h4 className="font-bold text-slate-800 dark:text-white text-[15px] truncate">{title}</h4>
@@ -161,20 +274,41 @@ function GroupedWealthCard({ title, icon, color, items, onEdit, onDelete }: {
                     </div>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{subtitle}</p>
                 </div>
-                <AmountCell value={totalBalance} />
+                <div className="text-right flex-shrink-0">
+                    <AmountCell value={totalBalance} />
+                    {credit && credit.limit > 0 && (
+                        <div className="mt-1.5 w-32 ml-auto">
+                            {credit.isShared ? (
+                                <div className="flex gap-0.5 h-1.5">
+                                    {items.map(i => {
+                                        const w = credit.limit > 0 ? (Math.abs(i.balance) / credit.limit) * 100 : 0;
+                                        return <div key={i._id} className="h-full rounded-full flex-shrink-0" style={{ width: `${w}%`, backgroundColor: barColor, minWidth: Math.abs(i.balance) > 0 ? 3 : 0 }} />;
+                                    })}
+                                    <div className="h-full rounded-full bg-slate-100 dark:bg-white/10 flex-1" />
+                                </div>
+                            ) : (
+                                <div className="h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                                </div>
+                            )}
+                            <p className="text-[11px] font-bold mt-1" style={{ color: barColor }}>
+                                {pct.toFixed(0)}% <span className="text-slate-400 font-medium">· {credit.isShared ? 'hạn mức chung' : 'tổng'} {fmtLimit(credit.limit)}</span>
+                            </p>
+                        </div>
+                    )}
+                </div>
             </button>
 
             {isExpanded && (
-                <div className="pl-5 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                    {items.map(s => (
-                        <WealthCard
-                            key={s._id}
-                            source={s}
-                            onEdit={() => onEdit(s)}
-                            onDelete={() => onDelete(s)}
-                            className="border-dashed"
-                        />
-                    ))}
+                <div className="px-2.5 pb-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Recessed panel — members tucked into the parent, purple rail down the left */}
+                    <div className="relative rounded-xl bg-slate-50 dark:bg-black/25 overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_3px_rgba(0,0,0,0.45)]">
+                        <div className="absolute left-0 inset-y-0 w-[3px] bg-gradient-to-b from-purple-500 via-purple-500/40 to-transparent" />
+                        {items.map((s, i) => (
+                            <ChildRow key={s._id} source={s} bankShort={title} credit={credit} isFirst={i === 0}
+                                onEdit={() => onEdit(s)} onDelete={() => onDelete(s)} />
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

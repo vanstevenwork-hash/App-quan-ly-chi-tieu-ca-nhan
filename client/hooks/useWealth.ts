@@ -31,6 +31,16 @@ export type WealthSourceUI = Omit<WealthSource, 'icon'> & {
     isExternal?: boolean;
     bankShortName?: string;
     cardType?: string;
+    // Card-linked extras — used to render the credit-card group view (bank
+    // logo tile at a chosen size, "•••• 1234 · label" child names, and the
+    // debt-vs-limit progress bars). Absent on user-created wealth sources.
+    logoUrl?: string;
+    cardNumber?: string;
+    cardLabel?: string;
+    creditLimit?: number;
+    sharedLimit?: boolean;
+    effectiveCreditLimit?: number;
+    sharedGroupSize?: number;
 };
 
 import { create } from 'zustand';

@@ -69,7 +69,14 @@ export default function WealthPage() {
                 note: c.cardType === 'credit' ? 'Thẻ tín dụng' : c.cardType === 'savings' ? 'Sổ tiết kiệm' : 'Tài khoản',
                 isExternal: true,
                 bankShortName: c.bankShortName,
-                cardType: c.cardType
+                cardType: c.cardType,
+                logoUrl: logoUrl || undefined,
+                cardNumber: c.cardNumber,
+                cardLabel: c.bankName,            // user's per-card label (e.g. "Max", "Cash")
+                creditLimit: c.creditLimit,
+                sharedLimit: c.sharedLimit,
+                effectiveCreditLimit: c.effectiveCreditLimit,
+                sharedGroupSize: c.sharedGroupSize,
             } as WealthSourceUI;
         });
 
