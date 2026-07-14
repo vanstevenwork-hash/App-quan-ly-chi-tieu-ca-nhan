@@ -160,11 +160,11 @@ function WealthCard({ source, onEdit, onDelete, className }: {
                 <div className="w-full text-right transition-opacity duration-300 group-hover:opacity-0">
                     <AmountCell value={source.balance} />
                     {isCredit && limit > 0 && (
-                        <div className="mt-1.5 w-28 ml-auto">
+                        <div className="mt-1.5 w-32 ml-auto">
                             <div className="h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
                                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
                             </div>
-                            <p className="text-[11px] font-bold mt-1" style={{ color: barColor }}>
+                            <p className="text-[11px] font-bold mt-1 whitespace-nowrap" style={{ color: barColor }}>
                                 {pct.toFixed(0)}% <span className="text-slate-400 font-medium">· hạn mức {fmtLimit(limit)}</span>
                             </p>
                         </div>
@@ -217,8 +217,8 @@ function ChildRow({ source, bankShort, credit, isFirst, onEdit, onDelete }: {
                             <div className="h-1 rounded-full bg-slate-200/70 dark:bg-white/10 overflow-hidden">
                                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
                             </div>
-                            <p className="text-[10px] font-bold mt-0.5" style={{ color: barColor }}>
-                                {pct.toFixed(0)}% <span className="text-slate-400 font-medium">{credit?.isShared ? 'hạn mức chung' : 'hạn mức'}</span>
+                            <p className="text-[10px] font-bold mt-0.5 whitespace-nowrap" style={{ color: barColor }}>
+                                {pct.toFixed(0)}% <span className="text-slate-400 font-medium">· hạn mức</span>
                             </p>
                         </div>
                     )}
@@ -291,8 +291,8 @@ function GroupedWealthCard({ title, color, items, onEdit, onDelete }: {
                                     <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: barColor }} />
                                 </div>
                             )}
-                            <p className="text-[11px] font-bold mt-1" style={{ color: barColor }}>
-                                {pct.toFixed(0)}% <span className="text-slate-400 font-medium">· {credit.isShared ? 'hạn mức chung' : 'tổng'} {fmtLimit(credit.limit)}</span>
+                            <p className="text-[11px] font-bold mt-1 whitespace-nowrap" style={{ color: barColor }}>
+                                {pct.toFixed(0)}% <span className="text-slate-400 font-medium">· hạn mức {fmtLimit(credit.limit)}</span>
                             </p>
                         </div>
                     )}
