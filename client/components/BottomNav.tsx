@@ -44,9 +44,13 @@ export default function BottomNav() {
             }}
         >
             <div
-                className="w-full max-w-md bg-white dark:bg-[#191E36] border-t border-gray-100 dark:border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.55)] pb-[env(safe-area-inset-bottom)] pointer-events-auto rounded-t-[28px]"
+                className="relative w-full max-w-md bg-white dark:bg-[#191E36] border-t border-gray-100 dark:border-white/5 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.55)] pb-[env(safe-area-inset-bottom)] pointer-events-auto rounded-t-[28px]"
                 style={{ transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden' }}
             >
+                {/* Fade just above the bar so scrolling content dissolves into the
+                    page instead of butting right up against (and peeking through
+                    the bar's rounded corners). Matches the page canvas colour. */}
+                <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-full h-8 bg-gradient-to-t from-[#F8F9FF] dark:from-surface-deep to-transparent" />
                 <div className="relative flex items-stretch pt-3 pb-1.5">
                     {/* Floating halo ring — springs between tab slots, glowing on top of the bar */}
                     {activeIndex >= 0 && ActiveIcon && (
