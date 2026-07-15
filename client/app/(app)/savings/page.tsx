@@ -4,9 +4,11 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
+import SavingsRenewModal from '@/components/SavingsRenewModal';
 import PageHeader from '@/components/PageHeader';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { toast } from 'sonner';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
@@ -52,10 +54,11 @@ function getGradient(card: Card, idx: number) {
 }
 
 // ─── Savings book card slide ──────────────────────────────────────────────────
-function SavingsSlide({ card, idx, onEdit, onDelete }: {
-    card: Card; idx: number; onEdit: () => void; onDelete: () => void;
+function SavingsSlide({ card, idx, onEdit, onDelete, onRenew }: {
+    card: Card; idx: number; onEdit: () => void; onDelete: () => void; onRenew: () => void;
 }) {
     const matDays = daysUntil(card.maturityDate);
+    const matured = matDays !== null && matDays <= 0;
     const urg = urgencyColor(matDays);
     const interest = card.interestRate > 0 && card.term > 0
         ? card.balance * (card.interestRate / 100) * (card.term / 12)
@@ -78,6 +81,11 @@ function SavingsSlide({ card, idx, onEdit, onDelete }: {
                     <p className="text-2xl font-bold mt-1 tracking-tight">{fmt(card.balance)}₫</p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5">
+                    {matured && (
+                        <span className="bg-amber-300 text-amber-900 rounded-xl px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-sm">
+                            Đã đáo hạn
+                        </span>
+                    )}
                     <span className="bg-white/20 rounded-xl px-2.5 py-1 text-xs font-bold">
                         {card.interestRate ? `${card.interestRate}%/năm` : 'Linh hoạt'}
                     </span>
@@ -125,6 +133,15 @@ function SavingsSlide({ card, idx, onEdit, onDelete }: {
                             }} />
                     </div>
                 </>
+            )}
+
+            {/* Matured → a clear "Tái tục" CTA right on the book */}
+            {matured && (
+                <button onClick={onRenew}
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-white text-emerald-700 rounded-xl py-2.5 text-sm font-black shadow-sm active:scale-[0.98] transition">
+                    <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
+                    Tái tục ngay
+                </button>
             )}
         </div>
     );
@@ -193,8 +210,20 @@ export default function SavingsPage() {
 
     const [showForm, setShowForm] = useState(false);
     const [editCard, setEditCard] = useState<Card | null>(null);
+    const [renewCard, setRenewCard] = useState<Card | null>(null);
 
     const savingsCards = useMemo(() => cards.filter(c => c.cardType === 'savings'), [cards]);
+    // Matured books (đáo hạn) — soonest-matured first, for the "Tái tục" shortcut.
+    const maturedCards = useMemo(
+        () => savingsCards.filter(c => { const d = daysUntil(c.maturityDate); return d !== null && d <= 0; }),
+        [savingsCards]
+    );
+
+    const openRenew = (card: Card) => setRenewCard(card);
+    const handleQuickRenew = () => {
+        if (maturedCards.length > 0) setRenewCard(maturedCards[0]);
+        else toast.info('Chưa có sổ nào đáo hạn để tái tục');
+    };
 
     const handleSave = async (data: Parameters<typeof createCard>[0]) => {
         if (editCard) await updateCard(editCard._id, data);
@@ -284,7 +313,8 @@ export default function SavingsPage() {
                         {savingsCards.map((card, idx) => (
                             <SavingsSlide key={card._id} card={card} idx={idx}
                                 onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                onDelete={() => handleDelete(card._id)} />
+                                onDelete={() => handleDelete(card._id)}
+                                onRenew={() => openRenew(card)} />
                         ))}
 
                         <button onClick={() => { setEditCard(null); setShowForm(true); }}
@@ -302,7 +332,7 @@ export default function SavingsPage() {
                     <div className="bg-white/70 dark:bg-surface/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
                             { icon: <UtilityIcon type="soTietKiem" size={24} tile={false} color="#059669" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
-                            { icon: <CustomIcon type="refreshCw" size={20} tile={false} color="currentColor" className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: () => { setEditCard(null); setShowForm(true); } },
+                            { icon: <CustomIcon type="refreshCw" size={20} tile={false} color="currentColor" className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: handleQuickRenew },
                             { icon: <CustomIcon type="history" size={20} tile={false} color="currentColor" className="w-5 h-5 text-orange-600 dark:text-orange-400" />, bg: '#FEF3C7', bgDark: '#78350F', label: 'Lịch sử', onClick: () => { } },
                             { icon: <CustomIcon type="coPhieu" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-600 dark:text-purple-400" />, bg: '#EDE9FE', bgDark: '#4C1D95', label: 'Báo cáo', onClick: () => { } },
                         ].map(item => (
@@ -434,6 +464,13 @@ export default function SavingsPage() {
                 onSave={handleSave}
                 editCard={editCard}
                 initialType="savings"
+            />
+
+            <SavingsRenewModal
+                open={!!renewCard}
+                card={renewCard}
+                onClose={() => setRenewCard(null)}
+                onRenewed={refresh}
             />
         </div>
     );

@@ -424,7 +424,7 @@ function WealthTabContentBase({
     }
 
     return (
-        <div className="space-y-5 pt-6">
+        <div className="space-y-5 pt-2">
             {/* Title Bar */}
             <div className="flex justify-between items-end px-1">
                 <h2 className="font-bold text-lg text-gray-800 dark:text-white">

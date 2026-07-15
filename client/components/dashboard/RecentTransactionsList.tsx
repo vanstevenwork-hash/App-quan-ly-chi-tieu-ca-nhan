@@ -41,15 +41,22 @@ function sourceLabel(t: any, cards: Card[]): string {
     return 'Tiền mặt';
 }
 
-function TransactionRow({ t, cards, onClick }: { t: any; cards: Card[]; onClick: () => void }) {
+function TransactionRow({ t, cards, sharedOwner, onClick }: { t: any; cards: Card[]; sharedOwner?: string; onClick: () => void }) {
     const isIncome = t.type === 'income';
     const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES_MAP.get('Khác')!;
     const time = new Date(t.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     return (
         <div
             onClick={onClick}
-            className="flex items-center gap-3.5 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3.5 cursor-pointer"
+            className="relative flex items-center gap-3.5 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3.5 cursor-pointer"
         >
+            {/* Corner tag: this transaction is on a card shared with me (e.g. my
+                wife's) — makes "our" spending easy to spot in my own feed. */}
+            {sharedOwner && (
+                <span className="absolute top-0 right-0 inline-flex items-center gap-0.5 rounded-bl-xl rounded-tr-2xl bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 text-[9px] font-black pl-1.5 pr-2 py-0.5 max-w-[45%] truncate">
+                    <ActionIcon type="user" size={9} tile={false} color="currentColor" /> {sharedOwner}
+                </span>
+            )}
             <CategoryIcon
                 type={cat.catIconType || 'khac'}
                 size={44}
@@ -77,11 +84,12 @@ function TransactionRow({ t, cards, onClick }: { t: any; cards: Card[]; onClick:
 interface RecentTransactionsListProps {
     transactions: any[];
     cards: Card[];
+    sharedCardOwners?: Record<string, string>;
     onSelectTx: (t: any) => void;
     onAddFirst: () => void;
 }
 
-function RecentTransactionsListBase({ transactions, cards, onSelectTx, onAddFirst }: RecentTransactionsListProps) {
+function RecentTransactionsListBase({ transactions, cards, sharedCardOwners, onSelectTx, onAddFirst }: RecentTransactionsListProps) {
     // Latest transactions grouped by calendar day, each day with its net total
     const dayGroups = useMemo(() => {
         const shown = transactions.slice(0, 6);
@@ -144,7 +152,9 @@ function RecentTransactionsListBase({ transactions, cards, onSelectTx, onAddFirs
                             </div>
                             <div className="space-y-2.5">
                                 {g.items.map((t) => (
-                                    <TransactionRow key={t._id} t={t} cards={cards} onClick={() => onSelectTx(t)} />
+                                    <TransactionRow key={t._id} t={t} cards={cards}
+                                        sharedOwner={sharedCardOwners?.[resolveCardId(t)]}
+                                        onClick={() => onSelectTx(t)} />
                                 ))}
                             </div>
                         </div>

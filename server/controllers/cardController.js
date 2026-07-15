@@ -316,6 +316,70 @@ exports.updateBalance = async (req, res) => {
     }
 };
 
+// @desc  Renew ("tái tục") a matured savings book — realise the earned
+//        interest as an income transaction, then roll principal + interest
+//        (or a user-chosen amount) into a fresh term with a new rate.
+// @route POST /api/cards/:id/renew-savings
+exports.renewSavings = async (req, res) => {
+    try {
+        const card = await Card.findOne({ _id: req.params.id, userId: req.user.id });
+        if (!card) return res.status(404).json({ success: false, message: 'Không tìm thấy sổ' });
+        if (card.cardType !== 'savings')
+            return res.status(400).json({ success: false, message: 'Chỉ áp dụng cho sổ tiết kiệm' });
+
+        const newAmount = Number(req.body.newAmount);
+        const newRate = Number(req.body.newRate) || 0;
+        const newTerm = Number(req.body.newTerm) || 0;
+        if (!newAmount || newAmount <= 0) return res.status(400).json({ success: false, message: 'Số tiền mới không hợp lệ' });
+        if (newTerm <= 0) return res.status(400).json({ success: false, message: 'Kỳ hạn mới không hợp lệ' });
+
+        // Interest earned over the just-finished term (full-term simple interest).
+        const interestEarned = Math.round(card.balance * ((card.interestRate || 0) / 100) * ((card.term || 0) / 12));
+
+        // Record the interest as income so reports/net worth reflect it.
+        if (interestEarned > 0) {
+            const Transaction = require('../models/Transaction');
+            await Transaction.create({
+                userId: req.user.id,
+                type: 'income',
+                amount: interestEarned,
+                category: 'Tiền lãi',
+                note: `Lãi tái tục sổ ${card.bankName}`,
+                date: new Date(),
+                paymentMethod: 'transfer',
+            });
+        }
+
+        // Roll into a fresh term: new term starts at the old maturity date.
+        const start = card.maturityDate ? new Date(card.maturityDate) : new Date();
+        const maturity = new Date(start);
+        maturity.setMonth(maturity.getMonth() + newTerm);
+
+        card.balance = newAmount;
+        card.interestRate = newRate;
+        card.term = newTerm;
+        card.depositDate = start;
+        card.maturityDate = maturity;
+        await card.save();
+
+        await createNotification({
+            userId: req.user.id.toString(),
+            title: `Đã tái tục sổ ${card.bankName}`,
+            message: `Lãi nhận: ${interestEarned.toLocaleString('vi-VN')}đ · Gửi lại: ${newAmount.toLocaleString('vi-VN')}đ · ${newRate}%/năm · ${newTerm} tháng`,
+            type: 'system',
+            icon: '🐷',
+            iconBg: '#ECFDF5',
+            isImportant: true,
+            relatedId: card._id,
+            relatedModel: 'Card',
+        });
+
+        res.json({ success: true, data: card, interestEarned });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
 // @desc  Pay credit card bill
 // @route PATCH /api/cards/:id/pay
 exports.payCard = async (req, res) => {

@@ -18,6 +18,7 @@ import { useWealth } from '@/hooks/useWealth';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 import { useSharedCashback } from '@/hooks/useSharedCashback';
+import { useCardShares } from '@/hooks/useCardShares';
 import Link from 'next/link';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -60,6 +61,13 @@ export default function DashboardPage() {
     // Shared cards (e.g. my wife's credit card) are our spending too — fold
     // their cashback into the dashboard badge alongside my own cards'.
     const { sharedCashbackTotal } = useSharedCashback();
+    // Map of shared card id → owner name (e.g. wife's), for tagging her card's
+    // transactions in the recent list so they're easy to tell apart from mine.
+    const { sharedCards } = useCardShares();
+    const sharedCardOwners = useMemo(
+        () => Object.fromEntries(sharedCards.map(sc => [sc.card._id, sc.owner?.name || 'Thẻ chung'])),
+        [sharedCards]
+    );
     const ownCashback = useMemo(() => {
         const now = new Date();
         return creditCardsForCashback.reduce((sum, card) => {
@@ -318,6 +326,7 @@ export default function DashboardPage() {
                 <RecentTransactionsList
                     transactions={transactions}
                     cards={cards}
+                    sharedCardOwners={sharedCardOwners}
                     onSelectTx={handleSelectTx}
                     onAddFirst={handleAddFirstTx}
                 />

@@ -97,6 +97,7 @@ export const cardsApi = {
     setDefault: (id: string) => api.patch(`/cards/${id}/set-default`),
     pay: (id: string, amount: number, sourceId?: string) => api.patch(`/cards/${id}/pay`, { amount, sourceId }),
     updateBalance: (id: string, amount: number, action: 'add' | 'set') => api.patch(`/cards/${id}/balance`, { amount, action }),
+    renewSavings: (id: string, data: { newAmount: number; newRate: number; newTerm: number }) => api.post(`/cards/${id}/renew-savings`, data),
 };
 
 // Game Matches (real-time card games)
