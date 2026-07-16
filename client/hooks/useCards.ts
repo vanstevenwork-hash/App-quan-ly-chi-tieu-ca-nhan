@@ -40,6 +40,8 @@ export interface Card {
     statementDay: number;
     cashbackRate: number;
     cashbackCap: number;
+    cashbackMinSpend: number;
+    annualFee: number;
     expirationDate: string;
     note: string;
 }
@@ -69,6 +71,8 @@ export interface CardFormData {
     statementDay: number;
     cashbackRate: number;
     cashbackCap: number;
+    cashbackMinSpend: number;
+    annualFee: number;
     expirationDate: string;
     note: string;
 }

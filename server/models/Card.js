@@ -38,6 +38,8 @@ const cardSchema = new mongoose.Schema({
     statementDay: { type: Number, default: 0 },        // statement cut day
     cashbackRate: { type: Number, default: 0 },        // % hoàn tiền, e.g. 1.5 = 1.5%
     cashbackCap: { type: Number, default: 0 },         // hoàn tiền tối đa/tháng (VNĐ), 0 = không giới hạn
+    cashbackMinSpend: { type: Number, default: 0 },    // chi tiêu tối thiểu/tháng mới được hoàn (VNĐ), 0 = không yêu cầu
+    annualFee: { type: Number, default: 0 },           // phí thường niên (VNĐ), 0 = miễn phí/không có
     // === General ===
     expirationDate: { type: String, default: '' }, // MM/YY or similar
     note: { type: String, default: '' },

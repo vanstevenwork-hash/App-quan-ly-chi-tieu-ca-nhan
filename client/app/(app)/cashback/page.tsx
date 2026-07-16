@@ -132,7 +132,7 @@ export default function CashbackPage() {
             );
             return months.map(({ year, month, label }) => {
                 const monthTxs = cardTxs.filter(t => { const d = new Date(t.date); return d.getFullYear() === year && d.getMonth() === month; });
-                const estimatedAmount = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap);
+                const estimatedAmount = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
                 // Uncapped total — when it exceeds the cap, the row shows "chạm trần"
                 const rawAmount = monthTxs.reduce((s, t) => s + t.amount, 0) * (card.cashbackRate || 0) / 100;
                 const capped = card.cashbackCap > 0 && rawAmount > card.cashbackCap;

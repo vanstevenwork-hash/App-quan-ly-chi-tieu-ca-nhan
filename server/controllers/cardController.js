@@ -92,8 +92,8 @@ exports.create = async (req, res) => {
             // Savings fields
             interestRate, depositDate, maturityDate, term,
             // Credit fields
-            paymentDueDay, statementDay, cashbackRate, cashbackCap, sharedLimit,
-            receiveAccountNumber, receiveQrImage,
+            paymentDueDay, statementDay, cashbackRate, cashbackCap, cashbackMinSpend, sharedLimit,
+            receiveAccountNumber, receiveQrImage, annualFee,
             note,
         } = req.body;
 
@@ -121,6 +121,8 @@ exports.create = async (req, res) => {
             sharedLimit: sharedLimit || false,
             receiveAccountNumber: receiveAccountNumber || '',
             receiveQrImage: receiveQrImage || '',
+            cashbackMinSpend: cashbackMinSpend || 0,
+            annualFee: annualFee || 0,
             note: note || '',
         });
         if (card.cardType === 'credit' && card.sharedLimit) await syncSharedLimitGroup(req.user.id, card.bankShortName);
@@ -164,8 +166,8 @@ exports.update = async (req, res) => {
             'bankName', 'bankShortName', 'cardType', 'cardHolder',
             'balance', 'creditLimit', 'color', 'bankColor',
             'interestRate', 'depositDate', 'maturityDate', 'term',
-            'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'sharedLimit',
-            'receiveAccountNumber', 'receiveQrImage', 'note',
+            'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'cashbackMinSpend', 'sharedLimit',
+            'receiveAccountNumber', 'receiveQrImage', 'annualFee', 'note',
         ];
         fields.forEach(f => { if (req.body[f] !== undefined) card[f] = req.body[f]; });
         if (req.body.cardNumber) card.cardNumber = String(req.body.cardNumber).slice(-4);

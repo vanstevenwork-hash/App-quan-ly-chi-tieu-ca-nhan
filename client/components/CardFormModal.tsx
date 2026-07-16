@@ -63,7 +63,7 @@ const EMPTY: CardFormData = {
     receiveAccountNumber: '', receiveQrImage: '',
     color: '#6C63FF', bankColor: '#1B4FD8', isDefault: false,
     interestRate: 0, depositDate: '', maturityDate: '', term: 12,
-    paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, expirationDate: '', note: '',
+    paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, cashbackMinSpend: 0, annualFee: 0, expirationDate: '', note: '',
 };
 
 export default function CardFormModal({ open, onClose, onSave, editCard, initialType }: CardFormModalProps) {
@@ -107,6 +107,8 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                     statementDay: editCard.statementDay || 0,
                     cashbackRate: editCard.cashbackRate || 0,
                     cashbackCap: editCard.cashbackCap || 0,
+                    cashbackMinSpend: editCard.cashbackMinSpend || 0,
+                    annualFee: editCard.annualFee || 0,
                     expirationDate: (editCard as any).expirationDate || '',
                     note: editCard.note || '',
                 });
@@ -689,7 +691,24 @@ duration-200
                                                 className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
                                         </div>
                                     </div>
-                                    <p className="text-xs text-slate-400 -mt-2">Theo chính sách hoàn tiền thật của thẻ này, dùng để tính "Hoàn tiền" trên trang Thẻ. Để trống mục tối đa nếu thẻ không giới hạn.</p>
+                                    <div>
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Chi tiêu tối thiểu/tháng để nhận hoàn (VND)</p>
+                                        <Input type="text"
+                                            value={form.cashbackMinSpend ? new Intl.NumberFormat('vi-VN').format(form.cashbackMinSpend) : ''}
+                                            onChange={e => set('cashbackMinSpend', Number(e.target.value.replace(/\D/g, '')))}
+                                            placeholder="vd: 15.000.000 · để trống nếu không yêu cầu"
+                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                    </div>
+                                    <p className="text-xs text-slate-400 -mt-2">Theo chính sách hoàn tiền thật của thẻ này, dùng để tính "Hoàn tiền" trên trang Thẻ. Tháng nào chi chưa đủ mức tối thiểu sẽ không được tính hoàn. Để trống mục tối đa nếu thẻ không giới hạn.</p>
+
+                                    <div>
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Phí thường niên (VND)</p>
+                                        <Input type="text"
+                                            value={form.annualFee ? new Intl.NumberFormat('vi-VN').format(form.annualFee) : ''}
+                                            onChange={e => set('annualFee', Number(e.target.value.replace(/\D/g, '')))}
+                                            placeholder="vd: 400.000 · để trống nếu miễn phí"
+                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                    </div>
                                 </>
                             )}
 

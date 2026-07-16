@@ -148,7 +148,7 @@ export default function CalendarPage() {
                 const d = new Date(t.date);
                 return d.getMonth() === month && d.getFullYear() === year;
             });
-            return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap);
+            return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
         }, 0);
     }, [creditCards, transactions]);
 

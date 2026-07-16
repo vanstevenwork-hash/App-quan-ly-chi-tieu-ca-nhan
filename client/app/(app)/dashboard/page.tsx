@@ -76,7 +76,7 @@ export default function DashboardPage() {
                 const d = new Date(t.date);
                 return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             });
-            return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap);
+            return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
         }, 0);
     }, [creditCardsForCashback, transactions]);
     const monthCashback = ownCashback + sharedCashbackTotal;

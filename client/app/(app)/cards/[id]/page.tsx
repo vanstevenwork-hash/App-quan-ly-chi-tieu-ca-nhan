@@ -102,12 +102,12 @@ export default function CardDetailPage() {
         const monthTxs = cardTxs
             .filter(t => t.type === 'expense')
             .filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
-        return getCappedCashbackTotal(monthTxs, card?.cashbackRate, card?.cashbackCap);
+        return getCappedCashbackTotal(monthTxs, card?.cashbackRate, card?.cashbackCap, card?.cashbackMinSpend);
     }, [cardTxs, card]);
 
     const cashbackTotal = useMemo(() => {
         const expenseTxs = cardTxs.filter(t => t.type === 'expense');
-        return getCappedCashbackTotal(expenseTxs, card?.cashbackRate, card?.cashbackCap);
+        return getCappedCashbackTotal(expenseTxs, card?.cashbackRate, card?.cashbackCap, card?.cashbackMinSpend);
     }, [cardTxs, card]);
 
     const activeInstallmentPlans = useMemo(() => {
@@ -380,6 +380,27 @@ export default function CardDetailPage() {
                             <CustomIcon type="calendar" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                             <span className="text-xs text-slate-400 flex-1">Ngày sao kê</span>
                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Ngày {card.statementDay} hàng tháng</span>
+                        </div>
+                    )}
+                    {(card as any).expirationDate && (
+                        <div className="flex items-center gap-3 px-4 py-3">
+                            <CustomIcon type="calendar" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
+                            <span className="text-xs text-slate-400 flex-1">Ngày hết hạn thẻ</span>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{(card as any).expirationDate}</span>
+                        </div>
+                    )}
+                    {isCredit && card.cashbackMinSpend > 0 && (
+                        <div className="flex items-center gap-3 px-4 py-3">
+                            <CustomIcon type="hoanTien" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
+                            <span className="text-xs text-slate-400 flex-1">Chi tối thiểu để nhận hoàn</span>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{new Intl.NumberFormat('vi-VN').format(card.cashbackMinSpend)}đ/tháng</span>
+                        </div>
+                    )}
+                    {card.annualFee > 0 && (
+                        <div className="flex items-center gap-3 px-4 py-3">
+                            <CustomIcon type="creditCard" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
+                            <span className="text-xs text-slate-400 flex-1">Phí thường niên</span>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{new Intl.NumberFormat('vi-VN').format(card.annualFee)}đ/năm</span>
                         </div>
                     )}
                     {card.note && (

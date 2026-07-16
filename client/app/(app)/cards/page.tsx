@@ -110,8 +110,8 @@ export default function CardsPage() {
             );
             const monthTxs = cardTxs.filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
             const yearTxs = cardTxs.filter(t => new Date(t.date).getFullYear() === now.getFullYear());
-            const monthTotal = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap);
-            const yearTotal = getCappedCashbackTotal(yearTxs, card.cashbackRate, card.cashbackCap);
+            const monthTotal = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+            const yearTotal = getCappedCashbackTotal(yearTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
             return { card, monthTotal, yearTotal };
         }).sort((a, b) => b.monthTotal - a.monthTotal);
     }, [creditCards, transactions]);
