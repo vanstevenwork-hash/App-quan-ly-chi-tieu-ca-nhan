@@ -94,6 +94,7 @@ exports.create = async (req, res) => {
             // Credit fields
             paymentDueDay, statementDay, cashbackRate, cashbackCap, cashbackMinSpend, sharedLimit,
             receiveAccountNumber, receiveQrImage, annualFee,
+            cardNetwork, expirationDate,
             note,
         } = req.body;
 
@@ -123,6 +124,8 @@ exports.create = async (req, res) => {
             receiveQrImage: receiveQrImage || '',
             cashbackMinSpend: cashbackMinSpend || 0,
             annualFee: annualFee || 0,
+            cardNetwork: cardNetwork || '',
+            expirationDate: expirationDate || '',
             note: note || '',
         });
         if (card.cardType === 'credit' && card.sharedLimit) await syncSharedLimitGroup(req.user.id, card.bankShortName);
@@ -167,7 +170,7 @@ exports.update = async (req, res) => {
             'balance', 'creditLimit', 'color', 'bankColor',
             'interestRate', 'depositDate', 'maturityDate', 'term',
             'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'cashbackMinSpend', 'sharedLimit',
-            'receiveAccountNumber', 'receiveQrImage', 'annualFee', 'note',
+            'receiveAccountNumber', 'receiveQrImage', 'annualFee', 'cardNetwork', 'expirationDate', 'note',
         ];
         fields.forEach(f => { if (req.body[f] !== undefined) card[f] = req.body[f]; });
         if (req.body.cardNumber) card.cardNumber = String(req.body.cardNumber).slice(-4);
