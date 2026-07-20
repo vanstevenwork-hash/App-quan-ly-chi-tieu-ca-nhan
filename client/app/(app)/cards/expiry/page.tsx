@@ -1,12 +1,15 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useCards, type Card } from '@/hooks/useCards';
+import { useBanks } from '@/hooks/useBanks';
 import PageHeader from '@/components/PageHeader';
 import { getBankLogo } from '@/lib/bankLogos';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn } from '@/lib/utils';
+
+const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
 
 // Physical-card expiry is stored as "MM/YY" (CardFormModal) — older/mock data
 // may use "YYYY-MM". Parse either into the last moment of the expiry month
@@ -30,7 +33,16 @@ type Row = {
     days: number;       // days until expiry (negative = expired)
     months: number;     // whole months until expiry
     status: 'expired' | 'soon' | 'ok';
+    // Annual fee, charged yearly in the card's expiry MONTH (no separate fee
+    // date is stored, so the card's month stands in for the fee anniversary).
+    annualFee: number;
+    feeMonth: number;   // 0-11
+    feeDate: Date | null;
+    feeDays: number;    // days until next fee charge
+    feeDueSoon: boolean; // within the warning window (~2 months)
 };
+
+const FEE_WARN_DAYS = 60; // warn ~2 months before the annual fee month
 
 const STATUS = {
     expired: { color: '#EF4444', bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-500 dark:text-red-400', label: 'Đã hết hạn' },
@@ -50,9 +62,24 @@ function remainingLabel(r: Row): string {
 export default function CardExpiryPage() {
     const router = useRouter();
     const { cards, loading } = useCards();
+    const { banks: fetchedBanks, fetchBanks } = useBanks();
+
+    useEffect(() => { fetchBanks(); }, [fetchBanks]);
+
+    // Same logo resolution chain as Cards/Cashback: bank API logo first, then
+    // the static CDN map — getBankLogo alone misses many banks.
+    const banksByShortName = useMemo(() => {
+        const m = new Map<string, any>();
+        fetchedBanks.forEach((b: any) => { if (b.shortName) m.set(b.shortName.toUpperCase(), b); });
+        return m;
+    }, [fetchedBanks]);
+    const cardLogo = (card: Card): string | undefined =>
+        banksByShortName.get((card.bankShortName || '').toUpperCase())?.logo
+        || getBankLogo(card.bankShortName, card.bankName);
 
     const rows = useMemo<Row[]>(() => {
         const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         return cards
             .map(card => {
                 const expiry = parseExpiry((card as any).expirationDate);
@@ -61,16 +88,36 @@ export default function CardExpiryPage() {
                 const months = (expiry.getFullYear() - now.getFullYear()) * 12 + (expiry.getMonth() - now.getMonth());
                 const status: Row['status'] = days < 0 ? 'expired' : days <= 90 ? 'soon' : 'ok';
                 const label = `${String(expiry.getMonth() + 1).padStart(2, '0')}/${expiry.getFullYear()}`;
-                return { card, expiry, label, days, months, status };
+
+                // Next annual-fee charge: the card's expiry month, this year if
+                // not passed yet, otherwise next year. Only meaningful while the
+                // card is still valid and actually has a fee.
+                const annualFee = card.annualFee || 0;
+                const feeMonth = expiry.getMonth();
+                let feeDate: Date | null = null;
+                let feeDays = Infinity;
+                if (annualFee > 0 && status !== 'expired') {
+                    const feeYear = now.getMonth() > feeMonth ? now.getFullYear() + 1 : now.getFullYear();
+                    feeDate = new Date(feeYear, feeMonth, 1);
+                    feeDays = Math.ceil((feeDate.getTime() - todayStart.getTime()) / 86_400_000);
+                }
+                const feeDueSoon = annualFee > 0 && feeDate !== null && feeDays <= FEE_WARN_DAYS;
+
+                return { card, expiry, label, days, months, status, annualFee, feeMonth, feeDate, feeDays, feeDueSoon };
             })
             .filter((r): r is Row => r !== null)
-            .sort((a, b) => a.expiry.getTime() - b.expiry.getTime());
+            // Soonest actionable date first (nearest of fee-charge vs expiry).
+            .sort((a, b) => {
+                const au = Math.min(a.days, a.feeDueSoon ? a.feeDays : Infinity);
+                const bu = Math.min(b.days, b.feeDueSoon ? b.feeDays : Infinity);
+                return au - bu;
+            });
     }, [cards]);
 
     const stats = useMemo(() => ({
         total: rows.length,
-        soon: rows.filter(r => r.status === 'soon').length,
-        expired: rows.filter(r => r.status === 'expired').length,
+        fee: rows.filter(r => r.feeDueSoon).length,
+        soon: rows.filter(r => r.status === 'soon' || r.status === 'expired').length,
     }), [rows]);
 
     return (
@@ -82,8 +129,8 @@ export default function CardExpiryPage() {
                 <div className="grid grid-cols-3 gap-3">
                     {[
                         { k: 'total', label: 'Tổng thẻ', value: stats.total, color: '#6366F1' },
-                        { k: 'soon', label: 'Sắp hết hạn', value: stats.soon, color: '#F59E0B' },
-                        { k: 'expired', label: 'Đã hết hạn', value: stats.expired, color: '#EF4444' },
+                        { k: 'fee', label: 'Sắp đóng phí', value: stats.fee, color: '#F59E0B' },
+                        { k: 'soon', label: 'Sắp/đã hết hạn', value: stats.soon, color: '#EF4444' },
                     ].map(s => (
                         <div key={s.k} className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-3.5 text-center">
                             <p className="text-2xl font-black tabular-nums" style={{ color: s.color }}>{s.value}</p>
@@ -95,7 +142,7 @@ export default function CardExpiryPage() {
                 {/* List */}
                 {loading ? (
                     <div className="space-y-3">
-                        {[1, 2, 3].map(i => <div key={i} className="h-[76px] rounded-2xl bg-gray-200 dark:bg-surface animate-pulse" />)}
+                        {[1, 2, 3].map(i => <div key={i} className="h-[88px] rounded-2xl bg-gray-200 dark:bg-surface animate-pulse" />)}
                     </div>
                 ) : rows.length === 0 ? (
                     <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700 p-8 text-center">
@@ -109,7 +156,7 @@ export default function CardExpiryPage() {
                     <div className="space-y-3">
                         {rows.map(r => {
                             const st = STATUS[r.status];
-                            const logo = getBankLogo(r.card.bankShortName, r.card.bankName);
+                            const logo = cardLogo(r.card);
                             return (
                                 <button key={r.card._id} onClick={() => router.push(`/cards/${r.card._id}`)}
                                     className="w-full flex items-center gap-3 p-3.5 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm active:scale-[0.99] transition text-left">
@@ -129,9 +176,19 @@ export default function CardExpiryPage() {
                                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                                             Hết hạn <span className="font-bold" style={{ color: st.color }}>{r.label}</span> · {remainingLabel(r)}
                                         </p>
+                                        {r.annualFee > 0 && (
+                                            <p className={cn('text-xs mt-0.5', r.feeDueSoon ? 'text-amber-500 dark:text-amber-400 font-bold' : 'text-slate-400 dark:text-slate-500')}>
+                                                {r.feeDueSoon
+                                                    ? `⚠ Sắp đóng phí TN ${fmt(r.annualFee)}đ · còn ${Math.max(0, r.feeDays)} ngày`
+                                                    : `Phí TN ${fmt(r.annualFee)}đ · đóng T${r.feeMonth + 1} hằng năm`}
+                                            </p>
+                                        )}
                                     </div>
-                                    <span className={cn('text-[10px] font-black px-2.5 py-1 rounded-full flex-shrink-0', st.bg, st.text)}>
-                                        {st.label}
+                                    <span className={cn(
+                                        'text-[10px] font-black px-2.5 py-1 rounded-full flex-shrink-0',
+                                        r.feeDueSoon ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-500 dark:text-amber-400' : cn(st.bg, st.text)
+                                    )}>
+                                        {r.feeDueSoon ? 'Sắp đóng phí' : st.label}
                                     </span>
                                 </button>
                             );

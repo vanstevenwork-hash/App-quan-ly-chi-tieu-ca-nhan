@@ -6,7 +6,7 @@ import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
 import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
-import { getBankLogo } from '@/lib/bankLogos';
+import { useBankLogo } from '@/hooks/useBankLogo';
 import { useRouter } from 'next/navigation';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
@@ -102,6 +102,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
     card: Card; idx: number;
     onEdit: () => void; onDelete: () => void; onSetDefault: () => void; onViewDetail: () => void;
 }) {
+    const logoOf = useBankLogo();
     const gradient = getCardGradient(card, idx);
     const ts = cardTextStyle(card.color);
     const isPooled = card.sharedLimit && (card.sharedGroupSize ?? 1) > 1;
@@ -116,7 +117,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
             return Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
         })()
         : null;
-    const logoUrl = getBankLogo(card.bankShortName, card.bankName);
+    const logoUrl = logoOf(card.bankShortName, card.bankName);
 
     return (
         <div className="snap-center shrink-0 w-[85%] rounded-xl p-6 shadow-xl relative overflow-hidden"
@@ -192,6 +193,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
 function SavingsCard({ card, onEdit, onDelete }: {
     card: Card; onEdit: () => void; onDelete: () => void;
 }) {
+    const logoOf = useBankLogo();
     const matDays = daysUntil(card.maturityDate);
     const urgColor = getUrgencyColor(matDays);
     const estimatedInterest = card.interestRate > 0 && card.term > 0
@@ -209,7 +211,7 @@ function SavingsCard({ card, onEdit, onDelete }: {
             <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                     {(() => {
-                        const logoUrl = getBankLogo(card.bankShortName, card.bankName);
+                        const logoUrl = logoOf(card.bankShortName, card.bankName);
                         return logoUrl ? (
                             <img
                                 src={logoUrl}
@@ -285,6 +287,7 @@ function SavingsCard({ card, onEdit, onDelete }: {
 function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
     card: Card; onEdit: () => void; onDelete: () => void; onSetDefault: () => void;
 }) {
+    const logoOf = useBankLogo();
     const isCrypto = card.cardType === 'crypto';
     const isEWallet = card.cardType === 'eWallet';
     const isSavings = card.cardType === 'savings';
@@ -297,7 +300,7 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
         <div className="bg-white dark:bg-surface rounded-xl p-4 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
             <div className="flex items-center gap-3">
                 {(() => {
-                    const logoUrl = getBankLogo(card.bankShortName, card.bankName);
+                    const logoUrl = logoOf(card.bankShortName, card.bankName);
                     return logoUrl ? (
                         <img
                             src={logoUrl}
@@ -322,11 +325,25 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
                     <p className="text-xs text-slate-400 dark:text-slate-500">••{card.cardNumber} · {card.cardHolder}</p>
                 </div>
             </div>
-            <div className="flex items-center gap-3">
-                <div className="text-right">
-                    <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{fmt(card.balance)}</p>
+            {/* Amount at rest; edit/delete/set-default cross-fade in on hover — same pattern as the wealth page */}
+            <div className="relative flex items-center justify-end min-w-[124px] flex-shrink-0 self-stretch">
+                <p className="font-bold text-emerald-600 dark:text-emerald-400 text-sm whitespace-nowrap transition-opacity duration-300 group-hover:opacity-0">{fmt(card.balance)}</p>
+                <div className="absolute inset-0 flex items-center justify-end gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    {!card.isDefault && (
+                        <button onClick={(e) => { e.stopPropagation(); onSetDefault(); }} aria-label="Đặt mặc định"
+                            className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-yellow-100 dark:hover:bg-yellow-900/40 transition-colors shadow-sm">
+                            <CustomIcon type="star" size={15} tile={false} color="currentColor" className="w-4 h-4 text-yellow-500" />
+                        </button>
+                    )}
+                    <button onClick={(e) => { e.stopPropagation(); onEdit(); }} aria-label="Chỉnh sửa"
+                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors shadow-sm">
+                        <CustomIcon type="pencil" size={15} tile={false} color="currentColor" className="w-4 h-4 text-indigo-500" />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} aria-label="Xoá"
+                        className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors shadow-sm">
+                        <CustomIcon type="trash" size={15} tile={false} color="currentColor" className="w-4 h-4 text-red-500" />
+                    </button>
                 </div>
-                <CardMenu onEdit={onEdit} onDelete={onDelete} onSetDefault={onSetDefault} isDefault={card.isDefault} />
             </div>
         </div>
     );

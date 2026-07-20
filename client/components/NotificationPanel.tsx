@@ -156,9 +156,9 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                         return (
                             <div key={n._id} onClick={() => { if (!n.isRead) markRead(n._id); setSelectedNotification(n); }}
                                 className={cn("flex px-4 py-3 gap-4 cursor-pointer rounded-2xl transition-colors", !n.isRead ? 'bg-[#F9FAFB] dark:bg-slate-800/60' : 'bg-white dark:bg-surface hover:bg-gray-50 dark:hover:bg-slate-800')}>
-                                <div className="w-12 h-12 rounded-full border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-[#F8FAFC] dark:bg-slate-800 overflow-hidden">
+                                <div className={cn("w-12 h-12 border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-[#F8FAFC] dark:bg-slate-800 overflow-hidden", matchLogo ? 'rounded-xl' : 'rounded-full')}>
                                     {matchLogo ? (
-                                        <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-full">
+                                        <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-xl">
                                             <img src={matchLogo} alt="bank" className="w-full h-full object-contain" />
                                         </div>
                                     ) : (
@@ -220,7 +220,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
 
                 const getHistoryIcon = (n: any) => {
                     const matchLogo = getMatchingLogo(n.title) || getMatchingLogo(n.message);
-                    if (matchLogo) return <div className="w-full h-full p-2.5 rounded-full bg-white"><img src={matchLogo} alt="bank" className="w-full h-full object-contain" /></div>;
+                    if (matchLogo) return <div className="w-full h-full p-2.5 rounded-xl bg-white"><img src={matchLogo} alt="bank" className="w-full h-full object-contain" /></div>;
                     const catType = CATEGORY_LABEL_TO_TYPE[(n?.message || '').split(':')[0].trim()];
                     if (catType) return <CustomIcon type={catType} size={22} tile={false} />;
                     if (n.type === 'transaction_income') return <ActionIcon type="plus" size={20} tile={false} color="#10B981" />;
@@ -275,10 +275,11 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                             const match = n.message?.match(/([\d\.]+)\s*đ/);
                                             const amountStr = match ? match[1] : '';
                                             const isIncome = n.type === 'transaction_income' || n.title?.toLowerCase().includes('nhận');
+                                            const histLogo = getMatchingLogo(n.title) || getMatchingLogo(n.message);
 
                                             return (
                                                 <div key={n._id} className="flex items-center gap-4 p-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer rounded-2xl" onClick={() => setSelectedNotification(n)}>
-                                                    <div className="w-12 h-12 rounded-full bg-[#F1F5F9] dark:bg-slate-800 border border-gray-100 dark:border-transparent flex items-center justify-center flex-shrink-0">
+                                                    <div className={cn("w-12 h-12 bg-[#F1F5F9] dark:bg-slate-800 border border-gray-100 dark:border-transparent flex items-center justify-center flex-shrink-0", histLogo ? 'rounded-xl' : 'rounded-full')}>
                                                         {getHistoryIcon(n)}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
@@ -377,9 +378,9 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                             <div key={card._id}
                                                 onClick={() => { router.push(`/cards/${card._id}`); onClose(); }}
                                                 className="flex px-4 py-3 gap-4 cursor-pointer rounded-2xl bg-red-50/60 dark:bg-red-900/10 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-                                                <div className="w-12 h-12 rounded-full border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden">
+                                                <div className={cn("w-12 h-12 border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
                                                     {logo
-                                                        ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-full"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
+                                                        ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
                                                         : '💳'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -395,9 +396,9 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                             <div key={card._id}
                                                 onClick={() => { router.push('/savings'); onClose(); }}
                                                 className="flex px-4 py-3 gap-4 cursor-pointer rounded-2xl bg-amber-50/60 dark:bg-amber-900/10 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors">
-                                                <div className="w-12 h-12 rounded-full border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden">
+                                                <div className={cn("w-12 h-12 border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
                                                     {logo
-                                                        ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-full"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
+                                                        ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
                                                         : '🏦'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -440,7 +441,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                         <div className="w-10"></div>
                     </div>
                     <div className="flex-1 p-6 overflow-y-auto">
-                        <div className="w-20 h-20 mx-auto rounded-full bg-gray-50 dark:bg-slate-800 border dark:border-transparent flex items-center justify-center text-4xl mb-6 shadow-sm overflow-hidden">
+                        <div className={cn("w-20 h-20 mx-auto bg-gray-50 dark:bg-slate-800 border dark:border-transparent flex items-center justify-center text-4xl mb-6 shadow-sm overflow-hidden", (getMatchingLogo(selectedNotification.title) || getMatchingLogo(selectedNotification.message)) ? 'rounded-2xl' : 'rounded-full')}>
                             {(() => {
                                 const matchLogo = getMatchingLogo(selectedNotification.title) || getMatchingLogo(selectedNotification.message);
                                 if (matchLogo) return <div className="w-full h-full p-3 bg-white"><img src={matchLogo} alt="bank" className="w-full h-full object-contain" /></div>;
