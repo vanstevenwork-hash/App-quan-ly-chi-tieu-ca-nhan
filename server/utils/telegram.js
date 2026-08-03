@@ -22,4 +22,27 @@ const answerCallbackQuery = (callbackQueryId, text = '') =>
 const editMessageText = (chatId, messageId, text, extra = {}) =>
     callTelegram('editMessageText', { chat_id: chatId, message_id: messageId, text, parse_mode: 'HTML', ...extra });
 
-module.exports = { callTelegram, sendMessage, answerCallbackQuery, editMessageText };
+// Download a Telegram file (e.g. a photo) to a Buffer via getFile + the file CDN.
+async function downloadTelegramFile(fileId) {
+    const info = await callTelegram('getFile', { file_id: fileId });
+    const path = info.result?.file_path;
+    if (!path) throw new Error('Không lấy được file từ Telegram');
+    const { data } = await axios.get(`https://api.telegram.org/file/bot${token()}/${path}`, { responseType: 'arraybuffer' });
+    const ext = (path.split('.').pop() || 'jpg').toLowerCase();
+    const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    return { buffer: Buffer.from(data), mimeType };
+}
+
+// Send a generated file (e.g. a CSV export) via multipart. Uses the global
+// fetch/FormData/Blob (Node 18+) since axios + Buffer multipart is fiddlier.
+async function sendDocument(chatId, filename, content, caption = '') {
+    if (!token()) throw new Error('Thiếu TELEGRAM_BOT_TOKEN');
+    const form = new FormData();
+    form.append('chat_id', String(chatId));
+    if (caption) form.append('caption', caption);
+    form.append('document', new Blob([content], { type: 'text/csv' }), filename);
+    const res = await fetch(`https://api.telegram.org/bot${token()}/sendDocument`, { method: 'POST', body: form });
+    return res.json();
+}
+
+module.exports = { callTelegram, sendMessage, answerCallbackQuery, editMessageText, downloadTelegramFile, sendDocument };
