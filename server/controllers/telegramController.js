@@ -2,6 +2,8 @@ const crypto = require('crypto');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
+const Card = require('../models/Card');
+const { hasCardAccess } = require('../utils/cardAccess');
 const { sendMessage, answerCallbackQuery, editMessageText, callTelegram } = require('../utils/telegram');
 
 // Category labels must match client/lib/mockData.ts CATEGORIES exactly so the
@@ -76,6 +78,134 @@ Câu người dùng: "${text}"`;
     return { type, amount, category, note, confidence };
 }
 
+const CARD_EMOJI = { credit: '💳', debit: '🏧', eWallet: '📱', savings: '🏦', crypto: '₿' };
+const sourceLabel = (card) => card ? `${CARD_EMOJI[card.cardType] || '💳'} ${card.bankShortName} ••${card.cardNumber}` : '💵 Tiền mặt';
+
+// A parsed-but-not-yet-saved transaction, held while the user picks a payment
+// source via inline buttons. In-memory + TTL: if the process restarts before
+// they tap, the button just reports "hết hạn" and they retype — no data loss
+// that matters. callback_data stays tiny (id + cardId) to fit Telegram's 64B.
+const pending = new Map(); // id -> { userId, type, amount, category, note, exp }
+const PENDING_TTL = 15 * 60 * 1000;
+function putPending(data) {
+    const id = crypto.randomBytes(4).toString('hex');
+    pending.set(id, { ...data, exp: Date.now() + PENDING_TTL });
+    return id;
+}
+function getPending(id) {
+    const p = pending.get(id);
+    if (!p) return null;
+    if (Date.now() > p.exp) { pending.delete(id); return null; }
+    return p;
+}
+setInterval(() => {
+    const now = Date.now();
+    for (const [k, v] of pending) if (now > v.exp) pending.delete(k);
+}, 5 * 60 * 1000).unref?.();
+
+// Mirror of the balance maths in transactionController: expense lowers a debit
+// balance / raises credit debt; income does the reverse. `revert` undoes it.
+function applyBalance(card, type, amount, revert = false) {
+    const isCredit = card.cardType === 'credit';
+    let delta = type === 'income' ? (isCredit ? -amount : amount) : (isCredit ? amount : -amount);
+    card.balance += revert ? -delta : delta;
+}
+
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// The real spending cards for a user (savings/crypto aren't payment sources).
+const spendingCards = (userId) => Card.find({
+    userId, isActive: true, cardType: { $in: ['credit', 'debit', 'eWallet'] },
+}).sort({ isDefault: -1, updatedAt: -1 });
+
+// Create the transaction and apply any card-balance change. `card` null = cash.
+async function commitTransaction(user, data, card) {
+    const tx = await Transaction.create({
+        userId: card ? card.userId : user._id, // shared card → owner's history
+        createdBy: user._id,
+        type: data.type, amount: data.amount, category: data.category, note: data.note,
+        paymentMethod: card ? 'card' : 'cash', cardId: card ? card._id : null,
+        date: new Date(),
+    });
+    if (card) { applyBalance(card, data.type, data.amount); await card.save(); }
+    return tx;
+}
+
+const confirmText = (data, card) => {
+    const label = data.type === 'income' ? 'Thu' : 'Chi';
+    const emoji = data.type === 'income' ? '🟢' : '🔴';
+    return `✅ Đã ghi ${emoji} <b>${label} ${fmt(data.amount)}đ</b>\n📂 ${data.category}${data.note ? `\n📝 ${data.note}` : ''}\n💰 ${sourceLabel(card)}`;
+};
+
+const undoKeyboard = (txId) => ({ reply_markup: { inline_keyboard: [[{ text: '↩️ Hoàn tác', callback_data: `undo:${txId}` }]] } });
+
+// Ask which source to record against. `opts.cards` overrides the list (used to
+// disambiguate when the text named a bank with several cards); `opts.includeCash`
+// / `opts.prompt` tune the message.
+async function sendSourcePicker(chatId, user, pendingId, parsed, opts = {}) {
+    const cards = opts.cards || (await spendingCards(user._id)).slice(0, 10);
+    const rows = [];
+    if (opts.includeCash !== false) rows.push([{ text: '💵 Tiền mặt', callback_data: `pick:${pendingId}:cash` }]);
+    for (const c of cards) rows.push([{ text: sourceLabel(c), callback_data: `pick:${pendingId}:${c._id}` }]);
+    rows.push([{ text: '❌ Huỷ', callback_data: `pick:${pendingId}:cancel` }]);
+
+    const label = parsed.type === 'income' ? 'Thu' : 'Chi';
+    const emoji = parsed.type === 'income' ? '🟢' : '🔴';
+    await sendMessage(
+        chatId,
+        `${emoji} <b>${label} ${fmt(parsed.amount)}đ</b> · ${parsed.category}${parsed.note ? ` · ${parsed.note}` : ''}\n\n👉 ${opts.prompt || 'Ghi vào nguồn nào?'}`,
+        { reply_markup: { inline_keyboard: rows } }
+    );
+}
+
+// User tapped a source button → actually create the transaction now.
+async function handlePick(cq, pendingId, source) {
+    const chatId = cq.message?.chat?.id;
+    const messageId = cq.message?.message_id;
+    const p = getPending(pendingId);
+    if (!p) {
+        await answerCallbackQuery(cq.id, 'Yêu cầu đã hết hạn');
+        await editMessageText(chatId, messageId, '⌛ Yêu cầu đã hết hạn. Gõ lại giao dịch nhé.');
+        return;
+    }
+    if (source === 'cancel') {
+        pending.delete(pendingId);
+        await answerCallbackQuery(cq.id, 'Đã huỷ');
+        await editMessageText(chatId, messageId, '❌ Đã huỷ.');
+        return;
+    }
+
+    const user = await User.findById(p.userId);
+    if (!user) { await answerCallbackQuery(cq.id); return; }
+
+    let card = null;
+    if (source !== 'cash') {
+        const access = await hasCardAccess(user._id, source);
+        if (!access.allowed) { await answerCallbackQuery(cq.id, 'Không có quyền dùng thẻ này'); return; }
+        card = access.card;
+    }
+
+    const tx = await commitTransaction(user, p, card);
+    pending.delete(pendingId);
+    await answerCallbackQuery(cq.id, 'Đã ghi ✅');
+    await editMessageText(chatId, messageId, confirmText(p, card), undoKeyboard(tx._id));
+}
+
+// Undo: revert any card-balance change, then delete.
+async function handleUndo(cq, txId) {
+    const chatId = cq.message?.chat?.id;
+    const user = await User.findOne({ telegramChatId: String(chatId) });
+    const tx = await Transaction.findById(txId);
+    if (tx && user && (tx.userId.toString() === user._id.toString() || tx.createdBy?.toString() === user._id.toString())) {
+        if (tx.paymentMethod === 'card' && tx.cardId) {
+            const card = await Card.findById(tx.cardId);
+            if (card) { applyBalance(card, tx.type, tx.amount, true); await card.save(); }
+        }
+        await Transaction.findByIdAndDelete(txId);
+    }
+    await answerCallbackQuery(cq.id, 'Đã hoàn tác');
+    await editMessageText(chatId, cq.message.message_id, '↩️ Đã hoàn tác giao dịch.');
+}
+
 // Link a Telegram chat to an app user via the short code minted by GET /link.
 async function handleLink(chatId, code) {
     const user = await User.findOne({ telegramLinkCode: code, telegramLinkCodeExpires: { $gt: new Date() } });
@@ -89,17 +219,15 @@ async function handleLink(chatId, code) {
     return sendMessage(chatId, `✅ Đã liên kết với <b>${user.name}</b>!\n\n${HELP}`);
 }
 
-// Inline-button actions (currently just "undo last entry").
+// Inline-button dispatcher: source picker (pick:) and undo (undo:).
 async function handleCallback(cq) {
     const data = cq.data || '';
-    const chatId = cq.message?.chat?.id;
+    if (data.startsWith('pick:')) {
+        const [, id, source] = data.split(':');
+        return handlePick(cq, id, source);
+    }
     if (data.startsWith('undo:')) {
-        const id = data.slice(5);
-        const user = await User.findOne({ telegramChatId: String(chatId) });
-        if (user) await Transaction.deleteOne({ _id: id, userId: user._id });
-        await answerCallbackQuery(cq.id, 'Đã hoàn tác');
-        await editMessageText(chatId, cq.message.message_id, '↩️ Đã hoàn tác giao dịch.');
-        return;
+        return handleUndo(cq, data.slice(5));
     }
     await answerCallbackQuery(cq.id);
 }
@@ -149,24 +277,31 @@ exports.webhook = async (req, res) => {
             return void sendMessage(chatId, '🤔 Chưa nhận ra số tiền. Thử lại kiểu <code>cà phê 45k</code> hoặc <code>lương 20tr</code>.');
         }
 
-        const tx = await Transaction.create({
-            userId: user._id,
-            createdBy: user._id,
-            type: parsed.type,
-            amount: parsed.amount,
-            category: parsed.category,
-            note: parsed.note,
-            paymentMethod: 'cash',
-            date: new Date(),
-        });
+        // Shortcut: did the text name a bank the user actually owns? (e.g. "…vib")
+        const cards = await spendingCards(user._id);
+        const matched = cards.filter(c => new RegExp(`\\b${escapeRegExp(c.bankShortName)}\\b`, 'i').test(text));
+        // Strip the matched bank word out of the note so it doesn't read "cà phê vib"
+        for (const c of matched) {
+            parsed.note = parsed.note.replace(new RegExp(`\\b${escapeRegExp(c.bankShortName)}\\b`, 'ig'), '').replace(/\s{2,}/g, ' ').trim();
+        }
 
-        const label = parsed.type === 'income' ? 'Thu' : 'Chi';
-        const emoji = parsed.type === 'income' ? '🟢' : '🔴';
-        await sendMessage(
-            chatId,
-            `✅ Đã ghi ${emoji} <b>${label} ${fmt(parsed.amount)}đ</b>\n📂 ${parsed.category}${parsed.note ? `\n📝 ${parsed.note}` : ''}`,
-            { reply_markup: { inline_keyboard: [[{ text: '↩️ Hoàn tác', callback_data: `undo:${tx._id}` }]] } }
-        );
+        // Exactly one match → unambiguous, record straight away (no tapping).
+        if (matched.length === 1) {
+            const tx = await commitTransaction(user, parsed, matched[0]);
+            return void sendMessage(chatId, confirmText(parsed, matched[0]), undoKeyboard(tx._id));
+        }
+
+        // Otherwise hold it and ask. If several cards share the named bank
+        // (e.g. VIB credit + VIB debit) show just those to disambiguate.
+        const pendingId = putPending({ userId: user._id, type: parsed.type, amount: parsed.amount, category: parsed.category, note: parsed.note });
+        if (matched.length > 1) {
+            await sendSourcePicker(chatId, user, pendingId, parsed, {
+                cards: matched, includeCash: false,
+                prompt: `Bạn có ${matched.length} thẻ/tài khoản ${matched[0].bankShortName} — chọn cái nào?`,
+            });
+        } else {
+            await sendSourcePicker(chatId, user, pendingId, parsed, { cards: cards.slice(0, 10) });
+        }
     } catch (err) {
         console.error('❌ Telegram webhook error:', err.message);
     }
