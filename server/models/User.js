@@ -8,6 +8,11 @@ const userSchema = new mongoose.Schema({
     avatar: { type: String, default: '' },
     currency: { type: String, default: 'VND' },
     language: { type: String, default: 'vi' },
+    // Telegram quick-entry: chat id of the linked bot conversation, plus the
+    // short-lived code the app mints so /start <code> can bind this account.
+    telegramChatId: { type: String, default: null, index: true, sparse: true },
+    telegramLinkCode: { type: String, default: null },
+    telegramLinkCodeExpires: { type: Date, default: null },
 }, { timestamps: true });
 
 // Mongoose v8+: async pre-save hooks do NOT receive `next` — just use async/await and return

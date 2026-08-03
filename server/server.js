@@ -54,6 +54,7 @@ app.use('/api/day-notes', require('./routes/dayNotes'));
 app.use('/api/ocr', require('./routes/ocr'));
 app.use('/api/cashback-records', require('./routes/cashback'));
 app.use('/api/game-matches', require('./routes/gameMatches'));
+app.use('/api/telegram', require('./routes/telegram'));
 
 // ===== SSE Stream endpoint =====
 // GET /api/notifications/stream  (auth via ?token=... query param)
@@ -139,6 +140,29 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📡 Local Access: http://localhost:${PORT}`);
   console.log(`📚 Swagger UI: http://localhost:${PORT}/api-docs`);
   console.log(`🃏 Socket.io /games namespace ready`);
+  registerTelegramWebhook();
 });
+
+// Point Telegram at our public webhook on boot so a fresh deploy is wired up
+// automatically. No-op unless the bot token + public URL are configured.
+async function registerTelegramWebhook() {
+  const { TELEGRAM_BOT_TOKEN, PUBLIC_URL, TELEGRAM_WEBHOOK_SECRET } = process.env;
+  if (!TELEGRAM_BOT_TOKEN || !PUBLIC_URL) {
+    console.log('ℹ️  Telegram webhook chưa cấu hình (thiếu TELEGRAM_BOT_TOKEN / PUBLIC_URL) — bỏ qua.');
+    return;
+  }
+  try {
+    const { callTelegram } = require('./utils/telegram');
+    const url = `${PUBLIC_URL.replace(/\/$/, '')}/api/telegram/webhook`;
+    const res = await callTelegram('setWebhook', {
+      url,
+      secret_token: TELEGRAM_WEBHOOK_SECRET || undefined,
+      allowed_updates: ['message', 'callback_query'],
+    });
+    console.log(res.ok ? `🤖 Telegram webhook set → ${url}` : `⚠️ setWebhook: ${res.description}`);
+  } catch (err) {
+    console.error('⚠️ Không đặt được Telegram webhook:', err.message);
+  }
+}
 
 module.exports = app;

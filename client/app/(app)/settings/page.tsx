@@ -12,7 +12,7 @@ import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
-import { authApi } from '@/lib/api';
+import { authApi, telegramApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
@@ -91,10 +91,51 @@ export default function SettingsPage() {
     // Logout confirm
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+    // Telegram quick-entry link
+    const [tgConnected, setTgConnected] = useState<boolean | null>(null);
+    const [tgLoading, setTgLoading] = useState(false);
+
     useEffect(() => {
         setHideBalanceOnOpen(localStorage.getItem('security.hideBalanceOnOpen') === '1');
         setLastSync(localStorage.getItem('data.lastSyncAt'));
+        telegramApi.getStatus()
+            .then(res => setTgConnected(!!res.data?.connected))
+            .catch(() => setTgConnected(false));
     }, []);
+
+    const handleTelegram = async () => {
+        // Already linked → offer to disconnect
+        if (tgConnected) {
+            if (!confirm('Ngắt kết nối Telegram? Bạn sẽ không ghi chi tiêu qua bot được nữa.')) return;
+            setTgLoading(true);
+            try {
+                await telegramApi.unlink();
+                setTgConnected(false);
+                toast.success('Đã ngắt kết nối Telegram');
+            } catch {
+                toast.error('Ngắt kết nối thất bại');
+            } finally {
+                setTgLoading(false);
+            }
+            return;
+        }
+        // Not linked → mint a code and open the bot deep link
+        setTgLoading(true);
+        try {
+            const res = await telegramApi.getLink();
+            if (res.data?.connected) { setTgConnected(true); return; }
+            const url = res.data?.url as string | undefined;
+            if (!url) { toast.error('Server chưa cấu hình bot Telegram'); return; }
+            window.open(url, '_blank');
+            toast.success('Mở Telegram và bấm "Bắt đầu" để liên kết', { duration: 5000 });
+            // Re-check status shortly after so the row flips to "Đã kết nối"
+            setTimeout(() => { telegramApi.getStatus().then(r => setTgConnected(!!r.data?.connected)).catch(() => {}); }, 8000);
+        } catch {
+            toast.error('Không lấy được liên kết Telegram');
+        } finally {
+            setTgLoading(false);
+        }
+    };
 
     const handleLogout = () => {
         logout();
@@ -314,6 +355,24 @@ export default function SettingsPage() {
                             label="Ngôn ngữ"
                             value={currentLanguage.label}
                             onClick={() => setShowLanguageDialog(true)}
+                        />
+                        <SettingItem
+                            icon={<span className="text-lg">✈️</span>}
+                            label="Kết nối Telegram"
+                            sublabel={tgConnected == null ? 'Đang kiểm tra…' : tgConnected ? 'Đã kết nối · nhắn bot để ghi nhanh' : 'Ghi chi tiêu nhanh qua chat'}
+                            onClick={tgLoading ? undefined : handleTelegram}
+                            right={
+                                tgConnected == null ? undefined : (
+                                    <span className={cn(
+                                        'text-xs font-bold flex-shrink-0 px-2.5 py-1 rounded-full',
+                                        tgConnected
+                                            ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20'
+                                            : 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20'
+                                    )}>
+                                        {tgLoading ? '…' : tgConnected ? 'Đã kết nối' : 'Kết nối'}
+                                    </span>
+                                )
+                            }
                         />
                     </div>
                 </div>

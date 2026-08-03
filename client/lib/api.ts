@@ -69,6 +69,13 @@ export const transactionsApi = {
     delete: (id: string) => api.delete(`/transactions/${id}`),
 };
 
+// Telegram quick-entry linking
+export const telegramApi = {
+    getLink: () => api.get('/telegram/link'),
+    getStatus: () => api.get('/telegram/status'),
+    unlink: () => api.post('/telegram/unlink'),
+};
+
 // Accounts
 export const accountsApi = {
     getAll: () => api.get('/accounts'),
