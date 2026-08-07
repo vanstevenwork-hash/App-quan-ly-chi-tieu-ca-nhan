@@ -1,12 +1,15 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
+import CardPaymentModal from '@/components/CardPaymentModal';
+import CreditCardCarousel from '@/components/cards/CreditCardCarousel';
 import PageHeader from '@/components/PageHeader';
 import { cn } from '@/lib/utils';
 import { useBankLogo } from '@/hooks/useBankLogo';
+import { useBanks } from '@/hooks/useBanks';
 import { useRouter } from 'next/navigation';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
@@ -376,10 +379,24 @@ function DeleteConfirm({ card, onConfirm, onCancel }: { card: Card; onConfirm: (
 export default function AccountsPage() {
     const router = useRouter();
     const { cards, totalBalance, totalDebt, loading, error, createCard, updateCard, deleteCard, setDefaultCard, refetch } = useCards();
+    const { banks: fetchedBanks, fetchBanks } = useBanks();
+    useEffect(() => { fetchBanks(); }, [fetchBanks]);
     const [activeTab, setActiveTab] = useState<'cards' | 'savings'>('cards');
     const [showForm, setShowForm] = useState(false);
+    const [showPayment, setShowPayment] = useState(false);
     const [editCard, setEditCard] = useState<Card | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Card | null>(null);
+
+    const banksByShortName = useMemo(() => {
+        const map = new Map<string, any>();
+        fetchedBanks.forEach((b: any) => { if (b.shortName) map.set(b.shortName.toUpperCase(), b); });
+        return map;
+    }, [fetchedBanks]);
+    const findApiBank = useCallback((bankShortName?: string, bankName?: string) => {
+        const direct = banksByShortName.get((bankShortName || '').toUpperCase());
+        if (direct) return direct;
+        return fetchedBanks.find((b: any) => b.name?.toUpperCase().includes((bankName || '').toUpperCase()));
+    }, [banksByShortName, fetchedBanks]);
     const [defaultType, setDefaultType] = useState<typeof cards[0]['cardType']>('debit');
     const [creditCardsExpanded, setCreditCardsExpanded] = useState(true);
     const [paymentAccountsExpanded, setPaymentAccountsExpanded] = useState(true);
@@ -562,61 +579,18 @@ export default function AccountsPage() {
                     {/* ════════ TAB: CARDS ════════ */}
                     {activeTab === 'cards' && (
                         <>
-                            {/* Credit card horizontal scroll — collapsible */}
+                            {/* Credit cards — stacked deck view (same as /cards) */}
                             {creditCards.length > 0 && (
-                                <section>
-                                    <div className="flex items-center justify-between mb-3 px-1">
-                                        <button
-                                            onClick={() => setCreditCardsExpanded(v => !v)}
-                                            className="flex items-center gap-1.5 group"
-                                        >
-                                            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">Thẻ tín dụng</h2>
-                                            <CustomIcon type="chevronDown" size={14} tile={false} color="currentColor" className={cn(
-                                                'w-3.5 h-3.5 text-slate-400 transition-transform',
-                                                !creditCardsExpanded && '-rotate-90'
-                                            )} />
-                                        </button>
-                                        <button onClick={() => router.push("/cards")} aria-label="Xem tất cả"
-                                            className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-purple-600 dark:text-purple-300 border border-purple-200/60 dark:border-white/10 bg-purple-50 dark:bg-slate-900/60 shadow-sm hover:bg-purple-100 dark:hover:bg-slate-800/70 transition-all">
-                                            <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" />
-                                        </button>
-                                    </div>
-
-                                    {creditCardsExpanded ? (
-                                        <div className="flex gap-4 overflow-x-auto pb-4 snap-x no-scrollbar -mx-5 px-5">
-                                            {creditCards.map((card, idx) => (
-                                                <CreditCardSlide key={card._id} card={card} idx={idx}
-                                                    onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                                    onDelete={() => setDeleteTarget(card)}
-                                                    onSetDefault={() => setDefaultCard(card._id)}
-                                                    onViewDetail={() => router.push(`/cards/${card._id}`)} />
-                                            ))}
-                                            {/* Add credit card slide */}
-                                            <button onClick={() => openAdd('credit')}
-                                                className="snap-center shrink-0 w-40 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-surface/50 flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-purple-300 dark:hover:border-purple-800 hover:text-purple-500 transition-all min-h-[160px] shadow-sm">
-                                                <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
-                                                    <CustomIcon type="plus" size={24} tile={false} color="currentColor" className="w-6 h-6" />
-                                                </div>
-                                                <span className="text-xs font-bold uppercase tracking-tight">Thêm thẻ</span>
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            onClick={() => setCreditCardsExpanded(true)}
-                                            className="w-full flex items-center justify-between p-4 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm hover:border-purple-200 dark:hover:border-purple-900 transition-all"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
-                                                    <CustomIcon type="creditCard" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-500" />
-                                                </div>
-                                                <div className="text-left">
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{creditCards.length} thẻ tín dụng</p>
-                                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Tổng dư nợ: {fmt(totalDebt)}đ</p>
-                                                </div>
-                                            </div>
-                                            <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="w-4 h-4 text-slate-300 flex-shrink-0" />
-                                        </button>
-                                    )}
+                                <section className="-mx-5">
+                                    <CreditCardCarousel
+                                        loading={loading}
+                                        creditCards={creditCards}
+                                        findApiBank={findApiBank}
+                                        onEdit={(card) => { setEditCard(card); setShowForm(true); }}
+                                        onDelete={(id) => setDeleteTarget(creditCards.find(c => c._id === id) || null)}
+                                        onPay={() => setShowPayment(true)}
+                                        onAddNew={() => openAdd('credit')}
+                                    />
                                 </section>
                             )}
 
@@ -748,6 +722,14 @@ export default function AccountsPage() {
                         onConfirm={async () => { await deleteCard(deleteTarget._id); setDeleteTarget(null); }}
                         onCancel={() => setDeleteTarget(null)} />
                 )}
+
+                <CardPaymentModal
+                    open={showPayment}
+                    onClose={() => setShowPayment(false)}
+                    onPaid={() => { refetch(); }}
+                    creditCards={creditCards}
+                    accounts={debitCards}
+                />
             </div>
         </div>
     );

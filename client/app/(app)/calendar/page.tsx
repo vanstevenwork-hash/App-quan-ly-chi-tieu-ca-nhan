@@ -590,14 +590,6 @@ export default function CalendarPage() {
                 </section>
             </main>
 
-            {/* ── FAB ── */}
-            <button
-                onClick={() => openAddModal()}
-                className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(139,92,246,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all duration-200"
-                style={{ background: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)' }}
-            >
-                <ActionIcon type="plus" size={28} tile={false} color="#FFFFFF" />
-            </button>
 
             {/* ── Action Sheet (+ button tapped on a day) ── */}
             <DayActionSheet

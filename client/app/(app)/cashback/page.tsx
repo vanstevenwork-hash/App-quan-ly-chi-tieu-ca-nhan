@@ -190,6 +190,20 @@ export default function CashbackPage() {
     }, [creditCards, rawMonthly, records, curMonth, sharedCashback, sharedCards, getCardLogo]);
     const allCardsCashbackTotal = useMemo(() => allCardsCashback.reduce((s, c) => s + c.amount, 0), [allCardsCashback]);
 
+    // Ceiling of cashback earnable this month = sum of each card's monthly cap.
+    // Cards with a rate but no cap are unlimited → tracked separately so we can
+    // append a "+" instead of pretending the ceiling is finite.
+    const cashbackCaps = useMemo(() => {
+        let totalCap = 0;
+        let hasUnlimited = false;
+        creditCards.forEach(card => {
+            if ((card.cashbackRate || 0) <= 0) return;
+            if (card.cashbackCap > 0) totalCap += card.cashbackCap;
+            else hasUnlimited = true;
+        });
+        return { totalCap, hasUnlimited };
+    }, [creditCards]);
+
     // Insight: when cards hit their monthly cap, suggest the best card to move spending to
     const insight = useMemo(() => {
         const rows = creditCards.map(card => {
@@ -682,9 +696,15 @@ export default function CashbackPage() {
                                 </div>
                             ))}
                             <div className="flex items-center justify-between px-4 py-3 bg-slate-50/70 dark:bg-white/[0.03]">
-                                <span className="text-sm font-bold text-slate-500 dark:text-slate-300">Tổng cộng</span>
+                                <span className="text-sm font-bold text-slate-500 dark:text-slate-300">Đã hoàn tháng này</span>
                                 <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmt(allCardsCashbackTotal)}đ</span>
                             </div>
+                            {cashbackCaps.totalCap > 0 && (
+                                <div className="flex items-center justify-between px-4 py-3 bg-amber-50/70 dark:bg-amber-900/10">
+                                    <span className="text-sm font-bold text-amber-700 dark:text-amber-400">Tổng có thể hoàn tối đa</span>
+                                    <span className="text-sm font-black text-amber-600 dark:text-amber-400 tabular-nums">{fmt(cashbackCaps.totalCap)}đ{cashbackCaps.hasUnlimited ? '+' : ''}</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
