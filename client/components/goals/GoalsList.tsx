@@ -202,7 +202,7 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
             {!isCompleted ? (
                 <div className="mt-3 flex gap-2.5">
                     <button onClick={onContribute}
-                        className="flex-1 py-2.5 rounded-xl text-white text-[13px] font-bold flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#8B7CF6] to-[#6C63FF] shadow-md shadow-[#6C63FF]/25 active:scale-[0.98] transition-all">
+                        className="flex-1 py-2.5 rounded-xl text-white text-[13px] font-bold flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#8B7CF6] to-[#6C63FF] shadow-md shadow-brand/30 active:scale-[0.98] transition-all">
                         <CustomIcon type="plus" size={14} tile={false} color="#FFFFFF" />
                         Góp tiền vào mục tiêu
                     </button>
@@ -240,7 +240,7 @@ function TemplatesSection({ onAdd }: { onAdd: () => void }) {
             <div className="grid grid-cols-3 gap-3">
                 {TEMPLATES.map(t => (
                     <button key={t.label} onClick={onAdd}
-                        className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm px-2 py-4 flex flex-col items-center gap-2.5 active:scale-95 hover:border-[#6C63FF]/40 transition-all">
+                        className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm px-2 py-4 flex flex-col items-center gap-2.5 active:scale-95 hover:border-brand/40 transition-all">
                         <span className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-2xl">{t.icon}</span>
                         <span className="text-sm font-bold text-slate-800 dark:text-white leading-tight">{t.label}</span>
                         <span className="text-[11px] text-slate-400 dark:text-slate-500 leading-tight text-center">{t.sub}</span>
@@ -269,7 +269,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
                     { icon: '🚗', label: 'Mua xe' }, { icon: '💰', label: 'Quỹ khẩn cấp' },
                 ].map(g => (
                     <button key={g.label} onClick={onAdd}
-                        className="flex items-center gap-2 p-3 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-[#6C63FF] hover:bg-[#6C63FF]/5 transition text-left">
+                        className="flex items-center gap-2 p-3 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-brand hover:bg-brand-light/50 transition text-left">
                         <span className="text-xl">{g.icon}</span>
                         <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">{g.label}</span>
                     </button>

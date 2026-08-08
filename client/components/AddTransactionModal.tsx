@@ -208,7 +208,7 @@ export default function AddTransactionModal({
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="
-  fixed inset-x-0 bottom-0 top-[20vh] z-50
+  fixed inset-x-0 bottom-0 top-[20vh] z-[60]
   w-full max-w-md mx-auto gap-2
   !translate-x-0 !translate-y-0
   bg-[#F8F9FF] dark:bg-[#0F111A]
@@ -238,7 +238,7 @@ export default function AddTransactionModal({
                         {(['expense', 'income'] as const).map(t => (
                             <button key={t} onClick={() => { setType(t); setCategory(''); }}
                                 className={cn('flex-1 py-1.5 px-3 text-sm font-bold rounded-lg transition-all',
-                                    type === t ? 'bg-[#7f19e6]/10 dark:bg-[#7f19e6]/20 text-[#7f19e6] dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300')}>
+                                    type === t ? 'bg-brand-light/60 dark:bg-brand/20 text-brand dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300')}>
                                 {t === 'expense' ? 'Chi tiêu' : 'Thu nhập'}
                             </button>
                         ))}
@@ -246,7 +246,7 @@ export default function AddTransactionModal({
 
                     {/* ── Bill Scanner Panel ── */}
                     {showScanner && (
-                        <div className="rounded-2xl border-2 border-[#7f19e6]/30 bg-purple-50/50 dark:bg-[#1A1D2D] p-4 animate-in fade-in zoom-in duration-200">
+                        <div className="rounded-2xl border-2 border-brand/30 bg-purple-50/50 dark:bg-[#1A1D2D] p-4 animate-in fade-in zoom-in duration-200">
                             <BillScanner
                                 onResult={(result) => {
                                     // Fill form with OCR results
@@ -279,7 +279,7 @@ export default function AddTransactionModal({
                         <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Số tiền</label>
                         <div className={cn(
                             'flex w-full items-center gap-2 pb-1 border-b-2 transition-colors',
-                            errors.amount ? 'border-red-400' : 'border-slate-200 dark:border-slate-700 focus-within:border-[#7f19e6]'
+                            errors.amount ? 'border-red-400' : 'border-slate-200 dark:border-slate-700 focus-within:border-brand'
                         )}>
                             <span className="text-lg font-extrabold text-slate-400">₫</span>
                             <input
@@ -342,7 +342,7 @@ export default function AddTransactionModal({
                                 <div key={cat.id} onClick={() => { setCategory(cat.label); setErrors(p => ({ ...p, category: '' })); }} className="flex flex-col items-center gap-1 group cursor-pointer">
                                     <div className={cn('rounded-[10px] transition-all',
                                         category === cat.label
-                                            ? 'ring-2 ring-[#7f19e6] ring-offset-1 dark:ring-offset-[#0F111A]'
+                                            ? 'ring-2 ring-brand ring-offset-1 dark:ring-offset-[#0F111A]'
                                             : errors.category
                                                 ? 'ring-1 ring-red-300'
                                                 : 'group-hover:ring-1 group-hover:ring-slate-300')}>
@@ -350,10 +350,10 @@ export default function AddTransactionModal({
                                             type={cat.catIconType}
                                             size={42}
                                             tile
-                                            color={category === cat.label ? '#7f19e6' : undefined}
+                                            color={category === cat.label ? '#36255C' : undefined}
                                         />
                                     </div>
-                                    <span className={cn('text-[10px] font-bold text-center leading-tight', category === cat.label ? 'text-[#7f19e6] dark:text-purple-400' : 'text-slate-600 dark:text-slate-400')}>
+                                    <span className={cn('text-[10px] font-bold text-center leading-tight', category === cat.label ? 'text-brand dark:text-purple-400' : 'text-slate-600 dark:text-slate-400')}>
                                         {cat.label}
                                     </span>
                                 </div>
@@ -365,11 +365,11 @@ export default function AddTransactionModal({
                     <div className="flex flex-col gap-2 bg-white dark:bg-[#1A1D2D] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm">
                         <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Phương thức thanh toán</h3>
                         <div className="flex gap-2 p-1 bg-slate-50 dark:bg-[#0F111A] border border-slate-200 dark:border-slate-800 rounded-xl">
-                            <button onClick={() => setPaymentTab('cash')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'cash' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tiền mặt</button>
-                            <button onClick={() => setPaymentTab('account')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'account' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tài khoản</button>
-                            <button onClick={() => setPaymentTab('credit')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'credit' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ tín dụng</button>
+                            <button onClick={() => setPaymentTab('cash')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'cash' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tiền mặt</button>
+                            <button onClick={() => setPaymentTab('account')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'account' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tài khoản</button>
+                            <button onClick={() => setPaymentTab('credit')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'credit' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ tín dụng</button>
                             {sharedCardList.length > 0 && (
-                                <button onClick={() => setPaymentTab('shared')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'shared' ? 'bg-white dark:bg-[#1A1D2D] text-[#7f19e6] dark:text-purple-400 shadow-sm border border-slate-200 dark:border-slate-700' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ chung</button>
+                                <button onClick={() => setPaymentTab('shared')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'shared' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ chung</button>
                             )}
                         </div>
 
@@ -438,19 +438,19 @@ export default function AddTransactionModal({
                                 className={cn(
                                     'flex items-center justify-between w-full rounded-xl p-3 border-2 transition-all',
                                     isInstallment
-                                        ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20'
+                                        ? 'border-brand bg-brand-light/50 dark:bg-purple-900/20'
                                         : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface hover:border-slate-300 dark:hover:border-slate-600'
                                 )}
                             >
                                 <div className="flex items-center gap-2">
                                     <div className={cn(
                                         'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
-                                        isInstallment ? 'bg-[#7f19e6] text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                        isInstallment ? 'bg-brand text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                     )}>
                                         <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                                     </div>
                                     <div className="text-left">
-                                        <p className={cn('text-sm font-bold', isInstallment ? 'text-[#7f19e6]' : 'text-slate-700 dark:text-slate-300')}>
+                                        <p className={cn('text-sm font-bold', isInstallment ? 'text-brand' : 'text-slate-700 dark:text-slate-300')}>
                                             Trả góp 0% lãi suất
                                         </p>
                                         <p className="text-xs text-slate-400 dark:text-slate-500">Chia nhỏ dư nợ hàng tháng</p>
@@ -458,7 +458,7 @@ export default function AddTransactionModal({
                                 </div>
                                 <div className={cn(
                                     'w-12 h-6 rounded-full transition-colors flex items-center px-1 flex-shrink-0',
-                                    isInstallment ? 'bg-[#7f19e6]' : 'bg-slate-200 dark:bg-slate-700'
+                                    isInstallment ? 'bg-brand' : 'bg-slate-200 dark:bg-slate-700'
                                 )}>
                                     <div className={cn(
                                         'w-4 h-4 rounded-full bg-white shadow-sm transition-transform',
@@ -481,8 +481,8 @@ export default function AddTransactionModal({
                                                     className={cn(
                                                         'py-2 rounded-xl text-sm font-bold border-2 transition-all',
                                                         installmentMonths === m
-                                                            ? 'border-[#7f19e6] bg-[#7f19e6] text-white shadow-md shadow-[#7f19e6]/30'
-                                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-slate-600 dark:text-slate-400 hover:border-[#7f19e6]/50'
+                                                            ? 'border-brand bg-brand text-white shadow-md shadow-brand/30'
+                                                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-slate-600 dark:text-slate-400 hover:border-brand/50'
                                                     )}
                                                 >
                                                     {m}
@@ -493,23 +493,23 @@ export default function AddTransactionModal({
                                     </div>
 
                                     {amountNum > 0 ? (
-                                        <div className="rounded-2xl overflow-hidden border border-[#7f19e6]/20 bg-gradient-to-br from-[#7f19e6]/5 to-purple-50 dark:from-purple-900/20 dark:to-slate-900">
+                                        <div className="rounded-2xl overflow-hidden border border-brand/20 bg-gradient-to-br from-brand/5 to-purple-50 dark:from-purple-900/20 dark:to-slate-900">
                                             <div className="flex items-stretch">
-                                                <div className="flex-1 p-3 text-center border-r border-[#7f19e6]/10">
+                                                <div className="flex-1 p-3 text-center border-r border-brand/10">
                                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-0.5">Tổng dư nợ</p>
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                                         {amountNum.toLocaleString('vi-VN')}₫
                                                     </p>
                                                 </div>
-                                                <div className="flex-1 p-3 text-center border-r border-[#7f19e6]/10">
+                                                <div className="flex-1 p-3 text-center border-r border-brand/10">
                                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-0.5">Số kỳ</p>
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
                                                         {installmentMonths} tháng
                                                     </p>
                                                 </div>
-                                                <div className="flex-1 p-3 text-center bg-[#7f19e6]/10 dark:bg-purple-900/30">
-                                                    <p className="text-[10px] text-[#7f19e6] dark:text-purple-400 font-bold mb-0.5">Mỗi tháng</p>
-                                                    <p className="text-sm font-bold text-[#7f19e6] dark:text-purple-300">
+                                                <div className="flex-1 p-3 text-center bg-brand-light/60 dark:bg-purple-900/30">
+                                                    <p className="text-[10px] text-brand dark:text-purple-400 font-bold mb-0.5">Mỗi tháng</p>
+                                                    <p className="text-sm font-bold text-brand dark:text-purple-300">
                                                         {monthlyPayment.toLocaleString('vi-VN')}₫
                                                     </p>
                                                 </div>
@@ -529,7 +529,7 @@ export default function AddTransactionModal({
                         <div className="relative">
                             <input type="date" value={date} onChange={e => setDate(e.target.value)}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                            <button className="flex w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F111A] p-2.5 text-left hover:border-slate-300 dark:hover:border-slate-600 transition-colors focus:outline-none focus:ring-1 focus:ring-[#7f19e6]">
+                            <button className="flex w-full items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F111A] p-2.5 text-left hover:border-slate-300 dark:hover:border-slate-600 transition-colors focus:outline-none focus:ring-1 focus:ring-brand">
                                 <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{formatDateStr(date)}</span>
                                 <ActionIcon type="calendar" size={16} tile={false} color="#94A3B8" />
                             </button>
@@ -544,7 +544,7 @@ export default function AddTransactionModal({
                         </div>
                         <textarea
                             value={note} onChange={e => setNote(e.target.value)} maxLength={200}
-                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F111A] p-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-[#7f19e6] focus:ring-1 focus:ring-[#7f19e6] focus:outline-none resize-none h-16"
+                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F111A] p-2.5 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-brand focus:ring-1 focus:ring-brand focus:outline-none resize-none h-16"
                             placeholder="Thêm ghi chú..."></textarea>
                     </div>
 
@@ -577,7 +577,7 @@ export default function AddTransactionModal({
                                         Đính kèm ảnh hóa đơn hoặc biên lai để lưu cùng giao dịch.
                                     </p>
                                     <button type="button" onClick={() => setShowScanner(true)}
-                                        className="text-[11px] font-bold text-[#7f19e6] dark:text-purple-400 mt-1 hover:underline">
+                                        className="text-[11px] font-bold text-brand dark:text-purple-400 mt-1 hover:underline">
                                         Hoặc dùng Quét Bill để tự điền →
                                     </button>
                                 </div>
@@ -600,9 +600,9 @@ export default function AddTransactionModal({
                         {/* Nút Quét */}
                         <div className="flex flex-col items-center flex-shrink-0 w-[140px]">
                             <button onClick={() => setShowScanner(true)}
-                                className="w-full relative overflow-hidden flex items-center justify-center h-12 gap-1.5 rounded-xl border border-[#7f19e6]/50 dark:border-[#7f19e6]/70 bg-transparent hover:bg-[#7f19e6]/10 shadow-[0_0_15px_rgba(127,25,230,0.2)] dark:shadow-[0_0_15px_rgba(127,25,230,0.3)] hover:shadow-[0_0_20px_rgba(127,25,230,0.4)] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 text-[#000000] dark:text-white font-bold text-sm group">
+                                className="w-full relative overflow-hidden flex items-center justify-center h-12 gap-1.5 rounded-xl border border-brand/50 dark:border-brand/70 bg-transparent hover:bg-brand-light/60 shadow-[0_0_15px_rgba(127,25,230,0.2)] dark:shadow-[0_0_15px_rgba(127,25,230,0.3)] hover:shadow-[0_0_20px_rgba(127,25,230,0.4)] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 text-[#000000] dark:text-white font-bold text-sm group">
                                 <div className="absolute inset-0 w-1/4 h-full bg-gradient-to-r from-transparent via-white/20 dark:via-white/10 to-transparent -skew-x-12 -translate-x-24 group-hover:animate-[shimmer_1s_ease-in-out_infinite]" />
-                                <CustomIcon type="scanLine" size={16} tile={false} color="currentColor" className="w-4 h-4 text-[#7f19e6] dark:text-purple-400 group-hover:scale-110 transition-transform duration-300" />
+                                <CustomIcon type="scanLine" size={16} tile={false} color="currentColor" className="w-4 h-4 text-brand dark:text-purple-400 group-hover:scale-110 transition-transform duration-300" />
                                 <span>Quét Bill</span>
                             </button>
                             <span className="text-[10px] text-slate-400 mt-1 whitespace-nowrap">Quét mã QR / hóa đơn</span>
@@ -611,7 +611,7 @@ export default function AddTransactionModal({
                         {/* Nút Thêm giao dịch */}
                         <div className="flex-1 flex justify-end">
                             <button onClick={handleSave} disabled={saving}
-                                className="w-full max-w-[160px] flex items-center justify-center h-12 gap-1.5 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-sm font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                className="w-full max-w-[160px] flex items-center justify-center h-12 gap-1.5 bg-gradient-to-r from-brand to-[#9b4de8] text-white rounded-xl text-sm font-bold shadow-lg shadow-brand/30 hover:shadow-brand/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                                 <span>{saving ? 'Đang lưu...' : (initialData ? 'Cập nhật' : 'Thêm')}</span>
                                 <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                             </button>

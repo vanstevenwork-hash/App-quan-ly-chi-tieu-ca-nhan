@@ -59,7 +59,7 @@ export default function SavingsRenewModal({ open, card, onClose, onRenewed }: Sa
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="
-fixed inset-x-0 bottom-0 top-auto z-50
+fixed inset-x-0 bottom-0 top-auto z-[60]
 w-full max-w-md mx-auto gap-0
 !translate-x-0 !translate-y-0
 bg-white dark:bg-surface
@@ -99,18 +99,18 @@ duration-200
                         <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Số tiền gửi lại</p>
                         <div className="flex gap-2 mb-2">
                             <button onClick={() => setNewAmount(rollBoth)}
-                                className={cn('flex-1 rounded-xl border px-2 py-2 text-xs font-bold transition', newAmount === rollBoth ? 'border-[#7f19e6] bg-[#7f19e6]/10 text-[#7f19e6]' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300')}>
+                                className={cn('flex-1 rounded-xl border px-2 py-2 text-xs font-bold transition', newAmount === rollBoth ? 'border-brand bg-brand-light/60 text-brand' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300')}>
                                 Gốc + lãi<br /><span className="text-[10px] font-semibold opacity-70">{fmt(rollBoth)}đ</span>
                             </button>
                             <button onClick={() => setNewAmount(card.balance)}
-                                className={cn('flex-1 rounded-xl border px-2 py-2 text-xs font-bold transition', newAmount === card.balance ? 'border-[#7f19e6] bg-[#7f19e6]/10 text-[#7f19e6]' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300')}>
+                                className={cn('flex-1 rounded-xl border px-2 py-2 text-xs font-bold transition', newAmount === card.balance ? 'border-brand bg-brand-light/60 text-brand' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300')}>
                                 Chỉ gốc<br /><span className="text-[10px] font-semibold opacity-70">{fmt(card.balance)}đ</span>
                             </button>
                         </div>
                         <Input type="text" value={newAmount ? new Intl.NumberFormat('vi-VN').format(newAmount) : ''}
                             onChange={e => setNewAmount(Number(e.target.value.replace(/\D/g, '')))}
                             placeholder="0"
-                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -119,12 +119,12 @@ duration-200
                             <Input type="number" step="0.1" value={newRate || ''}
                                 onChange={e => setNewRate(Number(e.target.value))}
                                 placeholder="7.5"
-                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                         </div>
                         <div>
                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Kỳ hạn mới</p>
                             <select value={newTerm} onChange={e => setNewTerm(Number(e.target.value))}
-                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-black dark:text-white h-12 px-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-[#7f19e6] focus:border-[#7f19e6] appearance-none">
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-black dark:text-white h-12 px-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand appearance-none">
                                 {TERMS.map(t => <option key={t} value={t}>{t} tháng</option>)}
                             </select>
                         </div>

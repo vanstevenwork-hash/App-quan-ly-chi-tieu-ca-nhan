@@ -24,9 +24,9 @@ const navItems: NavItem[] = [
 // first (client nav keeps the store flag, so the modal opens on arrival).
 const MODAL_ROUTES = ['/dashboard', '/calendar', '/cards', '/search', '/analytics'];
 
-// Item footprint inside the pill: w-11 (44px) + gap-1 (4px) = 48px stride.
+// Item footprint inside the pill: w-12 (48px) + gap-1 (4px) = 52px stride.
 // The active halo slides by activeIndex × STRIDE. Springy overshoot easing.
-const ITEM_STRIDE = 48;
+const ITEM_STRIDE = 52;
 const SLIDE_EASE = 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 
 export default function BottomNav() {
@@ -55,7 +55,7 @@ export default function BottomNav() {
                 WebkitBackfaceVisibility: 'hidden',
             }}
         >
-            <div className="pointer-events-auto flex items-center gap-3 px-4">
+            <div className="pointer-events-auto flex items-center gap-3 px-3">
                 {/* ── Glass pill: the 4 destinations ── */}
                 <div className="relative flex items-center gap-1 p-1.5 rounded-full overflow-hidden bg-white/65 dark:bg-[#20264a]/65 ring-1 ring-white/60 dark:ring-white/10 shadow-[0_14px_34px_-10px_rgba(31,17,71,0.32),0_2px_8px_-2px_rgba(0,0,0,0.12)]">
                     {/* top gloss sheen + hairline rim highlight (the "glass") */}
@@ -68,7 +68,7 @@ export default function BottomNav() {
                     {/* Sliding glass halo — glides slowly between tabs */}
                     <span
                         aria-hidden
-                        className="pointer-events-none absolute top-1.5 left-1.5 w-11 h-11 rounded-full bg-white/90 dark:bg-white/15 ring-1 ring-black/[0.05] dark:ring-white/10"
+                        className="pointer-events-none absolute top-1.5 left-1.5 w-12 h-12 rounded-full bg-white/90 dark:bg-white/15 ring-1 ring-black/[0.05] dark:ring-white/10"
                         style={{
                             transform: `translateX(${Math.max(activeIndex, 0) * ITEM_STRIDE}px)`,
                             opacity: activeIndex >= 0 ? 1 : 0,
@@ -84,15 +84,15 @@ export default function BottomNav() {
                                 href={href}
                                 aria-label={label}
                                 aria-current={active ? 'page' : undefined}
-                                className="relative z-10 flex items-center justify-center w-11 h-11 rounded-full active:scale-90 transition-transform duration-200"
+                                className="relative z-10 flex items-center justify-center w-12 h-12 rounded-full active:scale-90 transition-transform duration-200"
                             >
                                 <span
                                     className={cn(
                                         'relative transition-colors duration-500',
-                                        active ? 'text-indigo-600 dark:text-[#8FA0FF]' : 'text-slate-400 dark:text-slate-500'
+                                        active ? 'text-brand dark:text-brand-light' : 'text-slate-400 dark:text-slate-500'
                                     )}
                                 >
-                                    <Icon className="w-[23px] h-[23px]" blob={false} mono color="currentColor" />
+                                    <Icon className="w-[25px] h-[25px]" blob={false} mono color="currentColor" />
                                 </span>
                             </Link>
                         );
@@ -103,9 +103,9 @@ export default function BottomNav() {
                 <button
                     onClick={handleAdd}
                     aria-label="Thêm giao dịch"
-                    className="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-[0_10px_24px_-6px_rgba(99,102,241,0.55)] transition-all duration-200 active:scale-90 hover:scale-105"
+                    className="flex items-center justify-center w-[52px] h-[52px] rounded-full bg-brand hover:bg-brand-dark text-white shadow-[0_10px_24px_-6px_rgba(54,37,92,0.6)] transition-all duration-200 active:scale-90 hover:scale-105"
                 >
-                    <CustomIcon type="plus" size={23} tile={false} color="#FFFFFF" />
+                    <CustomIcon type="plus" size={25} tile={false} color="#FFFFFF" />
                 </button>
             </div>
         </nav>

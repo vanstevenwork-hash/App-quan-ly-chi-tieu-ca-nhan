@@ -46,17 +46,30 @@ const CARD_GRADIENTS = [
 
 function getCardGradient(card: Card, idx: number): string {
     if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
-    if (card.bankColor && card.color && card.bankColor !== '#1B4FD8') {
-        return `linear-gradient(135deg, ${card.bankColor} 0%, ${card.color} 100%)`;
-    }
+    // Single vibrant brand colour (avoids the muddy two-hue blend).
+    const base = (card.bankColor && card.bankColor !== '#1B4FD8') ? card.bankColor
+        : (card.color && card.color !== '#6C63FF') ? card.color
+            : null;
+    if (base) return base;
     return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
 }
 
 function cardTextStyle(color: string) {
     if (color === '#111111') return { text: '#F59E0B', subtext: '#FCD34D', border: '1px solid #374151' };
     if (color === '#FFFFFF') return { text: '#1E293B', subtext: '#64748B', border: '1px solid #E2E8F0' };
-    return { text: '#FFFFFF', subtext: 'rgba(255,255,255,0.75)', border: undefined };
+    return { text: '#FFFFFF', subtext: 'rgba(255,255,255,0.82)', border: undefined };
 }
+
+// Liquid-glass light play (same recipe as the credit-card deck).
+const GLASS_OVERLAY =
+    'radial-gradient(120% 85% at 82% -18%, rgba(255,255,255,0.30), transparent 52%),' +
+    'linear-gradient(158deg, rgba(255,255,255,0.22) 0%, transparent 34%),' +
+    'linear-gradient(110deg, transparent 42%, rgba(255,255,255,0.10) 51%, transparent 63%),' +
+    'linear-gradient(to bottom, transparent 58%, rgba(0,0,0,0.10) 100%)';
+const GLASS_RING =
+    'inset 0 1px 1px rgba(255,255,255,0.55), inset 0 0 0 1px rgba(255,255,255,0.16), inset 0 -12px 22px -20px rgba(0,0,0,0.25)';
+const GLASS_SHADOW =
+    '0 16px 36px -12px rgba(31,17,71,0.5), 0 4px 12px -4px rgba(0,0,0,0.26)';
 
 // ─── Card Context Menu ─────────────────────────────────────────────────────
 function CardMenu({ onEdit, onDelete, onSetDefault, onViewDetail, isDefault }: {
@@ -193,95 +206,105 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
 }
 
 // ─── Savings Book Card ──────────────────────────────────────────────────────
-function SavingsCard({ card, onEdit, onDelete }: {
-    card: Card; onEdit: () => void; onDelete: () => void;
+function SavingsCard({ card, idx, onEdit, onDelete }: {
+    card: Card; idx: number; onEdit: () => void; onDelete: () => void;
 }) {
     const logoOf = useBankLogo();
+    const logoUrl = logoOf(card.bankShortName, card.bankName);
+    const [logoError, setLogoError] = useState(false);
+    const showLogo = logoUrl && !logoError;
     const matDays = daysUntil(card.maturityDate);
-    const urgColor = getUrgencyColor(matDays);
     const estimatedInterest = card.interestRate > 0 && card.term > 0
         ? card.balance * (card.interestRate / 100) * (card.term / 12)
         : 0;
+    const ts = cardTextStyle(card.color);
+    const isSolid = card.color === '#111111' || card.color === '#FFFFFF';
+    const urgent = matDays !== null && matDays <= 7;
 
     const formatDate = (d: string | null) => d
         ? new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' })
         : '—';
 
     return (
-        <div className="bg-white dark:bg-surface rounded-xl p-5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.04)] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 rounded-full -mr-10 -mt-10 blur-2xl pointer-events-none"
-                style={{ backgroundColor: '#8B5CF620' }} />
-            <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                    {(() => {
-                        const logoUrl = logoOf(card.bankShortName, card.bankName);
-                        return logoUrl ? (
-                            <img
-                                src={logoUrl}
-                                alt={card.bankShortName || card.bankName}
-                                className="w-10 h-10 rounded-xl object-contain bg-white dark:bg-white/90 p-1 border border-gray-100 dark:border-slate-700 shadow-sm flex-shrink-0"
-                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                            />
-                        ) : (
-                            <UtilityIcon type="soTietKiem" size={40} tile className="flex-shrink-0" />
-                        );
-                    })()}
-                    <div>
-                        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{card.bankName}</p>
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
-                            {card.term > 0 ? `Kỳ hạn ${card.term} tháng` : 'Không kỳ hạn'}
-                            {card.cardNumber && ` · ••${card.cardNumber}`}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {matDays !== null && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
-                            style={{ backgroundColor: `${urgColor}15`, color: urgColor }}>
-                            {matDays <= 0 ? 'Đã đáo hạn' : matDays <= 30 ? `${matDays}N nữa` : 'Đang hoạt động'}
-                        </span>
-                    )}
-                    <div className="flex gap-1.5">
-                        <button onClick={onEdit} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-purple-100 dark:hover:bg-purple-900/40 active:scale-95 transition">
-                            <UtilityIcon type="pencil" size={16} tile={false} color="#8B5CF6" />
-                        </button>
-                        <button onClick={onDelete} className="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 active:scale-95 transition">
-                            <UtilityIcon type="trash" size={16} tile={false} color="#EF4444" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 font-medium">Số tiền gốc</p>
-                    <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{fmt(card.balance)}</p>
-                </div>
-                <div className="text-right">
-                    <p className="text-xs text-slate-400 mb-1">Lãi tạm tính</p>
-                    <p className="text-lg font-bold text-purple-600">
-                        {estimatedInterest > 0 ? `+${fmtShort(estimatedInterest)}` : '—'}
-                    </p>
-                </div>
-            </div>
-
-            <div className="bg-gray-50 dark:bg-slate-800/50 rounded-xl p-3 flex justify-between items-center text-xs border border-gray-100 dark:border-slate-800/50">
-                <div className="text-center flex-1 border-r border-gray-200 dark:border-slate-700/50">
-                    <p className="text-slate-400 dark:text-slate-500 mb-0.5">Lãi suất</p>
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">{card.interestRate ? `${card.interestRate}%/năm` : '—'}</p>
-                </div>
-                <div className="text-center flex-1 border-r border-gray-200 dark:border-slate-700/50">
-                    <p className="text-slate-400 dark:text-slate-500 mb-0.5">Ngày gửi</p>
-                    <p className="font-semibold text-slate-700 dark:text-slate-200">{formatDate(card.depositDate)}</p>
-                </div>
-                <div className="text-center flex-1">
-                    <p className="text-slate-400 dark:text-slate-500 mb-0.5">Đáo hạn</p>
-                    <p className="font-semibold" style={{ color: urgColor }}>{formatDate(card.maturityDate)}</p>
-                </div>
-            </div>
-            {card.note && (
-                <p className="text-xs text-slate-400 mt-2 italic">{card.note}</p>
+        <div className="relative rounded-[22px] p-4 overflow-hidden isolate"
+            style={{ background: getCardGradient(card, idx), border: ts.border, boxShadow: GLASS_SHADOW }}>
+            {!isSolid && (
+                <>
+                    <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: GLASS_OVERLAY }} />
+                    <div className="absolute -top-12 -left-8 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" />
+                    <div className="absolute -bottom-16 -right-10 w-48 h-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+                </>
             )}
+            <div className="absolute inset-0 rounded-[22px] pointer-events-none" style={{ boxShadow: GLASS_RING }} />
+
+            <div className="relative z-10">
+                {/* Header — logo + bank/term + edit/delete */}
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        {showLogo ? (
+                            <img src={logoUrl} alt={card.bankShortName || card.bankName}
+                                className="w-10 h-10 rounded-2xl object-contain bg-white/90 p-1 flex-shrink-0 shadow-md ring-1 ring-white/50"
+                                onError={() => setLogoError(true)} />
+                        ) : (
+                            <div className="w-10 h-10 rounded-2xl bg-white/20 ring-1 ring-white/30 flex items-center justify-center flex-shrink-0">
+                                <UtilityIcon type="soTietKiem" size={22} tile={false} color={ts.text} />
+                            </div>
+                        )}
+                        <div className="min-w-0">
+                            <p className="text-[15px] font-bold truncate" style={{ color: ts.text }}>{card.bankName}</p>
+                            <p className="text-[11px] mt-0.5 truncate" style={{ color: ts.subtext }}>
+                                {card.term > 0 ? `Kỳ hạn ${card.term} tháng` : 'Không kỳ hạn'}{card.cardNumber ? ` · ••${card.cardNumber}` : ''}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button onClick={onEdit} className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 ring-1 ring-white/25 flex items-center justify-center transition active:scale-95">
+                            <UtilityIcon type="pencil" size={15} tile={false} color={ts.text} />
+                        </button>
+                        <button onClick={onDelete} className="w-8 h-8 rounded-full bg-white/15 hover:bg-red-400/40 ring-1 ring-white/25 flex items-center justify-center transition active:scale-95">
+                            <UtilityIcon type="trash" size={15} tile={false} color="#FCA5A5" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Balance + estimated interest */}
+                <div className="flex justify-between items-end mb-3">
+                    <div>
+                        <p className="text-[11px] mb-1" style={{ color: ts.subtext }}>Số tiền gốc</p>
+                        <p className="text-2xl font-bold tracking-tight" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[11px] mb-1" style={{ color: ts.subtext }}>Lãi tạm tính</p>
+                        <p className="text-sm font-bold" style={{ color: ts.text }}>{estimatedInterest > 0 ? `+${fmtShort(estimatedInterest)}` : '—'}</p>
+                    </div>
+                </div>
+
+                {/* Stats on glass — interest rate · deposit · maturity */}
+                <div className="grid grid-cols-3 rounded-xl bg-white/15 ring-1 ring-inset ring-white/15 divide-x divide-white/15 overflow-hidden">
+                    <div className="text-center py-2 px-1">
+                        <p className="text-[10px]" style={{ color: ts.subtext }}>Lãi suất</p>
+                        <p className="text-[13px] font-bold mt-0.5" style={{ color: ts.text }}>{card.interestRate ? `${card.interestRate}%` : '—'}</p>
+                    </div>
+                    <div className="text-center py-2 px-1">
+                        <p className="text-[10px]" style={{ color: ts.subtext }}>Ngày gửi</p>
+                        <p className="text-[13px] font-bold mt-0.5" style={{ color: ts.text }}>{formatDate(card.depositDate)}</p>
+                    </div>
+                    <div className="text-center py-2 px-1">
+                        <p className="text-[10px]" style={{ color: ts.subtext }}>Đáo hạn</p>
+                        <p className="text-[13px] font-bold mt-0.5" style={{ color: urgent ? '#FDE68A' : ts.text }}>{formatDate(card.maturityDate)}</p>
+                    </div>
+                </div>
+
+                {matDays !== null && (
+                    <span className="inline-flex mt-2.5 items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/20 ring-1 ring-white/25"
+                        style={{ color: matDays <= 0 ? '#FECACA' : ts.text }}>
+                        {matDays <= 0 ? '⚠️ Đã đáo hạn' : matDays <= 30 ? `⏳ Còn ${matDays} ngày` : '✓ Đang hoạt động'}
+                    </span>
+                )}
+                {card.note && (
+                    <p className="text-[11px] mt-2 italic truncate" style={{ color: ts.subtext }}>{card.note}</p>
+                )}
+            </div>
         </div>
     );
 }
@@ -530,25 +553,25 @@ export default function AccountsPage() {
                                 className={cn(
                                     'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2',
                                     activeTab === tab
-                                        ? 'bg-white dark:bg-slate-800 text-[#7f19e6] dark:text-purple-400 shadow-md scale-[1.02]'
+                                        ? 'bg-brand text-white shadow-md shadow-brand/30 scale-[1.02]'
                                         : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 )}>
                                 {tab === 'cards' ? (
                                     <>
-                                        <UtilityIcon type="wallet" size={16} tile={false} color={activeTab === tab ? '#7f19e6' : '#6B7280'} />
+                                        <UtilityIcon type="wallet" size={16} tile={false} color={activeTab === tab ? '#FFFFFF' : '#6B7280'} />
                                         <span>Thẻ & Ví</span>
                                         {(creditCards.length + debitCards.length) > 0 && (
-                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400">
+                                            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white/20 text-white" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
                                                 {creditCards.length + debitCards.length}
                                             </span>
                                         )}
                                     </>
                                 ) : (
                                     <>
-                                        <UtilityIcon type="soTietKiem" size={16} tile={false} color={activeTab === tab ? '#7f19e6' : '#6B7280'} />
+                                        <UtilityIcon type="soTietKiem" size={16} tile={false} color={activeTab === tab ? '#FFFFFF' : '#6B7280'} />
                                         <span>Tiết kiệm</span>
                                         {savingsCards.length > 0 && (
-                                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#7f19e6]/10 text-[#7f19e6] dark:text-purple-400">
+                                            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white/20 text-white" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
                                                 {savingsCards.length}
                                             </span>
                                         )}
@@ -612,7 +635,7 @@ export default function AccountsPage() {
                                         <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Tài khoản thanh toán</h2>
                                     )}
                                     <button onClick={() => openAdd('debit')} aria-label="Thêm mới"
-                                        className="flex items-center justify-center w-7 h-7 rounded-lg text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-all">
+                                        className="flex items-center justify-center w-7 h-7 rounded-lg text-white bg-brand hover:bg-brand-dark shadow-sm shadow-brand/30 transition-all">
                                         <CustomIcon type="plus" size={14} tile={false} color="currentColor" />
                                     </button>
                                 </div>
@@ -673,14 +696,14 @@ export default function AccountsPage() {
                             <div className="flex items-center justify-between mb-3 px-1">
                                 <h2 className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sổ tiết kiệm online</h2>
                                 <button onClick={() => openAdd('savings')}
-                                    className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-all shadow-sm">
+                                    className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white hover:bg-brand-dark transition-all shadow-sm shadow-brand/30">
                                     <CustomIcon type="plus" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                                 </button>
                             </div>
                             {savingsCards.length > 0 ? (
                                 <div className="space-y-4">
-                                    {savingsCards.map(card => (
-                                        <SavingsCard key={card._id} card={card}
+                                    {savingsCards.map((card, idx) => (
+                                        <SavingsCard key={card._id} card={card} idx={idx}
                                             onEdit={() => { setEditCard(card); setShowForm(true); }}
                                             onDelete={() => setDeleteTarget(card)} />
                                     ))}
@@ -697,7 +720,7 @@ export default function AccountsPage() {
                                         </p>
                                     </div>
                                     <button onClick={() => openAdd('savings')}
-                                        className="bg-[#7f19e6] dark:bg-purple-600 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
+                                        className="bg-brand dark:bg-purple-600 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg shadow-purple-500/20 active:scale-95 transition-all">
                                         + Thêm sổ tiết kiệm
                                     </button>
                                 </div>

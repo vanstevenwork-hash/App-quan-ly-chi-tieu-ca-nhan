@@ -110,7 +110,7 @@ export default function GoalFormModal({ open, onClose, onSave, editGoal }: GoalF
         <Dialog open={open} onOpenChange={v => !v && onClose()}>
             <DialogContent
                 className="
-fixed inset-x-0 bottom-0 top-[20vh] z-50
+fixed inset-x-0 bottom-0 top-[20vh] z-[60]
 w-full max-w-md mx-auto gap-2
 !translate-x-0 !translate-y-0
 bg-white dark:bg-surface
@@ -229,7 +229,7 @@ duration-200
                                     className={cn(
                                         'flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all',
                                         category === cat.id
-                                            ? 'border-[#6C63FF] bg-[#6C63FF]/5'
+                                            ? 'border-brand bg-brand-light/50'
                                             : 'border-slate-200 dark:border-slate-700'
                                     )}
                                 >

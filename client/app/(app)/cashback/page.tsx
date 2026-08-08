@@ -64,6 +64,7 @@ export default function CashbackPage() {
     const { records, setStatus, loading: recordsLoading } = useCashbackRecords();
     const [updatingKey, setUpdatingKey] = useState<string | null>(null);
     const [viewTab, setViewTab] = useState<'month' | 'card'>('month');
+    const [showMaxDetail, setShowMaxDetail] = useState(false);
     const { banks: fetchedBanks, fetchBanks } = useBanks();
     const { sharedCards } = useCardShares();
 
@@ -193,16 +194,26 @@ export default function CashbackPage() {
     // Ceiling of cashback earnable this month = sum of each card's monthly cap.
     // Cards with a rate but no cap are unlimited → tracked separately so we can
     // append a "+" instead of pretending the ceiling is finite.
+    // Every cashback-earning card — own AND shared (family) — with its monthly cap.
+    const cashbackCards = useMemo(() => {
+        const own = creditCards
+            .filter(c => (c.cashbackRate || 0) > 0)
+            .map(c => ({ key: c._id, name: `${c.bankName} •••• ${c.cardNumber}`, rate: c.cashbackRate || 0, cap: c.cashbackCap || 0, shared: false, ownerName: '', logo: getCardLogo(c) as string | null }));
+        const shared = sharedCards
+            .filter(sc => (sc.card?.cashbackRate || 0) > 0)
+            .map(sc => ({ key: sc.card._id, name: `${sc.card.bankName} •••• ${sc.card.cardNumber}`, rate: sc.card.cashbackRate || 0, cap: sc.card.cashbackCap || 0, shared: true, ownerName: sc.owner?.name || '', logo: getCardLogo(sc.card) as string | null }));
+        return [...own, ...shared].sort((a, b) => (b.rate - a.rate) || (b.cap - a.cap));
+    }, [creditCards, sharedCards, getCardLogo]);
+
     const cashbackCaps = useMemo(() => {
         let totalCap = 0;
         let hasUnlimited = false;
-        creditCards.forEach(card => {
-            if ((card.cashbackRate || 0) <= 0) return;
-            if (card.cashbackCap > 0) totalCap += card.cashbackCap;
+        cashbackCards.forEach(c => {
+            if (c.cap > 0) totalCap += c.cap;
             else hasUnlimited = true;
         });
         return { totalCap, hasUnlimited };
-    }, [creditCards]);
+    }, [cashbackCards]);
 
     // Insight: when cards hit their monthly cap, suggest the best card to move spending to
     const insight = useMemo(() => {
@@ -436,7 +447,7 @@ export default function CashbackPage() {
                                 onClick={() => setViewTab('month')}
                                 className={cn(
                                     'px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all',
-                                    viewTab === 'month' ? 'bg-[#6C63FF] text-white shadow-md shadow-[#6C63FF]/25' : 'text-slate-500 dark:text-slate-400'
+                                    viewTab === 'month' ? 'bg-brand text-white shadow-md shadow-brand/30' : 'text-slate-500 dark:text-slate-400'
                                 )}
                             >
                                 Theo tháng
@@ -445,7 +456,7 @@ export default function CashbackPage() {
                                 onClick={() => setViewTab('card')}
                                 className={cn(
                                     'px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all',
-                                    viewTab === 'card' ? 'bg-[#6C63FF] text-white shadow-md shadow-[#6C63FF]/25' : 'text-slate-500 dark:text-slate-400'
+                                    viewTab === 'card' ? 'bg-brand text-white shadow-md shadow-brand/30' : 'text-slate-500 dark:text-slate-400'
                                 )}
                             >
                                 Theo thẻ
@@ -700,10 +711,42 @@ export default function CashbackPage() {
                                 <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmt(allCardsCashbackTotal)}đ</span>
                             </div>
                             {cashbackCaps.totalCap > 0 && (
-                                <div className="flex items-center justify-between px-4 py-3 bg-amber-50/70 dark:bg-amber-900/10">
-                                    <span className="text-sm font-bold text-amber-700 dark:text-amber-400">Tổng có thể hoàn tối đa</span>
-                                    <span className="text-sm font-black text-amber-600 dark:text-amber-400 tabular-nums">{fmt(cashbackCaps.totalCap)}đ{cashbackCaps.hasUnlimited ? '+' : ''}</span>
-                                </div>
+                                <>
+                                    <button onClick={() => setShowMaxDetail(v => !v)}
+                                        className="w-full flex items-center justify-between px-4 py-3 bg-amber-50/70 dark:bg-amber-900/10 hover:bg-amber-100/70 dark:hover:bg-amber-900/20 transition">
+                                        <span className="flex items-center gap-1.5 text-sm font-bold text-amber-700 dark:text-amber-400">
+                                            Tổng có thể hoàn tối đa
+                                            <ActionIcon type="chevronDown" size={14} tile={false} color="currentColor"
+                                                className={cn('transition-transform', showMaxDetail && 'rotate-180')} />
+                                        </span>
+                                        <span className="text-sm font-black text-amber-600 dark:text-amber-400 tabular-nums">{fmt(cashbackCaps.totalCap)}đ{cashbackCaps.hasUnlimited ? '+' : ''}</span>
+                                    </button>
+                                    {showMaxDetail && (
+                                        <div className="bg-amber-50/40 dark:bg-amber-900/[0.06] divide-y divide-amber-100/70 dark:divide-amber-900/20 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            {cashbackCards.map(c => (
+                                                <div key={c.key} className="flex items-center gap-3 px-4 py-2.5">
+                                                    {c.logo ? (
+                                                        <Image src={c.logo} width={32} height={32} alt=""
+                                                            className="w-8 h-8 rounded-lg object-contain bg-white p-0.5 border border-gray-100 dark:border-slate-700 flex-shrink-0" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 flex items-center justify-center flex-shrink-0">
+                                                            <ActionIcon type="creditCard" size={14} tile={false} color="#94A3B8" />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate">{c.name}</p>
+                                                        <p className={cn('text-[11px] mt-0.5 truncate', c.shared ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500')}>
+                                                            Hoàn {c.rate}%{c.shared ? ` · thẻ chung${c.ownerName ? ` của ${c.ownerName}` : ''}` : ''}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-[13px] font-bold text-amber-600 dark:text-amber-400 tabular-nums flex-shrink-0">
+                                                        {c.cap > 0 ? `${fmt(c.cap)}đ` : 'Không giới hạn'}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

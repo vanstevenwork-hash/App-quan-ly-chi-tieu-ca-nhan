@@ -29,7 +29,7 @@ const renderCustomTick = (props: any) => {
     const { x, y, payload } = props;
     const isToday = payload.value === 'Nay';
     return (
-        <text x={x} y={y + 12} className={isToday ? 'fill-purple-600 dark:fill-purple-400 font-bold' : 'fill-slate-400 dark:fill-slate-500'} fontSize={isToday ? 10 : 9} textAnchor="middle">
+        <text x={x} y={y + 12} className={isToday ? 'fill-brand dark:fill-brand-light font-bold' : 'fill-slate-400 dark:fill-slate-500'} fontSize={isToday ? 10 : 9} textAnchor="middle">
             {payload.value}
         </text>
     );
@@ -165,8 +165,8 @@ function SpendingTrendChartBase({ transactions }: SpendingTrendChartProps) {
         if (index === data.length - 1) {
             return (
                 <g key={`now-${index}`}>
-                    <circle cx={cx} cy={cy} r={8} fill="#8B5CF6" fillOpacity={0.3} />
-                    <circle cx={cx} cy={cy} r={4.5} fill="#8B5CF6" />
+                    <circle cx={cx} cy={cy} r={8} fill="#36255C" fillOpacity={0.3} />
+                    <circle cx={cx} cy={cy} r={4.5} fill="#36255C" />
                 </g>
             );
         }
@@ -194,7 +194,7 @@ function SpendingTrendChartBase({ transactions }: SpendingTrendChartProps) {
                             className={cn(
                                 'px-5 py-1.5 rounded-[8px] text-sm font-bold transition-all',
                                 range === r.key
-                                    ? 'bg-[#6C63FF] text-white shadow-md shadow-[#6C63FF]/25'
+                                    ? 'bg-brand text-white shadow-md shadow-brand/30'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                             )}>
                             {r.label}

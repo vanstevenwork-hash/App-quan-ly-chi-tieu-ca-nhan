@@ -157,31 +157,34 @@ function CardFace({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                     )}
                 </div>
 
-                {effLimit > 0 && (
-                    <>
-                        <div className="flex justify-between text-[10px] mb-1.5" style={{ color: ts.subtext }}>
-                            <span>Đã dùng {usedPct.toFixed(0)}%{isPooled ? ' 🔗' : ''}</span>
-                            <span>Hạn mức:<span className="text-sm ml-0.5 font-bold" style={{ color: ts.text }}>{fmtShort(effLimit)}</span></span>
+                {/* Bottom row: usage bar (left, fills the empty space) + pay button (right) */}
+                <div className="mt-auto flex items-end justify-between gap-3">
+                    {effLimit > 0 ? (
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1.5 text-[11px]" style={{ color: ts.subtext }}>
+                                <span>Đã dùng <span className="font-bold" style={{ color: ts.text }}>{usedPct.toFixed(0)}%</span>{isPooled ? ' 🔗' : ''}</span>
+                                <span>Hạn mức <span className="font-bold" style={{ color: ts.text }}>{fmtShort(effLimit)}</span></span>
+                            </div>
+                            <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden ring-1 ring-inset ring-white/15">
+                                <div className="h-full rounded-full transition-all"
+                                    style={{
+                                        width: `${usedPct}%`,
+                                        background: usedPct > 80
+                                            ? 'linear-gradient(90deg, #FDA4AF, #FB7185)'
+                                            : 'linear-gradient(90deg, rgba(255,255,255,0.98), rgba(255,255,255,0.78))',
+                                    }} />
+                            </div>
                         </div>
-                        <div className="h-1.5 w-full bg-white/15 rounded-full overflow-hidden mb-2 ring-1 ring-inset ring-white/10">
-                            <div className="h-full rounded-full transition-all"
-                                style={{
-                                    width: `${usedPct}%`,
-                                    background: usedPct > 80
-                                        ? 'linear-gradient(90deg, #FDA4AF, #FB7185)'
-                                        : 'linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.7))',
-                                }} />
-                        </div>
-                    </>
-                )}
+                    ) : <span />}
 
-                {card.balance > 0 && (
-                    <button onClick={stop(onPay)}
-                        className="mt-auto self-end px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 ring-1 ring-white/30 text-[11px] font-bold transition active:scale-95 flex items-center gap-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]"
-                        style={{ color: ts.text }}>
-                        <CustomIcon type="creditCard" size={13} tile={false} color="currentColor" /> Thanh toán
-                    </button>
-                )}
+                    {card.balance > 0 && (
+                        <button onClick={stop(onPay)}
+                            className="flex-shrink-0 px-3.5 py-1.5 rounded-full bg-white/20 hover:bg-white/30 ring-1 ring-white/30 text-[11px] font-bold transition active:scale-95 flex items-center gap-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]"
+                            style={{ color: ts.text }}>
+                            <CustomIcon type="creditCard" size={13} tile={false} color="currentColor" /> Thanh toán
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -346,7 +349,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                         {remaining > 0 && (
                             <button
                                 onClick={() => setSheetOpen(true)}
-                                className="absolute bottom-2 right-0 z-30 flex items-center justify-center min-w-[42px] h-9 px-3 rounded-full bg-slate-900/85 text-white text-sm font-bold shadow-lg ring-1 ring-white/20 backdrop-blur-sm active:scale-95 transition"
+                                className="absolute bottom-2 right-0 z-30 flex items-center justify-center min-w-[44px] h-9 px-3.5 rounded-full bg-white/30 backdrop-blur-md text-white text-sm font-bold ring-1 ring-white/45 shadow-[0_5px_14px_-5px_rgba(0,0,0,0.22),inset_0_1px_1px_rgba(255,255,255,0.7)] active:scale-95 transition"
                             >
                                 +{remaining}
                             </button>
@@ -358,7 +361,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                             <p className="text-[12px] text-slate-400 dark:text-slate-500">Chạm thẻ sau để đưa lên trước</p>
                         )}
                         <button onClick={onAddNew}
-                            className="ml-auto flex items-center gap-1 text-[13px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition active:scale-95">
+                            className="ml-auto flex items-center gap-1 text-[13px] font-bold text-white bg-brand px-3 py-1.5 rounded-full hover:bg-brand-dark shadow-sm shadow-brand/30 transition active:scale-95">
                             <ActionIcon type="plus" size={14} tile={false} color="currentColor" /> Thêm thẻ
                         </button>
                     </div>

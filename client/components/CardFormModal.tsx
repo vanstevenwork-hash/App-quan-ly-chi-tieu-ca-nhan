@@ -261,7 +261,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent
                 className="
-fixed inset-x-0 bottom-0 top-[20vh] z-50
+fixed inset-x-0 bottom-0 top-[20vh] z-[60]
 gap-2
 w-full max-w-md mx-auto
 !translate-x-0 !translate-y-0
@@ -379,11 +379,11 @@ duration-200
                                     <button key={t.value} onClick={() => { set('cardType', t.value); setSearchBank(''); }}
                                         className={cn(
                                             'flex gap-2 p-1 rounded-xl border transition-all text-left items-center justify-center flex-col',
-                                            form.cardType === t.value ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+                                            form.cardType === t.value ? 'border-brand bg-brand-light/50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
                                         )}>
                                         <CustomIcon type={t.iconType} size={26} tile={false} color={t.color} />
                                         <div>
-                                            <p className={cn("text-[11px] text-center font-bold", form.cardType === t.value ? "text-[#7f19e6] dark:text-purple-400" : "text-[#000000] dark:text-white")}>{t.label}</p>
+                                            <p className={cn("text-[11px] text-center font-bold", form.cardType === t.value ? "text-brand dark:text-purple-400" : "text-[#000000] dark:text-white")}>{t.label}</p>
                                         </div>
                                     </button>
                                 ))}
@@ -399,7 +399,7 @@ duration-200
                                 <div className="relative w-[140px]">
                                     <CustomIcon type="search" size={16} tile={false} color="currentColor" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <Input value={searchBank} onChange={e => setSearchBank(e.target.value)}
-                                        placeholder="Tìm kiếm..." className="pl-9 h-9 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:border-[#7f19e6] dark:text-white dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        placeholder="Tìm kiếm..." className="pl-9 h-9 text-xs bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl focus:border-brand dark:text-white dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                 </div>
                             )}
                         </div>
@@ -408,7 +408,7 @@ duration-200
                             {form.cardType === 'eWallet' ? (
                                 E_WALLETS.map(bank => (
                                     <button key={bank.short} onClick={() => selectBank({ name: bank.name, shortName: bank.short, color: bank.color, logo: bank.logo })}
-                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.short ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
+                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.short ? 'border-brand bg-brand-light/50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
                                         {bank.logo ? <Image src={bank.logo} width={40} height={40} alt={bank.name} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" /> : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: bank.color }}>{bank.short.slice(0, 3)}</div>}
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.name}</span>
                                     </button>
@@ -416,7 +416,7 @@ duration-200
                             ) : form.cardType === 'crypto' ? (
                                 CRYPTOS.map(bank => (
                                     <button key={bank.short} onClick={() => selectBank({ name: bank.name, shortName: bank.short, color: bank.color, logo: bank.logo })}
-                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.short ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
+                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.short ? 'border-brand bg-brand-light/50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
                                         <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm" style={{ backgroundColor: bank.color }}>{bank.short.slice(0, 3)}</div>
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.name}</span>
                                     </button>
@@ -424,7 +424,7 @@ duration-200
                             ) : (
                                 fetchedBanks.filter(b => b.name.toLowerCase().includes(searchBank.toLowerCase()) || b.shortName.toLowerCase().includes(searchBank.toLowerCase())).map(bank => (
                                     <button key={bank.bin || bank.shortName} onClick={() => selectBank(bank)}
-                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.shortName ? 'border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
+                                        className={cn('snap-start shrink-0 w-24 flex flex-col items-center gap-2 p-1.5 rounded-xl border transition-all', form.bankShortName === bank.shortName ? 'border-brand bg-brand-light/50 dark:bg-purple-900/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex-shrink-0')}>
                                         {bank.logo ? <Image src={bank.logo} width={40} height={40} alt={bank.shortName} className="w-10 h-10 object-contain p-1 bg-white rounded-lg border border-slate-100 shadow-sm" /> : <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shadow-sm bg-slate-300">{bank.shortName?.slice(0, 3)}</div>}
                                         <span className="text-xs font-bold text-[#000000] dark:text-white text-center w-full truncate">{bank.shortName}</span>
                                     </button>
@@ -444,7 +444,7 @@ duration-200
                                     value={cardLabel}
                                     onChange={e => handleCardLabelChange(e.target.value)}
                                     placeholder={form.bankName || 'Nhập tên thẻ...'}
-                                    className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
+                                    className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand"
                                 />
                             </div>
                         )}
@@ -456,7 +456,7 @@ duration-200
                                     <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Tên chủ {isSavings ? 'sổ' : 'thẻ'}</p>
                                     <Input value={form.cardHolder} onChange={e => set('cardHolder', e.target.value.toUpperCase())}
                                         placeholder={userNamePlaceholder}
-                                        className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold uppercase text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold uppercase text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                 </div>
                             )}
 
@@ -476,7 +476,7 @@ duration-200
                                             }
                                             placeholder="1234"
                                             maxLength={4}
-                                            className="w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold tracking-widest text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]"
+                                            className="w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold tracking-widest text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand"
                                         />
                                     </div>
 
@@ -500,7 +500,7 @@ duration-200
                                             className={cn(
                                                 "w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1",
                                                 errCls("balance") ||
-                                                "focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]"
+                                                "focus:border-brand dark:focus:border-purple-400 focus:ring-brand"
                                             )}
                                         />
 
@@ -521,7 +521,7 @@ duration-200
                                             value={form.balance ? new Intl.NumberFormat('vi-VN').format(form.balance) : ''}
                                             onChange={e => { set('balance', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
                                             placeholder="0"
-                                            className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                            className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-brand dark:focus:border-purple-400 focus:ring-brand')} />
                                         {errors.balance && <p className="text-xs text-red-500 mt-1">{errors.balance}</p>}
                                     </div>
 
@@ -532,7 +532,7 @@ duration-200
                                             <Input type="number" step="0.1" value={form.interestRate || ''}
                                                 onChange={e => { set('interestRate', Number(e.target.value)); setErrors(p => ({ ...p, interestRate: '' })); }}
                                                 placeholder="7.5"
-                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('interestRate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('interestRate') || 'focus:border-brand dark:focus:border-purple-400 focus:ring-brand')} />
                                             {errors.interestRate && <p className="text-xs text-red-500 mt-1">{errors.interestRate}</p>}
                                         </div>
                                         <div>
@@ -545,7 +545,7 @@ duration-200
                                                     d.setMonth(d.getMonth() + t);
                                                     set('maturityDate', d.toISOString().slice(0, 10));
                                                 }
-                                            }} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-black dark:text-white h-12 px-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-[#7f19e6] focus:border-[#7f19e6] dark:focus:border-purple-400 appearance-none">
+                                            }} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface text-black dark:text-white h-12 px-3 text-base font-semibold focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand dark:focus:border-purple-400 appearance-none">
                                                 <option value={1}>1 tháng</option>
                                                 <option value={3}>3 tháng</option>
                                                 <option value={6}>6 tháng</option>
@@ -571,7 +571,7 @@ duration-200
                                                         set('maturityDate', d.toISOString().slice(0, 10));
                                                     }
                                                 }}
-                                                className={cn('w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:ring-1', errCls('depositDate') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 px-3 text-black dark:text-white focus:ring-1', errCls('depositDate') || 'focus:border-brand dark:focus:border-purple-400 focus:ring-brand')} />
                                             {errors.depositDate && <p className="text-xs text-red-500 mt-1">{errors.depositDate}</p>}
                                         </div>
 
@@ -603,7 +603,7 @@ duration-200
                                                     { value: 'napas', label: 'Napas', logo: <span className="font-bold text-green-500 text-sm">NAPAS</span> },
                                                 ].map(net => (
                                                     <button key={net.value} type="button" onClick={() => set('cardNetwork', net.value)}
-                                                        className={cn('flex-1 h-9 min-w-[60px] rounded-xl border flex items-center justify-center bg-white dark:bg-slate-100 transition-all', form.cardNetwork === net.value ? 'border-[#7f19e6] shadow-sm ring-1 ring-[#7f19e6]' : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
+                                                        className={cn('flex-1 h-9 min-w-[60px] rounded-xl border flex items-center justify-center bg-white dark:bg-slate-100 transition-all', form.cardNetwork === net.value ? 'border-brand shadow-sm ring-1 ring-brand' : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
                                                         {net.logo}
                                                     </button>
                                                 ))}
@@ -618,7 +618,7 @@ duration-200
                                                     set('expirationDate', val);
                                                 }}
                                                 maxLength={5}
-                                                placeholder="MM/YY" className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                placeholder="MM/YY" className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                         </div>
                                         {isCredit && (
                                             <div>
@@ -627,7 +627,7 @@ duration-200
                                                     value={form.creditLimit ? new Intl.NumberFormat('vi-VN').format(form.creditLimit) : ''}
                                                     onChange={e => { set('creditLimit', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
                                                     placeholder="50.000.000"
-                                                    className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                    className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                             </div>
                                         )}
                                     </div>
@@ -641,7 +641,7 @@ duration-200
                                     <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
                                         <label className="flex items-center gap-3 cursor-pointer">
                                             <div onClick={() => set('sharedLimit', !form.sharedLimit)}
-                                                className={cn('w-12 h-7 rounded-full transition-colors relative flex-shrink-0', form.sharedLimit ? 'bg-[#7f19e6]' : 'bg-slate-200 dark:bg-slate-700')}>
+                                                className={cn('w-12 h-7 rounded-full transition-colors relative flex-shrink-0', form.sharedLimit ? 'bg-brand' : 'bg-slate-200 dark:bg-slate-700')}>
                                                 <div className={cn('w-5 h-5 bg-white rounded-full absolute top-1 transition-all shadow-sm', form.sharedLimit ? 'left-6' : 'left-1')} />
                                             </div>
                                             <span className="text-sm font-bold text-[#000000] dark:text-white">Chung hạn mức cùng ngân hàng</span>
@@ -650,7 +650,7 @@ duration-200
                                             Bật nếu ngân hàng này cấp chung 1 hạn mức cho nhiều thẻ (vd: thẻ chính + thẻ phụ). Hạn mức hiển thị sẽ lấy giá trị cao nhất trong các thẻ cùng ngân hàng có bật switch này.
                                         </p>
                                         {form.sharedLimit && sharedSiblings.length > 0 && (
-                                            <p className="text-xs text-[#7f19e6] dark:text-purple-400 font-semibold mt-2">
+                                            <p className="text-xs text-brand dark:text-purple-400 font-semibold mt-2">
                                                 Sẽ chung hạn mức với: {sharedSiblings.map(c => c.bankName).join(', ')}
                                             </p>
                                         )}
@@ -662,7 +662,7 @@ duration-200
                                             <Input type="number" min={1} max={31} value={form.statementDay || ''}
                                                 onChange={e => { set('statementDay', Number(e.target.value)); setErrors(p => ({ ...p, statementDay: '' })); }}
                                                 placeholder="25"
-                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('statementDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('statementDay') || 'focus:border-brand dark:focus:border-purple-400 focus:ring-brand')} />
                                             {errors.statementDay && <p className="text-xs text-red-500 mt-1">{errors.statementDay}</p>}
                                         </div>
                                         <div>
@@ -670,7 +670,7 @@ duration-200
                                             <Input type="number" min={1} max={31} value={form.paymentDueDay || ''}
                                                 onChange={e => { set('paymentDueDay', Number(e.target.value)); setErrors(p => ({ ...p, paymentDueDay: '' })); }}
                                                 placeholder="10"
-                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('paymentDueDay') || 'focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-[#7f19e6]')} />
+                                                className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:ring-1', errCls('paymentDueDay') || 'focus:border-brand dark:focus:border-purple-400 focus:ring-brand')} />
                                             {errors.paymentDueDay && <p className="text-xs text-red-500 mt-1">{errors.paymentDueDay}</p>}
                                         </div>
                                     </div>
@@ -680,7 +680,7 @@ duration-200
                                             <Input type="number" min={0} max={100} step={0.1} value={form.cashbackRate || ''}
                                                 onChange={e => set('cashbackRate', Number(e.target.value))}
                                                 placeholder="vd: 1.5"
-                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hoàn tiền tối đa/tháng</p>
@@ -688,7 +688,7 @@ duration-200
                                                 value={form.cashbackCap ? new Intl.NumberFormat('vi-VN').format(form.cashbackCap) : ''}
                                                 onChange={e => set('cashbackCap', Number(e.target.value.replace(/\D/g, '')))}
                                                 placeholder="Không giới hạn"
-                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                         </div>
                                     </div>
                                     <div>
@@ -697,7 +697,7 @@ duration-200
                                             value={form.cashbackMinSpend ? new Intl.NumberFormat('vi-VN').format(form.cashbackMinSpend) : ''}
                                             onChange={e => set('cashbackMinSpend', Number(e.target.value.replace(/\D/g, '')))}
                                             placeholder="vd: 15.000.000 · để trống nếu không yêu cầu"
-                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                     </div>
                                     <p className="text-xs text-slate-400 -mt-2">Theo chính sách hoàn tiền thật của thẻ này, dùng để tính "Hoàn tiền" trên trang Thẻ. Tháng nào chi chưa đủ mức tối thiểu sẽ không được tính hoàn. Để trống mục tối đa nếu thẻ không giới hạn.</p>
 
@@ -707,7 +707,7 @@ duration-200
                                             value={form.annualFee ? new Intl.NumberFormat('vi-VN').format(form.annualFee) : ''}
                                             onChange={e => set('annualFee', Number(e.target.value.replace(/\D/g, '')))}
                                             placeholder="vd: 400.000 · để trống nếu miễn phí"
-                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                     </div>
                                 </>
                             )}
@@ -720,7 +720,7 @@ duration-200
                                         {/* Standard colors */}
                                         {CARD_COLORS.map(c => (
                                             <button key={c} onClick={() => set('color', c)}
-                                                className={cn('w-8 h-8 rounded-full transition-transform', form.color === c ? 'scale-125 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-[#7f19e6] dark:ring-purple-400' : 'hover:scale-110')}
+                                                className={cn('w-8 h-8 rounded-full transition-transform', form.color === c ? 'scale-125 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ring-brand dark:ring-purple-400' : 'hover:scale-110')}
                                                 style={{ backgroundColor: c }} />
                                         ))}
                                         {/* Separator */}
@@ -752,7 +752,7 @@ duration-200
                                 <div>
                                     <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Ghi chú</p>
                                     <Input value={form.note} onChange={e => set('note', e.target.value)}
-                                        placeholder="Ghi chú tuỳ ý..." className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                        placeholder="Ghi chú tuỳ ý..." className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                 </div>
                             )}
 
@@ -776,7 +776,7 @@ duration-200
                                             <Input value={form.receiveAccountNumber}
                                                 onChange={e => set('receiveAccountNumber', e.target.value.replace(/\s/g, ''))}
                                                 placeholder="VD: 0123456789"
-                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                         </div>
                                     </div>
                                 </div>
@@ -786,7 +786,7 @@ duration-200
                             {!isSavings && (
                                 <label className="flex items-center gap-3 cursor-pointer py-2">
                                     <div onClick={() => set('isDefault', !form.isDefault)}
-                                        className={cn('w-12 h-7 rounded-full transition-colors relative', form.isDefault ? 'bg-[#7f19e6]' : 'bg-slate-200 dark:bg-slate-700')}>
+                                        className={cn('w-12 h-7 rounded-full transition-colors relative', form.isDefault ? 'bg-brand' : 'bg-slate-200 dark:bg-slate-700')}>
                                         <div className={cn('w-5 h-5 bg-white rounded-full absolute top-1 transition-all shadow-sm', form.isDefault ? 'left-6' : 'left-1')} />
                                     </div>
                                     <span className="text-sm font-bold text-[#000000] dark:text-white">Đặt làm thẻ / tài khoản mặc định</span>
@@ -809,7 +809,7 @@ duration-200
                             <p className="text-[10px] text-red-500 text-center mb-1">Vui lòng kiểm tra lại thông tin</p>
                         )}
                         <button onClick={handleSave} disabled={saving}
-                            className="w-full h-12 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-lg font-bold shadow-lg shadow-[#7f19e6]/30 hover:shadow-[#7f19e6]/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                            className="w-full h-12 bg-gradient-to-r from-brand to-[#9b4de8] text-white rounded-xl text-lg font-bold shadow-lg shadow-brand/30 hover:shadow-brand/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <ActionIcon type="save" size={20} tile={false} color="#FFFFFF" />
                             <span>{saving ? 'Đang lưu...' : (isEdit ? 'Lưu thay đổi' : 'Hoàn tất')}</span>
                         </button>

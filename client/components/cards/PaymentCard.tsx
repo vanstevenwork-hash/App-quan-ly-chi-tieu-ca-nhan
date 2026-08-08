@@ -29,14 +29,14 @@ export default function PaymentCard({
             className={cn(
                 "relative snap-start shrink-0 w-[110px] h-[68px] p-1.5 rounded-xl border cursor-pointer flex flex-col transition-all",
                 isSelected
-                    ? "border-[#7f19e6] bg-[#7f19e6]/5 dark:bg-purple-900/20"
+                    ? "border-brand bg-brand-light/50 dark:bg-purple-900/20"
                     : "border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600"
             )}
         >
             {/* Selected icon */}
             {isSelected && (
-                <div className="absolute top-[-6px] right-[-6px] w-4 h-4 rounded-full border border-[#7f19e6] flex items-center justify-center bg-white dark:bg-surface">
-                    <ActionIcon type="check" size={10} tile={false} color="#7f19e6" />
+                <div className="absolute top-[-6px] right-[-6px] w-4 h-4 rounded-full border border-brand flex items-center justify-center bg-white dark:bg-surface">
+                    <ActionIcon type="check" size={10} tile={false} color="#36255C" />
                 </div>
             )}
 

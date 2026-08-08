@@ -49,6 +49,13 @@ const config: Config = {
 					DEFAULT: "#121829", // card / panel background
 					deep: "#0B0F1E",    // page background behind cards
 				},
+				// Brand accent — dùng chung cho tab active + nút thêm mới + điểm nhấn.
+				// Đổi ở ĐÂY là đổi toàn app (bg-brand, text-brand, bg-brand/10, hover:bg-brand-dark…).
+				brand: {
+					DEFAULT: "#36255C", // Violet
+					dark: "#2B1E4A",    // hover / pressed
+					light: "#D2C3F6",   // Lavender (nền nhạt / pill nhạt)
+				},
 				violet: {
 					50: "#F5F3FF",
 					100: "#EDE9FE",

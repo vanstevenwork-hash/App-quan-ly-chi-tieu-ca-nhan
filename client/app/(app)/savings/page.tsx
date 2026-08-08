@@ -453,7 +453,7 @@ export default function SavingsPage() {
             <button
                 onClick={() => { setEditCard(null); setShowForm(true); }}
                 className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
-                style={{ background: 'linear-gradient(135deg, #34D399, #059669)' }}>
+                style={{ background: 'linear-gradient(135deg, #4a3575, #36255C)' }}>
                 <CustomIcon type="plus" size={28} tile={false} color="currentColor" className="w-7 h-7 text-white" />
             </button>
 

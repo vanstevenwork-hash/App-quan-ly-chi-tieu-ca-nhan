@@ -52,7 +52,7 @@ const SettingItem = ({
         disabled={!onClick && !right}
         className="flex items-center gap-3.5 w-full px-4 py-4 hover:bg-muted/50 transition-colors text-left"
     >
-        <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-100 dark:bg-slate-800/80 text-slate-500 dark:text-indigo-200 shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-brand-light/60 dark:bg-brand/20 text-brand dark:text-purple-300 shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.06)]">
             {icon}
         </div>
         <div className="flex-1 min-w-0">

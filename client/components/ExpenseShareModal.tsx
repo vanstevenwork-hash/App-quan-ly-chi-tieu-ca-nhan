@@ -241,7 +241,7 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="
-fixed inset-x-0 bottom-0 top-[5vh] z-50
+fixed inset-x-0 bottom-0 top-[5vh] z-[60]
 gap-0 w-full max-w-md mx-auto
 !translate-x-0 !translate-y-0
 bg-white dark:bg-surface
@@ -264,15 +264,15 @@ duration-200
                 <div className="flex-1 overflow-y-auto hide-scrollbar px-4 pt-3 pb-6 space-y-4">
                     {loading ? (
                         <div className="flex justify-center py-10">
-                            <ActionIcon type="loader" size={24} tile={false} spin color="#7f19e6" />
+                            <ActionIcon type="loader" size={24} tile={false} spin color="#36255C" />
                         </div>
                     ) : editing ? (
                         <>
                             <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-[#000000] dark:text-white">
-                                    Tổng: <span className="text-[#7f19e6]">{fmt(transaction.amount)}đ</span>
+                                    Tổng: <span className="text-brand">{fmt(transaction.amount)}đ</span>
                                 </p>
-                                <button onClick={splitEqually} className="text-xs font-bold text-[#7f19e6] bg-[#7f19e6]/10 px-3 py-1.5 rounded-full">
+                                <button onClick={splitEqually} className="text-xs font-bold text-brand bg-brand-light/60 px-3 py-1.5 rounded-full">
                                     Chia đều
                                 </button>
                             </div>
@@ -283,12 +283,12 @@ duration-200
                                         <div className="flex items-center gap-2">
                                             <Input value={row.name} onChange={e => updateRow(i, { name: e.target.value })}
                                                 placeholder={`Người ${i + 1}`}
-                                                className="flex-[1.2] rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                className="flex-[1.2] rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                             <Input type="text"
                                                 value={row.amount ? new Intl.NumberFormat('vi-VN').format(row.amount) : ''}
                                                 onChange={e => updateRow(i, { amount: Number(e.target.value.replace(/\D/g, '')) })}
                                                 placeholder="Số tiền"
-                                                className="flex-1 rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-bold text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                                className="flex-1 rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-bold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                             <button onClick={() => removeRow(i)} disabled={rows.length === 1}
                                                 className="w-8 h-8 flex-shrink-0 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 flex items-center justify-center disabled:opacity-30">
                                                 <ActionIcon type="x" size={14} tile={false} color="currentColor" />
@@ -296,10 +296,10 @@ duration-200
                                         </div>
                                         <Input value={row.note} onChange={e => updateRow(i, { note: e.target.value })}
                                             placeholder="Ghi chú: ăn gì, uống gì... (không bắt buộc)"
-                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-9 text-xs text-black dark:text-white focus:border-[#7f19e6] dark:focus:border-purple-400 focus:ring-1 focus:ring-[#7f19e6]" />
+                                            className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-9 text-xs text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                     </div>
                                 ))}
-                                <button onClick={addRow} className="text-xs font-bold text-[#7f19e6] flex items-center gap-1 py-1">
+                                <button onClick={addRow} className="text-xs font-bold text-brand flex items-center gap-1 py-1">
                                     <ActionIcon type="plus" size={14} tile={false} color="currentColor" /> Thêm người
                                 </button>
                             </div>
@@ -319,7 +319,7 @@ duration-200
                                     <div className="flex gap-2 overflow-x-auto hide-scrollbar">
                                         {receivableCards.map(c => (
                                             <button key={c._id} onClick={() => setReceiveCardId(c._id)}
-                                                className={cn('shrink-0 px-3 py-2 rounded-xl border text-xs font-bold', receiveCardId === c._id ? 'border-[#7f19e6] bg-[#7f19e6]/10 text-[#7f19e6]' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300')}>
+                                                className={cn('shrink-0 px-3 py-2 rounded-xl border text-xs font-bold', receiveCardId === c._id ? 'border-brand bg-brand-light/60 text-brand' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300')}>
                                                 {c.bankName} •• {c.cardNumber}
                                             </button>
                                         ))}
@@ -336,7 +336,7 @@ duration-200
                                         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${cat.color}18` }}>
                                             <CategoryIcon type={cat.catIconType || 'khac'} size={22} tile={false} />
                                         </div>
-                                        <span className="text-[11px] font-black text-[#7f19e6] bg-[#7f19e6]/10 px-3 py-1 rounded-full uppercase tracking-wide">Chia bill</span>
+                                        <span className="text-[11px] font-black text-brand bg-brand-light/60 px-3 py-1 rounded-full uppercase tracking-wide">Chia bill</span>
                                     </div>
                                     <h3 className="text-xl font-black text-slate-900">{transaction.category}</h3>
                                     <p className="text-xs text-slate-400 mb-3">{formattedDate} · {formattedTime} · {share.participants.length + 1} người</p>
@@ -395,7 +395,7 @@ duration-200
                                                 </p>
                                                 <p className="text-base font-black text-slate-900 tracking-wide">{formatAccountNumber(share.receiveCardId.receiveAccountNumber)}</p>
                                                 <p className="text-xs text-slate-500 truncate">{share.receiveCardId.cardHolder}</p>
-                                                <p className="text-[11px] font-bold text-[#7f19e6] mt-0.5">◈ Quét mã để chuyển khoản</p>
+                                                <p className="text-[11px] font-bold text-brand mt-0.5">◈ Quét mã để chuyển khoản</p>
                                             </div>
                                         </div>
                                     )}
@@ -442,7 +442,7 @@ duration-200
                                                     </button>
                                                 ) : (
                                                     <button onClick={() => handleMarkPaid(p._id)}
-                                                        className="text-xs font-bold text-white bg-[#7f19e6] px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0">
+                                                        className="text-xs font-bold text-white bg-brand px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0">
                                                         Đánh dấu đã nhận
                                                     </button>
                                                 )}
@@ -451,7 +451,7 @@ duration-200
                                     </div>
 
                                     <button onClick={handleSaveImage} disabled={saveImgLoading}
-                                        className="w-full h-11 rounded-xl bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white text-sm font-bold shadow-lg shadow-[#7f19e6]/30 flex items-center justify-center gap-2 disabled:opacity-50">
+                                        className="w-full h-11 rounded-xl bg-gradient-to-r from-brand to-[#9b4de8] text-white text-sm font-bold shadow-lg shadow-brand/30 flex items-center justify-center gap-2 disabled:opacity-50">
                                         <ActionIcon type={saveImgLoading ? 'loader' : 'download'} size={16} tile={false} spin={saveImgLoading} color="#fff" />
                                         Lưu ảnh để gửi nhóm
                                     </button>
@@ -475,7 +475,7 @@ duration-200
                 {editing && (
                     <div className="shrink-0 w-full p-4 bg-white dark:bg-surface border-t border-slate-100 dark:border-slate-800">
                         <button onClick={handleSubmit} disabled={!canSubmit || saving}
-                            className="w-full h-12 bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white rounded-xl text-base font-bold shadow-lg shadow-[#7f19e6]/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            className="w-full h-12 bg-gradient-to-r from-brand to-[#9b4de8] text-white rounded-xl text-base font-bold shadow-lg shadow-brand/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                             {saving ? 'Đang lưu...' : 'OK'}
                         </button>
                     </div>

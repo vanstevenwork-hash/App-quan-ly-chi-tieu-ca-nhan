@@ -288,17 +288,17 @@ export default function WealthPage() {
                     <div className="bg-slate-100 dark:bg-surface p-1 rounded-xl flex gap-1 border border-transparent dark:border-slate-800/60">
                         <button onClick={() => setActiveTab('accounts')}
                             className={cn("flex-1 py-2.5 rounded-lg text-xs font-bold transition-all",
-                                activeTab === 'accounts' ? "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>
+                                activeTab === 'accounts' ? "bg-brand text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>
                             Tài khoản
                         </button>
                         <button onClick={() => setActiveTab('savings')}
                             className={cn("flex-1 py-2.5 rounded-lg text-xs font-bold transition-all",
-                                activeTab === 'savings' ? "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>
+                                activeTab === 'savings' ? "bg-brand text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>
                             Tiết kiệm
                         </button>
                         <button onClick={() => setActiveTab('other')}
                             className={cn("flex-1 py-2.5 rounded-lg text-xs font-bold transition-all",
-                                activeTab === 'other' ? "bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>
+                                activeTab === 'other' ? "bg-brand text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200")}>
                             Khác
                         </button>
                     </div>

@@ -145,7 +145,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7f19e6] to-[#b44dff] flex items-center justify-center shadow-lg shadow-purple-500/25">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand to-[#b44dff] flex items-center justify-center shadow-lg shadow-purple-500/25">
                             <CustomIcon type="scanLine" size={20} tile={false} color="currentColor" className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -167,13 +167,13 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                     className={cn(
                         'relative rounded-2xl border-2 border-dashed p-8 text-center transition-all duration-300',
                         dragOver
-                            ? 'border-[#7f19e6] bg-[#7f19e6]/5 scale-[1.02]'
+                            ? 'border-brand bg-brand-light/50 scale-[1.02]'
                             : 'border-slate-200 dark:border-slate-700 bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
                     )}
                 >
                     <div className="flex flex-col items-center gap-3">
                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-50 dark:from-purple-900/30 dark:to-slate-800 flex items-center justify-center">
-                            <CustomIcon type="receipt" size={32} tile={false} color="currentColor" className="w-8 h-8 text-[#7f19e6]" />
+                            <CustomIcon type="receipt" size={32} tile={false} color="currentColor" className="w-8 h-8 text-brand" />
                         </div>
                         <div>
                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -190,14 +190,14 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 <div className="grid grid-cols-2 gap-3">
                     <button
                         onClick={() => cameraInputRef.current?.click()}
-                        className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.97] transition-all"
+                        className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-brand to-[#9b4de8] text-white font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.97] transition-all"
                     >
                         <ActionIcon type="camera" size={20} tile={false} color="#FFFFFF" />
                         <span>Chụp ảnh</span>
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm border-2 border-slate-200 dark:border-slate-700 hover:border-[#7f19e6] hover:text-[#7f19e6] active:scale-[0.97] transition-all"
+                        className="flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm border-2 border-slate-200 dark:border-slate-700 hover:border-brand hover:text-brand active:scale-[0.97] transition-all"
                     >
                         <ActionIcon type="upload" size={20} tile={false} color="currentColor" />
                         <span>Tải ảnh lên</span>
@@ -223,7 +223,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
 
                 {/* Tip */}
                 <div className="flex items-start gap-2 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800/30 p-3">
-                    <CustomIcon type="sparkles" size={16} tile={false} color="currentColor" className="w-4 h-4 text-[#7f19e6] mt-0.5 flex-shrink-0" />
+                    <CustomIcon type="sparkles" size={16} tile={false} color="currentColor" className="w-4 h-4 text-brand mt-0.5 flex-shrink-0" />
                     <p className="text-[11px] text-purple-700 dark:text-purple-300 leading-relaxed">
                         <span className="font-bold">Mẹo:</span> Chụp rõ nét phần <span className="font-bold">tổng tiền</span> trên bill để tăng độ chính xác. Hỗ trợ bill siêu thị, nhà hàng, cửa hàng...
                     </p>
@@ -238,7 +238,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#7f19e6] to-[#b44dff] flex items-center justify-center shadow-lg shadow-purple-500/25">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand to-[#b44dff] flex items-center justify-center shadow-lg shadow-purple-500/25">
                         {scanning ? (
                             <ActionIcon type="loader" size={20} tile={false} spin color="#FFFFFF" />
                         ) : result ? (
@@ -277,18 +277,18 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 {scanning && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                         {/* Scan line animation */}
-                        <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#7f19e6] to-transparent animate-scan-line" />
+                        <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-brand to-transparent animate-scan-line" />
 
                         {/* Corner markers */}
-                        <div className="absolute top-4 left-4 w-8 h-8 border-t-3 border-l-3 border-[#7f19e6] rounded-tl-lg" />
-                        <div className="absolute top-4 right-4 w-8 h-8 border-t-3 border-r-3 border-[#7f19e6] rounded-tr-lg" />
-                        <div className="absolute bottom-4 left-4 w-8 h-8 border-b-3 border-l-3 border-[#7f19e6] rounded-bl-lg" />
-                        <div className="absolute bottom-4 right-4 w-8 h-8 border-b-3 border-r-3 border-[#7f19e6] rounded-br-lg" />
+                        <div className="absolute top-4 left-4 w-8 h-8 border-t-3 border-l-3 border-brand rounded-tl-lg" />
+                        <div className="absolute top-4 right-4 w-8 h-8 border-t-3 border-r-3 border-brand rounded-tr-lg" />
+                        <div className="absolute bottom-4 left-4 w-8 h-8 border-b-3 border-l-3 border-brand rounded-bl-lg" />
+                        <div className="absolute bottom-4 right-4 w-8 h-8 border-b-3 border-r-3 border-brand rounded-br-lg" />
 
                         {/* Progress bar at bottom */}
                         <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/30">
                             <div
-                                className="h-full bg-gradient-to-r from-[#7f19e6] to-[#b44dff] transition-all duration-500 ease-out"
+                                className="h-full bg-gradient-to-r from-brand to-[#b44dff] transition-all duration-500 ease-out"
                                 style={{ width: `${scanProgress}%` }}
                             />
                         </div>
@@ -338,7 +338,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                                     <span className="text-lg">🏷️</span>
                                     <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Danh mục</span>
                                 </div>
-                                <span className="text-sm font-semibold text-[#7f19e6] dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg">{result.suggestedCategory}</span>
+                                <span className="text-sm font-semibold text-brand dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg">{result.suggestedCategory}</span>
                             </div>
                         )}
 
@@ -387,7 +387,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                 {result && (
                     <button
                         onClick={handleApply}
-                        className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.97] transition-all"
+                        className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-brand to-[#9b4de8] text-white font-bold text-sm shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.97] transition-all"
                     >
                         <ActionIcon type="check" size={16} tile={false} color="#FFFFFF" />
                         <span>Điền vào form</span>

@@ -69,26 +69,26 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="
-                fixed inset-x-0 bottom-0 top-auto z-50
+                fixed inset-x-0 bottom-0 top-auto z-[60]
                 w-full max-w-md mx-auto gap-0
                 !translate-x-0 !translate-y-0
                 bg-[#F8F9FF] dark:bg-[#0F111A]
-                rounded-t-[32px] sm:rounded-[32px] sm:top-[10vh]
+                rounded-t-[32px]
                 shadow-2xl flex flex-col
                 overflow-hidden border-0 p-0
-                max-h-[85dvh] sm:max-h-[80vh]
+                max-h-[92dvh]
                 data-[state=open]:animate-in
                 data-[state=closed]:animate-out
                 data-[state=open]:slide-in-from-bottom
                 data-[state=closed]:slide-out-to-bottom
-                duration-200
+                duration-300
             ">
                 {/* Drag Handle */}
                 <div className="flex w-full items-center justify-center shrink-0 pt-3 pb-1 bg-[#F8F9FF] dark:bg-[#0F111A] z-10 rounded-t-3xl cursor-grab active:cursor-grabbing" onClick={onClose}>
                     <div className="h-[5px] w-12 rounded-full bg-slate-300 dark:bg-slate-600/80 hover:bg-slate-400 dark:hover:bg-slate-500 transition-colors"></div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-4 pb-44 space-y-3 hide-scrollbar">
+                <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-3 hide-scrollbar">
                     {/* Header (Icon, Amount, Category) */}
                     <div className="flex flex-col items-center mt-1">
                         {transaction.receiptImage ? (
@@ -148,7 +148,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                         <div className="flex items-center justify-between py-3.5">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                                    <ActionIcon type="calendar" size={18} tile={false} color="#7f19e6" />
+                                    <ActionIcon type="calendar" size={18} tile={false} color="#36255C" />
                                 </div>
                                 <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Thời gian</span>
                             </div>
@@ -233,12 +233,13 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                     </div>
                 )}
 
-                {/* Bottom Actions — one primary button, delete as a plain text link below (no "..." menu) */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 pb-4 bg-white/90 dark:bg-[#0F111A]/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 space-y-2">
+                {/* Bottom Actions — pinned footer in normal flow so the sheet fits its
+                    content and sits flush to the screen bottom (no floating gap). */}
+                <div className="shrink-0 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] bg-white/90 dark:bg-[#0F111A]/90 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 space-y-2">
                     {!isIncome && (
                         <button
                             onClick={() => setShowShareModal(true)}
-                            className="w-full flex items-center justify-center h-11 gap-2 rounded-xl border border-[#7f19e6]/30 bg-[#7f19e6]/8 text-[#7f19e6] text-sm font-bold active:scale-[0.98] transition-all"
+                            className="w-full flex items-center justify-center h-11 gap-2 rounded-xl border border-brand/30 bg-brand-light/60 text-brand text-sm font-bold active:scale-[0.98] transition-all"
                         >
                             <ActionIcon type="user" size={16} tile={false} color="currentColor" />
                             Chia sẻ hoá đơn
@@ -246,7 +247,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                     )}
                     <button
                         onClick={() => onEdit?.(transaction)}
-                        className="w-full flex items-center justify-center h-12 gap-2 rounded-xl bg-gradient-to-r from-[#7f19e6] to-[#9b4de8] text-white text-sm font-bold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.98] transition-all"
+                        className="w-full flex items-center justify-center h-12 gap-2 rounded-xl bg-gradient-to-r from-brand to-[#9b4de8] text-white text-sm font-bold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 active:scale-[0.98] transition-all"
                     >
                         <ActionIcon type="pencil" size={16} tile={false} color="#FFFFFF" />
                         Sửa giao dịch

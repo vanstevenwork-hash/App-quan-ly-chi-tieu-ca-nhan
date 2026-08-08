@@ -68,8 +68,8 @@ function GoalsStatsAndFiltersBase({
                         className={cn(
                             'px-3 py-1.5 rounded-full text-xs font-bold border transition-all',
                             filterTab === tab.id
-                                ? 'bg-[#6C63FF] border-transparent text-white shadow-md shadow-[#6C63FF]/25'
-                                : 'bg-white dark:bg-surface border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-[#6C63FF]/40'
+                                ? 'bg-brand border-transparent text-white shadow-md shadow-brand/30'
+                                : 'bg-white dark:bg-surface border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:border-brand/40'
                         )}>
                         {tab.label}
                     </button>

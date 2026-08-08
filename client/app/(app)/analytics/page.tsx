@@ -322,7 +322,7 @@ export default function AnalyticsPage() {
                             <button key={p} onClick={() => setPeriodTab(p)}
                                 className={cn('flex-1 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-center',
                                     periodTab === p
-                                        ? 'bg-white dark:bg-surface text-purple-600 dark:text-purple-400 shadow-sm'
+                                        ? 'bg-brand text-white shadow-sm'
                                         : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>
                                 {p}
                             </button>
@@ -496,7 +496,7 @@ export default function AnalyticsPage() {
                                     {(['all', 'expense', 'income'] as const).map(f => (
                                         <button key={f} onClick={() => setFilterType(f)}
                                             className={cn('px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase',
-                                                filterType === f ? 'bg-white dark:bg-surface text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
+                                                filterType === f ? 'bg-brand text-white shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
                                             {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi' : 'Thu'}
                                         </button>
                                     ))}
