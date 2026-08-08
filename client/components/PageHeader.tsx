@@ -35,9 +35,9 @@ export default function PageHeader({
             {showBackButton && (
                 <button
                     onClick={onBack ?? (() => router.push(backHref))}
-                    className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0"
+                    className="w-10 h-10 rounded-full bg-brand-light/60 dark:bg-slate-800 border border-brand/15 dark:border-slate-800 shadow-sm flex items-center justify-center text-brand dark:text-brand-light hover:bg-brand-light/80 dark:hover:bg-slate-700 active:scale-95 transition-all flex-shrink-0"
                 >
-                    <ActionIcon type="arrowLeft" size={20} tile={false} />
+                    <ActionIcon type="arrowLeft" size={20} tile={false} color="currentColor" />
                 </button>
             )}
             <div className="flex-1 min-w-0">

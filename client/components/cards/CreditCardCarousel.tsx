@@ -296,7 +296,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                 {creditCards.length > 1 && (
                     <button
                         onClick={() => setSheetOpen(true)}
-                        className="flex items-center gap-1 text-[13px] font-semibold text-indigo-600 dark:text-indigo-300 hover:opacity-80 transition"
+                        className="flex items-center gap-1 text-[13px] font-semibold text-brand dark:text-brand-light hover:opacity-80 transition"
                     >
                         Xem tất cả
                         <ActionIcon type="chevronRight" size={15} tile={false} color="currentColor" />
@@ -392,7 +392,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                                     active={card._id === front?._id} onClick={() => selectCard(card._id)} />
                             ))}
                             <button onClick={() => { setSheetOpen(false); onAddNew(); }}
-                                className="w-full mt-1.5 flex items-center justify-center gap-1.5 py-3 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-300 text-sm font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition active:scale-[0.98]">
+                                className="w-full mt-1.5 flex items-center justify-center gap-1.5 py-3 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700 text-brand dark:text-brand-light text-sm font-bold hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition active:scale-[0.98]">
                                 <ActionIcon type="plus" size={16} tile={false} color="currentColor" /> Thêm thẻ mới
                             </button>
                         </div>
