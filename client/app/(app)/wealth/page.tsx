@@ -6,6 +6,7 @@ import { useCards, type Card } from '@/hooks/useCards';
 import WealthSourceModal from '@/components/WealthSourceModal';
 import WealthTabContent from '@/components/wealth/WealthTabContent';
 import PageHeader from '@/components/PageHeader';
+import RefreshButton from '@/components/RefreshButton';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import CardFormModal from '@/components/CardFormModal';
@@ -259,10 +260,7 @@ export default function WealthPage() {
                     title="Tài sản ròng"
                     subtitle="Quản lý"
                     rightActions={
-                        <button onClick={refetch}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
-                            <ActionIcon type="refreshCw" size={16} tile={false} color="currentColor" />
-                        </button>
+                        <RefreshButton onRefresh={refetch} />
                     }
                 />
 

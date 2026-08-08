@@ -7,6 +7,7 @@ import GoalContributeModal from '@/components/GoalContributeModal';
 import GoalsList from '@/components/goals/GoalsList';
 import GoalsStatsAndFilters, { type FilterTab, type SortBy } from '@/components/goals/GoalsStatsAndFilters';
 import PageHeader from '@/components/PageHeader';
+import RefreshButton from '@/components/RefreshButton';
 import { toast } from 'sonner';
 
 function daysLeft(deadline: string): number {
@@ -115,9 +116,7 @@ export default function GoalsPage() {
                     title="Mục tiêu 🎯"
                     subtitle="Theo dõi"
                     rightActions={
-                        <button onClick={refetch} className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all">
-                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
-                        </button>
+                        <RefreshButton onRefresh={refetch} />
                     }
                 />
 

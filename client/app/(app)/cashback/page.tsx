@@ -502,13 +502,19 @@ export default function CashbackPage() {
                                                         onClick={() => handleToggleStatus(card._id, curMonth.year, curMonth.month, status, estimatedAmount)}
                                                         disabled={updatingKey === key}
                                                         className={cn(
-                                                            'text-[10px] font-bold px-2.5 py-1 rounded-full transition-all active:scale-95 disabled:opacity-50',
-                                                            status === 'received'
-                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
-                                                                : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
+                                                            'text-[10px] font-bold px-2.5 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1',
+                                                            updatingKey === key
+                                                                ? 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
+                                                                : status === 'received'
+                                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+                                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
                                                         )}
                                                     >
-                                                        {status === 'received' ? 'Đã nhận' : 'Chờ nhận'}
+                                                        {updatingKey === key
+                                                            ? <><ActionIcon type="loader" size={11} tile={false} color="currentColor" className="animate-spin" /> Đang lưu…</>
+                                                            : status === 'received'
+                                                                ? <><ActionIcon type="check" size={11} tile={false} color="currentColor" /> Đã nhận</>
+                                                                : 'Chờ nhận'}
                                                     </button>
                                                 </div>
                                             </div>
@@ -657,13 +663,19 @@ export default function CashbackPage() {
                                                                     onClick={() => handleToggleStatus(row.card._id, group.year, group.month, row.status, row.estimatedAmount)}
                                                                     disabled={updatingKey === key}
                                                                     className={cn(
-                                                                        'text-[10px] font-bold px-2.5 py-1 rounded-full transition-all active:scale-95 disabled:opacity-50',
-                                                                        row.status === 'received'
-                                                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
-                                                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
+                                                                        'text-[10px] font-bold px-2.5 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1',
+                                                                        updatingKey === key
+                                                                            ? 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
+                                                                            : row.status === 'received'
+                                                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400'
+                                                                                : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400'
                                                                     )}
                                                                 >
-                                                                    {row.status === 'received' ? 'Đã nhận' : 'Chờ nhận'}
+                                                                    {updatingKey === key
+                                                                        ? <><ActionIcon type="loader" size={11} tile={false} color="currentColor" className="animate-spin" /> Đang lưu…</>
+                                                                        : row.status === 'received'
+                                                                            ? <><ActionIcon type="check" size={11} tile={false} color="currentColor" /> Đã nhận</>
+                                                                            : 'Chờ nhận'}
                                                                 </button>
                                                             </div>
                                                         </div>

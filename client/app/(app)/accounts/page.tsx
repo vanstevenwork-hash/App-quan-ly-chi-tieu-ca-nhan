@@ -1,12 +1,14 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
 import CreditCardCarousel from '@/components/cards/CreditCardCarousel';
 import PageHeader from '@/components/PageHeader';
+import RefreshButton from '@/components/RefreshButton';
 import { cn } from '@/lib/utils';
 import { useBankLogo } from '@/hooks/useBankLogo';
 import { useBanks } from '@/hooks/useBanks';
@@ -309,6 +311,108 @@ function SavingsCard({ card, idx, onEdit, onDelete }: {
     );
 }
 
+// ─── Savings deck — stacked cards + "all savings" bottom sheet (like the credit deck) ──
+function SavingsDeck({ cards, onEdit, onDelete }: {
+    cards: Card[]; onEdit: (c: Card) => void; onDelete: (c: Card) => void;
+}) {
+    const [frontId, setFrontId] = useState<string | null>(null);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    const logoOf = useBankLogo();
+    const origIdx = (c: Card) => cards.findIndex(x => x._id === c._id);
+
+    const fi = Math.max(0, cards.findIndex(c => c._id === frontId));
+    const front = cards[fi];
+    const rest = cards.filter((_, i) => i !== fi);
+    const backs = rest.slice(0, 2);
+    const remaining = cards.length - 1 - backs.length;
+    if (!front) return null;
+
+    return (
+        <div>
+            <div className="relative">
+                {backs.map((card, i) => {
+                    const d = i + 1;
+                    const ts = cardTextStyle(card.color);
+                    const isSolid = card.color === '#111111' || card.color === '#FFFFFF';
+                    return (
+                        <div key={card._id} onClick={() => setFrontId(card._id)}
+                            className="absolute inset-0 rounded-[22px] overflow-hidden cursor-pointer"
+                            style={{
+                                zIndex: 5 - d,
+                                transform: `translateX(${d * 16}px) scale(${1 - d * 0.05})`,
+                                background: getCardGradient(card, origIdx(card)), border: ts.border, boxShadow: GLASS_SHADOW,
+                                transition: 'transform 0.5s cubic-bezier(0.34,1.4,0.64,1)',
+                            }}>
+                            {!isSolid && <div className="absolute inset-0" style={{ backgroundImage: GLASS_OVERLAY }} />}
+                            <div className="absolute inset-0 rounded-[22px]" style={{ boxShadow: GLASS_RING }} />
+                            <span className="absolute top-4 right-4 text-sm font-bold tracking-widest" style={{ color: ts.text }}>{card.bankShortName || `••${card.cardNumber}`}</span>
+                        </div>
+                    );
+                })}
+                <div className="relative z-10">
+                    <SavingsCard card={front} idx={origIdx(front)} onEdit={() => onEdit(front)} onDelete={() => onDelete(front)} />
+                </div>
+                {remaining > 0 && (
+                    <button onClick={() => setSheetOpen(true)}
+                        className="absolute bottom-2 right-0 z-30 flex items-center justify-center min-w-[44px] h-9 px-3.5 rounded-full bg-white/30 backdrop-blur-md text-white text-sm font-bold ring-1 ring-white/45 shadow-[0_5px_14px_-5px_rgba(0,0,0,0.22),inset_0_1px_1px_rgba(255,255,255,0.7)] active:scale-95 transition">
+                        +{remaining}
+                    </button>
+                )}
+            </div>
+
+            {cards.length > 1 && (
+                <div className="flex items-center gap-2 mt-3">
+                    <p className="text-[12px] text-slate-400 dark:text-slate-500">Chạm sổ sau để đưa lên trước</p>
+                    <button onClick={() => setSheetOpen(true)} className="ml-auto text-[13px] font-bold text-brand dark:text-brand-light hover:opacity-80 transition">Xem tất cả</button>
+                </div>
+            )}
+
+            {mounted && sheetOpen && createPortal(
+                <div className="fixed inset-0 z-[100] flex items-end justify-center" onClick={() => setSheetOpen(false)}>
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" />
+                    <div className="relative w-full max-w-md bg-white dark:bg-surface rounded-t-3xl px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl max-h-[78vh] flex flex-col animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
+                        <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700 mx-auto mb-3" />
+                        <div className="flex items-center justify-between px-1 mb-3">
+                            <h3 className="font-bold text-slate-800 dark:text-white">Tất cả sổ tiết kiệm <span className="text-slate-400 dark:text-slate-500 font-semibold">({cards.length})</span></h3>
+                            <button onClick={() => setSheetOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
+                                <CustomIcon type="x" size={16} tile={false} color="currentColor" />
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto -mx-1 px-1 space-y-1.5" style={{ scrollbarWidth: 'none' }}>
+                            {cards.map(card => {
+                                const url = logoOf(card.bankShortName, card.bankName);
+                                const active = card._id === front._id;
+                                return (
+                                    <button key={card._id} onClick={() => { setFrontId(card._id); setSheetOpen(false); }}
+                                        className={cn('w-full flex items-center gap-3 p-2.5 rounded-2xl border transition active:scale-[0.99]', active ? 'border-brand bg-brand-light/40 dark:border-brand dark:bg-brand/20' : 'border-transparent hover:bg-gray-50 dark:hover:bg-slate-800/60')}>
+                                        <div className="w-10 h-10 rounded-xl bg-white ring-1 ring-gray-100 dark:ring-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                            {url ? <img src={url} alt="" className="w-full h-full object-contain p-1" /> : <UtilityIcon type="soTietKiem" size={18} tile={false} color="#A855F7" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0 text-left">
+                                            <p className="text-[15px] font-bold text-slate-800 dark:text-white truncate">{card.bankName}</p>
+                                            <p className="text-[13px] text-slate-400 dark:text-slate-500">{card.term > 0 ? `Kỳ hạn ${card.term} tháng` : 'Không kỳ hạn'}</p>
+                                        </div>
+                                        <div className="text-right flex-shrink-0">
+                                            <p className="text-sm font-bold text-slate-800 dark:text-white tabular-nums">{fmt(card.balance)}₫</p>
+                                            <p className="text-[10px] text-slate-400 dark:text-slate-500">{card.interestRate ? `${card.interestRate}%/năm` : 'sổ tiết kiệm'}</p>
+                                        </div>
+                                        {active
+                                            ? <CustomIcon type="checkCircle" size={18} tile={false} color="#36255C" />
+                                            : <CustomIcon type="alignJustify" size={16} tile={false} color="currentColor" className="text-slate-300 dark:text-slate-600" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+}
+
 // ─── Debit/eWallet/Crypto row ───────────────────────────────────────────────
 function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
     card: Card; onEdit: () => void; onDelete: () => void; onSetDefault: () => void;
@@ -463,10 +567,7 @@ export default function AccountsPage() {
                 title="Tài khoản & Tài sản"
                 subtitle="Tài chính"
                 rightActions={
-                    <button onClick={refetch}
-                        className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all relative flex-shrink-0">
-                        <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
-                    </button>
+                    <RefreshButton onRefresh={refetch} />
                 }
             />
 
@@ -561,7 +662,7 @@ export default function AccountsPage() {
                                         <UtilityIcon type="wallet" size={16} tile={false} color={activeTab === tab ? '#FFFFFF' : '#6B7280'} />
                                         <span>Thẻ & Ví</span>
                                         {(creditCards.length + debitCards.length) > 0 && (
-                                            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white/20 text-white" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
+                                            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white text-brand" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
                                                 {creditCards.length + debitCards.length}
                                             </span>
                                         )}
@@ -571,7 +672,7 @@ export default function AccountsPage() {
                                         <UtilityIcon type="soTietKiem" size={16} tile={false} color={activeTab === tab ? '#FFFFFF' : '#6B7280'} />
                                         <span>Tiết kiệm</span>
                                         {savingsCards.length > 0 && (
-                                            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white/20 text-white" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
+                                            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white text-brand" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
                                                 {savingsCards.length}
                                             </span>
                                         )}
@@ -701,13 +802,10 @@ export default function AccountsPage() {
                                 </button>
                             </div>
                             {savingsCards.length > 0 ? (
-                                <div className="space-y-4">
-                                    {savingsCards.map((card, idx) => (
-                                        <SavingsCard key={card._id} card={card} idx={idx}
-                                            onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                            onDelete={() => setDeleteTarget(card)} />
-                                    ))}
-                                </div>
+                                <SavingsDeck
+                                    cards={savingsCards}
+                                    onEdit={(c) => { setEditCard(c); setShowForm(true); }}
+                                    onDelete={(c) => setDeleteTarget(c)} />
                             ) : (
                                 <div className="flex flex-col items-center py-20 gap-6 bg-white dark:bg-surface/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
                                     <div className="w-20 h-20 rounded-[2.5rem] bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center transform rotate-3">

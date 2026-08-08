@@ -43,7 +43,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         const isPositive = diff >= 0;
 
         return (
-            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/50 rounded-xl p-4 shadow-xl min-w-[180px]">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-xl p-4 shadow-xl min-w-[180px]">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{label}</p>
 
                 <div className="space-y-2.5 mb-4">
@@ -52,18 +52,18 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                             <div className="w-1 h-4 rounded-full bg-[#34D399]" />
                             <span className="text-xs font-medium text-slate-400">Thu nhập</span>
                         </div>
-                        <span className="text-xs font-bold text-white">+{fmtFull(Math.abs(income))}đ</span>
+                        <span className="text-xs font-bold text-slate-800 dark:text-white">+{fmtFull(Math.abs(income))}đ</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-4 rounded-full bg-[#F87171]" />
                             <span className="text-xs font-medium text-slate-400">Chi tiêu</span>
                         </div>
-                        <span className="text-xs font-bold text-white">-{fmtFull(Math.abs(expense))}đ</span>
+                        <span className="text-xs font-bold text-slate-800 dark:text-white">-{fmtFull(Math.abs(expense))}đ</span>
                     </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-700/50 flex justify-between items-center gap-2">
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center gap-2">
                     <div className="flex items-center gap-2">
                         <div className={cn(
                             'w-6 h-6 rounded-full flex items-center justify-center transition-colors',

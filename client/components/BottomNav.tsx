@@ -89,7 +89,7 @@ export default function BottomNav() {
                                 <span
                                     className={cn(
                                         'relative transition-colors duration-500',
-                                        active ? 'text-brand dark:text-brand-light' : 'text-slate-400 dark:text-slate-500'
+                                        active ? 'text-brand dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'
                                     )}
                                 >
                                     <Icon className="w-[25px] h-[25px]" blob={false} mono color="currentColor" />

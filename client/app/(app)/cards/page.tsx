@@ -17,6 +17,7 @@ import PaymentAccountsList from '@/components/cards/PaymentAccountsList';
 import PaymentAlertsCard from '@/components/cards/PaymentAlertsCard';
 import CreditCardHistoryList from '@/components/cards/CreditCardHistoryList';
 import PageHeader from '@/components/PageHeader';
+import RefreshButton from '@/components/RefreshButton';
 import { useUIStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
@@ -178,13 +179,11 @@ export default function CardsPage() {
                     title="Quản lý Thẻ 💳"
                     subtitle="Tài chính"
                     rightActions={
-                        <button onClick={refetchCards}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
-                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
+                        <RefreshButton onRefresh={refetchCards}>
                             {paymentAlerts.length > 0 && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white dark:border-slate-800" />
                             )}
-                        </button>
+                        </RefreshButton>
                     }
                 />
 

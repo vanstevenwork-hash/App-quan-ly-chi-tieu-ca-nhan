@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { transactionsApi } from '@/lib/api';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
@@ -9,6 +9,7 @@ import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn } from '@/lib/utils';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import PageHeader from '@/components/PageHeader';
+import RefreshButton from '@/components/RefreshButton';
 import { toast } from 'sonner';
 import { exportTransactionsToCsv } from '@/lib/exportCsv';
 
@@ -133,6 +134,9 @@ export default function AnalyticsPage() {
     const [summary, setSummary] = useState({ income: 0, expense: 0 });
     const [categoryBreakdown, setCategoryBreakdown] = useState<{ category: string; total: number; color: string; catIconType: string }[]>([]);
     const [loading, setLoading] = useState(true);
+    // Full-screen loader only on the very first load; later tab switches update
+    // in place (no whole-screen "Đang tải..." flash).
+    const initialLoad = useRef(true);
 
     const paramsForPeriod = useCallback((): { month: number; year: number } | { startDate: string; endDate: string } | null => {
         const now = new Date();
@@ -158,9 +162,10 @@ export default function AnalyticsPage() {
             setSummary({ income: 0, expense: 0 });
             setCategoryBreakdown([]);
             setLoading(false);
+            initialLoad.current = false;
             return;
         }
-        setLoading(true);
+        if (initialLoad.current) setLoading(true);
         try {
             const [txRes, sumRes, catRes] = await Promise.all([
                 transactionsApi.getAll({ ...params, limit: 1000 }),
@@ -201,6 +206,7 @@ export default function AnalyticsPage() {
             setCategoryBreakdown([]);
         } finally {
             setLoading(false);
+            initialLoad.current = false;
         }
     }, [periodTab, paramsForPeriod]);
 
@@ -302,14 +308,7 @@ export default function AnalyticsPage() {
                 zIndexClassName="z-30"
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <button onClick={refetch}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 active:scale-95 transition-all flex-shrink-0">
-                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" />
-                        </button>
-                        <button onClick={() => setShowAddModal(true)}
-                            className="w-10 h-10 rounded-full gradient-primary text-white shadow-lg shadow-purple-500/20 flex items-center justify-center active:scale-95 transition-all">
-                            <CustomIcon type="plus" size={20} tile={false} color="currentColor" />
-                        </button>
+                        <RefreshButton onRefresh={() => Promise.all([refetch(), fetchPeriodData()])} />
                     </div>
                 }
             />
@@ -378,6 +377,7 @@ export default function AnalyticsPage() {
                                 <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500" /><span className="text-[9px] text-slate-400">Chi</span></div>
                             </div>
                         </div>
+                        {chartData.some(d => d.income > 0 || d.expense > 0) ? (
                         <ResponsiveContainer width="100%" height={180}>
                             <AreaChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: -30 }}>
                                 <defs>
@@ -398,6 +398,12 @@ export default function AnalyticsPage() {
                                 <Area type="monotone" dataKey="expense" stroke="#F43F5E" fill="url(#aExpense)" strokeWidth={3} dot={createCustomDot('#F43F5E', 'expense')} activeDot={false} name="Chi" />
                             </AreaChart>
                         </ResponsiveContainer>
+                        ) : (
+                            <div className="h-[180px] flex flex-col items-center justify-center gap-2">
+                                <CustomIcon type="trendingUp" size={26} tile={false} color="currentColor" className="text-slate-300 dark:text-slate-600" />
+                                <p className="text-xs font-medium text-slate-400 dark:text-slate-500">Chưa có giao dịch trong 14 ngày</p>
+                            </div>
+                        )}
                     </section>
 
                     {/* ── Monthly history: real month-over-month comparison ── */}

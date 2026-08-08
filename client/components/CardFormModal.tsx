@@ -244,11 +244,16 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
 
     const renderNetworkLogo = (network?: string) => {
         switch (network) {
-            case 'visa': return <span className="font-bold italic text-blue-900 text-lg tracking-tighter">VISA</span>;
-            case 'mastercard': return <div className="flex -space-x-2 opacity-90"><div className="w-6 h-6 rounded-full bg-red-500 mix-blend-multiply"></div><div className="w-6 h-6 rounded-full bg-amber-400 mix-blend-multiply"></div></div>;
-            case 'jcb': return <span className="font-bold text-green-600 text-sm">JCB</span>;
-            case 'amex': return <span className="font-bold text-blue-600 text-xs bg-blue-50 px-1 py-0.5 rounded border border-blue-200">AMEX</span>;
-            case 'napas': return <span className="font-bold text-green-500 text-sm">NAPAS</span>;
+            case 'visa':
+                return <span className="font-extrabold italic text-[#1A1F71] text-[19px] leading-none tracking-[-0.04em]">VISA</span>;
+            case 'mastercard':
+                return <div className="flex items-center -space-x-2"><div className="w-[18px] h-[18px] rounded-full bg-[#EB001B]" /><div className="w-[18px] h-[18px] rounded-full bg-[#F79E1B] mix-blend-multiply" /></div>;
+            case 'jcb':
+                return <span className="text-[15px] font-black leading-none tracking-tight"><span className="text-[#0F4C9E]">J</span><span className="text-[#BE1833]">C</span><span className="text-[#118A38]">B</span></span>;
+            case 'amex':
+                return <span className="font-bold text-white text-[8px] leading-none tracking-wide bg-[#006FCF] px-1.5 py-1 rounded-[3px]">AMEX</span>;
+            case 'napas':
+                return <span className="font-black lowercase text-[14px] leading-none tracking-tight text-[#C8102E]">napas</span>;
             default: return null;
         }
     };
@@ -595,16 +600,10 @@ duration-200
                                         <div className="col-span-2">
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Tổ chức thẻ</p>
                                             <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar pb-2">
-                                                {[
-                                                    { value: 'visa', label: 'Visa', logo: <span className="font-bold italic text-blue-900 text-lg tracking-tighter">VISA</span> },
-                                                    { value: 'mastercard', label: 'Master', logo: <div className="flex -space-x-2 opacity-90"><div className="w-6 h-6 rounded-full bg-red-500 mix-blend-multiply"></div><div className="w-6 h-6 rounded-full bg-amber-400 mix-blend-multiply"></div></div> },
-                                                    { value: 'jcb', label: 'JCB', logo: <span className="font-bold text-green-600 text-sm">JCB</span> },
-                                                    { value: 'amex', label: 'Amex', logo: <span className="font-bold text-blue-600 text-xs bg-blue-50 px-1 py-0.5 rounded border border-blue-200">AMEX</span> },
-                                                    { value: 'napas', label: 'Napas', logo: <span className="font-bold text-green-500 text-sm">NAPAS</span> },
-                                                ].map(net => (
-                                                    <button key={net.value} type="button" onClick={() => set('cardNetwork', net.value)}
-                                                        className={cn('flex-1 h-9 min-w-[60px] rounded-xl border flex items-center justify-center bg-white dark:bg-slate-100 transition-all', form.cardNetwork === net.value ? 'border-brand shadow-sm ring-1 ring-brand' : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
-                                                        {net.logo}
+                                                {['visa', 'mastercard', 'jcb', 'amex', 'napas'].map(net => (
+                                                    <button key={net} type="button" onClick={() => set('cardNetwork', net)}
+                                                        className={cn('flex-1 h-10 min-w-[62px] rounded-xl border flex items-center justify-center bg-white dark:bg-slate-100 transition-all', form.cardNetwork === net ? 'border-brand shadow-sm ring-1 ring-brand' : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
+                                                        {renderNetworkLogo(net)}
                                                     </button>
                                                 ))}
                                             </div>
