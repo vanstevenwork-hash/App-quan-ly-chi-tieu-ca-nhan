@@ -227,6 +227,11 @@ export const ocrApi = {
     },
 };
 
+// Email ingest — pull bank notification emails → transactions
+export const emailApi = {
+    sync: (days = 7) => api.post('/email/sync', { days }, { timeout: 120000 }),
+};
+
 // Day Notes (calendar images)
 export const dayNotesApi = {
     getByMonth: (month: number, year: number) =>

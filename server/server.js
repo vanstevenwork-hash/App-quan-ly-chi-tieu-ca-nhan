@@ -55,6 +55,7 @@ app.use('/api/ocr', require('./routes/ocr'));
 app.use('/api/cashback-records', require('./routes/cashback'));
 app.use('/api/game-matches', require('./routes/gameMatches'));
 app.use('/api/telegram', require('./routes/telegram'));
+app.use('/api/email', require('./routes/email'));
 
 // ===== SSE Stream endpoint =====
 // GET /api/notifications/stream  (auth via ?token=... query param)

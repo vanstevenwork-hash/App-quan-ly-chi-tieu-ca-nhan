@@ -19,6 +19,9 @@ const transactionSchema = new mongoose.Schema({
     installmentStartDate: { type: Date },
     // Card sharing: track who created this transaction
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    // Email ingest: Message-ID of the bank notification this tx was parsed from
+    // (so re-syncing the inbox never double-imports the same email).
+    sourceEmailId: { type: String, default: null, index: true, sparse: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Transaction', transactionSchema);

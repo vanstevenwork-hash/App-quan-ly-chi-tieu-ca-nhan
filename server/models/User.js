@@ -33,6 +33,9 @@ const userSchema = new mongoose.Schema({
     // Proactive nudges: master on/off + de-dupe guards so we don't re-send.
     telegramNudges: { type: Boolean, default: true },
     telegramReminders: { type: Object, default: {} }, // { dailySummary, cardDue:{}, cashback:{} }
+    // Message-IDs of statement emails already parsed (so a re-sync doesn't
+    // re-read the same PDF). Capped to the most recent few hundred.
+    mailStatementIds: { type: [String], default: [] },
 }, { timestamps: true });
 
 // Mongoose v8+: async pre-save hooks do NOT receive `next` — just use async/await and return

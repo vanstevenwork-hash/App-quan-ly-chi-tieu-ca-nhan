@@ -12,7 +12,7 @@ import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
-import { authApi, telegramApi } from '@/lib/api';
+import { authApi, telegramApi, emailApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
@@ -87,6 +87,9 @@ export default function SettingsPage() {
     // Data refresh
     const [refreshing, setRefreshing] = useState(false);
     const [lastSync, setLastSync] = useState<string | null>(null);
+
+    // Email sync (pull bank notification emails → transactions)
+    const [emailSyncing, setEmailSyncing] = useState(false);
 
     // Logout confirm
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -208,6 +211,31 @@ export default function SettingsPage() {
             toast.error('Làm mới thất bại, thử lại sau');
         } finally {
             setRefreshing(false);
+        }
+    };
+
+    const handleEmailSync = async () => {
+        if (emailSyncing) return;
+        setEmailSyncing(true);
+        try {
+            const { data } = await emailApi.sync(7);
+            const made = data.txCreated || 0;
+            const st = data.statements || 0;
+            if (made > 0 || st > 0) {
+                // Pull the new transactions/cards into the UI
+                await Promise.all([
+                    useTransactionStore.getState().fetch(true),
+                    useNotificationStore.getState().fetch(true),
+                ]);
+                const parts = [made > 0 && `${made} giao dịch mới`, st > 0 && `${st} sao kê`].filter(Boolean);
+                toast.success(`Đã nhập ${parts.join(' · ')} từ email`);
+            } else {
+                toast.success('Không có email giao dịch mới');
+            }
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || 'Đồng bộ email thất bại');
+        } finally {
+            setEmailSyncing(false);
         }
     };
 
@@ -400,6 +428,13 @@ export default function SettingsPage() {
                             sublabel={lastSyncLabel}
                             onClick={handleRefreshData}
                             right={refreshing ? <ActionIcon type="loader" size={16} tile={false} spin /> : undefined}
+                        />
+                        <SettingItem
+                            icon={<CustomIcon type="mail" size={18} tile={false} color="currentColor" className={cn('w-[18px] h-[18px]', emailSyncing && 'animate-pulse')} />}
+                            label="Đồng bộ email"
+                            sublabel="Quét email biến động số dư 7 ngày gần đây"
+                            onClick={emailSyncing ? undefined : handleEmailSync}
+                            right={emailSyncing ? <ActionIcon type="loader" size={16} tile={false} spin /> : undefined}
                         />
                         <SettingItem
                             icon={<CustomIcon type="download" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
