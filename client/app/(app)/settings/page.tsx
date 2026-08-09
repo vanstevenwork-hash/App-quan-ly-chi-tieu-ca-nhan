@@ -459,12 +459,6 @@ export default function SettingsPage() {
                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.15em] mb-2.5 px-1">Tùy chỉnh</p>
                     <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50 border border-transparent dark:border-slate-800/60', CARD_SHADOW)}>
                         <SettingItem
-                            icon={<CustomIcon type="mail" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
-                            label="Đổi email"
-                            sublabel={user?.email || ''}
-                            onClick={openEmailDialog}
-                        />
-                        <SettingItem
                             icon={<ActionIcon type="moon" size={18} tile={false} color="currentColor" />}
                             label="Chế độ tối"
                             sublabel={isDarkMode ? 'Đang bật' : 'Đang tắt'}
@@ -598,7 +592,7 @@ export default function SettingsPage() {
                                 className="rounded-xl h-12 text-center text-lg font-bold tracking-[0.5em]"
                                 autoFocus
                             />
-                            <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                            <DialogFooter>
                                 <Button type="button" variant="outline" onClick={() => setEmailStep('enter')} className="rounded-xl">Đổi địa chỉ khác</Button>
                                 <Button onClick={handleConfirmEmailChange} disabled={emailBusy} className="rounded-xl">
                                     {emailBusy ? 'Đang xác nhận…' : 'Xác nhận'}
@@ -609,27 +603,41 @@ export default function SettingsPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Edit name dialog */}
+            {/* Edit profile dialog — name + a shortcut to the email-change flow */}
             <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
                 <DialogContent className="sm:max-w-md rounded-2xl">
                     <DialogHeader>
-                        <DialogTitle>Đổi tên hiển thị</DialogTitle>
+                        <DialogTitle>Chỉnh sửa hồ sơ</DialogTitle>
                     </DialogHeader>
-                    <Input
-                        value={nameInput}
-                        onChange={e => setNameInput(e.target.value)}
-                        placeholder="Nhập tên mới"
-                        className="rounded-xl h-12"
-                        maxLength={50}
-                        autoFocus
-                    />
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Tên hiển thị</label>
+                        <Input
+                            value={nameInput}
+                            onChange={e => setNameInput(e.target.value)}
+                            placeholder="Nhập tên mới"
+                            className="rounded-xl h-12"
+                            maxLength={50}
+                            autoFocus
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Email</label>
+                        <button
+                            onClick={() => { setShowNameDialog(false); openEmailDialog(); }}
+                            className="w-full flex items-center gap-3 rounded-xl border border-border h-12 px-3.5 text-left hover:bg-muted/50 transition-colors"
+                        >
+                            <CustomIcon type="mail" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-muted-foreground flex-shrink-0" />
+                            <span className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">{user?.email || ''}</span>
+                            <span className="text-xs font-bold text-brand dark:text-brand-light flex-shrink-0">Đổi</span>
+                        </button>
+                    </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => setShowNameDialog(false)} className="rounded-xl">
                             Hủy
                         </Button>
                         <Button onClick={handleSaveName} disabled={savingName} className="rounded-xl">
                             {savingName && <ActionIcon type="loader" size={16} tile={false} spin className="mr-2" />}
-                            Lưu
+                            Lưu tên
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -679,11 +687,11 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">
                         Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng ứng dụng.
                     </p>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setShowLogoutConfirm(false)} className="rounded-xl">
+                    <DialogFooter className="flex-row gap-2">
+                        <Button type="button" variant="outline" onClick={() => setShowLogoutConfirm(false)} className="rounded-xl flex-1">
                             Hủy
                         </Button>
-                        <Button onClick={handleLogout} className="rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center">
+                        <Button onClick={handleLogout} className="rounded-xl flex-1 bg-red-500 hover:bg-red-600 text-white flex items-center justify-center">
                             <ActionIcon type="logOut" size={16} tile={false} color="#FFFFFF" className="mr-2" /> Đăng xuất
                         </Button>
                     </DialogFooter>

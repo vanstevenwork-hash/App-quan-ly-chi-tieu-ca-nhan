@@ -72,7 +72,9 @@ const DialogFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      // Mobile-first: keep the two actions side-by-side (equal width) instead of
+      // stacking them, so confirm dialogs never wrap onto two lines.
+      "flex w-full flex-row gap-2 [&>button]:flex-1",
       className
     )}
     {...props}

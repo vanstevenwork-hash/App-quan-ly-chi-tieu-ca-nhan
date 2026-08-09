@@ -251,19 +251,19 @@ export default function LoginPage() {
                                     required
                                 />
                             </div>
-                            <DialogFooter>
-                                <Button 
-                                    type="button" 
-                                    variant="outline" 
+                            <DialogFooter className="flex-row gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
                                     onClick={() => setShowForgotPwd(false)}
-                                    className="rounded-xl"
+                                    className="rounded-xl flex-1"
                                 >
                                     Hủy
                                 </Button>
-                                <Button 
-                                    type="submit" 
+                                <Button
+                                    type="submit"
                                     disabled={forgotLoading}
-                                    className="rounded-xl bg-primary hover:bg-primary/90"
+                                    className="rounded-xl flex-1 bg-primary hover:bg-primary/90"
                                 >
                                     {forgotLoading && <CustomIcon type="loader" size={16} tile={false} spin className="mr-2" />}
                                     Gửi mật khẩu mới
