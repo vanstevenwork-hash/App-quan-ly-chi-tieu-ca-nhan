@@ -1,12 +1,13 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import CardFormModal from '@/components/CardFormModal';
+import SavingsDeck, { type SavingsDeckHandle } from '@/components/cards/SavingsDeck';
+import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 import SavingsRenewModal from '@/components/SavingsRenewModal';
 import PageHeader from '@/components/PageHeader';
-import Link from 'next/link';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -36,115 +37,6 @@ function urgencyColor(days: number | null) {
 function fmtDate(d: string | null) {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' });
-}
-
-const CARD_GRADIENTS = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)',
-];
-
-function getGradient(card: Card, idx: number) {
-    if (card.bankColor && card.color && card.bankColor !== '#1B4FD8')
-        return `linear-gradient(135deg, ${card.bankColor} 0%, ${card.color} 100%)`;
-    return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
-}
-
-// ─── Savings book card slide ──────────────────────────────────────────────────
-function SavingsSlide({ card, idx, onEdit, onDelete, onRenew }: {
-    card: Card; idx: number; onEdit: () => void; onDelete: () => void; onRenew: () => void;
-}) {
-    const matDays = daysUntil(card.maturityDate);
-    const matured = matDays !== null && matDays <= 0;
-    const urg = urgencyColor(matDays);
-    const interest = card.interestRate > 0 && card.term > 0
-        ? card.balance * (card.interestRate / 100) * (card.term / 12)
-        : 0;
-    const elapsedPct = (() => {
-        if (!card.depositDate || !card.maturityDate) return 0;
-        const total = new Date(card.maturityDate).getTime() - new Date(card.depositDate).getTime();
-        const elapsed = Date.now() - new Date(card.depositDate).getTime();
-        return Math.min(100, Math.max(0, (elapsed / total) * 100));
-    })();
-
-    return (
-        <div className="snap-center shrink-0 w-[85%] relative rounded-[20px] p-6 text-white shadow-xl overflow-hidden transition hover:scale-[1.02]"
-            style={{ background: getGradient(card, idx) }}>
-            <div className="absolute -top-8 -right-8 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
-
-            <div className="flex justify-between items-start mb-5">
-                <div>
-                    <p className="text-xs opacity-80 font-semibold tracking-widest uppercase">{card.bankName}</p>
-                    <p className="text-2xl font-bold mt-1 tracking-tight">{fmt(card.balance)}₫</p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5">
-                    {matured && (
-                        <span className="bg-amber-300 text-amber-900 rounded-xl px-2.5 py-1 text-[10px] font-black uppercase tracking-wide shadow-sm">
-                            Đã đáo hạn
-                        </span>
-                    )}
-                    <span className="bg-white/20 rounded-xl px-2.5 py-1 text-xs font-bold">
-                        {card.interestRate ? `${card.interestRate}%/năm` : 'Linh hoạt'}
-                    </span>
-                    <div className="flex gap-1">
-                        <button onClick={onEdit}
-                            className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition">
-                            <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
-                        </button>
-                        <button onClick={onDelete}
-                            className="w-8 h-8 rounded-full bg-red-400/30 hover:bg-red-400/50 flex items-center justify-center transition">
-                            <CustomIcon type="trash" size={16} tile={false} color="currentColor" />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 mb-5 text-center">
-                <div className="bg-black/10 rounded-2xl p-2.5">
-                    <p className="text-[9px] opacity-70 mb-0.5">Kỳ hạn</p>
-                    <p className="text-xs font-bold">{card.term > 0 ? `${card.term}T` : '—'}</p>
-                </div>
-                <div className="bg-black/10 rounded-2xl p-2.5">
-                    <p className="text-[9px] opacity-70 mb-0.5">Lãi tạm tính</p>
-                    <p className="text-xs font-bold text-yellow-200">{interest > 0 ? `+${fmtShort(interest)}` : '—'}</p>
-                </div>
-                <div className="bg-black/10 rounded-2xl p-2.5">
-                    <p className="text-[9px] opacity-70 mb-0.5">Đáo hạn</p>
-                    <p className="text-xs font-bold" style={{ color: matDays !== null && matDays <= 7 ? '#FCA5A5' : 'white' }}>
-                        {matDays !== null ? (matDays <= 0 ? 'Đã đáo' : `${matDays}N`) : '—'}
-                    </p>
-                </div>
-            </div>
-
-            {card.depositDate && card.maturityDate && (
-                <>
-                    <div className="flex justify-between text-[10px] opacity-75 mb-1.5">
-                        <span>Ngày gửi: {fmtDate(card.depositDate)}</span>
-                        <span>Đáo hạn: {fmtDate(card.maturityDate)}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-black/20 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all"
-                            style={{
-                                width: `${elapsedPct}%`,
-                                backgroundColor: matDays !== null && matDays <= 7 ? '#FCA5A5' : 'rgba(255,255,255,0.85)',
-                            }} />
-                    </div>
-                </>
-            )}
-
-            {/* Matured → a clear "Tái tục" CTA right on the book */}
-            {matured && (
-                <button onClick={onRenew}
-                    className="mt-4 w-full flex items-center justify-center gap-2 bg-white text-emerald-700 rounded-xl py-2.5 text-sm font-black shadow-sm active:scale-[0.98] transition">
-                    <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
-                    Tái tục ngay
-                </button>
-            )}
-        </div>
-    );
 }
 
 // ─── Detail info row ──────────────────────────────────────────────────────────
@@ -211,6 +103,7 @@ export default function SavingsPage() {
     const [showForm, setShowForm] = useState(false);
     const [editCard, setEditCard] = useState<Card | null>(null);
     const [renewCard, setRenewCard] = useState<Card | null>(null);
+    const deckRef = useRef<SavingsDeckHandle>(null);
 
     const savingsCards = useMemo(() => cards.filter(c => c.cardType === 'savings'), [cards]);
     // Matured books (đáo hạn) — soonest-matured first, for the "Tái tục" shortcut.
@@ -219,7 +112,6 @@ export default function SavingsPage() {
         [savingsCards]
     );
 
-    const openRenew = (card: Card) => setRenewCard(card);
     const handleQuickRenew = () => {
         if (maturedCards.length > 0) setRenewCard(maturedCards[0]);
         else toast.info('Chưa có sổ nào đáo hạn để tái tục');
@@ -265,7 +157,7 @@ export default function SavingsPage() {
                     rightActions={
                         <button onClick={refresh}
                             className="w-10 h-10 rounded-full bg-white dark:bg-surface border border-gray-100 dark:border-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 active:scale-95 transition-all relative flex-shrink-0">
-                            <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
+                            <RefreshDuotone className="w-4 h-4" />
                             {maturingSoon.length > 0 && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 rounded-full border border-white dark:border-slate-800" />
                             )}
@@ -294,36 +186,28 @@ export default function SavingsPage() {
                 <div className="pl-6 mb-2 overflow-hidden">
                     <div className="flex items-center justify-between pr-6 mb-4">
                         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Sổ của tôi</h2>
-                        <Link href="/accounts?tab=savings"
-                            aria-label="Xem tất cả"
-                            className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-emerald-600 dark:text-emerald-300 border border-emerald-200/60 dark:border-white/10 bg-emerald-50 dark:bg-slate-900/60 shadow-sm hover:bg-emerald-100 dark:hover:bg-slate-800/70 transition-all">
-                            <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" />
-                        </Link>
-                    </div>
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x pr-6"
-                        style={{ scrollbarWidth: 'none' }}>
-
-                        {savingsCards.length === 0 && (
-                            <div className="snap-center shrink-0 w-[85%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-surface/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500">
-                                <UtilityIcon type="soTietKiem" size={40} tile={false} color="#94A3B8" />
-                                <p className="text-sm font-medium">Chưa có sổ tiết kiệm</p>
-                            </div>
+                        {savingsCards.length > 0 && (
+                            <button onClick={() => deckRef.current?.openAll()}
+                                aria-label="Xem tất cả sổ tiết kiệm"
+                                className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-emerald-600 dark:text-emerald-300 border border-emerald-200/60 dark:border-white/10 bg-emerald-50 dark:bg-slate-900/60 shadow-sm hover:bg-emerald-100 dark:hover:bg-slate-800/70 transition-all">
+                                <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" />
+                            </button>
                         )}
-
-                        {savingsCards.map((card, idx) => (
-                            <SavingsSlide key={card._id} card={card} idx={idx}
-                                onEdit={() => { setEditCard(card); setShowForm(true); }}
-                                onDelete={() => handleDelete(card._id)}
-                                onRenew={() => openRenew(card)} />
-                        ))}
-
-                        <button onClick={() => { setEditCard(null); setShowForm(true); }}
-                            className="snap-center shrink-0 w-[55%] min-h-[185px] rounded-[20px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white dark:bg-surface/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
-                            <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
-                                <CustomIcon type="plus" size={24} tile={false} color="currentColor" className="w-6 h-6" />
-                            </div>
-                            <span className="font-semibold text-sm">Thêm sổ mới</span>
-                        </button>
+                    </div>
+                    <div className="pr-6">
+                        {savingsCards.length === 0 ? (
+                            <button onClick={() => { setEditCard(null); setShowForm(true); }}
+                                className="w-full min-h-[160px] rounded-[22px] border-2 border-dashed border-gray-300 dark:border-slate-700 bg-white/70 dark:bg-surface/80 flex flex-col items-center justify-center gap-3 text-gray-400 dark:text-slate-500 hover:border-emerald-300 hover:text-emerald-500 dark:hover:border-emerald-500 transition">
+                                <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+                                    <CustomIcon type="plus" size={24} tile={false} color="currentColor" className="w-6 h-6" />
+                                </div>
+                                <span className="font-semibold text-sm">Thêm sổ tiết kiệm</span>
+                            </button>
+                        ) : (
+                            <SavingsDeck ref={deckRef} cards={savingsCards} hideFooterSeeAll
+                                onEdit={(c) => { setEditCard(c); setShowForm(true); }}
+                                onDelete={(c) => handleDelete(c._id)} />
+                        )}
                     </div>
                 </div>
 
@@ -332,7 +216,7 @@ export default function SavingsPage() {
                     <div className="bg-white/70 dark:bg-surface/80 backdrop-blur-xl rounded-2xl p-4 flex justify-between items-center shadow-sm border border-white/50 dark:border-slate-700/50">
                         {[
                             { icon: <UtilityIcon type="soTietKiem" size={24} tile={false} color="#059669" />, bg: '#D1FAE5', bgDark: '#064E3B', label: 'Gửi thêm', onClick: () => { setEditCard(null); setShowForm(true); } },
-                            { icon: <CustomIcon type="refreshCw" size={20} tile={false} color="currentColor" className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: handleQuickRenew },
+                            { icon: <RefreshDuotone className="w-5 h-5 text-blue-600 dark:text-blue-400" />, bg: '#DBEAFE', bgDark: '#1E3A8A', label: 'Tái tục', onClick: handleQuickRenew },
                             { icon: <CustomIcon type="history" size={20} tile={false} color="currentColor" className="w-5 h-5 text-orange-600 dark:text-orange-400" />, bg: '#FEF3C7', bgDark: '#78350F', label: 'Lịch sử', onClick: () => { } },
                             { icon: <CustomIcon type="coPhieu" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-600 dark:text-purple-400" />, bg: '#EDE9FE', bgDark: '#4C1D95', label: 'Báo cáo', onClick: () => { } },
                         ].map(item => (

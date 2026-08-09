@@ -772,7 +772,7 @@ async function handleXuat(chatId, user) {
 
 async function handleNhac(chatId, user, argText) {
     const arg = argText.trim().toLowerCase();
-    if (arg === 'off' || arg === 'tat') { user.telegramNudges = false; await user.save(); return void sendMessage(chatId, '🔕 Đã tắt nhắc chủ động (tổng kết cuối ngày, nhắc hạn thẻ).'); }
+    if (arg === 'off' || arg === 'tat') { user.telegramNudges = false; await user.save(); return void sendMessage(chatId, '🔕 Đã tắt nhắc chủ động (tổng kết cuối ngày, nhắc hạn thẻ, phí thường niên).'); }
     if (arg === 'on' || arg === 'bat') { user.telegramNudges = true; await user.save(); return void sendMessage(chatId, '🔔 Đã bật nhắc chủ động.'); }
     return void sendMessage(chatId, `Nhắc chủ động đang <b>${user.telegramNudges === false ? 'TẮT' : 'BẬT'}</b>.\n<code>/nhac off</code> để tắt · <code>/nhac on</code> để bật.`);
 }
@@ -883,6 +883,46 @@ async function runCashbackAlerts() {
     }
 }
 
+// Annual-fee (phí thường niên) reminders: nhắc trước 30 / 7 / 1 ngày.
+// Mirror the web (cards/expiry): the fee is charged at the START of the card's
+// expiry month — this year if that month hasn't passed, else next year.
+function expiryFeeMonth(s) {
+    if (!s) return null;
+    let m;
+    const a = /^(\d{2})\/(\d{2})$/.exec(s);   // MM/YY
+    const b = /^(\d{4})-(\d{1,2})$/.exec(s);  // YYYY-MM
+    if (a) m = +a[1];
+    else if (b) m = +b[2];
+    else return null;
+    if (m < 1 || m > 12) return null;
+    return m - 1; // 0-indexed month
+}
+async function runAnnualFeeReminders() {
+    const v = vnNow();
+    const today = vnYmd(v);
+    const y = v.getUTCFullYear(), mo = v.getUTCMonth(), d = v.getUTCDate();
+    const todayMs = Date.UTC(y, mo, d);
+    const users = await User.find({ telegramChatId: { $ne: null }, telegramNudges: { $ne: false } });
+    for (const user of users) {
+        const cards = await Card.find({ userId: user._id, isActive: true, annualFee: { $gt: 0 }, expirationDate: { $nin: [null, ''] } });
+        const rem = user.telegramReminders || {};
+        rem.annualFee = rem.annualFee || {};
+        let changed = false;
+        for (const c of cards) {
+            const feeMonth = expiryFeeMonth(c.expirationDate);
+            if (feeMonth === null) continue;
+            const feeYear = mo > feeMonth ? y + 1 : y;
+            const feeDays = Math.round((Date.UTC(feeYear, feeMonth, 1) - todayMs) / 86_400_000);
+            if (feeDays !== 30 && feeDays !== 7 && feeDays !== 1) continue;
+            if (rem.annualFee[c._id] === today) continue;
+            rem.annualFee[c._id] = today; changed = true;
+            const when = feeDays === 1 ? 'NGÀY MAI' : `trong ${feeDays} ngày (đầu T${feeMonth + 1})`;
+            await sendMessage(user.telegramChatId, `🗓️ <b>Nhắc phí thường niên</b>\n${sourceLabel(c)} sẽ bị thu phí thường niên ${when}.\nPhí: <b>${fmt(c.annualFee)}đ</b>`);
+        }
+        if (changed) { user.telegramReminders = rem; user.markModified('telegramReminders'); await user.save(); }
+    }
+}
+
 // All time-based jobs. Runs on an internal hourly timer AND via the /cron
 // endpoint (so an external scheduler like cron-job.org can wake a sleeping
 // Render instance). Every job is idempotent via per-day/-month guards.
@@ -891,6 +931,7 @@ async function runScheduledJobs() {
     await runDailySummaries();
     await runDueReminders();
     await runCashbackAlerts();
+    await runAnnualFeeReminders();
 }
 setInterval(runScheduledJobs, 60 * 60 * 1000).unref?.();
 setTimeout(runScheduledJobs, 30 * 1000).unref?.();

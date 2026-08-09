@@ -14,6 +14,7 @@ import EndScreen from '@/components/games/EndScreen';
 import GameRulesModal from '@/components/games/GameRulesModal';
 import GameStatsModal from '@/components/games/GameStatsModal';
 import { ActionIcon } from '@/components/icons/ActionIcon';
+import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 import { useAuthStore } from '@/store/useStore';
 import { validateSelection } from '@/lib/tienLenRules';
 import { cn } from '@/lib/utils';
@@ -1012,7 +1013,7 @@ export default function GameMatchPage() {
                     )}
                     <div className="absolute right-7 bottom-8 flex flex-col gap-7">
                         <RoundIconButton label="Bỏ lượt" onClick={pass} disabled={!isYourTurn || !canPass}>
-                            <ActionIcon type="refreshCw" size={26} tile={false} color="#fff" />
+                            <RefreshDuotone className="w-[26px] h-[26px] text-white" />
                         </RoundIconButton>
                         <RoundIconButton label="Gợi ý" disabled>
                             <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M8.6 14.8A6 6 0 1 1 15.4 14.8c-.8.6-1.4 1.5-1.4 2.2h-4c0-.7-.6-1.6-1.4-2.2Z" /><path d="M4 12H2" /><path d="M22 12h-2" /><path d="m19.1 4.9-1.4 1.4" /><path d="m4.9 4.9 1.4 1.4" /></svg>

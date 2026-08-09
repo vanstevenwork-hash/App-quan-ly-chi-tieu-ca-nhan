@@ -32,12 +32,12 @@ const fmt = (n: number) => {
 const fmtFull = (n: number) => n.toLocaleString('vi-VN');
 
 // ─── Custom Chart Dots ───────────────────────────────────────────────────
-const createCustomDot = (color: string, dataKey: string) => {
+const createCustomDot = (color: string, dataKey: string, lastIndex: number) => {
     return (props: any) => {
-        const { cx, cy, payload, index, data } = props;
+        const { cx, cy, payload, index } = props;
         const val = payload[dataKey] || 0;
-        // Show detail dot for the last point
-        if (index === 13) {
+        // Show the value bubble on the final point (period length varies by tab).
+        if (index === lastIndex) {
             const valStr = Math.abs(val) >= 1_000_000
                 ? `${(val / 1_000_000).toFixed(1).replace('.0', '')}tr`
                 : `${val >= 1000 ? Math.round(val / 1000) + 'k' : val}`;
@@ -108,7 +108,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const PERIOD_TABS = ['Tháng này', 'Tuần này', 'Tháng trước', 'Tùy chỉnh'] as const;
+const PERIOD_TABS = ['Tuần này', 'Tháng này', 'Tháng trước', 'Tùy chỉnh'] as const;
 
 const toISODate = (d: Date) => {
     const y = d.getFullYear();
@@ -118,7 +118,7 @@ const toISODate = (d: Date) => {
 };
 
 export default function AnalyticsPage() {
-    const [periodTab, setPeriodTab] = useState<typeof PERIOD_TABS[number]>('Tháng này');
+    const [periodTab, setPeriodTab] = useState<typeof PERIOD_TABS[number]>('Tuần này');
     const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingTx, setEditingTx] = useState<any>(null);
@@ -212,20 +212,47 @@ export default function AnalyticsPage() {
 
     useEffect(() => { fetchPeriodData(); }, [fetchPeriodData]);
 
-    // Chart data — last 14 real calendar days, independent of the selected period tab
+    // Chart data — follows the selected period tab. Daily buckets, folded to
+    // weekly if the range is very long (custom multi-month) so labels stay legible.
     const chartData = useMemo(() => {
-        const days: Record<string, { income: number; expense: number }> = {};
-        for (let i = 13; i >= 0; i--) {
-            const d = new Date(Date.now() - i * 86400000);
-            days[`${d.getDate()}/${d.getMonth() + 1}`] = { income: 0, expense: 0 };
+        const DAY = 86_400_000;
+        const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const now = new Date();
+        let start: Date, end: Date;
+        if (periodTab === 'Tuần này') {
+            end = startOfDay(now);
+            start = new Date(end.getTime() - 6 * DAY);
+        } else if (periodTab === 'Tháng trước') {
+            const m = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+            const y = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+            start = new Date(y, m, 1);
+            end = new Date(y, m + 1, 0);
+        } else if (periodTab === 'Tùy chỉnh') {
+            if (!customStart || !customEnd) return [];
+            start = startOfDay(new Date(customStart));
+            end = startOfDay(new Date(customEnd));
+        } else { // 'Tháng này'
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            end = startOfDay(now);
         }
-        recentTransactions.forEach(t => {
-            const d = new Date(t.date);
-            const key = `${d.getDate()}/${d.getMonth() + 1}`;
-            if (key in days) days[key][t.type as 'income' | 'expense'] += t.amount;
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return [];
+
+        const span = Math.round((end.getTime() - start.getTime()) / DAY) + 1;
+        const step = span > 92 ? 7 : 1; // weekly buckets only for very long ranges
+        const nBuckets = Math.ceil(span / step);
+        const buckets = Array.from({ length: nBuckets }, (_, i) => {
+            const d = new Date(start.getTime() + i * step * DAY);
+            return { name: `${d.getDate()}/${d.getMonth() + 1}`, income: 0, expense: 0 };
         });
-        return Object.entries(days).map(([name, v]) => ({ name, ...v }));
-    }, [recentTransactions]);
+        periodTx.forEach(t => {
+            const idx = Math.floor((new Date(t.date).getTime() - start.getTime()) / (step * DAY));
+            if (idx >= 0 && idx < buckets.length) buckets[idx][t.type as 'income' | 'expense'] += t.amount;
+        });
+        return buckets;
+    }, [periodTab, customStart, customEnd, periodTx]);
+
+    // X-axis label density: aim for ~8 visible ticks regardless of bucket count.
+    const chartTickInterval = Math.max(0, Math.ceil(chartData.length / 8) - 1);
 
     const filteredTx = useMemo(
         () => periodTx.filter(t => filterType === 'all' || t.type === filterType),
@@ -350,28 +377,35 @@ export default function AnalyticsPage() {
                     )}
 
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-3 gap-2">
-                        {[
-                            { label: 'Thu nhập', value: summary.income, color: 'text-emerald-500', bg: 'bg-emerald-50/50 dark:bg-emerald-900/10', icon: <CustomIcon type="trendingUp" size={10} tile={false} color="currentColor" /> },
-                            { label: 'Chi tiêu', value: summary.expense, color: 'text-rose-500', bg: 'bg-rose-50/50 dark:bg-rose-900/10', icon: <CustomIcon type="trendingDown" size={10} tile={false} color="currentColor" /> },
-                            { label: 'Số dư', value: summary.income - summary.expense, color: 'text-blue-500', bg: 'bg-blue-50/50 dark:bg-blue-900/10', icon: <CustomIcon type="wallet" size={10} tile={false} color="currentColor" /> },
-                        ].map(item => (
-                            <div key={item.label} className={cn('rounded-[1.25rem] p-3 transition-all border border-white/50 dark:border-slate-800/10 shadow-sm', item.bg)}>
-                                <div className="flex items-center gap-1 mb-1.5 opacity-70">
-                                    <div className={cn('p-1 rounded-md bg-white/50 dark:bg-black/20', item.color)}>{item.icon}</div>
-                                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">{item.label}</span>
-                                </div>
-                                <p className={cn('text-xs font-black truncate', item.color)}>{fmt(Math.abs(item.value))}₫</p>
+                    {(() => {
+                        const balance = summary.income - summary.expense;
+                        const balPos = balance >= 0;
+                        const cards = [
+                            { label: 'Thu nhập', value: summary.income, prefix: '', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/15', ring: 'border-emerald-100 dark:border-emerald-900/30', icon: <CustomIcon type="trendingUp" size={13} tile={false} color="currentColor" /> },
+                            { label: 'Chi tiêu', value: summary.expense, prefix: '', color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/15', ring: 'border-rose-100 dark:border-rose-900/30', icon: <CustomIcon type="trendingDown" size={13} tile={false} color="currentColor" /> },
+                            { label: 'Số dư', value: balance, prefix: balPos ? '+' : '−', color: balPos ? 'text-blue-500' : 'text-rose-500', bg: balPos ? 'bg-blue-50 dark:bg-blue-900/15' : 'bg-rose-50 dark:bg-rose-900/15', ring: balPos ? 'border-blue-100 dark:border-blue-900/30' : 'border-rose-100 dark:border-rose-900/30', icon: <CustomIcon type="wallet" size={13} tile={false} color="currentColor" /> },
+                        ];
+                        return (
+                            <div className="grid grid-cols-3 gap-2.5">
+                                {cards.map(item => (
+                                    <div key={item.label} className={cn('rounded-2xl p-3 border shadow-sm', item.bg, item.ring)}>
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            <div className={cn('w-6 h-6 rounded-lg flex items-center justify-center bg-white/80 dark:bg-black/25 shadow-sm', item.color)}>{item.icon}</div>
+                                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">{item.label}</span>
+                                        </div>
+                                        <p className={cn('text-[15px] leading-tight font-black tabular-nums truncate', item.color)}>{item.prefix}{fmt(Math.abs(item.value))}₫</p>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })()}
                 </div>
 
                 <div className="space-y-4">
                     {/* ── Trend chart ─────────────────────────────────── */}
                     <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Xu hướng 14 ngày</h2>
+                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">Xu hướng · {periodTab}</h2>
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /><span className="text-[9px] text-slate-400">Thu</span></div>
                                 <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-rose-500" /><span className="text-[9px] text-slate-400">Chi</span></div>
@@ -391,17 +425,17 @@ export default function AnalyticsPage() {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156, 163, 175, 0.1)" />
-                                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} interval={chartTickInterval} minTickGap={4} />
                                 <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} tickFormatter={v => fmt(v)} />
                                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(148, 163, 184, 0.2)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                                <Area type="monotone" dataKey="income" stroke="#10B981" fill="url(#aIncome)" strokeWidth={3} dot={createCustomDot('#10B981', 'income')} activeDot={false} name="Thu" />
-                                <Area type="monotone" dataKey="expense" stroke="#F43F5E" fill="url(#aExpense)" strokeWidth={3} dot={createCustomDot('#F43F5E', 'expense')} activeDot={false} name="Chi" />
+                                <Area type="monotone" dataKey="income" stroke="#10B981" fill="url(#aIncome)" strokeWidth={3} dot={createCustomDot('#10B981', 'income', chartData.length - 1)} activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#10B981' }} name="Thu" />
+                                <Area type="monotone" dataKey="expense" stroke="#F43F5E" fill="url(#aExpense)" strokeWidth={3} dot={createCustomDot('#F43F5E', 'expense', chartData.length - 1)} activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#F43F5E' }} name="Chi" />
                             </AreaChart>
                         </ResponsiveContainer>
                         ) : (
                             <div className="h-[180px] flex flex-col items-center justify-center gap-2">
                                 <CustomIcon type="trendingUp" size={26} tile={false} color="currentColor" className="text-slate-300 dark:text-slate-600" />
-                                <p className="text-xs font-medium text-slate-400 dark:text-slate-500">Chưa có giao dịch trong 14 ngày</p>
+                                <p className="text-xs font-medium text-slate-400 dark:text-slate-500">Chưa có giao dịch trong kỳ này</p>
                             </div>
                         )}
                     </section>

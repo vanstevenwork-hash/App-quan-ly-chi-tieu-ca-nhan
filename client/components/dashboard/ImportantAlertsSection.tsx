@@ -1,5 +1,5 @@
 'use client';
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -117,8 +117,44 @@ interface ImportantAlertsSectionProps {
     onOpen: () => void;
 }
 
+const VISIBLE_ALERTS = 2; // show the top 2; fold the rest into a "Xem thêm" row
+
 function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites = [], onRespondShare, gameInvites = [], onRespondGame, totalCount, onOpen }: ImportantAlertsSectionProps) {
     if (creditAlerts.length === 0 && savingsCards.length === 0 && shareInvites.length === 0 && gameInvites.length === 0) return null;
+
+    // Flatten every alert into one ordered list (invites first — they're actionable),
+    // then only render the first few so the section doesn't take over the screen.
+    const alerts: ReactNode[] = [
+        ...(onRespondShare ? shareInvites.map(item => (
+            <ShareInviteCard key={`share-${item.share._id}`} item={item} onRespond={onRespondShare} />
+        )) : []),
+        ...(onRespondGame ? gameInvites.map(item => (
+            <GameInviteCard key={`game-${item._id}`} item={item} onRespond={onRespondGame} />
+        )) : []),
+        ...creditAlerts.map(({ card, dueThisCycle }) => (
+            <AlertCard
+                key={`credit-${card._id}`}
+                title={`Sao kê ${card.bankName}`}
+                sub="Cần thanh toán kỳ này"
+                amount={`${fmtFull(dueThisCycle)}đ`}
+                badge="Cần thanh toán"
+                variant="credit"
+                onClick={onOpen}
+            />
+        )),
+        ...savingsCards.map(card => (
+            <AlertCard
+                key={`savings-${card._id}`}
+                title={`Sổ tiết kiệm ${card.bankShortName}`}
+                sub="Kiểm tra kỳ hạn"
+                amount={`${fmtFull(card.balance)}đ`}
+                badge="Xem chi tiết"
+                variant="savings"
+                onClick={onOpen}
+            />
+        )),
+    ];
+    const hiddenCount = alerts.length - VISIBLE_ALERTS;
 
     return (
         <section className="anim-fade-up-d2">
@@ -131,35 +167,15 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
                     <ActionIcon type="chevronRight" size={16} tile={false} color="#94A3B8" className="group-hover:text-purple-500 transition-colors" />
                 </button>
             </div>
-            <div className="space-y-2.5 max-h-[280px] overflow-y-auto hide-scrollbar pb-2">
-                {onRespondShare && shareInvites.map(item => (
-                    <ShareInviteCard key={item.share._id} item={item} onRespond={onRespondShare} />
-                ))}
-                {onRespondGame && gameInvites.map(item => (
-                    <GameInviteCard key={item._id} item={item} onRespond={onRespondGame} />
-                ))}
-                {creditAlerts.map(({ card, dueThisCycle }) => (
-                    <AlertCard
-                        key={card._id}
-                        title={`Sao kê ${card.bankName}`}
-                        sub="Cần thanh toán kỳ này"
-                        amount={`${fmtFull(dueThisCycle)}đ`}
-                        badge="Cần thanh toán"
-                        variant="credit"
-                        onClick={onOpen}
-                    />
-                ))}
-                {savingsCards.map(card => (
-                    <AlertCard
-                        key={card._id}
-                        title={`Sổ tiết kiệm ${card.bankShortName}`}
-                        sub="Kiểm tra kỳ hạn"
-                        amount={`${fmtFull(card.balance)}đ`}
-                        badge="Xem chi tiết"
-                        variant="savings"
-                        onClick={onOpen}
-                    />
-                ))}
+            <div className="space-y-2.5">
+                {alerts.slice(0, VISIBLE_ALERTS)}
+                {hiddenCount > 0 && (
+                    <button onClick={onOpen}
+                        className="w-full flex items-center justify-center gap-1 py-2.5 text-[13px] font-bold text-primary dark:text-purple-300 hover:opacity-80 active:scale-[0.99] transition">
+                        Xem thêm {hiddenCount} thông báo
+                        <ActionIcon type="chevronRight" size={14} tile={false} color="currentColor" />
+                    </button>
+                )}
             </div>
         </section>
     );

@@ -6,7 +6,8 @@ const { ingestBankEmails } = require('../services/emailIngestService');
 exports.sync = async (req, res) => {
     try {
         const days = Math.min(30, Math.max(1, Number(req.body?.days) || 7));
-        const result = await ingestBankEmails({ days });
+        // Assign imports to the logged-in user (not the env cron user)
+        const result = await ingestBankEmails({ days, user: req.user });
         res.json({ success: true, ...result });
     } catch (err) {
         console.error('❌ Email sync error:', err.message);

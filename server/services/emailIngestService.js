@@ -83,16 +83,27 @@ ${text}`;
 // Scan the last `days` of the inbox. Emails with a PDF attachment → statement
 // (update the card's dư nợ + hạn thanh toán); text notifications → transactions.
 // Nothing is written to disk/Cloudinary — PDFs are parsed in memory and dropped.
-async function ingestBankEmails({ days = 7 } = {}) {
+async function ingestBankEmails({ days = 7, user = null } = {}) {
     const imapUser = process.env.IMAP_EMAIL_USER || process.env.EMAIL_USER;
     const imapPass = process.env.IMAP_EMAIL_PASS || process.env.EMAIL_PASS;
     if (!imapUser || !imapPass) throw new Error('Thiếu IMAP_EMAIL_USER / IMAP_EMAIL_PASS (hoặc EMAIL_USER / EMAIL_PASS)');
-    const user = await resolveUser();
+    // A manual /sync passes the logged-in user so imports land in THEIR account;
+    // the unauthenticated cron falls back to the env-configured user.
+    if (!user) user = await resolveUser();
     if (!user) throw new Error('Không tìm thấy user để gán dữ liệu (đặt MAIL_INGEST_USER_EMAIL)');
 
     const cards = await Card.find({ userId: user._id, isActive: true });
+    const cardLabel = (c) => c ? (c.bankShortName ? `${c.bankShortName}${c.cardNumber ? ' ••' + c.cardNumber : ''}` : (c.name || 'Thẻ')) : 'Tiền mặt';
     const seenStatements = new Set(user.mailStatementIds || []);
-    const result = { scanned: 0, txCreated: 0, txSkipped: 0, statements: 0, notTx: 0, encrypted: 0 };
+    const result = { scanned: 0, txCreated: 0, txSkipped: 0, statements: 0, notTx: 0, encrypted: 0, created: [] };
+
+    // Pre-load existing transactions in the window to flag likely duplicates
+    // (same manual/other entry with matching amount+type on the same day).
+    const windowStart = new Date(Date.now() - days * 86_400_000);
+    const existing = await Transaction.find({ userId: user._id, date: { $gte: windowStart } })
+        .select('amount type date sourceEmailId').lean();
+    const dayKey = (d, type, amount) => `${new Date(d).toISOString().slice(0, 10)}|${type}|${amount}`;
+    const existingKeys = new Set(existing.filter(t => !t.sourceEmailId).map(t => dayKey(t.date, t.type, t.amount)));
 
     const client = new ImapFlow({ host: 'imap.gmail.com', port: 993, secure: true, auth: { user: imapUser, pass: imapPass }, logger: false });
     await client.connect();
@@ -133,7 +144,7 @@ async function ingestBankEmails({ days = 7 } = {}) {
             }
 
             // ── Transaction branch (text notification) ──
-            if (await Transaction.exists({ sourceEmailId: messageId })) { result.txSkipped++; continue; }
+            if (await Transaction.exists({ userId: user._id, sourceEmailId: messageId })) { result.txSkipped++; continue; }
             const body = (mail.text || (mail.html || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').slice(0, 4000);
             let data;
             try { data = await parseTxEmail(`Tiêu đề: ${subject}\nNgười gửi: ${from}\n\n${body}`); }
@@ -141,15 +152,27 @@ async function ingestBankEmails({ days = 7 } = {}) {
             if (!data.isTransaction || !(data.amount > 0)) { result.notTx++; continue; }
 
             const card = matchCard(cards, data.bankShortName, data.last4);
-            await Transaction.create({
+            const txDate = data.date ? new Date(data.date) : (env.date || new Date());
+            const tx = await Transaction.create({
                 userId: user._id, createdBy: user._id,
                 type: data.type, amount: data.amount, category: data.category, note: data.note,
-                date: data.date ? new Date(data.date) : (env.date || new Date()),
+                date: txDate,
                 cardId: card ? card._id : null, paymentMethod: card ? 'card' : 'cash',
                 sourceEmailId: messageId,
             });
             if (card) { applyBalance(card, data.type, data.amount); await card.save(); }
             result.txCreated++;
+            result.created.push({
+                _id: tx._id.toString(),
+                type: data.type,
+                amount: data.amount,
+                category: data.category,
+                note: data.note,
+                date: txDate,
+                source: cardLabel(card),
+                // flagged if a non-email entry with same day+type+amount already exists
+                maybeDuplicate: existingKeys.has(dayKey(txDate, data.type, data.amount)),
+            });
         }
     } finally {
         lock.release();

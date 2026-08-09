@@ -2,6 +2,7 @@
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
+import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 import { cn } from '@/lib/utils';
 import { ocrApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -381,7 +382,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                     onClick={reset}
                     className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.97] transition-all"
                 >
-                    <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
+                    <RefreshDuotone className="w-4 h-4" />
                     <span>Chụp lại</span>
                 </button>
                 {result && (

@@ -11,6 +11,7 @@ import { useBanks } from '@/hooks/useBanks';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
+import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 import { getBankLogo } from '@/lib/bankLogos';
 import PaymentCard from './cards/PaymentCard';
 import BillScanner from './BillScanner';
@@ -447,7 +448,7 @@ export default function AddTransactionModal({
                                         'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
                                         isInstallment ? 'bg-brand text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                                     )}>
-                                        <CustomIcon type="refreshCw" size={16} tile={false} color="currentColor" className="w-4 h-4" />
+                                        <RefreshDuotone className="w-4 h-4" />
                                     </div>
                                     <div className="text-left">
                                         <p className={cn('text-sm font-bold', isInstallment ? 'text-brand' : 'text-slate-700 dark:text-slate-300')}>

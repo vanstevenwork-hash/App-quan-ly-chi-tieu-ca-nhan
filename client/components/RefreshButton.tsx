@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn } from '@/lib/utils';
+import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 
 // Shared header refresh button — brand-tinted pill that spins its icon while
 // the refresh promise is in flight. Pass any (optionally async) refresh fn.
@@ -34,8 +34,7 @@ export default function RefreshButton({
                 className
             )}
         >
-            <CustomIcon type="refreshCw" size={17} tile={false} color="currentColor"
-                className={cn('transition-transform', spinning && 'animate-spin')} />
+            <RefreshDuotone className={cn('w-[18px] h-[18px] transition-transform', spinning && 'animate-spin')} />
             {children}
         </button>
     );

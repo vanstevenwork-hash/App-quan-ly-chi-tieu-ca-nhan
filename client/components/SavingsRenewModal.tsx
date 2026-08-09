@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { ActionIcon } from '@/components/icons/ActionIcon';
+import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 import { cardsApi } from '@/lib/api';
 import type { Card } from '@/hooks/useCards';
 import { toast } from 'sonner';
@@ -134,7 +135,7 @@ duration-200
                 <div className="shrink-0 w-full p-4 border-t border-slate-100 dark:border-slate-800">
                     <button onClick={handleSubmit} disabled={!canSubmit || saving}
                         className="w-full h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl text-base font-bold shadow-lg shadow-emerald-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                        <ActionIcon type="refreshCw" size={18} tile={false} color="#fff" />
+                        <RefreshDuotone className="w-[18px] h-[18px] text-white" />
                         {saving ? 'Đang tái tục...' : 'Tái tục sổ'}
                     </button>
                 </div>

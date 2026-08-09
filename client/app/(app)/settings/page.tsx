@@ -12,15 +12,28 @@ import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
-import { authApi, telegramApi, emailApi } from '@/lib/api';
+import { authApi, telegramApi, emailApi, transactionsApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
+import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 
 const LANGUAGES = [
     { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
     { code: 'en', label: 'English', flag: '🇬🇧' },
 ];
+
+// One transaction imported from a bank email — shown in the post-sync review sheet
+type ImportedTx = {
+    _id: string;
+    type: 'income' | 'expense';
+    amount: number;
+    category: string;
+    note: string;
+    date: string;
+    source: string;
+    maybeDuplicate: boolean;
+};
 
 // Layered "elevated glass" shadow recipe — soft ambient spread + tight contact
 // shadow, tinted purple in light mode (flat single-layer shadow-card reads flat;
@@ -90,6 +103,9 @@ export default function SettingsPage() {
 
     // Email sync (pull bank notification emails → transactions)
     const [emailSyncing, setEmailSyncing] = useState(false);
+    const [showEmailReview, setShowEmailReview] = useState(false);
+    const [emailReviewTxs, setEmailReviewTxs] = useState<ImportedTx[]>([]);
+    const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
 
     // Logout confirm
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -219,16 +235,20 @@ export default function SettingsPage() {
         setEmailSyncing(true);
         try {
             const { data } = await emailApi.sync(7);
-            const made = data.txCreated || 0;
+            const created: ImportedTx[] = data.created || [];
             const st = data.statements || 0;
-            if (made > 0 || st > 0) {
+            if (created.length > 0 || st > 0) {
                 // Pull the new transactions/cards into the UI
                 await Promise.all([
                     useTransactionStore.getState().fetch(true),
                     useNotificationStore.getState().fetch(true),
                 ]);
-                const parts = [made > 0 && `${made} giao dịch mới`, st > 0 && `${st} sao kê`].filter(Boolean);
-                toast.success(`Đã nhập ${parts.join(' · ')} từ email`);
+            }
+            if (created.length > 0) {
+                setEmailReviewTxs(created);
+                setShowEmailReview(true);
+            } else if (st > 0) {
+                toast.success(`Đã cập nhật ${st} sao kê từ email`);
             } else {
                 toast.success('Không có email giao dịch mới');
             }
@@ -236,6 +256,25 @@ export default function SettingsPage() {
             toast.error(e?.response?.data?.message || 'Đồng bộ email thất bại');
         } finally {
             setEmailSyncing(false);
+        }
+    };
+
+    const handleDeleteImportedTx = async (id: string) => {
+        if (deletingTxId) return;
+        setDeletingTxId(id);
+        try {
+            await transactionsApi.delete(id);
+            setEmailReviewTxs(prev => prev.filter(t => t._id !== id));
+            // Reflect the removal (and any card-balance revert) in the app
+            await Promise.all([
+                useTransactionStore.getState().fetch(true),
+                useNotificationStore.getState().fetch(true),
+            ]);
+            toast.success('Đã xóa giao dịch');
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || 'Xóa thất bại');
+        } finally {
+            setDeletingTxId(null);
         }
     };
 
@@ -423,7 +462,7 @@ export default function SettingsPage() {
                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.15em] mb-2.5 px-1">Dữ liệu</p>
                     <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50 border border-transparent dark:border-slate-800/60', CARD_SHADOW)}>
                         <SettingItem
-                            icon={<CustomIcon type="refreshCw" size={18} tile={false} color="currentColor" className={cn('w-[18px] h-[18px]', refreshing && 'animate-spin')} />}
+                            icon={<RefreshDuotone className={cn('w-[18px] h-[18px]', refreshing && 'animate-spin')} />}
                             label="Làm mới dữ liệu"
                             sublabel={lastSyncLabel}
                             onClick={handleRefreshData}
@@ -533,6 +572,71 @@ export default function SettingsPage() {
                         </Button>
                         <Button onClick={handleLogout} className="rounded-xl bg-red-500 hover:bg-red-600 text-white flex items-center justify-center">
                             <ActionIcon type="logOut" size={16} tile={false} color="#FFFFFF" className="mr-2" /> Đăng xuất
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Email import review — list what was pulled, flag possible duplicates, allow delete */}
+            <Dialog open={showEmailReview} onOpenChange={setShowEmailReview}>
+                <DialogContent className="sm:max-w-md rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <CustomIcon type="mail" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />
+                            Đã nhập {emailReviewTxs.length} giao dịch từ email
+                        </DialogTitle>
+                    </DialogHeader>
+                    {emailReviewTxs.some(t => t.maybeDuplicate) && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 -mt-1">
+                            ⚠️ Mục gắn nhãn <b>“Có thể trùng”</b> đã có giao dịch cùng ngày & số tiền — kiểm tra rồi xóa nếu bị lặp.
+                        </p>
+                    )}
+                    <div className="max-h-[55vh] overflow-y-auto -mx-2 px-2 divide-y divide-border/50">
+                        {emailReviewTxs.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-8">Đã xử lý xong — không còn mục nào.</p>
+                        )}
+                        {emailReviewTxs.map((t) => (
+                            <div key={t._id} className="flex items-center gap-3 py-3">
+                                <div className={cn(
+                                    'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold',
+                                    t.type === 'income'
+                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
+                                        : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
+                                )}>
+                                    {t.type === 'income' ? '+' : '−'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-[15px] font-bold text-foreground truncate">
+                                            {t.amount.toLocaleString('vi-VN')}đ
+                                        </p>
+                                        {t.maybeDuplicate && (
+                                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                                Có thể trùng
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                        {t.category} · {t.source} · {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                                        {t.note ? ` · ${t.note}` : ''}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => handleDeleteImportedTx(t._id)}
+                                    disabled={deletingTxId === t._id}
+                                    className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                                    aria-label="Xóa giao dịch"
+                                >
+                                    {deletingTxId === t._id
+                                        ? <ActionIcon type="loader" size={16} tile={false} spin />
+                                        : <ActionIcon type="trash" size={16} tile={false} color="currentColor" />}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setShowEmailReview(false)} className="rounded-xl w-full">
+                            Xong
                         </Button>
                     </DialogFooter>
                 </DialogContent>
