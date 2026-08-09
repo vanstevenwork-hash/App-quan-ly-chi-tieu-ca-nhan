@@ -6,15 +6,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format a number the Vietnamese way — dot thousands separators, no decimals
- * (e.g. 18100 → "18.100"). Rounds the input.
+ * Format a number with comma thousands separators, no decimals
+ * (e.g. 18100 → "18,100"). Rounds the input.
  *
- * We intentionally do NOT use `toLocaleString('vi-VN')`: some runtimes ship
- * without the vi-VN ICU dataset and silently fall back to en-US, producing
- * commas ("18,100"). Grouping in en-US (always available) then swapping "," → "."
- * guarantees dots everywhere. VND has no minor units, so integers only.
+ * Uses the en-US grouping (always available in every runtime), so the separator
+ * is a comma everywhere and never varies with the host's locale data. VND has no
+ * minor units, so integers only.
  */
 export function formatNumber(n: number | null | undefined): string {
   if (n == null || !Number.isFinite(Number(n))) return "0"
-  return Math.round(Number(n)).toLocaleString("en-US").replace(/,/g, ".")
+  return Math.round(Number(n)).toLocaleString("en-US")
 }

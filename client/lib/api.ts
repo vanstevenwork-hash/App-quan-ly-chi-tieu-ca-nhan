@@ -54,6 +54,8 @@ export const authApi = {
     updateProfile: (data: object) => api.put('/auth/profile', data),
     forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
     checkEmail: (email: string) => api.get('/auth/check-email', { params: { email } }),
+    requestEmailChange: (newEmail: string) => api.post('/auth/change-email/request', { newEmail }),
+    confirmEmailChange: (code: string) => api.post('/auth/change-email/confirm', { code }),
 };
 
 // Transactions
@@ -227,9 +229,41 @@ export const ocrApi = {
     },
 };
 
-// Email ingest — pull bank notification emails → transactions
+// Email ingest — scan bank notification emails → review → commit
 export const emailApi = {
     sync: (days = 7) => api.post('/email/sync', { days }, { timeout: 120000 }),
+    // Streams NDJSON progress; resolves with { items, statements } once done.
+    scan: async (days: number, onProgress?: (done: number, total: number) => void): Promise<{ items: any[]; statements: number }> => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const res = await fetch(`${API_URL}/email/scan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ days }),
+        });
+        if (!res.ok || !res.body) throw new Error((await res.text().catch(() => '')) || 'Quét email thất bại');
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        let result: { items: any[]; statements: number } = { items: [], statements: 0 };
+        for (; ;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            let nl: number;
+            while ((nl = buf.indexOf('\n')) >= 0) {
+                const line = buf.slice(0, nl).trim();
+                buf = buf.slice(nl + 1);
+                if (!line) continue;
+                let msg: any;
+                try { msg = JSON.parse(line); } catch { continue; }
+                if (msg.type === 'progress') onProgress?.(msg.done, msg.total);
+                else if (msg.type === 'done') result = msg;
+                else if (msg.type === 'error') throw new Error(msg.message || 'Lỗi quét email');
+            }
+        }
+        return result;
+    },
+    commit: (items: any[]) => api.post('/email/commit', { items }, { timeout: 60000 }),
 };
 
 // Day Notes (calendar images)

@@ -83,6 +83,65 @@ exports.updateProfile = async (req, res) => {
 
 const sendEmail = require('../utils/sendEmail');
 
+const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+const gen6 = () => String(Math.floor(100000 + Math.random() * 900000));
+
+// @desc  Step 1 — request an email change: emails a 6-digit code to the NEW address
+// @route POST /api/auth/change-email/request  body: { newEmail }
+// @access Private
+exports.requestEmailChange = async (req, res) => {
+    try {
+        const newEmail = (req.body.newEmail || '').toLowerCase().trim();
+        if (!isEmail(newEmail)) return res.status(400).json({ success: false, message: 'Email không hợp lệ' });
+        if (newEmail === req.user.email) return res.status(400).json({ success: false, message: 'Email mới trùng email hiện tại' });
+        const taken = await User.findOne({ email: newEmail });
+        if (taken) return res.status(400).json({ success: false, message: 'Email này đã được dùng cho tài khoản khác' });
+
+        const code = gen6();
+        const user = await User.findById(req.user._id);
+        user.emailChangeNew = newEmail;
+        user.emailChangeCode = code;
+        user.emailChangeExpires = new Date(Date.now() + 15 * 60 * 1000);
+        await user.save();
+
+        const message = `Xin chào ${user.name},\n\nMã xác nhận đổi email cho tài khoản Zenith Finance là: ${code}\n\nMã có hiệu lực trong 15 phút. Nếu bạn không yêu cầu, hãy bỏ qua email này.\n\nTrân trọng.`;
+        const html = `<div style="font-family:system-ui,sans-serif;max-width:440px;margin:auto"><p>Xin chào <b>${user.name}</b>,</p><p>Mã xác nhận đổi email tài khoản <b>Zenith Finance</b> của bạn là:</p><p style="font-size:30px;font-weight:800;letter-spacing:6px;color:#36255C;text-align:center;margin:18px 0">${code}</p><p style="color:#64748B;font-size:13px">Mã có hiệu lực trong 15 phút. Nếu bạn không yêu cầu đổi email, hãy bỏ qua email này.</p></div>`;
+        await sendEmail({ email: newEmail, subject: 'Mã xác nhận đổi email - Zenith Finance', message, html });
+
+        res.json({ success: true, message: `Đã gửi mã xác nhận tới ${newEmail}` });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Step 2 — confirm the email change with the code sent to the new address
+// @route POST /api/auth/change-email/confirm  body: { code }
+// @access Private
+exports.confirmEmailChange = async (req, res) => {
+    try {
+        const code = (req.body.code || '').trim();
+        const user = await User.findById(req.user._id);
+        if (!user.emailChangeNew || !user.emailChangeCode) return res.status(400).json({ success: false, message: 'Chưa có yêu cầu đổi email nào' });
+        if (!user.emailChangeExpires || user.emailChangeExpires < new Date()) return res.status(400).json({ success: false, message: 'Mã đã hết hạn, vui lòng gửi lại mã' });
+        if (code !== user.emailChangeCode) return res.status(400).json({ success: false, message: 'Mã xác nhận không đúng' });
+        // Re-check the address is still free (someone could have grabbed it meanwhile)
+        const taken = await User.findOne({ email: user.emailChangeNew, _id: { $ne: user._id } });
+        if (taken) return res.status(400).json({ success: false, message: 'Email này vừa bị tài khoản khác sử dụng' });
+
+        user.email = user.emailChangeNew;
+        user.emailChangeNew = null;
+        user.emailChangeCode = null;
+        user.emailChangeExpires = null;
+        await user.save();
+
+        const safe = user.toObject();
+        delete safe.password;
+        res.json({ success: true, user: safe, message: 'Đã đổi email thành công' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // @desc Forgot Password
 exports.forgotPassword = async (req, res) => {
     try {

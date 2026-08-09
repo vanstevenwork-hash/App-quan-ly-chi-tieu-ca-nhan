@@ -50,6 +50,8 @@ const matchCard = (cards, bankShortName, last4) => cards.find(c =>
     (bankShortName && c.bankShortName?.toUpperCase() === String(bankShortName).toUpperCase())
 );
 
+const cardLabel = (c) => c ? (c.bankShortName ? `${c.bankShortName}${c.cardNumber ? ' ••' + c.cardNumber : ''}` : (c.name || 'Thẻ')) : 'Tiền mặt';
+
 // Best-effort bank short-name from the sender domain (statements often don't
 // print a clean code; last-4 is the primary match key anyway).
 const SENDER_BANK = { vpb: 'VPB', vib: 'VIB', msb: 'MSB', bidv: 'BIDV', uob: 'UOB', hsbc: 'HSBC', cake: 'CAKE', techcombank: 'TCB', vietcombank: 'VCB', tpb: 'TPB', shinhan: 'SHBVN', acb: 'ACB', mbbank: 'MB', citi: 'CITI', sacombank: 'STB', vietinbank: 'CTG', ocb: 'OCB' };
@@ -80,25 +82,22 @@ ${text}`;
     };
 }
 
-// Scan the last `days` of the inbox. Emails with a PDF attachment → statement
-// (update the card's dư nợ + hạn thanh toán); text notifications → transactions.
-// Nothing is written to disk/Cloudinary — PDFs are parsed in memory and dropped.
-async function ingestBankEmails({ days = 7, user = null } = {}) {
+// ── Scan the inbox and PREVIEW transactions (nothing is written for the user to
+// review first). Statement PDFs still auto-update the matched card's dư nợ +
+// hạn thanh toán (low-risk). `onProgress(done, total)` is called as it goes so
+// the UI can show a %. Returns { items, statements, ... } — items are NOT saved.
+async function scanBankEmails({ days = 7, user = null, onProgress = null } = {}) {
     const imapUser = process.env.IMAP_EMAIL_USER || process.env.EMAIL_USER;
     const imapPass = process.env.IMAP_EMAIL_PASS || process.env.EMAIL_PASS;
     if (!imapUser || !imapPass) throw new Error('Thiếu IMAP_EMAIL_USER / IMAP_EMAIL_PASS (hoặc EMAIL_USER / EMAIL_PASS)');
-    // A manual /sync passes the logged-in user so imports land in THEIR account;
-    // the unauthenticated cron falls back to the env-configured user.
     if (!user) user = await resolveUser();
     if (!user) throw new Error('Không tìm thấy user để gán dữ liệu (đặt MAIL_INGEST_USER_EMAIL)');
 
     const cards = await Card.find({ userId: user._id, isActive: true });
-    const cardLabel = (c) => c ? (c.bankShortName ? `${c.bankShortName}${c.cardNumber ? ' ••' + c.cardNumber : ''}` : (c.name || 'Thẻ')) : 'Tiền mặt';
     const seenStatements = new Set(user.mailStatementIds || []);
-    const result = { scanned: 0, txCreated: 0, txSkipped: 0, statements: 0, notTx: 0, encrypted: 0, created: [] };
+    const result = { items: [], statements: 0, notTx: 0, encrypted: 0, txSkipped: 0 };
 
-    // Pre-load existing transactions in the window to flag likely duplicates
-    // (same manual/other entry with matching amount+type on the same day).
+    // Flag likely duplicates vs a manual entry with same day+type+amount.
     const windowStart = new Date(Date.now() - days * 86_400_000);
     const existing = await Transaction.find({ userId: user._id, date: { $gte: windowStart } })
         .select('amount type date sourceEmailId').lean();
@@ -111,68 +110,79 @@ async function ingestBankEmails({ days = 7, user = null } = {}) {
     let statementsChanged = false;
     try {
         const since = new Date(Date.now() - days * 86_400_000);
+        // 1) Gather all candidate emails first so we know the total for progress.
+        const candidates = [];
         for await (const msg of client.fetch({ since }, { envelope: true, source: true })) {
-            result.scanned++;
             const env = msg.envelope || {};
             const from = env.from?.[0]?.address || '';
             const subject = env.subject || '';
             if (!fromBank(from) && !isTxSubject(subject) && !isStatementSubject(subject)) continue;
+            candidates.push({ env, source: msg.source, from, subject });
+        }
+        const total = candidates.length;
+        if (onProgress) onProgress(0, total);
 
+        // 2) Process each — the Gemini parse per email is the slow bit.
+        for (let i = 0; i < candidates.length; i++) {
+            const { env, source, from, subject } = candidates[i];
             const messageId = env.messageId || `${from}|${subject}|${env.date}`;
-            const mail = await simpleParser(msg.source);
+            const mail = await simpleParser(source);
             const pdf = (mail.attachments || []).find(a => (a.contentType || '').includes('pdf') || /\.pdf$/i.test(a.filename || ''));
 
-            // ── Statement branch (has a PDF) — parsed locally, no LLM ──
+            // ── Statement branch (PDF) — parsed locally, auto-applies to the card ──
             if (pdf && (isStatementSubject(subject) || fromBank(from))) {
-                if (seenStatements.has(messageId)) continue;
-                let st;
-                try { st = await parseStatementPdfLocal(pdf.content); }
-                catch { result.encrypted++; continue; }
-                seenStatements.add(messageId);
-                statementsChanged = true;
-                if (!st.ok) { result.encrypted++; continue; } // encrypted/scanned/unreadable
-
-                const card = matchCard(cards, senderBankShort(from), st.last4);
-                if (card) {
-                    if (st.totalDue > 0) card.balance = st.totalDue; // official dư nợ kỳ sao kê
-                    if (st.dueDate) card.paymentDueDay = new Date(st.dueDate).getDate();
-                    if (st.statementDate) card.statementDay = new Date(st.statementDate).getDate();
-                    await card.save();
+                if (!seenStatements.has(messageId)) {
+                    let st = null;
+                    try { st = await parseStatementPdfLocal(pdf.content); } catch { st = null; }
+                    seenStatements.add(messageId);
+                    statementsChanged = true;
+                    if (st && st.ok) {
+                        const card = matchCard(cards, senderBankShort(from), st.last4);
+                        if (card) {
+                            if (st.totalDue > 0) card.balance = st.totalDue;
+                            if (st.dueDate) card.paymentDueDay = new Date(st.dueDate).getDate();
+                            if (st.statementDate) card.statementDay = new Date(st.statementDate).getDate();
+                            await card.save();
+                        }
+                        result.statements++;
+                    } else {
+                        result.encrypted++;
+                    }
                 }
-                result.statements++;
+                if (onProgress) onProgress(i + 1, total);
                 continue;
             }
 
-            // ── Transaction branch (text notification) ──
-            if (await Transaction.exists({ userId: user._id, sourceEmailId: messageId })) { result.txSkipped++; continue; }
+            // ── Transaction branch (text notification) — PREVIEW only ──
+            if (await Transaction.exists({ userId: user._id, sourceEmailId: messageId })) {
+                result.txSkipped++;
+                if (onProgress) onProgress(i + 1, total);
+                continue;
+            }
             const body = (mail.text || (mail.html || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').slice(0, 4000);
             let data;
             try { data = await parseTxEmail(`Tiêu đề: ${subject}\nNgười gửi: ${from}\n\n${body}`); }
-            catch { continue; }
-            if (!data.isTransaction || !(data.amount > 0)) { result.notTx++; continue; }
+            catch { if (onProgress) onProgress(i + 1, total); continue; }
+            if (!data.isTransaction || !(data.amount > 0)) {
+                result.notTx++;
+                if (onProgress) onProgress(i + 1, total);
+                continue;
+            }
 
             const card = matchCard(cards, data.bankShortName, data.last4);
             const txDate = data.date ? new Date(data.date) : (env.date || new Date());
-            const tx = await Transaction.create({
-                userId: user._id, createdBy: user._id,
-                type: data.type, amount: data.amount, category: data.category, note: data.note,
-                date: txDate,
-                cardId: card ? card._id : null, paymentMethod: card ? 'card' : 'cash',
-                sourceEmailId: messageId,
-            });
-            if (card) { applyBalance(card, data.type, data.amount); await card.save(); }
-            result.txCreated++;
-            result.created.push({
-                _id: tx._id.toString(),
+            result.items.push({
                 type: data.type,
                 amount: data.amount,
                 category: data.category,
                 note: data.note,
                 date: txDate,
+                cardId: card ? String(card._id) : null,
                 source: cardLabel(card),
-                // flagged if a non-email entry with same day+type+amount already exists
+                sourceEmailId: messageId,
                 maybeDuplicate: existingKeys.has(dayKey(txDate, data.type, data.amount)),
             });
+            if (onProgress) onProgress(i + 1, total);
         }
     } finally {
         lock.release();
@@ -180,11 +190,53 @@ async function ingestBankEmails({ days = 7, user = null } = {}) {
     }
 
     if (statementsChanged) {
-        // keep the guard list bounded
         user.mailStatementIds = Array.from(seenStatements).slice(-300);
         await user.save();
     }
     return result;
 }
 
-module.exports = { ingestBankEmails };
+// ── Commit reviewed items — create the transactions the user confirmed ──
+async function commitItems({ user = null, items = [] } = {}) {
+    if (!user) user = await resolveUser();
+    if (!user) throw new Error('Không tìm thấy user để gán dữ liệu');
+    const cards = await Card.find({ userId: user._id, isActive: true });
+    let created = 0, skipped = 0;
+    const createdList = [];
+    for (const it of Array.isArray(items) ? items : []) {
+        const amount = Math.round(Number(it && it.amount));
+        if (!(amount > 0)) continue;
+        if (it.sourceEmailId && await Transaction.exists({ userId: user._id, sourceEmailId: it.sourceEmailId })) { skipped++; continue; }
+        const type = it.type === 'income' ? 'income' : 'expense';
+        const card = it.cardId ? cards.find(c => String(c._id) === String(it.cardId)) : null;
+        const category = (type === 'income' ? INCOME_CATS : EXPENSE_CATS).includes(it.category) ? it.category : 'Khác';
+        const tx = await Transaction.create({
+            userId: user._id, createdBy: user._id,
+            type, amount, category, note: typeof it.note === 'string' ? it.note.slice(0, 200) : '',
+            date: it.date ? new Date(it.date) : new Date(),
+            cardId: card ? card._id : null, paymentMethod: card ? 'card' : 'cash',
+            sourceEmailId: it.sourceEmailId || null,
+        });
+        if (card) { applyBalance(card, type, amount); await card.save(); }
+        created++;
+        createdList.push(tx._id.toString());
+    }
+    return { created, skipped, ids: createdList };
+}
+
+// ── Full auto ingest (used by the cron scheduler): scan + commit in one go ──
+async function ingestBankEmails({ days = 7, user = null } = {}) {
+    if (!user) user = await resolveUser();
+    if (!user) throw new Error('Không tìm thấy user để gán dữ liệu (đặt MAIL_INGEST_USER_EMAIL)');
+    const scan = await scanBankEmails({ days, user });
+    const commit = await commitItems({ user, items: scan.items });
+    return {
+        statements: scan.statements,
+        txCreated: commit.created,
+        txSkipped: (scan.txSkipped || 0) + (commit.skipped || 0),
+        notTx: scan.notTx,
+        encrypted: scan.encrypted,
+    };
+}
+
+module.exports = { ingestBankEmails, scanBankEmails, commitItems };

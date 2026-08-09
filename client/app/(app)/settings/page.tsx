@@ -12,11 +12,13 @@ import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
 import { cn, formatNumber } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
-import { authApi, telegramApi, emailApi, transactionsApi } from '@/lib/api';
+import { authApi, telegramApi, emailApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
+import CategoryIcon from '@/components/icons/CategoryIcon';
+import { CATEGORIES_MAP } from '@/lib/mockData';
 
 const LANGUAGES = [
     { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
@@ -25,13 +27,14 @@ const LANGUAGES = [
 
 // One transaction imported from a bank email — shown in the post-sync review sheet
 type ImportedTx = {
-    _id: string;
     type: 'income' | 'expense';
     amount: number;
     category: string;
     note: string;
     date: string;
     source: string;
+    cardId: string | null;
+    sourceEmailId: string;
     maybeDuplicate: boolean;
 };
 
@@ -88,6 +91,14 @@ export default function SettingsPage() {
     // Edit name dialog
     const [showNameDialog, setShowNameDialog] = useState(false);
     const [nameInput, setNameInput] = useState('');
+
+    // Change-email flow: enter new address → 6-digit code emailed to it → confirm
+    const [showEmailDialog, setShowEmailDialog] = useState(false);
+    const [emailStep, setEmailStep] = useState<'enter' | 'code'>('enter');
+    const [newEmailInput, setNewEmailInput] = useState('');
+    const [emailCodeInput, setEmailCodeInput] = useState('');
+    const [pendingEmail, setPendingEmail] = useState('');
+    const [emailBusy, setEmailBusy] = useState(false);
     const [savingName, setSavingName] = useState(false);
 
     // Language dialog
@@ -101,11 +112,12 @@ export default function SettingsPage() {
     const [refreshing, setRefreshing] = useState(false);
     const [lastSync, setLastSync] = useState<string | null>(null);
 
-    // Email sync (pull bank notification emails → transactions)
+    // Email scan → review → confirm
     const [emailSyncing, setEmailSyncing] = useState(false);
+    const [scanProgress, setScanProgress] = useState<number | null>(null); // 0–100 while scanning
     const [showEmailReview, setShowEmailReview] = useState(false);
     const [emailReviewTxs, setEmailReviewTxs] = useState<ImportedTx[]>([]);
-    const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
+    const [importing, setImporting] = useState(false);
 
     // Logout confirm
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -188,6 +200,44 @@ export default function SettingsPage() {
         }
     };
 
+    const openEmailDialog = () => {
+        setNewEmailInput('');
+        setEmailCodeInput('');
+        setPendingEmail('');
+        setEmailStep('enter');
+        setShowEmailDialog(true);
+    };
+    const handleRequestEmailChange = async () => {
+        const email = newEmailInput.trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast.error('Email không hợp lệ'); return; }
+        setEmailBusy(true);
+        try {
+            await authApi.requestEmailChange(email);
+            setPendingEmail(email);
+            setEmailStep('code');
+            toast.success(`Đã gửi mã xác nhận tới ${email}`);
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || 'Không gửi được mã');
+        } finally {
+            setEmailBusy(false);
+        }
+    };
+    const handleConfirmEmailChange = async () => {
+        const code = emailCodeInput.trim();
+        if (code.length < 6) { toast.error('Nhập đủ mã 6 số'); return; }
+        setEmailBusy(true);
+        try {
+            const { data } = await authApi.confirmEmailChange(code);
+            updateUser({ email: data.user.email });
+            setShowEmailDialog(false);
+            toast.success('Đã đổi email thành công');
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || 'Xác nhận thất bại');
+        } finally {
+            setEmailBusy(false);
+        }
+    };
+
     const handleSelectLanguage = async (code: string) => {
         if (code === (user?.language || 'vi')) { setShowLanguageDialog(false); return; }
         setSavingLanguage(true);
@@ -233,48 +283,50 @@ export default function SettingsPage() {
     const handleEmailSync = async () => {
         if (emailSyncing) return;
         setEmailSyncing(true);
+        setScanProgress(0);
         try {
-            const { data } = await emailApi.sync(7);
-            const created: ImportedTx[] = data.created || [];
-            const st = data.statements || 0;
-            if (created.length > 0 || st > 0) {
-                // Pull the new transactions/cards into the UI
-                await Promise.all([
-                    useTransactionStore.getState().fetch(true),
-                    useNotificationStore.getState().fetch(true),
-                ]);
-            }
-            if (created.length > 0) {
-                setEmailReviewTxs(created);
+            const data = await emailApi.scan(7, (done, total) => {
+                setScanProgress(total > 0 ? Math.round((done / total) * 100) : 100);
+            });
+            const items: ImportedTx[] = data.items || [];
+            if (items.length > 0) {
+                setEmailReviewTxs(items);
                 setShowEmailReview(true);
-            } else if (st > 0) {
-                toast.success(`Đã cập nhật ${st} sao kê từ email`);
+            } else if ((data.statements || 0) > 0) {
+                toast.success(`Đã cập nhật ${data.statements} sao kê từ email`);
             } else {
-                toast.success('Không có email giao dịch mới');
+                toast.success('Không có giao dịch mới trong email');
             }
         } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'Đồng bộ email thất bại');
+            toast.error(e?.message || 'Quét email thất bại');
         } finally {
             setEmailSyncing(false);
+            setScanProgress(null);
         }
     };
 
-    const handleDeleteImportedTx = async (id: string) => {
-        if (deletingTxId) return;
-        setDeletingTxId(id);
+    // Exclude one previewed item before confirming (nothing is saved yet).
+    const excludeImportedTx = (sourceEmailId: string) => {
+        setEmailReviewTxs(prev => prev.filter(t => t.sourceEmailId !== sourceEmailId));
+    };
+
+    // Confirm → actually create the reviewed transactions.
+    const handleConfirmImport = async () => {
+        if (importing) return;
+        if (emailReviewTxs.length === 0) { setShowEmailReview(false); return; }
+        setImporting(true);
         try {
-            await transactionsApi.delete(id);
-            setEmailReviewTxs(prev => prev.filter(t => t._id !== id));
-            // Reflect the removal (and any card-balance revert) in the app
+            const { data } = await emailApi.commit(emailReviewTxs);
             await Promise.all([
                 useTransactionStore.getState().fetch(true),
                 useNotificationStore.getState().fetch(true),
             ]);
-            toast.success('Đã xóa giao dịch');
+            setShowEmailReview(false);
+            toast.success(`Đã thêm ${data.created} giao dịch${data.skipped ? ` · bỏ ${data.skipped} trùng` : ''}`);
         } catch (e: any) {
-            toast.error(e?.response?.data?.message || 'Xóa thất bại');
+            toast.error(e?.response?.data?.message || 'Thêm giao dịch thất bại');
         } finally {
-            setDeletingTxId(null);
+            setImporting(false);
         }
     };
 
@@ -407,6 +459,12 @@ export default function SettingsPage() {
                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.15em] mb-2.5 px-1">Tùy chỉnh</p>
                     <div className={cn('bg-card rounded-[20px] overflow-hidden divide-y divide-border/50 border border-transparent dark:border-slate-800/60', CARD_SHADOW)}>
                         <SettingItem
+                            icon={<CustomIcon type="mail" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
+                            label="Đổi email"
+                            sublabel={user?.email || ''}
+                            onClick={openEmailDialog}
+                        />
+                        <SettingItem
                             icon={<ActionIcon type="moon" size={18} tile={false} color="currentColor" />}
                             label="Chế độ tối"
                             sublabel={isDarkMode ? 'Đang bật' : 'Đang tắt'}
@@ -471,9 +529,13 @@ export default function SettingsPage() {
                         <SettingItem
                             icon={<CustomIcon type="mail" size={18} tile={false} color="currentColor" className={cn('w-[18px] h-[18px]', emailSyncing && 'animate-pulse')} />}
                             label="Đồng bộ email"
-                            sublabel="Quét email biến động số dư 7 ngày gần đây"
+                            sublabel={emailSyncing
+                                ? (scanProgress == null ? 'Đang kết nối…' : `Đang quét… ${scanProgress}%`)
+                                : 'Quét email, xem trước rồi mới thêm'}
                             onClick={emailSyncing ? undefined : handleEmailSync}
-                            right={emailSyncing ? <ActionIcon type="loader" size={16} tile={false} spin /> : undefined}
+                            right={emailSyncing
+                                ? <span className="text-xs font-bold text-brand dark:text-brand-light tabular-nums flex-shrink-0">{scanProgress == null ? '' : `${scanProgress}%`}</span>
+                                : undefined}
                         />
                         <SettingItem
                             icon={<CustomIcon type="download" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
@@ -495,6 +557,57 @@ export default function SettingsPage() {
 
                 <p className="text-center text-muted-foreground text-xs">Phiên bản 1.0.0 • Chi Tiêu Cá Nhân</p>
             </div>
+
+            {/* Change email dialog — 2 steps: enter new email → confirm with code */}
+            <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+                <DialogContent className="sm:max-w-md rounded-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Đổi email</DialogTitle>
+                    </DialogHeader>
+                    {emailStep === 'enter' ? (
+                        <>
+                            <p className="text-sm text-muted-foreground -mt-1">
+                                Nhập email mới. Mã xác nhận 6 số sẽ được gửi tới địa chỉ đó — email chỉ đổi sau khi bạn nhập đúng mã.
+                            </p>
+                            <Input
+                                type="email"
+                                value={newEmailInput}
+                                onChange={e => setNewEmailInput(e.target.value)}
+                                placeholder="email-moi@gmail.com"
+                                className="rounded-xl h-12"
+                                autoFocus
+                            />
+                            <DialogFooter>
+                                <Button type="button" variant="outline" onClick={() => setShowEmailDialog(false)} className="rounded-xl">Hủy</Button>
+                                <Button onClick={handleRequestEmailChange} disabled={emailBusy} className="rounded-xl">
+                                    {emailBusy ? 'Đang gửi…' : 'Gửi mã'}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-sm text-muted-foreground -mt-1">
+                                Đã gửi mã 6 số tới <b className="text-foreground">{pendingEmail}</b>. Mở email và nhập mã để xác nhận.
+                            </p>
+                            <Input
+                                inputMode="numeric"
+                                value={emailCodeInput}
+                                onChange={e => setEmailCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                placeholder="••••••"
+                                maxLength={6}
+                                className="rounded-xl h-12 text-center text-lg font-bold tracking-[0.5em]"
+                                autoFocus
+                            />
+                            <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+                                <Button type="button" variant="outline" onClick={() => setEmailStep('enter')} className="rounded-xl">Đổi địa chỉ khác</Button>
+                                <Button onClick={handleConfirmEmailChange} disabled={emailBusy} className="rounded-xl">
+                                    {emailBusy ? 'Đang xác nhận…' : 'Xác nhận'}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Edit name dialog */}
             <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
@@ -583,32 +696,29 @@ export default function SettingsPage() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <CustomIcon type="mail" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />
-                            Đã nhập {emailReviewTxs.length} giao dịch từ email
+                            Xem trước {emailReviewTxs.length} giao dịch
                         </DialogTitle>
                     </DialogHeader>
-                    {emailReviewTxs.some(t => t.maybeDuplicate) && (
-                        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 -mt-1">
-                            ⚠️ Mục gắn nhãn <b>“Có thể trùng”</b> đã có giao dịch cùng ngày & số tiền — kiểm tra rồi xóa nếu bị lặp.
-                        </p>
-                    )}
+                    <p className="text-xs text-muted-foreground -mt-1">
+                        Kiểm tra rồi bấm <b className="text-foreground">Xác nhận</b> để thêm. Bấm 🗑 để loại bỏ mục không muốn.
+                        {emailReviewTxs.some(t => t.maybeDuplicate) && ' Mục “Có thể trùng” đã có giao dịch cùng ngày & số tiền.'}
+                    </p>
                     <div className="max-h-[55vh] overflow-y-auto -mx-2 px-2 divide-y divide-border/50">
                         {emailReviewTxs.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-8">Đã xử lý xong — không còn mục nào.</p>
+                            <p className="text-sm text-muted-foreground text-center py-8">Đã bỏ hết — không còn mục nào để thêm.</p>
                         )}
                         {emailReviewTxs.map((t) => (
-                            <div key={t._id} className="flex items-center gap-3 py-3">
-                                <div className={cn(
-                                    'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-bold',
-                                    t.type === 'income'
-                                        ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
-                                        : 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400'
-                                )}>
-                                    {t.type === 'income' ? '+' : '−'}
-                                </div>
+                            <div key={t.sourceEmailId} className="flex items-center gap-3 py-3">
+                                <CategoryIcon
+                                    type={(CATEGORIES_MAP.get(t.category) || CATEGORIES_MAP.get('Khác')!).catIconType || 'khac'}
+                                    size={38}
+                                    tile
+                                    className="flex-shrink-0"
+                                />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <p className="text-[15px] font-bold text-foreground truncate">
-                                            {formatNumber(t.amount)}đ
+                                        <p className={cn('text-[15px] font-bold truncate', t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground')}>
+                                            {t.type === 'income' ? '+' : '−'}{formatNumber(t.amount)}đ
                                         </p>
                                         {t.maybeDuplicate && (
                                             <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full flex-shrink-0">
@@ -622,21 +732,22 @@ export default function SettingsPage() {
                                     </p>
                                 </div>
                                 <button
-                                    onClick={() => handleDeleteImportedTx(t._id)}
-                                    disabled={deletingTxId === t._id}
+                                    onClick={() => excludeImportedTx(t.sourceEmailId)}
+                                    disabled={importing}
                                     className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors disabled:opacity-40"
-                                    aria-label="Xóa giao dịch"
+                                    aria-label="Loại bỏ giao dịch này"
                                 >
-                                    {deletingTxId === t._id
-                                        ? <ActionIcon type="loader" size={16} tile={false} spin />
-                                        : <ActionIcon type="trash" size={16} tile={false} color="currentColor" />}
+                                    <ActionIcon type="trash" size={16} tile={false} color="currentColor" />
                                 </button>
                             </div>
                         ))}
                     </div>
-                    <DialogFooter>
-                        <Button onClick={() => setShowEmailReview(false)} className="rounded-xl w-full">
-                            Xong
+                    <DialogFooter className="flex-row gap-2">
+                        <Button type="button" variant="outline" onClick={() => setShowEmailReview(false)} disabled={importing} className="rounded-xl flex-1">
+                            Hủy
+                        </Button>
+                        <Button onClick={handleConfirmImport} disabled={importing || emailReviewTxs.length === 0} className="rounded-xl flex-1">
+                            {importing ? 'Đang thêm…' : `Xác nhận (${emailReviewTxs.length})`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

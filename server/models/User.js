@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true, minlength: 6 },
     avatar: { type: String, default: '' },
     currency: { type: String, default: 'VND' },
+    // Email-change verification: the pending new address + a short-lived code
+    // that's emailed to that new address; the change only applies once confirmed.
+    emailChangeNew: { type: String, default: null },
+    emailChangeCode: { type: String, default: null },
+    emailChangeExpires: { type: Date, default: null },
     language: { type: String, default: 'vi' },
     // Telegram quick-entry: chat id of the linked bot conversation, plus the
     // short-lived code the app mints so /start <code> can bind this account.
