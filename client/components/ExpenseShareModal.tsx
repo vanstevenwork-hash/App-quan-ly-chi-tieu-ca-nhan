@@ -240,7 +240,7 @@ export default function ExpenseShareModal({ open, onClose, transaction, onSettle
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="
+            <DialogContent disableDefaultAnimation className="
 fixed inset-x-0 bottom-0 top-[5vh] z-[60]
 gap-0 w-full max-w-md mx-auto
 !translate-x-0 !translate-y-0

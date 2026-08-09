@@ -68,7 +68,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="
+            <DialogContent disableDefaultAnimation className="
                 fixed inset-x-0 bottom-0 top-auto z-[60]
                 w-full max-w-md mx-auto gap-0
                 !translate-x-0 !translate-y-0

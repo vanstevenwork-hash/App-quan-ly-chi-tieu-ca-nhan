@@ -183,6 +183,9 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
     const isEdit = !!editCard;
     const isSavings = form.cardType === 'savings';
     const isCredit = form.cardType === 'credit';
+    // Payment accounts (debit / e-wallet): the bank account number matters, so it
+    // gets a prominent field next to the last-4 (used to match email transactions).
+    const isPayAcct = form.cardType === 'debit' || form.cardType === 'eWallet';
 
     // Other credit cards from the same bank that already have sharing on —
     // shown as a preview of who this card would pool its limit with.
@@ -265,6 +268,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent
+                disableDefaultAnimation
                 className="
 fixed inset-x-0 bottom-0 top-[20vh] z-[60]
 gap-2
@@ -275,11 +279,8 @@ rounded-t-3xl sm:rounded-3xl
 shadow-xl flex flex-col
 overflow-hidden
 p-0 border-0
-data-[state=open]:animate-in
-data-[state=closed]:animate-out
-data-[state=open]:slide-in-from-bottom
-data-[state=closed]:slide-out-to-bottom
-duration-200
+data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300 data-[state=open]:ease-out
+data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-bottom data-[state=closed]:duration-300 data-[state=closed]:ease-in
 "
             >
                 <button className="flex h-5 w-full items-center justify-center shrink-0 pt-2 pb-1 bg-white dark:bg-surface z-10" onClick={onClose}>
@@ -516,6 +517,24 @@ duration-200
                                 </div>
                             )}
 
+                            {/* Bank account number — payment accounts only. Full STK so
+                                imported email transactions land on this exact card. */}
+                            {isPayAcct && (
+                                <div>
+                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">
+                                        Số tài khoản ngân hàng <span className="text-slate-400 font-normal text-xs">(tuỳ chọn)</span>
+                                    </p>
+                                    <Input
+                                        value={form.receiveAccountNumber}
+                                        onChange={e => set('receiveAccountNumber', e.target.value.replace(/\s/g, ''))}
+                                        placeholder="VD: 41322102001"
+                                        inputMode="numeric"
+                                        className="w-full rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold tracking-wide text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand"
+                                    />
+                                    <p className="text-xs text-slate-400 mt-1.5">Điền STK đầy đủ để tự khớp giao dịch nhập từ email/ngân hàng vào đúng thẻ này.</p>
+                                </div>
+                            )}
+
                             {/* Savings Details */}
                             {isSavings && (
                                 <>
@@ -600,12 +619,23 @@ duration-200
                                         <div className="col-span-2">
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Tổ chức thẻ</p>
                                             <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar pb-2">
-                                                {['visa', 'mastercard', 'jcb', 'amex', 'napas'].map(net => (
-                                                    <button key={net} type="button" onClick={() => set('cardNetwork', net)}
-                                                        className={cn('flex-1 h-10 min-w-[62px] rounded-xl border flex items-center justify-center bg-white dark:bg-slate-100 transition-all', form.cardNetwork === net ? 'border-brand shadow-sm ring-1 ring-brand' : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
-                                                        {renderNetworkLogo(net)}
-                                                    </button>
-                                                ))}
+                                                {['visa', 'mastercard', 'jcb', 'amex', 'napas'].map(net => {
+                                                    const active = form.cardNetwork === net;
+                                                    return (
+                                                        <button key={net} type="button" onClick={() => set('cardNetwork', net)}
+                                                            className={cn('relative flex-1 h-10 min-w-[62px] rounded-xl border-2 flex items-center justify-center overflow-hidden bg-white dark:bg-slate-100 transition-all',
+                                                                active
+                                                                    ? 'border-brand ring-2 ring-brand/35 shadow-md scale-[1.04]'
+                                                                    : 'border-slate-200 dark:border-transparent hover:border-slate-300 dark:hover:border-slate-400')}>
+                                                            {renderNetworkLogo(net)}
+                                                            {active && (
+                                                                <span className="absolute top-0 right-0 w-5 h-5 rounded-bl-lg bg-brand flex items-center justify-center shadow-sm">
+                                                                    <CustomIcon type="check" size={12} tile={false} color="#FFFFFF" />
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                         <div>
@@ -759,7 +789,7 @@ duration-200
                                 display-only 4-digit cardNumber, only used to render a QR receipt */}
                             {!isSavings && (
                                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-1">Thông tin nhận tiền (chia bill)</p>
+                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-1">{isPayAcct ? 'Mã QR nhận tiền (chia bill)' : 'Thông tin nhận tiền (chia bill)'}</p>
                                     <p className="text-xs text-slate-400 mb-3">Dùng khi bạn chia bill một giao dịch — lưu 1 lần, dùng lại cho các lần chia sau.</p>
                                     <div className="flex gap-3 items-start">
                                         <ImageUpload
@@ -770,13 +800,17 @@ duration-200
                                             size={72}
                                             placeholder="QR"
                                         />
-                                        <div className="flex-1">
-                                            <p className="text-xs font-bold text-[#000000] dark:text-white mb-1.5">Số tài khoản đầy đủ</p>
-                                            <Input value={form.receiveAccountNumber}
-                                                onChange={e => set('receiveAccountNumber', e.target.value.replace(/\s/g, ''))}
-                                                placeholder="VD: 0123456789"
-                                                className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
-                                        </div>
+                                        {/* For payment accounts the account number is captured above,
+                                            next to the last-4 — don't ask for it twice. */}
+                                        {!isPayAcct && (
+                                            <div className="flex-1">
+                                                <p className="text-xs font-bold text-[#000000] dark:text-white mb-1.5">Số tài khoản đầy đủ</p>
+                                                <Input value={form.receiveAccountNumber}
+                                                    onChange={e => set('receiveAccountNumber', e.target.value.replace(/\s/g, ''))}
+                                                    placeholder="VD: 0123456789"
+                                                    className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

@@ -117,7 +117,15 @@ export default function GoalsPage() {
                     title="Mục tiêu 🎯"
                     subtitle="Theo dõi"
                     rightActions={
-                        <RefreshButton onRefresh={refetch} />
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => { setEditGoal(null); setShowForm(true); }}
+                                aria-label="Thêm mục tiêu"
+                                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-brand text-white shadow-sm shadow-brand/30 hover:bg-brand-dark active:scale-90 transition-all">
+                                <CustomIcon type="plus" size={20} tile={false} color="#FFFFFF" className="w-5 h-5" />
+                            </button>
+                            <RefreshButton onRefresh={refetch} />
+                        </div>
                     }
                 />
 
@@ -146,13 +154,8 @@ export default function GoalsPage() {
                 />
             </div>
 
-            {/* ── FAB ───────────────────────────────────────────── */}
-            <button
-                onClick={() => { setEditGoal(null); setShowForm(true); }}
-                className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(108,99,255,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
-                style={{ background: 'linear-gradient(135deg, #4a3575, #36255C)' }}>
-                <CustomIcon type="plus" size={28} tile={false} color="currentColor" className="w-7 h-7 text-white" />
-            </button>
+            {/* Add moved to the header (+) — no floating FAB, to avoid clashing
+                with the BottomNav's central + button. */}
 
             {/* ── Delete Confirm ────────────────────────────────── */}
             {deleteConfirm && (

@@ -109,6 +109,7 @@ export default function GoalFormModal({ open, onClose, onSave, editGoal }: GoalF
     return (
         <Dialog open={open} onOpenChange={v => !v && onClose()}>
             <DialogContent
+                disableDefaultAnimation
                 className="
 fixed inset-x-0 bottom-0 top-[20vh] z-[60]
 w-full max-w-md mx-auto gap-2

@@ -476,13 +476,8 @@ export default function CardsPage() {
                 );
             })()}
 
-            {/* ── FAB ─────────────────────────────────────────── */}
-            <button
-                onClick={() => { setEditCard(null); setShowForm(true); }}
-                className="fixed bottom-28 right-5 w-14 h-14 rounded-full shadow-[0_0_20px_rgba(99,102,241,0.4)] flex items-center justify-center z-40 hover:scale-110 active:scale-95 transition-all"
-                style={{ background: 'linear-gradient(135deg, #4a3575, #36255C)' }}>
-                <CustomIcon type="plus" size={28} tile={false} color="currentColor" className="w-7 h-7 text-white" />
-            </button>
+            {/* Add-card affordances live inside the carousel (Thêm thẻ) — no floating
+                FAB here, to avoid clashing with the BottomNav's central + button. */}
 
             {/* ── Modals ──────────────────────────────────────── */}
             <CardFormModal

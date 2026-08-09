@@ -94,7 +94,7 @@ const fmtFull = (n: number) => formatNumber(n);
 function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open: boolean; initialTab?: PanelTab }) {
     const { isAuthenticated } = useAuthStore();
     const { notifications, loading, markRead, markAllRead } = useNotifications();
-    const { creditAlerts, savingsAlerts, shareInvites, respondToShare, gameInvites, respondToGame, dismissAll, count: alertCount } = useImportantAlerts();
+    const { creditAlerts, savingsAlerts, shareInvites, respondToShare, gameInvites, respondToGame, count: alertCount } = useImportantAlerts();
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     useEffect(() => {
@@ -416,11 +416,12 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                         {renderGroup('Cũ hơn', grouped.older)}
                     </div>
 
-                    {/* Bottom Action */}
-                    {(filtered.length > 0 || (activeTab === 'important' && alertCount > 0)) && (
+                    {/* Bottom Action — only marks real notifications read; the live
+                        card-due / savings reminders persist until resolved. */}
+                    {filtered.length > 0 && (
                         <div className="absolute left-0 right-0 px-4" style={{ bottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
                             <button
-                                onClick={() => { markAllRead(); if (activeTab === 'important') dismissAll(); }}
+                                onClick={markAllRead}
                                 className="w-full py-4 bg-[#F8F9FB] dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-900 dark:text-white font-semibold rounded-[20px] transition-colors shadow-sm border border-gray-100 dark:border-transparent">
                                 Đánh dấu đã đọc tất cả
                             </button>

@@ -45,10 +45,45 @@ function applyBalance(card, type, amount) {
     card.balance += type === 'income' ? (isCredit ? -amount : amount) : (isCredit ? amount : -amount);
 }
 
-const matchCard = (cards, bankShortName, last4) => cards.find(c =>
-    (last4 && c.cardNumber === last4) ||
-    (bankShortName && c.bankShortName?.toUpperCase() === String(bankShortName).toUpperCase())
-);
+const normBank = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+// Find the app card an email transaction belongs to. Priority:
+//   1) exact last-4 of the card number,
+//   2) the full bank account number saved on the card (receiveAccountNumber),
+//   3) same bank (fuzzy, so 'VPB' matches 'VPBANK') — preferring the expected
+//      card type (a transfer from a payment account → a debit card, not credit),
+//      and never a savings book.
+function matchCard(cards, { bankShortName, last4, accountNumber, preferTypes } = {}) {
+    if (last4) {
+        const byNum = cards.find(c => c.cardNumber && c.cardNumber === last4);
+        if (byNum) return byNum;
+    }
+    if (accountNumber) {
+        const acc = String(accountNumber).replace(/\D/g, '');
+        if (acc.length >= 4) {
+            const byAcc = cards.find(c => {
+                const r = String(c.receiveAccountNumber || '').replace(/\D/g, '');
+                return r && (r === acc || r.endsWith(acc) || acc.endsWith(r));
+            });
+            if (byAcc) return byAcc;
+        }
+    }
+    if (bankShortName) {
+        const b = normBank(bankShortName);
+        const sameBank = cards.filter(c => {
+            const cb = normBank(c.bankShortName);
+            return cb && b && (cb === b || cb.includes(b) || b.includes(cb));
+        });
+        if (sameBank.length) {
+            if (preferTypes && preferTypes.length) {
+                const typed = sameBank.find(c => preferTypes.includes(c.cardType));
+                if (typed) return typed;
+            }
+            return sameBank.find(c => c.cardType !== 'savings') || sameBank[0];
+        }
+    }
+    return null;
+}
 
 const cardLabel = (c) => c ? (c.bankShortName ? `${c.bankShortName}${c.cardNumber ? ' ••' + c.cardNumber : ''}` : (c.name || 'Thẻ')) : 'Tiền mặt';
 
@@ -78,6 +113,7 @@ ${text}`;
         date: /^\d{4}-\d{2}-\d{2}$/.test(p.date) ? p.date : '',
         bankShortName: typeof p.bankShortName === 'string' ? p.bankShortName : '',
         last4: typeof p.last4 === 'string' ? p.last4.replace(/\D/g, '').slice(-4) : '',
+        accountNumber: '',
         category: cats.includes(p.category) ? p.category : 'Khác',
     };
 }
@@ -97,7 +133,8 @@ function parseVpbankNeo(from, text) {
     if (!(amount > 0)) return null;
 
     const acctM = t.match(/T[àa]i kho[ảa]n (?:tr[íi]ch n[ợo]|thanh to[áa]n)\s*:?\s*(\d{6,})/i);
-    const last4 = acctM ? acctM[1].slice(-4) : '';
+    const accountNumber = acctM ? acctM[1] : '';
+    const last4 = accountNumber ? accountNumber.slice(-4) : '';
     const dateM = t.match(/(\d{2})\/(\d{2})\/(\d{4})/);
     const date = dateM ? `${dateM[3]}-${dateM[2]}-${dateM[1]}` : '';
 
@@ -118,6 +155,9 @@ function parseVpbankNeo(from, text) {
         date,
         bankShortName: 'VPB',
         last4,
+        accountNumber,
+        // It's debited from a payment account → a debit/eWallet card, not credit.
+        preferTypes: ['debit', 'eWallet'],
         category: 'Khác',
     };
 }
@@ -177,7 +217,7 @@ async function scanBankEmails({ days = 7, user = null, onProgress = null } = {})
                     seenStatements.add(messageId);
                     statementsChanged = true;
                     if (st && st.ok) {
-                        const card = matchCard(cards, senderBankShort(from), st.last4);
+                        const card = matchCard(cards, { bankShortName: senderBankShort(from), last4: st.last4 });
                         if (card) {
                             if (st.totalDue > 0) card.balance = st.totalDue;
                             if (st.dueDate) card.paymentDueDay = new Date(st.dueDate).getDate();
@@ -213,7 +253,7 @@ async function scanBankEmails({ days = 7, user = null, onProgress = null } = {})
                 continue;
             }
 
-            const card = matchCard(cards, data.bankShortName, data.last4);
+            const card = matchCard(cards, { bankShortName: data.bankShortName, last4: data.last4, accountNumber: data.accountNumber, preferTypes: data.preferTypes });
             const txDate = data.date ? new Date(data.date) : (env.date || new Date());
             result.items.push({
                 type: data.type,
