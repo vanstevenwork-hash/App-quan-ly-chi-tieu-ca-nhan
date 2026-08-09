@@ -11,6 +11,10 @@ const sendEmail = async (options) => {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
         },
+        // Fail fast instead of hanging forever if Gmail SMTP is unreachable.
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 20000,
     });
 
     // 2. Define the email options

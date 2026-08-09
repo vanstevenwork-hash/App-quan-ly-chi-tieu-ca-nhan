@@ -440,33 +440,86 @@ export default function AnalyticsPage() {
                         )}
                     </section>
 
-                    {/* ── Monthly history: real month-over-month comparison ── */}
-                    <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
-                        <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-1">Lịch sử theo tháng</h2>
-                        <div className="space-y-1.5">
-                            {monthlyHistory.map((m, i) => {
-                                const prev = i > 0 ? monthlyHistory[i - 1] : null;
-                                const expenseDelta = prev && prev.expense > 0 ? ((m.expense - prev.expense) / prev.expense) * 100 : null;
-                                const isCurrent = i === monthlyHistory.length - 1;
-                                return (
-                                    <div key={m.label} className={cn(
-                                        'flex items-center gap-2 rounded-2xl px-3 py-2.5 transition-colors',
-                                        isCurrent ? 'bg-purple-50/60 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30' : 'border border-transparent'
-                                    )}>
-                                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 w-14 flex-shrink-0">{m.label}</span>
-                                        <span className="text-[10px] font-bold text-emerald-500 flex-1 text-right">+{fmt(m.income)}₫</span>
-                                        <span className="text-[10px] font-bold text-rose-500 flex-1 text-right">-{fmt(m.expense)}₫</span>
-                                        <span className={cn(
-                                            'text-[9px] font-bold flex-shrink-0 w-11 text-right',
-                                            expenseDelta === null ? 'text-slate-300 dark:text-slate-600' : expenseDelta <= 0 ? 'text-emerald-500' : 'text-rose-500'
-                                        )}>
-                                            {expenseDelta === null ? '—' : `${expenseDelta <= 0 ? '↓' : '↑'}${Math.abs(expenseDelta).toFixed(0)}%`}
-                                        </span>
-                                    </div>
-                                );
-                            })}
+                    {/* ── Transaction List (recent) — moved up, right under the chart ── */}
+                    <section>
+                        <div className="flex items-center justify-between flex-wrap gap-y-2 mb-3 px-1 gap-2">
+                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex-shrink-0">Giao dịch gần nhất</h2>
+                            <div className="flex items-center gap-1.5">
+                                <button onClick={handleExport}
+                                    title="Xuất CSV"
+                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-surface border border-slate-200/50 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex-shrink-0">
+                                    <CustomIcon type="upload" size={14} tile={false} color="currentColor" />
+                                </button>
+                                <div className="bg-slate-100 dark:bg-surface rounded-xl p-1 flex gap-1 border border-slate-200/50 dark:border-slate-800">
+                                    {(['all', 'expense', 'income'] as const).map(f => (
+                                        <button key={f} onClick={() => setFilterType(f)}
+                                            className={cn('px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase',
+                                                filterType === f ? 'bg-brand text-white shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
+                                            {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi' : 'Thu'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                        <p className="text-[9px] text-slate-300 dark:text-slate-600 text-center mt-3">Chi tiêu so với tháng liền trước</p>
+
+                        <div className="space-y-2">
+                            {filteredTx.length === 0 ? (
+                                <div className="py-12 text-center bg-white dark:bg-surface/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-surface flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-slate-800">
+                                        <CustomIcon type="filter" size={24} tile={false} color="currentColor" className="text-slate-300" />
+                                    </div>
+                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-medium italic">Không tìm thấy giao dịch nào</p>
+                                </div>
+                            ) : (
+                                filteredTx.map(t => {
+                                    const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES[CATEGORIES.length - 1];
+                                    const isIncome = t.type === 'income';
+                                    return (
+                                        <div key={t._id} className="bg-white dark:bg-surface rounded-2xl p-3 flex items-center justify-between gap-2 border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <CategoryIcon
+                                                    type={cat.catIconType || 'khac'}
+                                                    size={36}
+                                                    tile
+                                                    className="flex-shrink-0"
+                                                />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-bold text-[13px] text-slate-800 dark:text-slate-200 truncate">{t.note || t.category}</p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">{t.category}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
+                                                        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500">
+                                                            {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="relative h-10 min-w-[80px] overflow-hidden flex items-center justify-end">
+                                                {/* Amount View */}
+                                                <div className="flex flex-col items-end transition-all duration-300 group-hover:-translate-y-full group-hover:opacity-0">
+                                                    <p className={cn('text-[13px] font-black leading-none', isIncome ? 'text-emerald-500' : 'text-slate-900 dark:text-white')}>
+                                                        {isIncome ? '+' : '-'}{fmt(t.amount)}₫
+                                                    </p>
+                                                    {isIncome && <span className="text-[7px] font-bold text-emerald-400 uppercase mt-1">Đã cộng</span>}
+                                                </div>
+
+                                                {/* Hover Actions */}
+                                                <div className="absolute inset-0 flex items-center justify-end gap-1.5 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }}
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 transition-all shadow-sm">
+                                                        <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(t._id); }}
+                                                        className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-rose-100 hover:text-rose-500 dark:hover:bg-rose-900/40 transition-all shadow-sm">
+                                                        <CustomIcon type="trash" size={16} tile={false} color="currentColor" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
                     </section>
 
                     {/* ── Category pie chart ──────────────────────────── */}
@@ -522,86 +575,33 @@ export default function AnalyticsPage() {
                         </section>
                     )}
 
-                    {/* ── Transaction List ────────────────────────────── */}
-                    <section>
-                        <div className="flex items-center justify-between flex-wrap gap-y-2 mb-3 px-1 gap-2">
-                            <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest flex-shrink-0">Giao dịch gần nhất</h2>
-                            <div className="flex items-center gap-1.5">
-                                <button onClick={handleExport}
-                                    title="Xuất CSV"
-                                    className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-surface border border-slate-200/50 dark:border-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex-shrink-0">
-                                    <CustomIcon type="upload" size={14} tile={false} color="currentColor" />
-                                </button>
-                                <div className="bg-slate-100 dark:bg-surface rounded-xl p-1 flex gap-1 border border-slate-200/50 dark:border-slate-800">
-                                    {(['all', 'expense', 'income'] as const).map(f => (
-                                        <button key={f} onClick={() => setFilterType(f)}
-                                            className={cn('px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase',
-                                                filterType === f ? 'bg-brand text-white shadow-sm' : 'text-slate-400 dark:text-slate-600')}>
-                                            {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi' : 'Thu'}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            {filteredTx.length === 0 ? (
-                                <div className="py-12 text-center bg-white dark:bg-surface/30 rounded-[20px] border border-dashed border-slate-200 dark:border-slate-800">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-surface flex items-center justify-center mx-auto mb-3 border border-slate-100 dark:border-slate-800">
-                                        <CustomIcon type="filter" size={24} tile={false} color="currentColor" className="text-slate-300" />
+                    {/* ── Monthly history: moved to the bottom ── */}
+                    <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+                        <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 px-1">Lịch sử theo tháng</h2>
+                        <div className="space-y-1.5">
+                            {monthlyHistory.map((m, i) => {
+                                const prev = i > 0 ? monthlyHistory[i - 1] : null;
+                                const expenseDelta = prev && prev.expense > 0 ? ((m.expense - prev.expense) / prev.expense) * 100 : null;
+                                const isCurrent = i === monthlyHistory.length - 1;
+                                return (
+                                    <div key={m.label} className={cn(
+                                        'flex items-center gap-2 rounded-2xl px-3 py-2.5 transition-colors',
+                                        isCurrent ? 'bg-purple-50/60 dark:bg-purple-900/10 border border-purple-100 dark:border-purple-900/30' : 'border border-transparent'
+                                    )}>
+                                        <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 w-14 flex-shrink-0">{m.label}</span>
+                                        <span className="text-[10px] font-bold text-emerald-500 flex-1 text-right">+{fmt(m.income)}₫</span>
+                                        <span className="text-[10px] font-bold text-rose-500 flex-1 text-right">-{fmt(m.expense)}₫</span>
+                                        <span className={cn(
+                                            'text-[9px] font-bold flex-shrink-0 w-11 text-right',
+                                            expenseDelta === null ? 'text-slate-300 dark:text-slate-600' : expenseDelta <= 0 ? 'text-emerald-500' : 'text-rose-500'
+                                        )}>
+                                            {expenseDelta === null ? '—' : `${expenseDelta <= 0 ? '↓' : '↑'}${Math.abs(expenseDelta).toFixed(0)}%`}
+                                        </span>
                                     </div>
-                                    <p className="text-slate-400 dark:text-slate-500 text-xs font-medium italic">Không tìm thấy giao dịch nào</p>
-                                </div>
-                            ) : (
-                                filteredTx.map(t => {
-                                    const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES[CATEGORIES.length - 1];
-                                    const isIncome = t.type === 'income';
-                                    return (
-                                        <div key={t._id} className="bg-white dark:bg-surface rounded-2xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">
-                                            <div className="flex items-center gap-3">
-                                                <CategoryIcon
-                                                    type={cat.catIconType || 'khac'}
-                                                    size={36}
-                                                    tile
-                                                    className="flex-shrink-0"
-                                                />
-                                                <div className="min-w-0">
-                                                    <p className="font-bold text-[13px] text-slate-800 dark:text-slate-200 truncate">{t.note || t.category}</p>
-                                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">{t.category}</span>
-                                                        <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-                                                        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500">
-                                                            {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="relative h-10 min-w-[80px] overflow-hidden flex items-center justify-end">
-                                                {/* Amount View */}
-                                                <div className="flex flex-col items-end transition-all duration-300 group-hover:-translate-y-full group-hover:opacity-0">
-                                                    <p className={cn('text-[13px] font-black leading-none', isIncome ? 'text-emerald-500' : 'text-slate-900 dark:text-white')}>
-                                                        {isIncome ? '+' : '-'}{fmt(t.amount)}₫
-                                                    </p>
-                                                    {isIncome && <span className="text-[7px] font-bold text-emerald-400 uppercase mt-1">Đã cộng</span>}
-                                                </div>
-
-                                                {/* Hover Actions */}
-                                                <div className="absolute inset-0 flex items-center justify-end gap-1.5 translate-y-full opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(t); }}
-                                                        className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-indigo-100 hover:text-indigo-600 dark:hover:bg-indigo-900/40 transition-all shadow-sm">
-                                                        <CustomIcon type="pencil" size={16} tile={false} color="currentColor" />
-                                                    </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(t._id); }}
-                                                        className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-700 flex-shrink-0 text-slate-500 dark:text-slate-400 hover:bg-rose-100 hover:text-rose-500 dark:hover:bg-rose-900/40 transition-all shadow-sm">
-                                                        <CustomIcon type="trash" size={16} tile={false} color="currentColor" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            )}
+                                );
+                            })}
                         </div>
+                        <p className="text-[9px] text-slate-300 dark:text-slate-600 text-center mt-3">Chi tiêu so với tháng liền trước</p>
                     </section>
                 </div>
             </div>

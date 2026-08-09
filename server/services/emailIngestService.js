@@ -82,6 +82,46 @@ ${text}`;
     };
 }
 
+// ── Deterministic parser for VPBank NEO transaction emails ──
+// VPBank's "Transfer/Payment successful" emails have a fixed field layout, so we
+// pull the figures with regex — 100% reliable and free (no LLM). Returns the same
+// shape as parseTxEmail, or null if this isn't a recognizable VPBank tx email.
+function parseVpbankNeo(from, text) {
+    if (!/vpbankonline@vpb/i.test(from || '')) return null;
+    const t = (text || '').replace(/\s+/g, ' ');
+    // Money out = the DEBIT amount. Two layouts: "Số tiền trích nợ" (transfer) and
+    // "Số tiền thanh toán" (bill/QRPay). Amount may carry a ".00" decimal.
+    const amtM = t.match(/S[ốo] ti[eề]n (?:tr[íi]ch n[ợo]|thanh to[áa]n)\s*:?\s*([\d.,]+)/i);
+    if (!amtM) return null;
+    const amount = Math.abs(parseInt(amtM[1].replace(/[.,]\d{2}$/, '').replace(/[.,]/g, ''), 10)) || 0;
+    if (!(amount > 0)) return null;
+
+    const acctM = t.match(/T[àa]i kho[ảa]n (?:tr[íi]ch n[ợo]|thanh to[áa]n)\s*:?\s*(\d{6,})/i);
+    const last4 = acctM ? acctM[1].slice(-4) : '';
+    const dateM = t.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    const date = dateM ? `${dateM[3]}-${dateM[2]}-${dateM[1]}` : '';
+
+    let note = '';
+    const noteM = t.match(/N[ộo]i dung chuy[eể]n ti[eề]n\s*:?\s*(.+?)\s*Details of Payment/i);
+    if (noteM) note = noteM[1].trim();
+    if (!note) { // bill/QRPay layout: "Dịch vụ thanh toán … Nhà cung cấp …"
+        const svc = t.match(/D[ịi]ch v[ụu] thanh to[áa]n\s*:?\s*(.+?)\s*(?:Nh[àa] cung c[ấa]p|Billing)/i);
+        const biller = t.match(/Nh[àa] cung c[ấa]p\s*:?\s*(.+?)\s*(?:Billing|Biller|M[ãa]|C[áa]m [ơo]n)/i);
+        note = [svc && svc[1].trim(), biller && biller[1].trim()].filter(Boolean).join(' - ');
+    }
+    if (!note) { const benM = t.match(/T[êe]n ng[uư][ờo]i h[uư][ởo]ng\s*:?\s*(.+?)\s*Beneficiary/i); if (benM) note = 'Chuyển ' + benM[1].trim(); }
+    return {
+        isTransaction: true,
+        type: 'expense',
+        amount,
+        note: (note || 'Giao dịch VPBank').slice(0, 200),
+        date,
+        bankShortName: 'VPB',
+        last4,
+        category: 'Khác',
+    };
+}
+
 // ── Scan the inbox and PREVIEW transactions (nothing is written for the user to
 // review first). Statement PDFs still auto-update the matched card's dư nợ +
 // hạn thanh toán (low-risk). `onProgress(done, total)` is called as it goes so
@@ -160,9 +200,13 @@ async function scanBankEmails({ days = 7, user = null, onProgress = null } = {})
                 continue;
             }
             const body = (mail.text || (mail.html || '').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').slice(0, 4000);
-            let data;
-            try { data = await parseTxEmail(`Tiêu đề: ${subject}\nNgười gửi: ${from}\n\n${body}`); }
-            catch { if (onProgress) onProgress(i + 1, total); continue; }
+            // VPBank NEO has a fixed format → parse deterministically first (reliable
+            // + no LLM cost). Fall back to Gemini for other banks / formats.
+            let data = parseVpbankNeo(from, body);
+            if (!data) {
+                try { data = await parseTxEmail(`Tiêu đề: ${subject}\nNgười gửi: ${from}\n\n${body}`); }
+                catch { if (onProgress) onProgress(i + 1, total); continue; }
+            }
             if (!data.isTransaction || !(data.amount > 0)) {
                 result.notTx++;
                 if (onProgress) onProgress(i + 1, total);
