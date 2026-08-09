@@ -1,4 +1,5 @@
 'use client';
+import { formatNumber } from '@/lib/utils';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { useState } from 'react';
@@ -29,7 +30,7 @@ export default function BalanceCard({
                 </p>
                 <div className="flex items-center justify-center gap-3">
                     <p className="text-2xl font-bold text-foreground text-money tracking-tight">
-                        {hidden ? '••••••••' : totalBalance.toLocaleString('vi-VN')}
+                        {hidden ? '••••••••' : formatNumber(totalBalance)}
                         <span className="text-lg font-semibold text-muted-foreground ml-2">VND</span>
                     </p>
                     <button

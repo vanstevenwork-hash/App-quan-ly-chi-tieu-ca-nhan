@@ -20,6 +20,7 @@ import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 import { useSharedCashback } from '@/hooks/useSharedCashback';
 import { useCardShares } from '@/hooks/useCardShares';
 import Link from 'next/link';
+import { formatNumber } from '@/lib/utils';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) => {
@@ -28,7 +29,7 @@ const fmt = (n: number) => {
     if (n >= 1_000) return `${(n / 1_000).toFixed(0)}k`;
     return `${n}`;
 };
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = formatNumber;
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
@@ -144,8 +145,8 @@ export default function DashboardPage() {
 
             {/* ── Header: identity left, actions right — sticky like every other page ── */}
             <header
-                className="sticky top-0 z-20 px-5 pb-3 flex items-center gap-3 bg-[#F8F9FF]/80 dark:bg-surface-deep/80 backdrop-blur-lg"
-                style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
+                className="sticky top-0 z-20 px-5 pb-2 flex items-center gap-3 bg-[#F8F9FF]/80 dark:bg-surface-deep/80 backdrop-blur-lg"
+                style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.625rem)' }}
             >
                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
                     {user?.avatar ? (
@@ -164,7 +165,17 @@ export default function DashboardPage() {
                             <span className="relative">{initials}</span>
                         </div>
                     )}
-                    <p className="text-slate-800 dark:text-white font-bold text-base truncate">{user?.name || 'Người dùng'}</p>
+                    <div className="min-w-0 flex flex-col items-start gap-1">
+                        <p className="text-slate-800 dark:text-white font-bold text-base truncate max-w-full">{user?.name || 'Người dùng'}</p>
+                        {/* Cashback this month — moved up here, right under the name */}
+                        <Link href="/cashback"
+                            className="inline-flex items-center gap-1 bg-amber-50 dark:bg-black/25 hover:bg-amber-100 dark:hover:bg-black/35 transition-colors pl-1 pr-2 py-0.5 rounded-full border border-amber-100 dark:border-white/10">
+                            <span className="text-sm leading-none flex-shrink-0">🪙</span>
+                            <span className="text-amber-700 dark:text-amber-300 text-[11px] font-bold whitespace-nowrap">
+                                {monthCashback > 0 ? `+${fmtFull(monthCashback)}đ` : '0đ'}
+                            </span>
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -192,10 +203,10 @@ export default function DashboardPage() {
                 </div>
             </header>
 
-            <main className="px-5 space-y-5">
+            <main className="px-5 space-y-4">
 
                 {/* ── Asset card: light lavender / dark navy→purple with aurora glow ── */}
-                <div className="anim-scale-in relative overflow-hidden rounded-[20px] p-5 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#191E36] dark:via-[#151829] dark:to-[#141224] border border-[#E9D5FF] dark:border-slate-700/50">
+                <div className="anim-scale-in relative overflow-hidden rounded-[20px] p-4 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#191E36] dark:via-[#151829] dark:to-[#141224] border border-[#E9D5FF] dark:border-slate-700/50">
                     {/* Aurora glow — confined to the bottom-right corner, card stays mostly dark navy */}
                     <div aria-hidden className="absolute inset-0 pointer-events-none">
                         {/* deep-purple bloom hugging the corner */}
@@ -227,38 +238,27 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="relative z-10">
-                        {/* Label + eye toggle left, cashback coin badge right */}
-                        <div className="flex items-center justify-between gap-2 mb-2.5">
-                            <div className="flex items-center gap-1.5">
-                                <Link href="/wealth" className="text-slate-500 dark:text-slate-300 text-sm font-medium hover:text-purple-500 dark:hover:text-white transition-colors">Tài sản ròng</Link>
-                                <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
-                                    {hideBalance ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" className="w-4 h-4" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" className="w-4 h-4" />}
-                                </button>
-                            </div>
-
-                            {/* Cashback badge — always shown, even at 0, so the feature is discoverable */}
-                            <Link href="/cashback"
-                                className="inline-flex items-center gap-1.5 bg-amber-50 dark:bg-black/25 hover:bg-amber-100 dark:hover:bg-black/35 transition-colors pl-1.5 pr-2.5 py-1 rounded-full border border-amber-100 dark:border-white/10 flex-shrink-0">
-                                <span className="text-base leading-none flex-shrink-0">🪙</span>
-                                <span className="text-amber-700 dark:text-amber-300 text-xs font-bold whitespace-nowrap">
-                                    {monthCashback > 0 ? `+${fmtFull(monthCashback)}đ` : '0đ'}
-                                </span>
-                            </Link>
+                        {/* Label + eye toggle (cashback badge moved to the header) */}
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                            <Link href="/wealth" className="text-slate-500 dark:text-slate-300 text-sm font-medium hover:text-purple-500 dark:hover:text-white transition-colors">Tài sản ròng</Link>
+                            <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
+                                {hideBalance ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" className="w-4 h-4" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" className="w-4 h-4" />}
+                            </button>
                         </div>
 
-                        <p className="text-slate-800 dark:text-white text-[30px] font-bold tracking-tight leading-none text-money">
+                        <p className="text-slate-800 dark:text-white text-[21px] font-bold tracking-tight leading-none text-money">
                             {hideBalance ? '*******' : `${fmtFull(netWorth)}đ`}
                         </p>
 
                         {/* Thu/Chi — value on top, label below, split by divider */}
-                        <div className="flex items-center gap-6 mt-5">
+                        <div className="flex items-center gap-6 mt-3">
                             <Link href="/analytics" className="group">
                                 <p className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
                                     <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" /> +{fmt(summary.income)}
                                 </p>
                                 <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Thu nhập</p>
                             </Link>
-                            <div className="w-px h-9 bg-slate-200 dark:bg-white/15" />
+                            <div className="w-px h-8 bg-slate-200 dark:bg-white/15" />
                             <Link href="/analytics" className="group">
                                 <p className="inline-flex items-center gap-1 text-red-500 dark:text-red-400 text-sm font-bold">
                                     <UtilityIcon type="trendingDown" size={14} tile={false} color="#EF4444" /> -{fmt(summary.expense)}

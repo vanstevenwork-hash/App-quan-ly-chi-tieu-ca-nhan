@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import type { Card, CardFormData } from '@/hooks/useCards';
 import { ActionIcon } from '@/components/icons/CustomIcon';
@@ -523,7 +523,7 @@ duration-200
                                     <div>
                                         <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Số tiền gửi (VND) <span className="text-red-500">*</span></p>
                                         <Input type="text"
-                                            value={form.balance ? new Intl.NumberFormat('vi-VN').format(form.balance) : ''}
+                                            value={form.balance ? formatNumber(form.balance) : ''}
                                             onChange={e => { set('balance', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
                                             placeholder="0"
                                             className={cn('rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:ring-1', errCls('balance') || 'focus:border-brand dark:focus:border-purple-400 focus:ring-brand')} />
@@ -623,7 +623,7 @@ duration-200
                                             <div>
                                                 <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hạn mức tín dụng (VND)</p>
                                                 <Input type="text"
-                                                    value={form.creditLimit ? new Intl.NumberFormat('vi-VN').format(form.creditLimit) : ''}
+                                                    value={form.creditLimit ? formatNumber(form.creditLimit) : ''}
                                                     onChange={e => { set('creditLimit', Number(e.target.value.replace(/\D/g, ''))); setErrors(p => ({ ...p, balance: '' })); }}
                                                     placeholder="50.000.000"
                                                     className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
@@ -684,7 +684,7 @@ duration-200
                                         <div>
                                             <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hoàn tiền tối đa/tháng</p>
                                             <Input type="text"
-                                                value={form.cashbackCap ? new Intl.NumberFormat('vi-VN').format(form.cashbackCap) : ''}
+                                                value={form.cashbackCap ? formatNumber(form.cashbackCap) : ''}
                                                 onChange={e => set('cashbackCap', Number(e.target.value.replace(/\D/g, '')))}
                                                 placeholder="Không giới hạn"
                                                 className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
@@ -693,7 +693,7 @@ duration-200
                                     <div>
                                         <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Chi tiêu tối thiểu/tháng để nhận hoàn (VND)</p>
                                         <Input type="text"
-                                            value={form.cashbackMinSpend ? new Intl.NumberFormat('vi-VN').format(form.cashbackMinSpend) : ''}
+                                            value={form.cashbackMinSpend ? formatNumber(form.cashbackMinSpend) : ''}
                                             onChange={e => set('cashbackMinSpend', Number(e.target.value.replace(/\D/g, '')))}
                                             placeholder="vd: 15.000.000 · để trống nếu không yêu cầu"
                                             className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
@@ -703,7 +703,7 @@ duration-200
                                     <div>
                                         <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Phí thường niên (VND)</p>
                                         <Input type="text"
-                                            value={form.annualFee ? new Intl.NumberFormat('vi-VN').format(form.annualFee) : ''}
+                                            value={form.annualFee ? formatNumber(form.annualFee) : ''}
                                             onChange={e => set('annualFee', Number(e.target.value.replace(/\D/g, '')))}
                                             placeholder="vd: 400.000 · để trống nếu miễn phí"
                                             className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />

@@ -2,14 +2,14 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
 import { cardsApi } from '@/lib/api';
 import type { Card } from '@/hooks/useCards';
 import { toast } from 'sonner';
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
+const fmt = (n: number) => formatNumber(Math.round(n));
 const TERMS = [1, 3, 6, 12, 24];
 
 interface SavingsRenewModalProps {
@@ -108,7 +108,7 @@ duration-200
                                 Chỉ gốc<br /><span className="text-[10px] font-semibold opacity-70">{fmt(card.balance)}đ</span>
                             </button>
                         </div>
-                        <Input type="text" value={newAmount ? new Intl.NumberFormat('vi-VN').format(newAmount) : ''}
+                        <Input type="text" value={newAmount ? formatNumber(newAmount) : ''}
                             onChange={e => setNewAmount(Number(e.target.value.replace(/\D/g, '')))}
                             placeholder="0"
                             className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-bold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />

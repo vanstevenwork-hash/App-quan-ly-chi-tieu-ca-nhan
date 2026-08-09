@@ -13,12 +13,12 @@ import CardFormModal from '@/components/CardFormModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
 import CardShareModal from '@/components/CardShareModal';
 import PageHeader from '@/components/PageHeader';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { resolveCardId, getCashbackAmount, getCappedCashbackTotal } from '@/lib/cashback';
 import { getActiveInstallmentPlans, getDueThisCycle } from '@/lib/cardDue';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
@@ -393,14 +393,14 @@ export default function CardDetailPage() {
                         <div className="flex items-center gap-3 px-4 py-3">
                             <CustomIcon type="hoanTien" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                             <span className="text-xs text-slate-400 flex-1">Chi tối thiểu để nhận hoàn</span>
-                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{new Intl.NumberFormat('vi-VN').format(card.cashbackMinSpend)}đ/tháng</span>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{formatNumber(card.cashbackMinSpend)}đ/tháng</span>
                         </div>
                     )}
                     {card.annualFee > 0 && (
                         <div className="flex items-center gap-3 px-4 py-3">
                             <CustomIcon type="creditCard" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                             <span className="text-xs text-slate-400 flex-1">Phí thường niên</span>
-                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{new Intl.NumberFormat('vi-VN').format(card.annualFee)}đ/năm</span>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{formatNumber(card.annualFee)}đ/năm</span>
                         </div>
                     )}
                     {card.note && (
@@ -448,7 +448,7 @@ export default function CardDetailPage() {
                                                 {isExpense ? '-' : '+'}{fmt(t.amount)}đ
                                             </p>
                                             {isExpense && cb > 0 && (
-                                                <p className="text-[10px] text-amber-500 font-semibold">+{Math.round(cb).toLocaleString('vi-VN')}đ CB</p>
+                                                <p className="text-[10px] text-amber-500 font-semibold">+{formatNumber(Math.round(cb))}đ CB</p>
                                             )}
                                         </div>
                                     </div>

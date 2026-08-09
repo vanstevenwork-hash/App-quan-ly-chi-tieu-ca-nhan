@@ -1,4 +1,5 @@
 'use client';
+import { formatNumber } from '@/lib/utils';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
@@ -12,7 +13,7 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;

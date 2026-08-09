@@ -5,10 +5,10 @@ import { CustomIcon } from '@/components/icons/CustomIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useBankLogo } from '@/hooks/useBankLogo';
 import { type Card } from '@/hooks/useCards';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 
 // ─── Formatters / helpers (self-contained so the deck drops into any page) ──
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
+const fmt = (n: number) => formatNumber(Math.round(n));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;

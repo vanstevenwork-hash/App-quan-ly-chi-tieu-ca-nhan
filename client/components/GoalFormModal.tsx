@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import type { Goal, GoalFormData } from '@/hooks/useGoals';
 
 const GOAL_CATEGORIES = [
@@ -191,7 +191,7 @@ duration-200
                             <input
                                 value={
                                     targetAmount
-                                        ? parseInt(targetAmount.replace(/\D/g, '') || '0').toLocaleString('vi-VN')
+                                        ? formatNumber(parseInt(targetAmount.replace(/\D/g, '') || '0'))
                                         : ''
                                 }
                                 onChange={e => {
@@ -273,7 +273,7 @@ duration-200
                     </div>
 
 
-                    {/* Deadline */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block">Ngày hoàn thành</label> <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 10)} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition" /> </div> {/* Auto-save */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 block">Tiết kiệm tự động (tuỳ chọn)</label> <div className="flex gap-2"> <div className="relative flex-1"> <input value={autoSaveAmount ? parseInt(autoSaveAmount.replace(/\D/g, '') || '0').toLocaleString('vi-VN') : ''} onChange={e => setAutoSaveAmount(e.target.value.replace(/\D/g, ''))} placeholder="Số tiền" className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] pr-6" /> <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">₫</span> </div> <select value={autoSaveFreq} onChange={e => setAutoSaveFreq(e.target.value as any)} className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-surface text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-[#6C63FF] flex-shrink-0" > <option value="">Tần suất</option> <option value="daily">Hàng ngày</option> <option value="weekly">Hàng tuần</option> <option value="monthly">Hàng tháng</option> </select> </div> </div>
+                    {/* Deadline */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block">Ngày hoàn thành</label> <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} min={new Date().toISOString().slice(0, 10)} className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition" /> </div> {/* Auto-save */} <div> <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 block">Tiết kiệm tự động (tuỳ chọn)</label> <div className="flex gap-2"> <div className="relative flex-1"> <input value={autoSaveAmount ? formatNumber(parseInt(autoSaveAmount.replace(/\D/g, '') || '0')) : ''} onChange={e => setAutoSaveAmount(e.target.value.replace(/\D/g, ''))} placeholder="Số tiền" className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] pr-6" /> <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">₫</span> </div> <select value={autoSaveFreq} onChange={e => setAutoSaveFreq(e.target.value as any)} className="rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm bg-white dark:bg-surface text-slate-700 dark:text-slate-300 outline-none focus:ring-1 focus:ring-[#6C63FF] flex-shrink-0" > <option value="">Tần suất</option> <option value="daily">Hàng ngày</option> <option value="weekly">Hàng tuần</option> <option value="monthly">Hàng tháng</option> </select> </div> </div>
                     {/* Note */}
                     <div>
                         <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block">

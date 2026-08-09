@@ -5,7 +5,7 @@ import { ActionIcon } from '@/components/icons/CustomIcon';
 import { UtilityIcon } from '@/components/icons/CustomIcon';
 import { createPortal } from 'react-dom';
 import { cardsApi } from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Card } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
@@ -27,7 +27,7 @@ interface CardPaymentModalProps {
     accounts?: Card[];
 }
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
@@ -81,7 +81,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
     const remaining = balance - (parseInt(amount.replace(/\D/g, '') || '0'));
 
     const handleInput = (v: string) => setAmount(v.replace(/\D/g, ''));
-    const displayAmount = amount ? parseInt(amount).toLocaleString('vi-VN') : '';
+    const displayAmount = amount ? formatNumber(parseInt(amount)) : '';
 
     const handlePay = async () => {
         if (!selectedCard || !amount) return;

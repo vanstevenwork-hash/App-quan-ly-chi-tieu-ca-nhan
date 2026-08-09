@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { expenseSharesApi } from '@/lib/api';
 import { useCards } from '@/hooks/useCards';
@@ -58,7 +58,7 @@ interface ExpenseShareModalProps {
     onSettled?: () => void; // called after a participant is marked paid (balance/transactions changed)
 }
 
-const fmt = (n: number) => n.toLocaleString('vi-VN');
+const fmt = (n: number) => formatNumber(n);
 
 export default function ExpenseShareModal({ open, onClose, transaction, onSettled }: ExpenseShareModalProps) {
     const { cards } = useCards();
@@ -285,7 +285,7 @@ duration-200
                                                 placeholder={`Người ${i + 1}`}
                                                 className="flex-[1.2] rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                             <Input type="text"
-                                                value={row.amount ? new Intl.NumberFormat('vi-VN').format(row.amount) : ''}
+                                                value={row.amount ? formatNumber(row.amount) : ''}
                                                 onChange={e => updateRow(i, { amount: Number(e.target.value.replace(/\D/g, '')) })}
                                                 placeholder="Số tiền"
                                                 className="flex-1 rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-11 text-sm font-bold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />

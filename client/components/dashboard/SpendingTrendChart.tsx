@@ -3,10 +3,10 @@ import { memo, useMemo, useState } from 'react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import Link from 'next/link';
 
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(n);
 
 // "5,6tr" / "820k" — Vietnamese compact amounts
 const fmtViShort = (n: number) => {

@@ -2,11 +2,11 @@
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { memo, useMemo, useState } from 'react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
 import { resolveCardId, getCashbackAmount } from '@/lib/cashback';
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
@@ -88,7 +88,7 @@ function CreditCardHistoryListBase({ transactions, cards }: CreditCardHistoryLis
                                     {isExpense ? '-' : '+'}{fmt(t.amount)}₫
                                 </p>
                                 {isExpense && cb > 0 && (
-                                    <p className="text-[10px] text-amber-500 font-semibold">+{Math.round(cb).toLocaleString('vi-VN')}₫ CB</p>
+                                    <p className="text-[10px] text-amber-500 font-semibold">+{formatNumber(Math.round(cb))}₫ CB</p>
                                 )}
                                 {isInstallment && (
                                     <p className="text-[10px] text-indigo-400 font-semibold">{fmtShort((t as any).installmentMonthly || 0)}/th</p>

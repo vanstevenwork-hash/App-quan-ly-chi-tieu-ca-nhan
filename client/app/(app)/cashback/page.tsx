@@ -13,10 +13,10 @@ import { getBankLogo } from '@/lib/bankLogos';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 import { cardSharesApi } from '@/lib/api';
 import PageHeader from '@/components/PageHeader';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1).replace('.', ',')}tỷ`.replace(',0tỷ', 'tỷ');

@@ -10,7 +10,7 @@ import { useAuthStore, useUIStore } from '@/store/useStore';
 import { useCashbackRecordStore } from '@/hooks/useCashbackRecords';
 import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
 import { authApi, telegramApi, emailApi, transactionsApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -608,7 +608,7 @@ export default function SettingsPage() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
                                         <p className="text-[15px] font-bold text-foreground truncate">
-                                            {t.amount.toLocaleString('vi-VN')}đ
+                                            {formatNumber(t.amount)}đ
                                         </p>
                                         {t.maybeDuplicate && (
                                             <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded-full flex-shrink-0">

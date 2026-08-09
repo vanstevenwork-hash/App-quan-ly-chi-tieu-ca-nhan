@@ -7,9 +7,9 @@ import { useBanks } from '@/hooks/useBanks';
 import PageHeader from '@/components/PageHeader';
 import { getBankLogo } from '@/lib/bankLogos';
 import { ActionIcon } from '@/components/icons/ActionIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
+const fmt = (n: number) => formatNumber(Math.round(n));
 
 // Physical-card expiry is stored as "MM/YY" (CardFormModal) — older/mock data
 // may use "YYYY-MM". Parse either into the last moment of the expiry month

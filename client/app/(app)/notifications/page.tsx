@@ -3,14 +3,14 @@ import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { useNotifications, type NotificationItem } from '@/hooks/useNotifications';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { TYPE_MAP, renderNotifIcon } from '@/components/NotificationPanel';
 import InviteCard from '@/components/InviteCard';
 import { toast } from 'sonner';
 
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(n);
 const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
 
 const TABS = [

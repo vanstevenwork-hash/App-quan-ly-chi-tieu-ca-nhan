@@ -7,7 +7,7 @@ import WealthSourceModal from '@/components/WealthSourceModal';
 import WealthTabContent from '@/components/wealth/WealthTabContent';
 import PageHeader from '@/components/PageHeader';
 import RefreshButton from '@/components/RefreshButton';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { toast } from 'sonner';
 import CardFormModal from '@/components/CardFormModal';
 import { useBanks } from '@/hooks/useBanks';
@@ -17,7 +17,7 @@ import { getBankLogo } from '@/lib/bankLogos';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 
-const fmtFull = (n: number) => Math.round(n).toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(Math.round(n));
 
 export default function WealthPage() {
     const { sources, total, loading, createSource, updateSource, deleteSource, refetch } = useWealth();

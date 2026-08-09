@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import type { Goal } from '@/hooks/useGoals';
@@ -14,7 +14,7 @@ interface GoalContributeModalProps {
     onWithdraw: (id: string, amount: number, note?: string) => Promise<void>;
 }
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
+const fmt = (n: number) => formatNumber(Math.round(n));
 const fmtShort = (n: number) => n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}tr` : `${Math.round(n / 1_000)}k`;
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
@@ -99,7 +99,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 block">Số tiền</label>
                         <div className="relative">
                             <input
-                                value={amount ? amountNum.toLocaleString('vi-VN') : ''}
+                                value={amount ? formatNumber(amountNum) : ''}
                                 onChange={e => { setAmount(e.target.value.replace(/\D/g, '')); setError(''); }}
                                 placeholder="0"
                                 inputMode="numeric"
@@ -142,7 +142,7 @@ export default function GoalContributeModal({ open, onClose, goal, onDeposit, on
                                 ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
                                 : 'bg-gradient-to-r from-red-500 to-orange-500')}
                     >
-                        {saving ? 'Đang xử lý...' : mode === 'deposit' ? `➕ Nạp ${amountNum > 0 ? amountNum.toLocaleString('vi-VN') + '₫' : 'tiền'}` : `➖ Rút ${amountNum > 0 ? amountNum.toLocaleString('vi-VN') + '₫' : 'tiền'}`}
+                        {saving ? 'Đang xử lý...' : mode === 'deposit' ? `➕ Nạp ${amountNum > 0 ? formatNumber(amountNum) + '₫' : 'tiền'}` : `➖ Rút ${amountNum > 0 ? formatNumber(amountNum) + '₫' : 'tiền'}`}
                     </button>
 
                     {/* Contribution history */}

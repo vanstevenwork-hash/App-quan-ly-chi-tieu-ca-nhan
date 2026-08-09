@@ -1,11 +1,11 @@
 'use client';
 import { memo, useMemo, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import type { WealthSourceUI } from '@/hooks/useWealth';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 
-const fmtFull = (n: number) => Math.round(n).toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(Math.round(n));
 
 // Unsigned short amount for limit captions: "150tr" · "54tr" · "113tr"
 const fmtLimit = (n: number) => {

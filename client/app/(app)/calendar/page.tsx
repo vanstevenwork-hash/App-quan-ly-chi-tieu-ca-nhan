@@ -15,7 +15,7 @@ import PageHeader from '@/components/PageHeader';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import Link from 'next/link';
 
 const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
@@ -27,7 +27,7 @@ const fmt = (n: number) => {
     if (n >= 1_000) return `${Math.round(n / 1_000)}k`;
     return `${n}`;
 };
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(n);
 
 // Get Monday-based week offset for a day-of-week (0=Sun → 6, 1=Mon → 0, ..., 6=Sat → 5)
 function getMonOffset(dayOfWeek: number) {

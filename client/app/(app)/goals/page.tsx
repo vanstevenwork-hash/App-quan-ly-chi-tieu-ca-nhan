@@ -1,4 +1,5 @@
 'use client';
+import { formatNumber } from '@/lib/utils';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useGoals, type Goal } from '@/hooks/useGoals';
@@ -89,12 +90,12 @@ export default function GoalsPage() {
         else if (pct >= 75) toast.success('🔥 Almost done! Còn 25% nữa thôi!');
         else if (pct >= 50) toast.success('🚀 Halfway there! Đã đi được nửa chặng!');
         else if (pct >= 25) toast.success('🎉 Good start! Đã đi được 25%!');
-        else toast.success(`💰 Đã nạp ${amount.toLocaleString('vi-VN')}₫`);
+        else toast.success(`💰 Đã nạp ${formatNumber(amount)}₫`);
     };
 
     const handleWithdraw = async (id: string, amount: number, note?: string) => {
         await withdraw(id, amount, note);
-        toast.success(`➖ Đã rút ${amount.toLocaleString('vi-VN')}₫`);
+        toast.success(`➖ Đã rút ${formatNumber(amount)}₫`);
     };
 
     const handleAddClick = useCallback(() => setShowForm(true), []);

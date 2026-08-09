@@ -2,12 +2,12 @@
 import { memo } from 'react';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { getBankLogo } from '@/lib/bankLogos';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 
 function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
     card: Card; onEdit: () => void; onDelete: () => void; bankLogoUrl?: string;

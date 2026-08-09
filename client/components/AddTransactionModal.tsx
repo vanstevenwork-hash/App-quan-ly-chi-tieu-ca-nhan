@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { useCards } from '@/hooks/useCards';
 import { useCardShares } from '@/hooks/useCardShares';
 import { useBanks } from '@/hooks/useBanks';
@@ -144,7 +144,7 @@ export default function AddTransactionModal({
             : !['Lương', 'Freelance', 'Đầu tư', 'Thưởng', 'Tiền lãi'].includes(c.label)
     );
 
-    const displayAmount = amount ? parseInt(amount).toLocaleString('vi-VN') : '';
+    const displayAmount = amount ? formatNumber(parseInt(amount)) : '';
     const amountNum = parseInt(amount) || 0;
     const monthlyPayment = isInstallment && installmentMonths > 0 ? Math.ceil(amountNum / installmentMonths) : 0;
 
@@ -184,7 +184,7 @@ export default function AddTransactionModal({
             } else {
                 await createTransaction(payload);
                 if (isInstallment && paymentTab === 'credit') {
-                    toast.success(`Đã thêm trả góp! Mỗi tháng: ${monthlyPayment.toLocaleString('vi-VN')}₫`, { icon: categoryToastIcon });
+                    toast.success(`Đã thêm trả góp! Mỗi tháng: ${formatNumber(monthlyPayment)}₫`, { icon: categoryToastIcon });
                 } else {
                     toast.success(type === 'income' ? 'Đã thêm thu nhập!' : 'Đã thêm chi tiêu!', { icon: categoryToastIcon });
                 }
@@ -499,7 +499,7 @@ export default function AddTransactionModal({
                                                 <div className="flex-1 p-3 text-center border-r border-brand/10">
                                                     <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mb-0.5">Tổng dư nợ</p>
                                                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                                                        {amountNum.toLocaleString('vi-VN')}₫
+                                                        {formatNumber(amountNum)}₫
                                                     </p>
                                                 </div>
                                                 <div className="flex-1 p-3 text-center border-r border-brand/10">
@@ -511,7 +511,7 @@ export default function AddTransactionModal({
                                                 <div className="flex-1 p-3 text-center bg-brand-light/60 dark:bg-purple-900/30">
                                                     <p className="text-[10px] text-brand dark:text-purple-400 font-bold mb-0.5">Mỗi tháng</p>
                                                     <p className="text-sm font-bold text-brand dark:text-purple-300">
-                                                        {monthlyPayment.toLocaleString('vi-VN')}₫
+                                                        {formatNumber(monthlyPayment)}₫
                                                     </p>
                                                 </div>
                                             </div>

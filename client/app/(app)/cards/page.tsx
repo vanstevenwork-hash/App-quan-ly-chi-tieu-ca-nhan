@@ -1,4 +1,5 @@
 'use client';
+import { formatNumber } from '@/lib/utils';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -24,7 +25,7 @@ import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 import { getDueThisCycle } from '@/lib/cardDue';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;
@@ -397,7 +398,7 @@ export default function CardsPage() {
                                     const bankByShort = fetchedBanks.find((b: any) => b.shortName?.toUpperCase() === sc.bankShortName?.toUpperCase());
                                     return (bankByShort as any)?.logo || getBankLogo(sc.bankShortName, sc.bankName);
                                 })();
-                                const fmt2 = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+                                const fmt2 = (n: number) => formatNumber(Math.round(Math.abs(n)));
                                 return (
                                     <button
                                         key={share._id}

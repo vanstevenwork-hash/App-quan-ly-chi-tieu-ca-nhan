@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CATEGORIES } from '@/lib/mockData';
 import { ActionIcon } from '@/components/icons/ActionIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { uploadApi } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -141,7 +141,7 @@ function ImageNoteUploadModalBase(
                                         type="text"
                                         inputMode="numeric"
                                         placeholder="0"
-                                        value={uploadAmount ? parseInt(uploadAmount.replace(/\D/g, '') || '0').toLocaleString('vi-VN') : ''}
+                                        value={uploadAmount ? formatNumber(parseInt(uploadAmount.replace(/\D/g, '') || '0')) : ''}
                                         onChange={(e) => setUploadAmount(e.target.value)}
                                         className="h-12 rounded-xl pl-4 pr-12 text-lg font-bold bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus-visible:ring-emerald-500"
                                     />

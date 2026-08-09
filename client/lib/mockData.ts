@@ -1,3 +1,4 @@
+import { formatNumber } from '@/lib/utils';
 import { CATEGORY_LABEL_TO_TYPE } from '@/components/icons/CategoryIcon';
 
 // Mock data for UI preview when not connected to backend
@@ -91,7 +92,7 @@ export const formatShortCurrency = (amount: number) => {
     if (amount >= 1000000000) return `${(amount / 1000000000).toFixed(1)}tỷ`;
     if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}tr`;
     if (amount >= 1000) return `${(amount / 1000).toFixed(0)}k`;
-    return amount.toLocaleString('vi-VN');
+    return formatNumber(amount);
 };
 
 export const mockCards = [

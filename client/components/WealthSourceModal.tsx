@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import type { WealthSource, WealthFormData } from '@/hooks/useWealth';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 
@@ -82,7 +82,7 @@ export default function WealthSourceModal({ open, onClose, onSave, editSource }:
 
     if (!mounted || !open) return null;
 
-    const displayBalance = rawBalance ? parseInt(rawBalance.replace(/\D/g, '') || '0').toLocaleString('vi-VN') : '';
+    const displayBalance = rawBalance ? formatNumber(parseInt(rawBalance.replace(/\D/g, '') || '0')) : '';
 
     const modal = (
         <>

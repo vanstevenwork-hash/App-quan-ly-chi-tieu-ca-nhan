@@ -3,14 +3,14 @@ import { memo, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
 import type { SharedCardItem } from '@/hooks/useCardShares';
 import type { GameMatch } from '@/hooks/useGameMatches';
 import InviteCard from '@/components/InviteCard';
 import { toast } from 'sonner';
 
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(n);
 
 function AlertCard({
     title, sub, amount, badge, variant, onClick,

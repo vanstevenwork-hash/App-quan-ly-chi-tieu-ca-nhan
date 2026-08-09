@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuthStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
@@ -89,7 +89,7 @@ import InviteCard from '@/components/InviteCard';
 
 const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
 
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(n);
 
 function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open: boolean; initialTab?: PanelTab }) {
     const { isAuthenticated } = useAuthStore();

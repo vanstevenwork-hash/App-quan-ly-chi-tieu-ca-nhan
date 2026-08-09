@@ -10,13 +10,13 @@ import CreditCardCarousel from '@/components/cards/CreditCardCarousel';
 import SavingsDeck from '@/components/cards/SavingsDeck';
 import PageHeader from '@/components/PageHeader';
 import RefreshButton from '@/components/RefreshButton';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { useBankLogo } from '@/hooks/useBankLogo';
 import { useBanks } from '@/hooks/useBanks';
 import { useRouter } from 'next/navigation';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(n));
+const fmt = (n: number) => formatNumber(Math.round(n));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;

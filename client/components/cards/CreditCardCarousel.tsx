@@ -5,10 +5,10 @@ import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/CustomIcon';
 import Image from 'next/image';
 import { getBankLogo } from '@/lib/bankLogos';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
 
-const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(Math.round(Math.abs(n)));
+const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
     const abs = Math.abs(n);
     if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)}tỷ`;

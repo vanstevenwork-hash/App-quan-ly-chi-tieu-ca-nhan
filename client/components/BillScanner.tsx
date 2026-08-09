@@ -3,7 +3,7 @@ import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { RefreshDuotone } from '@/components/icons/RefreshDuotone';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { ocrApi } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -317,7 +317,7 @@ export default function BillScanner({ onResult, onClose }: BillScannerProps) {
                             </div>
                             <div className="text-right">
                                 <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                                    {result.amount > 0 ? `${result.amount.toLocaleString('vi-VN')}₫` : 'Không nhận diện được'}
+                                    {result.amount > 0 ? `${formatNumber(result.amount)}₫` : 'Không nhận diện được'}
                                 </p>
                             </div>
                         </div>

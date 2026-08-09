@@ -5,7 +5,7 @@ import { CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
 import { getBankLogo } from '@/lib/bankLogos';
 import { CustomIcon } from '@/components/icons/CustomIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { toast } from 'sonner';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -59,7 +59,7 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
         return 'Tài khoản';
     };
 
-    const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+    const fmtFull = (n: number) => formatNumber(n);
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);

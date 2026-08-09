@@ -9,10 +9,10 @@ import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import TransactionDetailModal from '@/components/TransactionDetailModal';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import PageHeader from '@/components/PageHeader';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import { toast } from 'sonner';
 
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(n);
 const RECENT_KEY = 'recentTransactionSearches';
 const MAX_RECENT = 8;
 

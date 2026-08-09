@@ -6,7 +6,7 @@ import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { CustomIcon } from '@/components/icons/CustomIcon';
-import { cn } from '@/lib/utils';
+import { cn, formatNumber } from '@/lib/utils';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import PageHeader from '@/components/PageHeader';
 import RefreshButton from '@/components/RefreshButton';
@@ -29,7 +29,7 @@ const fmt = (n: number) => {
     if (absRes >= 1_000) return `${(n / 1000).toFixed(0)}k`;
     return `${n}`;
 };
-const fmtFull = (n: number) => n.toLocaleString('vi-VN');
+const fmtFull = (n: number) => formatNumber(n);
 
 // ─── Custom Chart Dots ───────────────────────────────────────────────────
 const createCustomDot = (color: string, dataKey: string, lastIndex: number) => {
