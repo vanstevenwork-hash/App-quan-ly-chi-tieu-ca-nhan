@@ -266,6 +266,21 @@ export const emailApi = {
     commit: (items: any[]) => api.post('/email/commit', { items }, { timeout: 60000 }),
 };
 
+// Custom categories (user-defined, on top of the built-in ones)
+export interface CustomCategory {
+    _id: string;
+    label: string;
+    catIconType: string;
+    color: string;
+    type: 'expense' | 'income';
+}
+export const categoriesApi = {
+    list: () => api.get('/categories'),
+    create: (data: Omit<CustomCategory, '_id'>) => api.post('/categories', data),
+    update: (id: string, data: Partial<Omit<CustomCategory, '_id'>>) => api.put(`/categories/${id}`, data),
+    remove: (id: string) => api.delete(`/categories/${id}`),
+};
+
 // Day Notes (calendar images)
 export const dayNotesApi = {
     getByMonth: (month: number, year: number) =>

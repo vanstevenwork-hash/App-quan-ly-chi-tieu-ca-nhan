@@ -4,7 +4,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { transactionsApi } from '@/lib/api';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis } from 'recharts';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn, formatNumber } from '@/lib/utils';
 import AddTransactionModal from '@/components/AddTransactionModal';
@@ -412,28 +412,27 @@ export default function AnalyticsPage() {
                             </div>
                         </div>
                         {chartData.some(d => d.income > 0 || d.expense > 0) ? (
-                        <ResponsiveContainer width="100%" height={180}>
-                            <AreaChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: -30 }}>
+                        <ResponsiveContainer width="100%" height={160}>
+                            <AreaChart data={chartData} margin={{ top: 8, right: 6, bottom: 0, left: -20 }}>
                                 <defs>
                                     <linearGradient id="aIncome" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
-                                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#34D399" stopOpacity={0.28} />
+                                        <stop offset="95%" stopColor="#34D399" stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="aExpense" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.15} />
-                                        <stop offset="95%" stopColor="#F43F5E" stopOpacity={0} />
+                                        <stop offset="5%" stopColor="#F87171" stopOpacity={0.28} />
+                                        <stop offset="95%" stopColor="#F87171" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(156, 163, 175, 0.1)" />
                                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} interval={chartTickInterval} minTickGap={4} />
-                                <YAxis tick={{ fontSize: 10, fill: '#94A3B8' }} axisLine={false} tickLine={false} tickFormatter={v => fmt(v)} />
-                                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(148, 163, 184, 0.2)', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                                <Area type="monotone" dataKey="income" stroke="#10B981" fill="url(#aIncome)" strokeWidth={3} dot={createCustomDot('#10B981', 'income', chartData.length - 1)} activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#10B981' }} name="Thu" />
-                                <Area type="monotone" dataKey="expense" stroke="#F43F5E" fill="url(#aExpense)" strokeWidth={3} dot={createCustomDot('#F43F5E', 'expense', chartData.length - 1)} activeDot={{ r: 5, strokeWidth: 2, stroke: '#fff', fill: '#F43F5E' }} name="Chi" />
+                                <YAxis tick={{ fontSize: 9, fill: '#94A3B8' }} axisLine={false} tickLine={false} tickFormatter={v => fmt(v)} />
+                                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#94A3B8', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                                <Area type="monotone" dataKey="income" stroke="#34D399" fill="url(#aIncome)" strokeWidth={3} dot={createCustomDot('#34D399', 'income', chartData.length - 1)} activeDot={{ r: 4, fill: '#34D399' }} name="Thu" />
+                                <Area type="monotone" dataKey="expense" stroke="#F87171" fill="url(#aExpense)" strokeWidth={3} dot={createCustomDot('#F87171', 'expense', chartData.length - 1)} activeDot={{ r: 4, fill: '#F87171' }} name="Chi" />
                             </AreaChart>
                         </ResponsiveContainer>
                         ) : (
-                            <div className="h-[180px] flex flex-col items-center justify-center gap-2">
+                            <div className="h-[160px] flex flex-col items-center justify-center gap-2">
                                 <CustomIcon type="trendingUp" size={26} tile={false} color="currentColor" className="text-slate-300 dark:text-slate-600" />
                                 <p className="text-xs font-medium text-slate-400 dark:text-slate-500">Chưa có giao dịch trong kỳ này</p>
                             </div>

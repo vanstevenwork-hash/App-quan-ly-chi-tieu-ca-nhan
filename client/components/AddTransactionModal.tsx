@@ -1,8 +1,10 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
+import { useCustomCategories } from '@/hooks/useCustomCategories';
 import CategoryIcon from '@/components/icons/CategoryIcon';
 import { cn, formatNumber } from '@/lib/utils';
 import { useCards } from '@/hooks/useCards';
@@ -34,6 +36,7 @@ export default function AddTransactionModal({
     const [category, setCategory] = useState('');
     const [note, setNote] = useState('');
     const [paymentTab, setPaymentTab] = useState<'cash' | 'account' | 'credit' | 'shared'>('cash');
+    const [showCardPicker, setShowCardPicker] = useState(false); // 2-col picker when a tab has many cards
     const [selectedCardId, setSelectedCardId] = useState<string>('cash');
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
@@ -49,6 +52,7 @@ export default function AddTransactionModal({
 
     const { cards } = useCards();
     const { sharedCards } = useCardShares();
+    const { categories: customCats } = useCustomCategories();
 
     useEffect(() => {
         fetchBanks();
@@ -56,11 +60,10 @@ export default function AddTransactionModal({
 
     const debitCards = cards.filter(c => c.cardType === 'debit' || c.cardType === 'eWallet');
     const creditCards = cards.filter(c => c.cardType === 'credit');
-    const cashCards = cards.filter(c =>
-        c.bankName.toLowerCase().includes('tiền mặt') ||
-        c.bankName.toLowerCase().includes('ví') ||
-        c.cardType === 'eWallet'
-    );
+    const cashCards = cards.filter(c => {
+        const bn = (c.bankName || '').toLowerCase();
+        return bn.includes('tiền mặt') || bn.includes('ví') || c.cardType === 'eWallet';
+    });
     // Cards someone else shared with me — kept in their own group, never merged
     // into `cards` above so nothing here touches personal net-worth totals.
     const sharedCardList = sharedCards.map(sc => sc.card);
@@ -110,11 +113,10 @@ export default function AddTransactionModal({
     useEffect(() => {
         if (paymentTab === 'cash') {
             // Try to find a card representing Cash/Wallet
-            const cashCard = cards.find(c =>
-                c.bankName.toLowerCase().includes('tiền mặt') ||
-                c.bankName.toLowerCase().includes('ví') ||
-                c.cardType === 'eWallet'
-            );
+            const cashCard = cards.find(c => {
+                const bn = (c.bankName || '').toLowerCase();
+                return bn.includes('tiền mặt') || bn.includes('ví') || c.cardType === 'eWallet';
+            });
             if (cashCard && (selectedCardId === 'cash' || !cards.find(c => c._id === selectedCardId))) {
                 setSelectedCardId(cashCard._id);
             }
@@ -138,11 +140,29 @@ export default function AddTransactionModal({
     };
 
     const INCOME_CATS = ['Lương', 'Freelance', 'Đầu tư', 'Thưởng', 'Tiền lãi', 'Khác'];
-    const filteredCategories = CATEGORIES.filter(c =>
+    const builtinCategories = CATEGORIES.filter(c =>
         type === 'income'
             ? INCOME_CATS.includes(c.label)
             : !['Lương', 'Freelance', 'Đầu tư', 'Thưởng', 'Tiền lãi'].includes(c.label)
     );
+    // The user's own categories (Shopee, Lazada, TikTok…) for this type
+    const customCategories = customCats
+        .filter(c => c.type === type)
+        .map(c => ({ id: c._id, label: c.label, icon: '🏷️', color: c.color, catIconType: c.catIconType }));
+    const filteredCategories = [...builtinCategories, ...customCategories];
+
+    // Cards for the active payment tab. With many cards, show only a few inline
+    // (selected first) + a "+N" tile that opens a 2-column picker.
+    const activeCards = paymentTab === 'cash' ? cashCards : paymentTab === 'account' ? debitCards : paymentTab === 'credit' ? creditCards : sharedCardList;
+    const manyCards = activeCards.length > 10;
+    let inlineCards = activeCards;
+    if (manyCards) {
+        const sel = activeCards.find(c => c._id === selectedCardId);
+        const others = activeCards.filter(c => c._id !== selectedCardId);
+        inlineCards = sel ? [sel, ...others.slice(0, 4)] : others.slice(0, 5);
+    }
+    const cardLogo = (card: any) => fetchedBanks.find(b => b.shortName === card.bankShortName)?.logo || getBankLogo(card.bankShortName, card.bankName);
+    const shortMoney = (n: number) => { const a = Math.abs(n || 0); if (a >= 1e9) return (n / 1e9).toFixed(1) + 'tỷ'; if (a >= 1e6) return (n / 1e6).toFixed(1) + 'tr'; if (a >= 1e3) return Math.round(n / 1e3) + 'k'; return String(Math.round(n || 0)); };
 
     const displayAmount = amount ? formatNumber(parseInt(amount)) : '';
     const amountNum = parseInt(amount) || 0;
@@ -209,7 +229,7 @@ export default function AddTransactionModal({
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent disableDefaultAnimation className="
-  fixed inset-x-0 bottom-0 top-[20vh] z-[60]
+  fixed inset-x-0 bottom-0 top-[15vh] z-[60]
   w-full max-w-md mx-auto gap-2
   !translate-x-0 !translate-y-0
   bg-[#F8F9FF] dark:bg-[#0F111A]
@@ -234,12 +254,14 @@ export default function AddTransactionModal({
                 </div>
 
                 <div className="flex-1 overflow-y-auto pt-1 hide-scrollbar pb-24 bg-[#F8F9FF] dark:bg-[#0F111A] px-3 space-y-2.5">
-                    {/* Toggle Type */}
-                    <div className="flex gap-2 p-1 bg-white dark:bg-[#1A1D2D] border border-slate-200 dark:border-slate-800 rounded-xl">
+                    {/* Toggle Type — pill segmented control */}
+                    <div className="flex gap-1 p-1 rounded-full bg-slate-100 dark:bg-[#0F111A] ring-1 ring-inset ring-slate-200/70 dark:ring-slate-800">
                         {(['expense', 'income'] as const).map(t => (
                             <button key={t} onClick={() => { setType(t); setCategory(''); }}
-                                className={cn('flex-1 py-1.5 px-3 text-sm font-bold rounded-lg transition-all',
-                                    type === t ? 'bg-brand-light/60 dark:bg-brand/20 text-brand dark:text-purple-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300')}>
+                                className={cn('flex-1 py-2 text-sm font-bold rounded-full transition-all duration-200',
+                                    type === t
+                                        ? 'bg-white dark:bg-[#252A3D] text-brand dark:text-purple-300 shadow-[0_1px_3px_rgba(17,12,46,0.12)]'
+                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200')}>
                                 {t === 'expense' ? 'Chi tiêu' : 'Thu nhập'}
                             </button>
                         ))}
@@ -275,27 +297,31 @@ export default function AddTransactionModal({
                         </div>
                     )}
 
-                    {/* Số tiền block */}
-                    <div className="flex flex-col gap-2 bg-white dark:bg-[#1A1D2D] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm">
+                    {/* Số tiền block — amount on the left, quick chips share the row */}
+                    <div className="flex flex-col gap-1.5 bg-white dark:bg-[#1A1D2D] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm">
                         <label className="text-xs font-bold text-slate-700 dark:text-slate-200">Số tiền</label>
-                        <div className={cn(
-                            'flex w-full items-center gap-2 pb-1 border-b-2 transition-colors',
-                            errors.amount ? 'border-red-400' : 'border-slate-200 dark:border-slate-700 focus-within:border-brand'
-                        )}>
-                            <span className="text-lg font-extrabold text-slate-400">₫</span>
-                            <input
-                                className="w-full flex-1 border-0 bg-transparent py-0.5 text-3xl font-extrabold text-[#000000] dark:text-white focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                                placeholder="0"
-                                value={displayAmount}
-                                onChange={e => { handleAmountInput(e.target.value); setErrors(p => ({ ...p, amount: '' })); }}
-                                type="text"
-                                style={{ fontVariantNumeric: 'tabular-nums' }}
-                            />
-                        </div>
-                        {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
+                        <div className="flex items-end gap-3">
+                            {/* Amount input — left half */}
+                            <div className="flex-1 min-w-0">
+                                <div className={cn(
+                                    'flex w-full items-center gap-1.5 pb-1 border-b-2 transition-colors',
+                                    errors.amount ? 'border-red-400' : 'border-slate-200 dark:border-slate-700 focus-within:border-brand'
+                                )}>
+                                    <span className="text-base font-extrabold text-slate-400">₫</span>
+                                    <input
+                                        className="w-full flex-1 min-w-0 border-0 bg-transparent py-0.5 text-2xl font-extrabold text-[#000000] dark:text-white focus:ring-0 focus:outline-none placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                                        placeholder="0"
+                                        value={displayAmount}
+                                        onChange={e => { handleAmountInput(e.target.value); setErrors(p => ({ ...p, amount: '' })); }}
+                                        type="text"
+                                        inputMode="numeric"
+                                        style={{ fontVariantNumeric: 'tabular-nums' }}
+                                    />
+                                </div>
+                            </div>
 
-                        {/* Quick Amount Buttons */}
-                        <div className="flex gap-2 overflow-x-auto hide-scrollbar pt-1">
+                            {/* Quick Amount Buttons — right half, scrollable */}
+                            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar shrink-0 w-[42%] pb-1">
                             {[
                                 { label: 'C', value: '', type: 'clear' },
                                 { label: '000', value: '000', type: 'append' },
@@ -329,7 +355,9 @@ export default function AddTransactionModal({
                                     {btn.label}
                                 </button>
                             ))}
+                            </div>
                         </div>
+                        {errors.amount && <p className="text-xs text-red-500">{errors.amount}</p>}
                     </div>
 
                     {/* Danh mục block */}
@@ -366,16 +394,16 @@ export default function AddTransactionModal({
                     <div className="flex flex-col gap-2 bg-white dark:bg-[#1A1D2D] border border-slate-200 dark:border-slate-800 rounded-2xl p-3 shadow-sm">
                         <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Phương thức thanh toán</h3>
                         <div className="flex gap-2 p-1 bg-slate-50 dark:bg-[#0F111A] border border-slate-200 dark:border-slate-800 rounded-xl">
-                            <button onClick={() => setPaymentTab('cash')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'cash' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tiền mặt</button>
-                            <button onClick={() => setPaymentTab('account')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'account' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tài khoản</button>
-                            <button onClick={() => setPaymentTab('credit')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'credit' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ tín dụng</button>
+                            <button onClick={() => setPaymentTab('cash')} className={cn('flex-1 py-1.5 px-1 text-[11px] font-bold rounded-lg transition-colors whitespace-nowrap leading-none', paymentTab === 'cash' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tiền mặt</button>
+                            <button onClick={() => setPaymentTab('account')} className={cn('flex-1 py-1.5 px-1 text-[11px] font-bold rounded-lg transition-colors whitespace-nowrap leading-none', paymentTab === 'account' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tài khoản</button>
+                            <button onClick={() => setPaymentTab('credit')} className={cn('flex-1 py-1.5 px-1 text-[11px] font-bold rounded-lg transition-colors whitespace-nowrap leading-none', paymentTab === 'credit' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Tín dụng</button>
                             {sharedCardList.length > 0 && (
-                                <button onClick={() => setPaymentTab('shared')} className={cn('flex-1 py-1.5 px-2 text-[11px] font-bold rounded-lg transition-colors', paymentTab === 'shared' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ chung</button>
+                                <button onClick={() => setPaymentTab('shared')} className={cn('flex-1 py-1.5 px-1 text-[11px] font-bold rounded-lg transition-colors whitespace-nowrap leading-none', paymentTab === 'shared' ? 'bg-brand text-white shadow-sm border border-brand' : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300')}>Thẻ chung</button>
                             )}
                         </div>
 
                         <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x py-1 pt-2">
-                            {(paymentTab === 'cash' ? cashCards : paymentTab === 'account' ? debitCards : paymentTab === 'credit' ? creditCards : sharedCardList).map(card => {
+                            {inlineCards.map(card => {
                                 const isSelected = selectedCardId === card._id;
                                 const cBg = card.bankColor || '#3B82F6';
 
@@ -426,6 +454,16 @@ export default function AddTransactionModal({
                                     />
                                 )
                             })}
+
+                            {/* "+N" tile — opens the 2-column picker for many cards */}
+                            {manyCards && (
+                                <button type="button" onClick={() => setShowCardPicker(true)}
+                                    className="flex-shrink-0 w-[120px] min-h-[74px] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:border-brand hover:text-brand transition-colors active:scale-95">
+                                    <CustomIcon type="plus" size={20} tile={false} color="currentColor" className="w-5 h-5" />
+                                    <span className="text-[11px] font-bold">+{activeCards.length - inlineCards.length} thẻ</span>
+                                    <span className="text-[9px] font-medium opacity-70">Xem tất cả</span>
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -606,7 +644,7 @@ export default function AddTransactionModal({
                                 <CustomIcon type="scanLine" size={16} tile={false} color="currentColor" className="w-4 h-4 text-brand dark:text-purple-400 group-hover:scale-110 transition-transform duration-300" />
                                 <span>Quét Bill</span>
                             </button>
-                            <span className="text-[10px] text-slate-400 mt-1 whitespace-nowrap">Quét mã QR / hóa đơn</span>
+                            {/* <span className="text-[10px] text-slate-400 mt-1 whitespace-nowrap">Quét mã QR / hóa đơn</span> */}
                         </div>
 
                         {/* Nút Thêm giao dịch */}
@@ -620,6 +658,49 @@ export default function AddTransactionModal({
                     </div>
                 </div>
             </DialogContent>
+
+            {/* ── Card picker (2 columns) — for tabs with many cards ── */}
+            {showCardPicker && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[110] flex items-end justify-center" onClick={() => setShowCardPicker(false)}>
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" />
+                    <div className="relative w-full max-w-md bg-white dark:bg-surface rounded-t-3xl px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-300"
+                        onClick={e => e.stopPropagation()}>
+                        <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700 mx-auto mb-3" />
+                        <div className="flex items-center justify-between px-1 mb-3">
+                            <h3 className="font-bold text-slate-800 dark:text-white">Chọn thẻ <span className="text-slate-400 dark:text-slate-500 font-semibold">({activeCards.length})</span></h3>
+                            <button onClick={() => setShowCardPicker(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
+                                <CustomIcon type="x" size={16} tile={false} color="currentColor" />
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto grid grid-cols-2 gap-2 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
+                            {activeCards.map(card => {
+                                const active = selectedCardId === card._id;
+                                const url = cardLogo(card);
+                                const isCredit = card.cardType === 'credit';
+                                return (
+                                    <button key={card._id} type="button"
+                                        onClick={() => { setSelectedCardId(card._id); setShowCardPicker(false); }}
+                                        className={cn('flex items-center gap-2.5 p-2.5 rounded-2xl border text-left transition active:scale-[0.98]',
+                                            active ? 'border-brand bg-brand-light/40 dark:border-brand dark:bg-brand/20' : 'border-slate-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/60')}>
+                                        <div className="w-9 h-9 rounded-xl bg-white ring-1 ring-gray-100 dark:ring-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                            {url ? <img src={url} alt="" className="w-full h-full object-contain p-1" /> : <CustomIcon type="creditCard" size={18} tile={false} color="#94A3B8" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[13px] font-bold text-slate-800 dark:text-white truncate">{card.bankShortName || card.bankName}</p>
+                                            <div className="flex items-center gap-1.5 text-[10px]">
+                                                <span className={cn('font-bold', isCredit ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400')}>{shortMoney(card.balance)}</span>
+                                                {card.cardNumber && <span className="text-slate-400 dark:text-slate-500">•• {card.cardNumber}</span>}
+                                            </div>
+                                        </div>
+                                        {active && <CustomIcon type="checkCircle" size={16} tile={false} color="#36255C" className="flex-shrink-0" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </Dialog>
     );
 }

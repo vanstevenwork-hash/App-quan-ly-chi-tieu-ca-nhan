@@ -33,8 +33,14 @@ export function useImportantAlerts() {
         [cards, transactions]
     );
 
+    // Only remind about savings books that are maturing soon (or already matured)
+    // — not every book forever, so the badge reflects real to-dos.
     const savingsAlerts = useMemo(
-        () => cards.filter(c => c.cardType === 'savings'),
+        () => cards.filter(c => {
+            if (c.cardType !== 'savings' || !c.maturityDate) return false;
+            const days = Math.ceil((new Date(c.maturityDate).getTime() - Date.now()) / 86_400_000);
+            return days <= 30;
+        }),
         [cards]
     );
 

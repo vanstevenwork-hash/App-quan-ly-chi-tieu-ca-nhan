@@ -860,7 +860,46 @@ export interface CustomIconProps extends React.SVGProps<SVGSVGElement> {
     spin?: boolean;
 }
 
+// Brand/app logos (files in client/public/App). A custom category stores its
+// icon as "app:<key>" so it renders the real logo everywhere the vector icons do.
+export const APP_LOGOS: Record<string, string> = {
+    shopee: '/App/shopee.png',
+    lazada: '/App/lazada.png',
+    tiktokshop: '/App/tiktokshop.png',
+    tiki: '/App/tiki.png',
+    grab: '/App/grab.jpg',
+    be: '/App/be.jpg',
+    xanhsm: '/App/xanhsm.jpeg',
+    bachhoaxanh: '/App/bachhoaxanh.png',
+};
+export const APP_LOGO_LIST = [
+    { key: 'shopee', label: 'Shopee' },
+    { key: 'lazada', label: 'Lazada' },
+    { key: 'tiktokshop', label: 'TikTok Shop' },
+    { key: 'tiki', label: 'Tiki' },
+    { key: 'grab', label: 'Grab' },
+    { key: 'be', label: 'Be' },
+    { key: 'xanhsm', label: 'Xanh SM' },
+    { key: 'bachhoaxanh', label: 'Bách hoá xanh' },
+];
+
 export const CustomIcon = ({ type, size = 40, tile, color, spin = false, ...props }: CustomIconProps) => {
+    // Brand-logo categories — type looks like "app:shopee" → render the image.
+    if (typeof type === 'string' && type.startsWith('app:')) {
+        const src = APP_LOGOS[type.slice(4)];
+        if (src) {
+            const r = Math.round(size * 0.28);
+            const pad = Math.round(size * 0.12);
+            return (
+                <span
+                    className={(props as any).className}
+                    style={{ width: size, height: size, borderRadius: r, display: 'inline-flex', flexShrink: 0, overflow: 'hidden', background: '#fff', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)' }}
+                >
+                    <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: pad }} />
+                </span>
+            );
+        }
+    }
     const cfg = ICON_CONFIGS[type];
     if (!cfg) return null;
 

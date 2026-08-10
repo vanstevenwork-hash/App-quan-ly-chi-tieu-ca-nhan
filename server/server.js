@@ -56,6 +56,7 @@ app.use('/api/cashback-records', require('./routes/cashback'));
 app.use('/api/game-matches', require('./routes/gameMatches'));
 app.use('/api/telegram', require('./routes/telegram'));
 app.use('/api/email', require('./routes/email'));
+app.use('/api/categories', require('./routes/categories'));
 
 // ===== SSE Stream endpoint =====
 // GET /api/notifications/stream  (auth via ?token=... query param)
@@ -142,7 +143,24 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📚 Swagger UI: http://localhost:${PORT}/api-docs`);
   console.log(`🃏 Socket.io /games namespace ready`);
   registerTelegramWebhook();
+  scheduleEmailAutoImport();
 });
+
+// Auto-import bank emails on an internal timer (fallback for when the instance is
+// awake). On a sleeping free-tier host an external cron hitting /api/email/cron is
+// what actually wakes it — this just keeps things fresh during active periods.
+// Only runs when IMAP + Gemini are configured, so it's a no-op otherwise.
+function scheduleEmailAutoImport() {
+  const hasImap = process.env.IMAP_EMAIL_USER || process.env.EMAIL_USER;
+  if (!hasImap || !process.env.GEMINI_API_KEY || process.env.MAIL_AUTO_IMPORT === 'false') {
+    console.log('ℹ️  Auto-import email chưa bật (thiếu IMAP/GEMINI hoặc MAIL_AUTO_IMPORT=false).');
+    return;
+  }
+  const { ingestAndNotify } = require('./controllers/emailController');
+  const run = () => ingestAndNotify(2).catch(e => console.error('📧 email auto-import:', e.message));
+  setTimeout(run, 90_000).unref?.();               // once shortly after boot
+  setInterval(run, 30 * 60_000).unref?.();          // then every 30 min while awake
+}
 
 // Point Telegram at our public webhook on boot so a fresh deploy is wired up
 // automatically. No-op unless the bot token + public URL are configured.

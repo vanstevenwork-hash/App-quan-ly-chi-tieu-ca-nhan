@@ -41,6 +41,15 @@ const userSchema = new mongoose.Schema({
     // Message-IDs of statement emails already parsed (so a re-sync doesn't
     // re-read the same PDF). Capped to the most recent few hundred.
     mailStatementIds: { type: [String], default: [] },
+    // User-defined spending/income categories (on top of the built-in ones).
+    // Each reuses an existing icon glyph + a color, so it renders everywhere the
+    // built-in categories do. `label` is the key transactions store.
+    customCategories: [{
+        label: { type: String, required: true, trim: true },
+        catIconType: { type: String, default: 'khac' },
+        color: { type: String, default: '#6B7280' },
+        type: { type: String, enum: ['expense', 'income'], default: 'expense' },
+    }],
 }, { timestamps: true });
 
 // Mongoose v8+: async pre-save hooks do NOT receive `next` — just use async/await and return

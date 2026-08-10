@@ -262,9 +262,10 @@ interface CreditCardCarouselProps {
     onDelete: (id: string) => void;
     onPay: () => void;
     onAddNew: () => void;
+    onViewDetail?: (id: string) => void;
 }
 
-function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onDelete, onPay, onAddNew }: CreditCardCarouselProps) {
+function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onDelete, onPay, onAddNew, onViewDetail }: CreditCardCarouselProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
     const [frontId, setFrontId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
@@ -327,8 +328,8 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                             return (
                                 <div
                                     key={card._id}
-                                    onClick={() => (!isFront && !hidden ? setFrontId(card._id) : undefined)}
-                                    className={cn('absolute top-0 left-0 h-full w-[calc(100%-34px)]', !isFront && !hidden && 'cursor-pointer')}
+                                    onClick={() => { if (!isFront && !hidden) setFrontId(card._id); else if (isFront) onViewDetail?.(card._id); }}
+                                    className={cn('absolute top-0 left-0 h-full w-[calc(100%-34px)]', ((!isFront && !hidden) || (isFront && onViewDetail)) && 'cursor-pointer')}
                                     style={{
                                         zIndex: stack.length - depth,
                                         transform: `translateX(${d * 16}px) scale(${1 - d * 0.05})`,
@@ -345,11 +346,12 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                             );
                         })}
 
-                        {/* "+N" badge — opens the full list */}
+                        {/* "+N" badge — compact circle tucked into the bottom-right
+                            corner (on the peek cards), clear of the "Thanh toán" button */}
                         {remaining > 0 && (
                             <button
                                 onClick={() => setSheetOpen(true)}
-                                className="absolute bottom-2 right-0 z-30 flex items-center justify-center min-w-[44px] h-9 px-3.5 rounded-full bg-white/30 backdrop-blur-md text-white text-sm font-bold ring-1 ring-white/45 shadow-[0_5px_14px_-5px_rgba(0,0,0,0.22),inset_0_1px_1px_rgba(255,255,255,0.7)] active:scale-95 transition"
+                                className="absolute bottom-2 right-0 z-30 w-9 h-9 flex items-center justify-center rounded-full bg-white/40 dark:bg-slate-900/50 backdrop-blur-md text-white text-xs font-bold ring-1 ring-white/50 shadow-[0_6px_16px_-4px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.7)] active:scale-95 transition"
                             >
                                 +{remaining}
                             </button>

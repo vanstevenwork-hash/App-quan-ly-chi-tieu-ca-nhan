@@ -476,6 +476,12 @@ export default function SettingsPage() {
                             onClick={() => setShowLanguageDialog(true)}
                         />
                         <SettingItem
+                            icon={<CustomIcon type="muaSam" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
+                            label="Danh mục"
+                            sublabel="Thêm danh mục chi tiêu riêng (Shopee, Lazada…)"
+                            onClick={() => router.push('/settings/categories')}
+                        />
+                        <SettingItem
                             icon={<span className="text-lg">✈️</span>}
                             label="Kết nối Telegram"
                             sublabel={tgConnected == null ? 'Đang kiểm tra…' : tgConnected ? 'Đã kết nối · nhắn bot để ghi nhanh' : 'Ghi chi tiêu nhanh qua chat'}

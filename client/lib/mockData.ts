@@ -78,6 +78,33 @@ export const CATEGORIES_MAP: Map<string, typeof CATEGORIES[number]> = new Map(
     CATEGORIES.map(c => [c.label, c])
 );
 
+// Merge the user's custom categories into the lookup so transactions using them
+// render the right icon/color everywhere (lists, analytics, calendar…). Called
+// once custom categories load and whenever they change. Built-ins are never
+// overwritten. Returns nothing — mutates CATEGORIES_MAP in place.
+const BUILTIN_LABELS = new Set(CATEGORIES.map(c => c.label));
+let _syncedCustomLabels: string[] = [];
+export function syncCustomCategories(
+    custom: { label: string; catIconType?: string; color?: string }[]
+) {
+    // drop previously-synced custom entries that are gone / renamed
+    for (const label of _syncedCustomLabels) {
+        if (!BUILTIN_LABELS.has(label)) CATEGORIES_MAP.delete(label);
+    }
+    _syncedCustomLabels = [];
+    for (const c of custom) {
+        if (!c.label || BUILTIN_LABELS.has(c.label)) continue; // never shadow a built-in
+        CATEGORIES_MAP.set(c.label, {
+            id: 'custom-' + c.label,
+            label: c.label,
+            icon: '🏷️',
+            color: c.color || '#6B7280',
+            catIconType: c.catIconType || 'khac',
+        });
+        _syncedCustomLabels.push(c.label);
+    }
+}
+
 // Re-export for convenience
 export { CATEGORY_LABEL_TO_TYPE };
 

@@ -216,6 +216,7 @@ export default function CardsPage() {
                     onDelete={handleDeleteCardClick}
                     onPay={handlePayClick}
                     onAddNew={handleAddNewCard}
+                    onViewDetail={(id) => router.push(`/cards/${id}`)}
                 />
 
                 {/* ── Quick actions ────────────────────────────── */}

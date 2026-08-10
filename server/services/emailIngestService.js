@@ -287,6 +287,7 @@ async function commitItems({ user = null, items = [] } = {}) {
     const cards = await Card.find({ userId: user._id, isActive: true });
     let created = 0, skipped = 0;
     const createdList = [];
+    const createdItems = [];
     for (const it of Array.isArray(items) ? items : []) {
         const amount = Math.round(Number(it && it.amount));
         if (!(amount > 0)) continue;
@@ -304,8 +305,9 @@ async function commitItems({ user = null, items = [] } = {}) {
         if (card) { applyBalance(card, type, amount); await card.save(); }
         created++;
         createdList.push(tx._id.toString());
+        createdItems.push({ type, amount, category, source: it.source || cardLabel(card) });
     }
-    return { created, skipped, ids: createdList };
+    return { created, skipped, ids: createdList, createdItems };
 }
 
 // ── Full auto ingest (used by the cron scheduler): scan + commit in one go ──
@@ -315,11 +317,13 @@ async function ingestBankEmails({ days = 7, user = null } = {}) {
     const scan = await scanBankEmails({ days, user });
     const commit = await commitItems({ user, items: scan.items });
     return {
+        user,
         statements: scan.statements,
         txCreated: commit.created,
         txSkipped: (scan.txSkipped || 0) + (commit.skipped || 0),
         notTx: scan.notTx,
         encrypted: scan.encrypted,
+        createdItems: commit.createdItems,
     };
 }
 

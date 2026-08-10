@@ -416,8 +416,8 @@ export default function AccountsPage() {
                         <div className="relative z-10">
                             {/* Net worth */}
                             <div className="text-center">
-                                <p className="text-sm text-slate-500 dark:text-slate-300 font-medium mb-1.5">Tổng tài sản ròng</p>
-                                <p className="text-[30px] font-bold text-slate-800 dark:text-white tracking-tight leading-none text-money">{fmt(netWorth)} đ</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-300 font-medium mb-1">Tổng tài sản ròng</p>
+                                <p className="text-[22px] font-bold text-slate-800 dark:text-white tracking-tight leading-none text-money">{fmt(netWorth)} đ</p>
                             </div>
 
                             {/* Breakdown — value on top, label below, split by dividers (Home style) */}
@@ -454,7 +454,7 @@ export default function AccountsPage() {
                                 )}>
                                 {tab === 'cards' ? (
                                     <>
-                                        <UtilityIcon type="wallet" size={16} tile={false} color={activeTab === tab ? '#FFFFFF' : '#6B7280'} />
+                                        <UtilityIcon type="wallet" size={16} tile={false} color={activeTab === tab ? '#DDD6FE' : '#6B7280'} />
                                         <span>Thẻ & Ví</span>
                                         {(creditCards.length + debitCards.length) > 0 && (
                                             <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white text-brand" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
@@ -464,7 +464,7 @@ export default function AccountsPage() {
                                     </>
                                 ) : (
                                     <>
-                                        <UtilityIcon type="soTietKiem" size={16} tile={false} color={activeTab === tab ? '#FFFFFF' : '#6B7280'} />
+                                        <UtilityIcon type="soTietKiem" size={16} tile={false} color={activeTab === tab ? '#DDD6FE' : '#6B7280'} />
                                         <span>Tiết kiệm</span>
                                         {savingsCards.length > 0 && (
                                             <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full", activeTab === tab ? "bg-white text-brand" : "bg-brand-light/60 text-brand dark:text-purple-300")}>
@@ -509,6 +509,7 @@ export default function AccountsPage() {
                                         onDelete={(id) => setDeleteTarget(creditCards.find(c => c._id === id) || null)}
                                         onPay={() => setShowPayment(true)}
                                         onAddNew={() => openAdd('credit')}
+                                        onViewDetail={(id) => router.push(`/cards/${id}`)}
                                     />
                                 </section>
                             )}

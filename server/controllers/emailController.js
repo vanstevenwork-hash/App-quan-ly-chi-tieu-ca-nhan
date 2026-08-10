@@ -1,4 +1,26 @@
 const { ingestBankEmails, scanBankEmails, commitItems } = require('../services/emailIngestService');
+const { sendMessage } = require('../utils/telegram');
+
+// Auto-import bank emails, then tell the user on Telegram what was added (so the
+// silent background import stays transparent and mistakes are easy to spot).
+async function ingestAndNotify(days = 2) {
+    const r = await ingestBankEmails({ days });
+    const chatId = r.user?.telegramChatId;
+    if (chatId && (r.txCreated > 0 || r.statements > 0)) {
+        const fmt = (n) => Math.round(n).toLocaleString('en-US');
+        const lines = (r.createdItems || []).slice(0, 8).map(it =>
+            `${it.type === 'income' ? '🟢 +' : '🔴 -'}${fmt(it.amount)}đ · ${it.source}`
+        );
+        const more = r.txCreated > 8 ? `\n…và ${r.txCreated - 8} giao dịch khác` : '';
+        const st = r.statements > 0 ? `\n📄 Cập nhật ${r.statements} sao kê` : '';
+        const body = r.txCreated > 0
+            ? `🔄 <b>Tự nhập từ email</b>\nĐã thêm <b>${r.txCreated}</b> giao dịch:\n${lines.join('\n')}${more}${st}`
+            : `🔄 <b>Tự nhập từ email</b>${st}`;
+        await sendMessage(chatId, body).catch(() => { });
+    }
+    return r;
+}
+exports.ingestAndNotify = ingestAndNotify;
 
 // @desc  Pull recent Gmail bank notifications → transactions (auto, no review)
 // @route POST /api/email/sync   body: { days? }
@@ -62,6 +84,7 @@ exports.cron = async (req, res) => {
     const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
     if (secret && req.query.key !== secret) return res.sendStatus(401);
     res.json({ success: true });
-    try { await ingestBankEmails({ days: 2 }); }
+    const days = Math.min(30, Math.max(1, Number(req.query.days) || 2));
+    try { await ingestAndNotify(days); }
     catch (e) { console.error('❌ Email cron error:', e.message); }
 };

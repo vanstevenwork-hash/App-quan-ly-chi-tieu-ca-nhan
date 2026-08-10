@@ -47,15 +47,15 @@ export default function PaymentCard({
                 </div>
             )}
 
-            {/* Top: logo + bank name */}
-            <div className="flex items-center gap-2 min-w-0 mb-2">
+            {/* Top: logo (1.5× bigger for readability on phones) + bank name */}
+            <div className="flex items-center gap-1.5 min-w-0 mb-0.5">
                 {logoUrl ? (
-                    <div className="w-6 h-6 p-1 bg-white rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-9 h-9 p-0.5 bg-white rounded-lg border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                         <img src={logoUrl} className="w-full h-full object-contain" alt="logo" />
                     </div>
                 ) : (
                     <div
-                        className="px-2 py-0.5 rounded-md text-white text-[10px] font-bold shadow-sm shrink-0"
+                        className="w-9 h-9 rounded-lg text-white text-[10px] font-bold shadow-sm shrink-0 flex items-center justify-center text-center leading-none"
                         style={{ backgroundColor: cBg }}
                     >
                         {card.bankShortName?.slice(0, 4) || card.cardType?.toUpperCase()}
@@ -67,32 +67,29 @@ export default function PaymentCard({
                 </p>
             </div>
 
-            {/* Bottom */}
+            {/* Bottom — balance + last4 grouped left; network logo pinned to corner */}
             {type === "credit" ? (
-                <div className="mt-auto flex items-end justify-between gap-1">
-                    <div className="flex items-center justify-between w-full min-w-0">
-
-                        <p className="text-[11px] font-bold text-red-500 dark:text-red-400">
-                            {(card.balance / 1000000).toFixed(1).replace('.0', '')}tr
-                        </p>
-
-                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-                            ** {card.cardNumber || "...."}
-                        </p>
-
-                    </div>
-
-                    {renderNetworkLogo && (
-                        <div className="flex items-center shrink-0">
-                            {renderNetworkLogo(card.cardNetwork)}
-                        </div>
-                    )}
+                <div className="mt-auto flex items-center gap-1.5 pr-6 min-w-0">
+                    <p className="text-[11px] font-bold text-red-500 dark:text-red-400 shrink-0">
+                        {(card.balance / 1000000).toFixed(1).replace('.0', '')}tr
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider truncate">
+                        ** {card.cardNumber || "...."}
+                    </p>
                 </div>
             ) : (
                 <div className="mt-auto">
                     <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         {card.balance.toLocaleString("vi-VN")}₫
                     </p>
+                </div>
+            )}
+
+            {/* Card network logo — small, fixed at the bottom-right corner, out of
+                the text flow so it never breaks the layout. */}
+            {type === "credit" && renderNetworkLogo && (
+                <div className="absolute bottom-1 right-1.5 scale-[0.68] origin-bottom-right pointer-events-none">
+                    {renderNetworkLogo(card.cardNetwork)}
                 </div>
             )}
         </div>
