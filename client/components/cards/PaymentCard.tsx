@@ -67,9 +67,9 @@ export default function PaymentCard({
                 </p>
             </div>
 
-            {/* Bottom — balance + last4 grouped left; network logo pinned to corner */}
+            {/* Bottom — balance (left) · last4 (right); network logo pinned to corner */}
             {type === "credit" ? (
-                <div className="mt-auto flex items-center gap-1.5 pr-6 min-w-0">
+                <div className="mt-auto flex items-center justify-between gap-2 pr-5 min-w-0">
                     <p className="text-[11px] font-bold text-red-500 dark:text-red-400 shrink-0">
                         {(card.balance / 1000000).toFixed(1).replace('.0', '')}tr
                     </p>

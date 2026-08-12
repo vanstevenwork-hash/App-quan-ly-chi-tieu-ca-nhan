@@ -1,7 +1,6 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
@@ -36,7 +35,8 @@ export default function AddTransactionModal({
     const [category, setCategory] = useState('');
     const [note, setNote] = useState('');
     const [paymentTab, setPaymentTab] = useState<'cash' | 'account' | 'credit' | 'shared'>('cash');
-    const [showCardPicker, setShowCardPicker] = useState(false); // 2-col picker when a tab has many cards
+    const [showCardPicker, setShowCardPicker] = useState(false); // full-list picker when a tab has many cards
+    const [cardSearch, setCardSearch] = useState('');
     const [selectedCardId, setSelectedCardId] = useState<string>('cash');
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
@@ -162,6 +162,12 @@ export default function AddTransactionModal({
         inlineCards = sel ? [sel, ...others.slice(0, 4)] : others.slice(0, 5);
     }
     const cardLogo = (card: any) => fetchedBanks.find(b => b.shortName === card.bankShortName)?.logo || getBankLogo(card.bankShortName, card.bankName);
+    const pickerCards = cardSearch.trim()
+        ? activeCards.filter(c => {
+            const q = cardSearch.trim().toLowerCase();
+            return (c.bankShortName || '').toLowerCase().includes(q) || (c.bankName || '').toLowerCase().includes(q) || (c.cardNumber || '').includes(q);
+        })
+        : activeCards;
     const shortMoney = (n: number) => { const a = Math.abs(n || 0); if (a >= 1e9) return (n / 1e9).toFixed(1) + 'tỷ'; if (a >= 1e6) return (n / 1e6).toFixed(1) + 'tr'; if (a >= 1e3) return Math.round(n / 1e3) + 'k'; return String(Math.round(n || 0)); };
 
     const displayAmount = amount ? formatNumber(parseInt(amount)) : '';
@@ -457,7 +463,7 @@ export default function AddTransactionModal({
 
                             {/* "+N" tile — opens the 2-column picker for many cards */}
                             {manyCards && (
-                                <button type="button" onClick={() => setShowCardPicker(true)}
+                                <button type="button" onClick={() => { setCardSearch(''); setShowCardPicker(true); }}
                                     className="flex-shrink-0 w-[120px] min-h-[74px] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center gap-1 text-slate-500 dark:text-slate-400 hover:border-brand hover:text-brand transition-colors active:scale-95">
                                     <CustomIcon type="plus" size={20} tile={false} color="currentColor" className="w-5 h-5" />
                                     <span className="text-[11px] font-bold">+{activeCards.length - inlineCards.length} thẻ</span>
@@ -657,50 +663,62 @@ export default function AddTransactionModal({
                         </div>
                     </div>
                 </div>
-            </DialogContent>
 
-            {/* ── Card picker (2 columns) — for tabs with many cards ── */}
-            {showCardPicker && typeof document !== 'undefined' && createPortal(
-                <div className="fixed inset-0 z-[110] flex items-end justify-center" onClick={() => setShowCardPicker(false)}>
-                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" />
-                    <div className="relative w-full max-w-md bg-white dark:bg-surface rounded-t-3xl px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-300"
-                        onClick={e => e.stopPropagation()}>
-                        <div className="w-10 h-1 rounded-full bg-slate-200 dark:bg-slate-700 mx-auto mb-3" />
-                        <div className="flex items-center justify-between px-1 mb-3">
-                            <h3 className="font-bold text-slate-800 dark:text-white">Chọn thẻ <span className="text-slate-400 dark:text-slate-500 font-semibold">({activeCards.length})</span></h3>
-                            <button onClick={() => setShowCardPicker(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-700 transition">
-                                <CustomIcon type="x" size={16} tile={false} color="currentColor" />
-                            </button>
+                {/* ── Card picker — rendered INSIDE DialogContent so clicks work
+                    (a portal to body gets blocked by Radix's pointer-events). ── */}
+                {showCardPicker && (
+                    <div className="absolute inset-0 z-50 flex flex-col bg-[#F8F9FF] dark:bg-[#0F111A] animate-in slide-in-from-right duration-200">
+                        <div className="px-4 pt-4 pb-3 shrink-0 border-b border-slate-200/60 dark:border-slate-800/60">
+                            <div className="flex items-center justify-between mb-3">
+                                <button onClick={() => setShowCardPicker(false)} className="flex items-center gap-1 text-sm font-bold text-slate-600 dark:text-slate-300">
+                                    <CustomIcon type="chevronLeft" size={18} tile={false} color="currentColor" /> Quay lại
+                                </button>
+                                <h3 className="font-bold text-slate-800 dark:text-white">Chọn thẻ <span className="text-slate-400 dark:text-slate-500 font-semibold">({activeCards.length})</span></h3>
+                                <span className="w-14" />
+                            </div>
+                            <div className="flex items-center gap-2 rounded-lg bg-white dark:bg-surface border border-slate-200 dark:border-slate-700 px-3 h-11">
+                                <CustomIcon type="search" size={16} tile={false} color="currentColor" className="text-slate-400 shrink-0" />
+                                <input value={cardSearch} onChange={e => setCardSearch(e.target.value)} autoFocus
+                                    placeholder="Tìm ngân hàng / 4 số cuối…"
+                                    className="flex-1 min-w-0 bg-transparent text-sm outline-none text-slate-800 dark:text-white placeholder:text-slate-400" />
+                                {cardSearch && (
+                                    <button type="button" onClick={() => setCardSearch('')} className="shrink-0 text-slate-400">
+                                        <CustomIcon type="x" size={14} tile={false} color="currentColor" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                        <div className="overflow-y-auto grid grid-cols-2 gap-2 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
-                            {activeCards.map(card => {
+                        <div className="flex-1 overflow-y-auto px-3 py-2 grid grid-cols-2 gap-2 auto-rows-min hide-scrollbar">
+                            {pickerCards.length === 0 && (
+                                <p className="col-span-2 text-center text-sm text-slate-400 py-10">Không tìm thấy thẻ nào</p>
+                            )}
+                            {pickerCards.map(card => {
                                 const active = selectedCardId === card._id;
                                 const url = cardLogo(card);
                                 const isCredit = card.cardType === 'credit';
                                 return (
                                     <button key={card._id} type="button"
                                         onClick={() => { setSelectedCardId(card._id); setShowCardPicker(false); }}
-                                        className={cn('flex items-center gap-2.5 p-2.5 rounded-2xl border text-left transition active:scale-[0.98]',
-                                            active ? 'border-brand bg-brand-light/40 dark:border-brand dark:bg-brand/20' : 'border-slate-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/60')}>
-                                        <div className="w-9 h-9 rounded-xl bg-white ring-1 ring-gray-100 dark:ring-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                            {url ? <img src={url} alt="" className="w-full h-full object-contain p-1" /> : <CustomIcon type="creditCard" size={18} tile={false} color="#94A3B8" />}
+                                        className={cn('relative w-full flex items-center gap-2 p-2.5 rounded-lg border text-left transition active:scale-[0.98]',
+                                            active ? 'border-brand bg-brand-light/40 dark:border-brand dark:bg-brand/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface hover:bg-gray-50 dark:hover:bg-slate-800/60')}>
+                                        <div className="w-8 h-8 rounded-lg bg-white ring-1 ring-gray-100 dark:ring-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                            {url ? <img src={url} alt="" className="w-full h-full object-contain p-1" /> : <CustomIcon type="creditCard" size={16} tile={false} color="#94A3B8" />}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] font-bold text-slate-800 dark:text-white truncate">{card.bankShortName || card.bankName}</p>
-                                            <div className="flex items-center gap-1.5 text-[10px]">
-                                                <span className={cn('font-bold', isCredit ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400')}>{shortMoney(card.balance)}</span>
-                                                {card.cardNumber && <span className="text-slate-400 dark:text-slate-500">•• {card.cardNumber}</span>}
+                                            <p className="text-[12px] font-bold text-slate-800 dark:text-white truncate leading-tight">{card.bankName || card.bankShortName}</p>
+                                            <div className="flex items-center gap-1 text-[10px] mt-0.5">
+                                                <span className={cn('font-bold truncate', isCredit ? 'text-rose-500' : 'text-slate-500 dark:text-slate-400')}>{shortMoney(card.balance)}</span>
+                                                {card.cardNumber && <span className="text-slate-400 dark:text-slate-500 flex-shrink-0">••{card.cardNumber}</span>}
                                             </div>
                                         </div>
-                                        {active && <CustomIcon type="checkCircle" size={16} tile={false} color="#36255C" className="flex-shrink-0" />}
+                                        {active && <CustomIcon type="checkCircle" size={15} tile={false} color="#36255C" className="absolute top-1 right-1 flex-shrink-0" />}
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
-                </div>,
-                document.body
-            )}
+                )}
+            </DialogContent>
         </Dialog>
     );
 }
