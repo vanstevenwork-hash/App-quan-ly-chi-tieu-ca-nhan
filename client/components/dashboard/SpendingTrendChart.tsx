@@ -202,8 +202,8 @@ function SpendingTrendChartBase({ transactions }: SpendingTrendChartProps) {
                     ))}
                 </div>
 
-                <ResponsiveContainer width="100%" height={200}>
-                    <AreaChart data={data} margin={{ top: 44, right: 10, bottom: 0, left: -18 }}>
+                <ResponsiveContainer width="100%" height={192}>
+                    <AreaChart data={data} margin={{ top: 36, right: 10, bottom: 0, left: -18 }}>
                         <defs>
                             <linearGradient id="trendGreen" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#34D399" stopOpacity={0.28} />

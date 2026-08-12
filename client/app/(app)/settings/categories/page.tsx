@@ -123,17 +123,17 @@ export default function CategoriesPage() {
 
             {/* Add / Edit form */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
-                <DialogContent className="sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
+                <DialogContent className="sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
                     <DialogHeader>
                         <DialogTitle>{editing ? 'Sửa danh mục' : `Thêm danh mục ${tab === 'income' ? 'thu' : 'chi'}`}</DialogTitle>
                     </DialogHeader>
 
                     {/* Preview + name */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}22` }}>
                             <CustomIcon type={iconType} size={26} color={color} />
                         </div>
-                        <Input value={label} onChange={e => setLabel(e.target.value)} placeholder="Tên danh mục (vd Shopee)" maxLength={40} className="rounded-xl h-12" autoFocus />
+                        <Input value={label} onChange={e => setLabel(e.target.value)} placeholder="Tên danh mục (vd Shopee)" maxLength={40} className="rounded-xl h-12 flex-1 min-w-0" autoFocus />
                     </div>
 
                     {/* Color */}
@@ -149,9 +149,9 @@ export default function CategoriesPage() {
                     </div>
 
                     {/* App logos */}
-                    <div>
+                    <div className="min-w-0">
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Logo app</p>
-                        <div className="flex gap-2.5 overflow-x-auto hide-scrollbar pb-1 -mx-1 px-1">
+                        <div className="flex gap-2.5 overflow-x-auto hide-scrollbar pb-1">
                             {APP_LOGO_LIST.map(a => {
                                 const val = `app:${a.key}`;
                                 const active = iconType === val;
@@ -169,9 +169,9 @@ export default function CategoriesPage() {
                     </div>
 
                     {/* Vector icon */}
-                    <div>
+                    <div className="min-w-0">
                         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Hoặc chọn biểu tượng</p>
-                        <div className="max-h-[200px] overflow-y-auto -mx-1 px-1">
+                        <div className="max-h-[200px] overflow-y-auto overflow-x-hidden">
                             <CategoryPicker value={iconType} onChange={setIconType} group={tab === 'income' ? 'thu' : 'chi'} />
                         </div>
                     </div>
