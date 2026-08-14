@@ -5,7 +5,7 @@ import PageHeader from '@/components/PageHeader';
 import { CustomIcon, APP_LOGO_LIST } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import CategoryIcon, { CategoryPicker } from '@/components/icons/CategoryIcon';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CATEGORIES } from '@/lib/mockData';
@@ -121,68 +121,82 @@ export default function CategoriesPage() {
                 </div>
             </div>
 
-            {/* Add / Edit form */}
+            {/* Add / Edit form — bottom sheet (fixed header + scrollable body + footer) */}
             <Dialog open={showForm} onOpenChange={setShowForm}>
-                <DialogContent className="sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden">
-                    <DialogHeader>
-                        <DialogTitle>{editing ? 'Sửa danh mục' : `Thêm danh mục ${tab === 'income' ? 'thu' : 'chi'}`}</DialogTitle>
-                    </DialogHeader>
-
-                    {/* Preview + name */}
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}22` }}>
-                            <CustomIcon type={iconType} size={26} color={color} />
-                        </div>
-                        <Input value={label} onChange={e => setLabel(e.target.value)} placeholder="Tên danh mục (vd Shopee)" maxLength={40} className="rounded-xl h-12 flex-1 min-w-0" autoFocus />
+                <DialogContent disableDefaultAnimation className="
+fixed inset-x-0 bottom-0 top-[14vh] z-[60] w-full max-w-md mx-auto
+!translate-x-0 !translate-y-0 bg-white dark:bg-surface
+rounded-t-3xl sm:rounded-3xl shadow-xl flex flex-col overflow-hidden p-0 border-0 gap-0
+data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom data-[state=open]:duration-300
+data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=closed]:duration-200
+">
+                    {/* Header */}
+                    <div className="flex items-center gap-2 px-4 pt-4 pb-3 shrink-0 border-b border-slate-100 dark:border-slate-800">
+                        <DialogTitle className="text-lg font-bold flex-1 text-slate-800 dark:text-white truncate">
+                            {editing ? 'Sửa danh mục' : `Thêm danh mục ${tab === 'income' ? 'thu' : 'chi'}`}
+                        </DialogTitle>
+                        <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 flex-shrink-0">
+                            <CustomIcon type="x" size={16} tile={false} color="currentColor" />
+                        </button>
                     </div>
 
-                    {/* Color */}
-                    <div>
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Màu</p>
-                        <div className="flex flex-wrap gap-2">
-                            {PALETTE.map(cl => (
-                                <button key={cl} onClick={() => setColor(cl)}
-                                    className={cn('w-8 h-8 rounded-full transition-transform', color === cl ? 'ring-2 ring-offset-2 ring-offset-background scale-110' : '')}
-                                    style={{ backgroundColor: cl, ...(color === cl ? { boxShadow: `0 0 0 2px ${cl}` } : {}) }} />
-                            ))}
+                    {/* Body */}
+                    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4 hide-scrollbar">
+                        {/* Preview + name */}
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}22` }}>
+                                <CustomIcon type={iconType} size={26} color={color} />
+                            </div>
+                            <Input value={label} onChange={e => setLabel(e.target.value)} placeholder="Tên danh mục (vd Shopee)" maxLength={40} className="rounded-xl h-12 flex-1 min-w-0" autoFocus />
                         </div>
-                    </div>
 
-                    {/* App logos */}
-                    <div className="min-w-0">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Logo app</p>
-                        <div className="flex gap-2.5 overflow-x-auto hide-scrollbar pb-1">
-                            {APP_LOGO_LIST.map(a => {
-                                const val = `app:${a.key}`;
-                                const active = iconType === val;
-                                return (
-                                    <button key={a.key} type="button" onClick={() => setIconType(val)}
-                                        className="flex flex-col items-center gap-1 flex-shrink-0 w-[60px]">
-                                        <span className={cn('rounded-xl transition', active && 'ring-2 ring-brand ring-offset-1 ring-offset-background')}>
-                                            <CustomIcon type={val} size={46} />
-                                        </span>
-                                        <span className="text-[10px] text-muted-foreground truncate w-full text-center">{a.label}</span>
-                                    </button>
-                                );
-                            })}
+                        {/* Color */}
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Màu</p>
+                            <div className="flex flex-wrap gap-2">
+                                {PALETTE.map(cl => (
+                                    <button key={cl} type="button" onClick={() => setColor(cl)}
+                                        className={cn('w-8 h-8 rounded-full transition-transform', color === cl ? 'scale-110' : '')}
+                                        style={{ backgroundColor: cl, ...(color === cl ? { boxShadow: `0 0 0 2px #fff, 0 0 0 4px ${cl}` } : {}) }} />
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Vector icon */}
-                    <div className="min-w-0">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Hoặc chọn biểu tượng</p>
-                        <div className="max-h-[200px] overflow-y-auto overflow-x-hidden">
+                        {/* App logos */}
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Logo app</p>
+                            <div className="flex gap-2.5 overflow-x-auto hide-scrollbar pb-1">
+                                {APP_LOGO_LIST.map(a => {
+                                    const val = `app:${a.key}`;
+                                    const active = iconType === val;
+                                    return (
+                                        <button key={a.key} type="button" onClick={() => setIconType(val)}
+                                            className="flex flex-col items-center gap-1 flex-shrink-0 w-[60px]">
+                                            <span className={cn('rounded-xl transition', active && 'ring-2 ring-brand ring-offset-1 ring-offset-background')}>
+                                                <CustomIcon type={val} size={46} />
+                                            </span>
+                                            <span className="text-[10px] text-muted-foreground truncate w-full text-center">{a.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Vector icon */}
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Hoặc chọn biểu tượng</p>
                             <CategoryPicker value={iconType} onChange={setIconType} group={tab === 'income' ? 'thu' : 'chi'} />
                         </div>
                     </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="rounded-xl">Hủy</Button>
-                        <Button onClick={handleSave} disabled={saving} className="rounded-xl">
+                    {/* Footer */}
+                    <div className="shrink-0 flex gap-2 px-4 py-3 border-t border-slate-100 dark:border-slate-800">
+                        <Button type="button" variant="outline" onClick={() => setShowForm(false)} className="rounded-xl flex-1">Hủy</Button>
+                        <Button onClick={handleSave} disabled={saving} className="rounded-xl flex-1">
                             {saving && <ActionIcon type="loader" size={16} tile={false} spin className="mr-2" />}
                             {editing ? 'Lưu' : 'Thêm'}
                         </Button>
-                    </DialogFooter>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
