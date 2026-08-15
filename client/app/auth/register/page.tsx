@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CustomIcon } from '@/components/icons/CustomIcon';
+import AuthSubmitButton from '@/components/auth/AuthSubmitButton';
+import WLogo from '@/components/auth/WLogo';
 import { useAuthStore } from '@/store/useStore';
 import { authApi } from '@/lib/api';
 
@@ -31,9 +33,12 @@ export default function RegisterPage() {
         if (Object.keys(errs).length > 0) return;
         setLoading(true);
         setErrors({});
+        const t0 = Date.now();
         try {
             const res = await authApi.register({ name, email, password });
             login(res.data.user, res.data.token);
+            const wait = 900 - (Date.now() - t0);
+            if (wait > 0) await new Promise(r => setTimeout(r, wait));
             const redirect = new URLSearchParams(window.location.search).get('redirect');
             router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
         } catch (err: any) {
@@ -63,22 +68,20 @@ export default function RegisterPage() {
             <div className="absolute pointer-events-none rounded-full" style={{ width: 380, height: 380, bottom: -180, right: -100, background: 'rgba(124,58,237,0.20)', filter: 'blur(90px)', mixBlendMode: 'screen' }} />
 
             {/* ── Top: logo + heading ── */}
-            <div className="relative z-10 px-7 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}>
-                <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm ring-1 ring-white/25 flex items-center justify-center mb-7 shadow-lg">
-                    <span className="text-3xl font-black bg-gradient-to-br from-[#C4B5FD] to-[#8B7CF6] bg-clip-text text-transparent leading-none">W</span>
-                </div>
-                <h1 className="text-[34px] font-extrabold text-white leading-tight tracking-tight">Tạo tài khoản</h1>
-                <p className="text-white/65 text-[15px] mt-2 leading-snug">Bắt đầu hành trình quản lý<br />tài chính thông minh</p>
+            <div className="relative z-10 px-6 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.75rem)' }}>
+                <WLogo className="w-[78px] h-auto mb-6 drop-shadow-[0_10px_24px_rgba(124,92,246,0.45)]" />
+                <h1 className="text-[36px] font-extrabold text-white leading-[1.1] tracking-tight">Tạo tài khoản</h1>
+                <p className="text-white/70 text-[15px] mt-2.5 leading-relaxed">Bắt đầu hành trình quản lý<br />tài chính thông minh</p>
             </div>
 
             {/* ── Bottom: frosted glass form card ── */}
-            <div className="relative z-10 mt-auto rounded-t-[2rem] px-6 pt-7 border-t border-white/60"
+            <div className="relative z-10 mt-auto rounded-t-[2.25rem] px-6 pt-8 border-t border-white/70"
                 style={{
-                    background: 'rgba(255,255,255,0.78)',
-                    backdropFilter: 'blur(30px)',
-                    WebkitBackdropFilter: 'blur(30px)',
-                    boxShadow: '0 -18px 60px -18px rgba(43,25,110,0.28), inset 0 1px 0 rgba(255,255,255,0.85)',
-                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)',
+                    background: 'rgba(250,249,255,0.86)',
+                    backdropFilter: 'blur(28px)',
+                    WebkitBackdropFilter: 'blur(28px)',
+                    boxShadow: '0 -20px 60px -20px rgba(43,25,110,0.30), inset 0 1px 0 rgba(255,255,255,0.9)',
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.25rem)',
                 }}>
                 <form onSubmit={handleRegister} className="space-y-4">
                     {/* Họ và tên */}
@@ -143,15 +146,12 @@ export default function RegisterPage() {
 
                     {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
 
-                    <button type="submit" disabled={loading}
-                        className="relative w-full h-14 rounded-[18px] text-white text-[17px] font-bold flex items-center justify-center transition-all active:scale-[0.98] disabled:opacity-60 mt-1"
-                        style={{
-                            background: 'linear-gradient(135deg, #6757ff 0%, #8b5cf6 50%, #c084fc 100%)',
-                            boxShadow: '0 14px 34px -8px rgba(124,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.35)',
-                        }}>
-                        {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
-                        {!loading && <CustomIcon type="arrowRight" size={18} tile={false} color="currentColor" className="absolute right-5" />}
-                    </button>
+                    <AuthSubmitButton
+                        loading={loading}
+                        idleLabel="Đăng ký"
+                        loadingLabel="Đang tạo tài khoản..."
+                        className="mt-1"
+                    />
                 </form>
 
                 {/* Login link */}
