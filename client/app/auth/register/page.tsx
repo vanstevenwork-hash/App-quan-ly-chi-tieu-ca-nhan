@@ -2,8 +2,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useAuthStore } from '@/store/useStore';
 import { authApi } from '@/lib/api';
@@ -50,78 +48,119 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-background">
-            <div className="absolute top-0 left-0 w-64 h-64 rounded-full bg-primary/10 blur-3xl -translate-y-1/3 -translate-x-1/4" />
+        <div className="relative flex flex-col overflow-hidden"
+            style={{
+                minHeight: '100dvh',
+                background: 'linear-gradient(180deg, #0b0828 0%, #17104a 35%, #6f5bc9 68%, #f0edff 100%)',
+            }}>
+            {/* Artwork (lightweight WebP) over the gradient base */}
+            <div className="absolute inset-0 bg-cover bg-top bg-no-repeat pointer-events-none"
+                style={{ backgroundImage: 'url("/images/fintech-login-background.webp")' }} />
 
-            <div className="px-6 pb-8 text-center" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 4rem)' }}>
-                <div className="w-16 h-16 gradient-primary rounded-[20px] flex items-center justify-center mx-auto mb-4 shadow-glow animate-float">
-                    <span className="text-3xl">💰</span>
+            {/* Ambient CSS glows */}
+            <div className="absolute pointer-events-none rounded-full" style={{ width: 280, height: 280, top: 80, right: -100, background: 'rgba(139,92,246,0.45)', filter: 'blur(90px)', mixBlendMode: 'screen' }} />
+            <div className="absolute pointer-events-none rounded-full" style={{ width: 320, height: 320, top: 420, left: -180, background: 'rgba(99,102,241,0.28)', filter: 'blur(90px)', mixBlendMode: 'screen' }} />
+            <div className="absolute pointer-events-none rounded-full" style={{ width: 380, height: 380, bottom: -180, right: -100, background: 'rgba(124,58,237,0.20)', filter: 'blur(90px)', mixBlendMode: 'screen' }} />
+
+            {/* ── Top: logo + heading ── */}
+            <div className="relative z-10 px-7 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 2rem)' }}>
+                <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm ring-1 ring-white/25 flex items-center justify-center mb-7 shadow-lg">
+                    <span className="text-3xl font-black bg-gradient-to-br from-[#C4B5FD] to-[#8B7CF6] bg-clip-text text-transparent leading-none">W</span>
                 </div>
-                <h1 className="text-2xl font-bold text-foreground">Tạo tài khoản</h1>
-                <p className="text-muted-foreground text-sm mt-1">Bắt đầu hành trình tài chính của bạn</p>
+                <h1 className="text-[34px] font-extrabold text-white leading-tight tracking-tight">Tạo tài khoản</h1>
+                <p className="text-white/65 text-[15px] mt-2 leading-snug">Bắt đầu hành trình quản lý<br />tài chính thông minh</p>
             </div>
 
-            <div className="flex-1 px-6">
+            {/* ── Bottom: frosted glass form card ── */}
+            <div className="relative z-10 mt-auto rounded-t-[2rem] px-6 pt-7 border-t border-white/60"
+                style={{
+                    background: 'rgba(255,255,255,0.78)',
+                    backdropFilter: 'blur(30px)',
+                    WebkitBackdropFilter: 'blur(30px)',
+                    boxShadow: '0 -18px 60px -18px rgba(43,25,110,0.28), inset 0 1px 0 rgba(255,255,255,0.85)',
+                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)',
+                }}>
                 <form onSubmit={handleRegister} className="space-y-4">
-                    <div className="relative">
-                        <CustomIcon type="user" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Họ và tên"
-                            value={name}
-                            onChange={(e) => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })); }}
-                            className={`pl-11 rounded-2xl h-14 text-sm ${errors.name ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
-                                }`}
-                        />
+                    {/* Họ và tên */}
+                    <div>
+                        <label className="text-[15px] font-bold text-slate-700 mb-2 block">Họ và tên</label>
+                        <div className="relative">
+                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-brand-light/70 flex items-center justify-center">
+                                <CustomIcon type="user" size={16} tile={false} color="#6C4DE6" />
+                            </div>
+                            <input
+                                placeholder="Nguyễn Văn A"
+                                value={name}
+                                onChange={(e) => { setName(e.target.value); setErrors(p => ({ ...p, name: '' })); }}
+                                className={`w-full h-14 rounded-2xl bg-white pl-[52px] pr-4 text-[15px] font-medium text-slate-900 outline-none border transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15 ${errors.name ? 'border-red-400' : 'border-slate-200'}`}
+                            />
+                        </div>
                         {errors.name && <p className="text-xs text-red-500 mt-1 ml-1">{errors.name}</p>}
                     </div>
-                    <div className="relative">
-                        <CustomIcon type="mail" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
-                            className={`pl-11 rounded-2xl h-14 text-sm ${errors.email ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
-                                }`}
-                        />
+
+                    {/* Email */}
+                    <div>
+                        <label className="text-[15px] font-bold text-slate-700 mb-2 block">Email</label>
+                        <div className="relative">
+                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-brand-light/70 flex items-center justify-center">
+                                <CustomIcon type="mail" size={16} tile={false} color="#6C4DE6" />
+                            </div>
+                            <input
+                                type="email"
+                                placeholder="you@email.com"
+                                value={email}
+                                onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
+                                className={`w-full h-14 rounded-2xl bg-white pl-[52px] pr-11 text-[15px] font-medium text-slate-900 outline-none border transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15 ${errors.email ? 'border-red-400' : 'border-slate-200'}`}
+                            />
+                            {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                                <CustomIcon type="checkCircle" size={18} tile={false} color="#6C4DE6" className="absolute right-4 top-1/2 -translate-y-1/2" />
+                            )}
+                        </div>
                         {errors.email && <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>}
                     </div>
-                    <div className="relative">
-                        <CustomIcon type="lock" size={16} tile={false} color="currentColor" className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            type={showPass ? 'text' : 'password'}
-                            placeholder="Mật khẩu"
-                            value={password}
-                            onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }}
-                            className={`pl-11 pr-12 rounded-2xl h-14 text-sm ${errors.password ? 'border-red-400 bg-red-50' : 'border-border/50 bg-muted/50'
-                                }`}
-                        />
-                        <button type="button" onClick={() => setShowPass(!showPass)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                            {showPass ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" />}
-                        </button>
+
+                    {/* Mật khẩu */}
+                    <div>
+                        <label className="text-[15px] font-bold text-slate-700 mb-2 block">Mật khẩu</label>
+                        <div className="relative">
+                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-brand-light/70 flex items-center justify-center">
+                                <CustomIcon type="lock" size={16} tile={false} color="#6C4DE6" />
+                            </div>
+                            <input
+                                type={showPass ? 'text' : 'password'}
+                                placeholder="Ít nhất 6 ký tự"
+                                value={password}
+                                onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }}
+                                className={`w-full h-14 rounded-2xl bg-white pl-[52px] pr-12 text-[15px] font-medium text-slate-900 outline-none border transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15 ${errors.password ? 'border-red-400' : 'border-slate-200'}`}
+                            />
+                            <button type="button" onClick={() => setShowPass(!showPass)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                {showPass ? <CustomIcon type="eyeOff" size={18} tile={false} color="currentColor" /> : <CustomIcon type="eye" size={18} tile={false} color="currentColor" />}
+                            </button>
+                        </div>
                         {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
                     </div>
 
                     {errors.general && <p className="text-red-500 text-sm text-center">{errors.general}</p>}
 
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full gradient-primary text-white rounded-2xl h-14 text-base font-bold shadow-glow hover:opacity-90 transition-all border-0 mt-2"
-                    >
-                        {loading ? 'Đang tạo tài khoản...' : (
-                            <>Đăng ký <CustomIcon type="arrowRight" size={16} tile={false} color="currentColor" className="ml-2" /></>
-                        )}
-                    </Button>
+                    <button type="submit" disabled={loading}
+                        className="relative w-full h-14 rounded-[18px] text-white text-[17px] font-bold flex items-center justify-center transition-all active:scale-[0.98] disabled:opacity-60 mt-1"
+                        style={{
+                            background: 'linear-gradient(135deg, #6757ff 0%, #8b5cf6 50%, #c084fc 100%)',
+                            boxShadow: '0 14px 34px -8px rgba(124,92,246,0.45), inset 0 1px 0 rgba(255,255,255,0.35)',
+                        }}>
+                        {loading ? 'Đang tạo tài khoản...' : 'Đăng ký'}
+                        {!loading && <CustomIcon type="arrowRight" size={18} tile={false} color="currentColor" className="absolute right-5" />}
+                    </button>
                 </form>
-            </div>
 
-            <div className="text-center py-8">
-                <span className="text-muted-foreground text-sm">Đã có tài khoản? </span>
-                <Link href={`/auth/login${authSuffix}`} className="text-primary font-semibold text-sm hover:underline">
-                    Đăng nhập
-                </Link>
+                {/* Login link */}
+                <div className="text-center pt-5 pb-1">
+                    <span className="text-slate-500 text-sm">Đã có tài khoản? </span>
+                    <Link href={`/auth/login${authSuffix}`} className="text-brand font-bold text-sm hover:underline">
+                        Đăng nhập
+                    </Link>
+                </div>
             </div>
         </div>
     );
