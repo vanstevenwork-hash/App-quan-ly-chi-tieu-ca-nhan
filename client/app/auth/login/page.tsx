@@ -123,14 +123,14 @@ export default function LoginPage() {
                 <p className="text-white/70 text-[15px] mt-2.5 leading-relaxed">Đăng nhập để tiếp tục quản lý<br />tài chính thông minh</p>
             </div>
 
-            {/* ── Bottom: frosted glass form card ── */}
-            <div className="relative z-10 mt-auto rounded-t-[2.25rem] px-6 pt-8 border-t border-white/70"
+            {/* ── Bottom: floating frosted glass form card ── */}
+            <div className="relative z-10 mt-auto mx-4 rounded-[1.75rem] px-5 pt-6 pb-6 border border-white/60"
                 style={{
-                    background: 'rgba(250,249,255,0.86)',
+                    background: 'rgba(250,249,255,0.88)',
                     backdropFilter: 'blur(28px)',
                     WebkitBackdropFilter: 'blur(28px)',
-                    boxShadow: '0 -20px 60px -20px rgba(43,25,110,0.30), inset 0 1px 0 rgba(255,255,255,0.9)',
-                    paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.25rem)',
+                    boxShadow: '0 24px 60px -20px rgba(43,25,110,0.38), inset 0 1px 0 rgba(255,255,255,0.9)',
+                    marginBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)',
                 }}>
                 <form onSubmit={handleLogin} className="space-y-4">
                     {/* Email */}
