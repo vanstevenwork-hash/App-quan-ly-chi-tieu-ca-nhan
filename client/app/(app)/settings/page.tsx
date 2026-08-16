@@ -366,7 +366,7 @@ export default function SettingsPage() {
         <div className="min-h-screen bg-background pb-8">
             {/* Header — flat title, page style matches the rest of the app */}
             <div className="px-5 pb-4" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-                <h1 className="text-2xl font-bold text-foreground">Cài đặt</h1>
+                <h1 className="text-xl font-bold text-foreground">Cài đặt</h1>
             </div>
 
             {/* Profile card with PRO badge */}

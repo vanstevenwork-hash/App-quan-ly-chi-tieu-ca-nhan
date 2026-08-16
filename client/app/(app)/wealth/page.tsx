@@ -273,7 +273,7 @@ export default function WealthPage() {
                                 {isVisible ? <ActionIcon type="eye" size={16} tile={false} color="#94A3B8" /> : <ActionIcon type="eyeOff" size={16} tile={false} color="#94A3B8" />}
                             </button>
                         </div>
-                        <p className="text-slate-800 dark:text-white text-[30px] font-bold tracking-tight leading-none text-money">
+                        <p className="text-slate-800 dark:text-white text-[24px] font-bold tracking-tight leading-none text-money">
                             {isVisible ? `${fmtFull(combinedTotal)}đ` : '*******'}
                         </p>
                         <div className="inline-flex items-center gap-1.5 mt-4 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-500/20">

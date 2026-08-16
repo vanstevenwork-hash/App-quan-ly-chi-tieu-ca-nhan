@@ -298,7 +298,7 @@ export default function CalendarPage() {
                                 </div>
                                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-300">Chi tiêu</p>
                             </div>
-                            <p className="text-[18px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.expense)}</p>
+                            <p className="text-[15px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.expense)}</p>
                             {expenseChangePct !== null ? (
                                 <span className={cn(
                                     'inline-flex items-center gap-0.5 text-[10px] font-bold mt-1',
@@ -329,7 +329,7 @@ export default function CalendarPage() {
                                     <UtilityIcon type="wallet" size={14} tile={false} color="#10B981" />
                                 </div>
                             </div>
-                            <p className="text-[18px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.income)}</p>
+                            <p className="text-[15px] font-black text-slate-800 dark:text-white tracking-tight leading-tight">đ{fmtFull(monthSummary.income)}</p>
                             {incomeChangePct !== null ? (
                                 <span className={cn(
                                     'inline-flex items-center gap-0.5 text-[10px] font-bold mt-1',
@@ -361,7 +361,7 @@ export default function CalendarPage() {
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                             )}
                         >
-                            {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Wallet' : 'Bank'}
+                            {f === 'all' ? 'Tất cả' : f === 'expense' ? 'Chi tiêu' : 'Thu nhập'}
                         </button>
                     ))}
                 </div>
@@ -581,7 +581,7 @@ export default function CalendarPage() {
                             <UtilityIcon type="trendingUp" size={20} tile={false} color="#10B981" />
                         </div>
                         <p className="text-xs font-bold text-slate-700 dark:text-slate-200">Tiết kiệm tháng</p>
-                        <p className="text-lg font-extrabold text-emerald-500">
+                        <p className="text-base font-extrabold text-emerald-500">
                             {monthSummary.income > 0
                                 ? `+${fmt(Math.max(monthSummary.income - monthSummary.expense, 0))}`
                                 : '+0'}đ

@@ -88,11 +88,12 @@ export default function BottomNav() {
                             >
                                 <span
                                     className={cn(
-                                        'relative transition-colors duration-500',
+                                        'relative flex flex-col items-center gap-0.5 transition-colors duration-500',
                                         active ? 'text-brand dark:text-violet-400' : 'text-slate-400 dark:text-slate-500'
                                     )}
                                 >
-                                    <Icon className="w-[25px] h-[25px]" blob={false} mono color="currentColor" />
+                                    <Icon className="w-[21px] h-[21px]" blob={false} mono color="currentColor" />
+                                    <span className="text-[8px] font-semibold leading-none whitespace-nowrap">{label}</span>
                                 </span>
                             </Link>
                         );

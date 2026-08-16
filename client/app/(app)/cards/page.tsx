@@ -271,7 +271,7 @@ export default function CardsPage() {
                             <div className="flex flex-col items-center justify-center p-4 border-r border-gray-100 dark:border-slate-700"
                                 style={{ background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)' }}>
                                 <p className="text-[10px] text-emerald-700 font-semibold mb-1">Tháng này ⭐</p>
-                                <p className="text-lg font-bold text-emerald-700">+{fmtShort(cashbackTotal)}₫</p>
+                                <p className="text-base font-bold text-emerald-700">+{fmtShort(cashbackTotal)}₫</p>
                                 <span className="mt-1 text-[9px] font-bold px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700">
                                     Chờ duyệt
                                 </span>
@@ -279,7 +279,7 @@ export default function CardsPage() {
                             <div className="flex flex-col items-center justify-center p-4"
                                 style={{ background: 'linear-gradient(135deg, #eff6ff, #dbeafe)' }}>
                                 <p className="text-[10px] text-blue-700 font-semibold mb-1">Cả năm {now.getFullYear()} 📅</p>
-                                <p className="text-lg font-bold text-blue-700">+{fmtShort(yearlyCashback)}₫</p>
+                                <p className="text-base font-bold text-blue-700">+{fmtShort(yearlyCashback)}₫</p>
                                 <span className="mt-1 text-[9px] font-bold px-2 py-0.5 rounded-lg bg-blue-100 text-blue-700">
                                     Tích lũy
                                 </span>

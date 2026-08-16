@@ -356,23 +356,28 @@ export default function AnalyticsPage() {
                     </div>
 
                     {periodTab === 'Tùy chỉnh' && (
-                        <div className="bg-white/50 dark:bg-surface/40 backdrop-blur-md rounded-[20px] p-3 flex items-center gap-2 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
-                            <input
-                                type="date"
-                                value={customStart}
-                                onChange={e => setCustomStart(e.target.value)}
-                                max={customEnd || undefined}
-                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
-                            />
-                            <span className="text-slate-400 text-xs font-bold flex-shrink-0">→</span>
-                            <input
-                                type="date"
-                                value={customEnd}
-                                onChange={e => setCustomEnd(e.target.value)}
-                                min={customStart || undefined}
-                                max={toISODate(new Date())}
-                                className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
-                            />
+                        <div className="bg-white/50 dark:bg-surface/40 backdrop-blur-md rounded-[20px] p-3 grid grid-cols-2 gap-2.5 border border-white/50 dark:border-slate-800/50 shadow-sm mb-6">
+                            <div className="min-w-0">
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1 px-0.5">Từ ngày</label>
+                                <input
+                                    type="date"
+                                    value={customStart}
+                                    onChange={e => setCustomStart(e.target.value)}
+                                    max={customEnd || undefined}
+                                    className="w-full min-w-0 appearance-none rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
+                                />
+                            </div>
+                            <div className="min-w-0">
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1 px-0.5">Đến ngày</label>
+                                <input
+                                    type="date"
+                                    value={customEnd}
+                                    onChange={e => setCustomEnd(e.target.value)}
+                                    min={customStart || undefined}
+                                    max={toISODate(new Date())}
+                                    className="w-full min-w-0 appearance-none rounded-xl border border-slate-200 dark:border-slate-700 px-2.5 py-2 text-xs font-medium bg-white dark:bg-surface text-slate-900 dark:text-white outline-none focus:ring-1 focus:ring-[#6C63FF] transition"
+                                />
+                            </div>
                         </div>
                     )}
 

@@ -48,7 +48,7 @@ function TransactionRow({ t, cards, sharedOwner, onClick }: { t: any; cards: Car
     return (
         <div
             onClick={onClick}
-            className="relative flex items-center gap-3.5 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 px-4 py-3.5 cursor-pointer"
+            className="relative flex items-center gap-3 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all duration-200 px-3 py-2.5 cursor-pointer"
         >
             {/* Corner tag: this transaction is on a card shared with me (e.g. my
                 wife's) — makes "our" spending easy to spot in my own feed. */}
@@ -59,21 +59,21 @@ function TransactionRow({ t, cards, sharedOwner, onClick }: { t: any; cards: Car
             )}
             <CategoryIcon
                 type={cat.catIconType || 'khac'}
-                size={44}
+                size={38}
                 tile
                 className="flex-shrink-0"
             />
             <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{t.note || t.category}</p>
-                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1 truncate">
+                <p className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{t.note || t.category}</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate">
                     {t.category} · {time}
                 </p>
             </div>
             <div className="flex flex-col items-end flex-shrink-0 ml-2">
-                <span className={cn('text-[15px] font-bold tabular-nums', isIncome ? 'text-emerald-500' : 'text-red-400')}>
+                <span className={cn('text-[13px] font-bold tabular-nums', isIncome ? 'text-emerald-500' : 'text-red-400')}>
                     {isIncome ? '+' : '-'}{fmtViShort(t.amount)}
                 </span>
-                <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1 truncate max-w-[120px]">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate max-w-[120px]">
                     {sourceLabel(t, cards)}
                 </span>
             </div>
@@ -118,10 +118,10 @@ function RecentTransactionsListBase({ transactions, cards, sharedCardOwners, onS
     return (
         <section>
             <div className="flex justify-between items-center mb-3">
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Giao dịch gần đây</h2>
+                <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Giao dịch gần đây</h2>
                 <Link href="/analytics" aria-label="Lịch sử"
-                    className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-brand dark:text-brand-light border border-brand/25 dark:border-white/10 bg-brand-light/60 dark:bg-slate-900/60 shadow-sm hover:bg-brand-light/80 dark:hover:bg-slate-800/70 transition-all">
-                    <ActionIcon type="arrowRight" size={16} tile={false} color="currentColor" />
+                    className="flex items-center justify-center w-7 h-7 rounded-[8px] text-brand dark:text-brand-light border border-brand/25 dark:border-white/10 bg-brand-light/60 dark:bg-slate-900/60 shadow-sm hover:bg-brand-light/80 dark:hover:bg-slate-800/70 transition-all">
+                    <ActionIcon type="arrowRight" size={15} tile={false} color="currentColor" />
                 </Link>
             </div>
             {transactions.length === 0 ? (
@@ -139,12 +139,12 @@ function RecentTransactionsListBase({ transactions, cards, sharedCardOwners, onS
                     {dayGroups.map(g => (
                         <div key={g.key}>
                             {/* Day header: label + date left, net total right */}
-                            <div className="flex items-baseline justify-between px-1 mb-2">
-                                <p className="text-sm font-bold text-slate-800 dark:text-white">
+                            <div className="flex items-baseline justify-between px-1 mb-1.5">
+                                <p className="text-[13px] font-bold text-slate-800 dark:text-white">
                                     {g.label} <span className="text-slate-400 dark:text-slate-500 font-medium">· {g.dateStr}</span>
                                 </p>
                                 <span className={cn(
-                                    'text-sm font-bold tabular-nums',
+                                    'text-[13px] font-bold tabular-nums',
                                     g.net < 0 ? 'text-red-400' : 'text-emerald-500'
                                 )}>
                                     {g.net < 0 ? '-' : '+'}{fmtViShort(g.net)}

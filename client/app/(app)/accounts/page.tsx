@@ -178,7 +178,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
             <div className="flex justify-between items-end mb-3">
                 <div>
                     <p className="text-xs mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
-                    <p className="text-2xl font-bold" style={{ color: ts.text }}>{fmt(card.balance)}</p>
+                    <p className="text-xl font-bold" style={{ color: ts.text }}>{fmt(card.balance)}</p>
                 </div>
                 {dueDays !== null && (
                     <div className="text-right">
@@ -417,7 +417,7 @@ export default function AccountsPage() {
                             {/* Net worth */}
                             <div className="text-center">
                                 <p className="text-sm text-slate-500 dark:text-slate-300 font-medium mb-1">Tổng tài sản ròng</p>
-                                <p className="text-[22px] font-bold text-slate-800 dark:text-white tracking-tight leading-none text-money">{fmt(netWorth)} đ</p>
+                                <p className="text-[19px] font-bold text-slate-800 dark:text-white tracking-tight leading-none text-money">{fmt(netWorth)} đ</p>
                             </div>
 
                             {/* Breakdown — value on top, label below, split by dividers (Home style) */}
@@ -430,7 +430,7 @@ export default function AccountsPage() {
                                     <div key={item.label} className="flex flex-1 items-center min-w-0">
                                         {i > 0 && <div className="w-px h-9 self-center bg-slate-200 dark:bg-white/15 flex-shrink-0" />}
                                         <div className="flex-1 text-center min-w-0 px-1">
-                                            <p className={cn('text-[15px] font-bold text-money tabular-nums', item.color)}>
+                                            <p className={cn('text-[13px] font-bold text-money tabular-nums', item.color)}>
                                                 {item.value}
                                             </p>
                                             <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 truncate">{item.label}</p>
@@ -447,7 +447,7 @@ export default function AccountsPage() {
                             <button key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={cn(
-                                    'flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2',
+                                    'flex-1 py-2 rounded-xl text-[13px] font-bold transition-all flex items-center justify-center gap-2',
                                     activeTab === tab
                                         ? 'bg-brand text-white shadow-md shadow-brand/30 scale-[1.02]'
                                         : 'text-slate-500 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'

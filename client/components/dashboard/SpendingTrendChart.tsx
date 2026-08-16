@@ -177,22 +177,22 @@ function SpendingTrendChartBase({ transactions }: SpendingTrendChartProps) {
 
     return (
         <section>
-            <div className="flex justify-between items-center mb-3">
-                <h2 className="text-lg font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
+            <div className="flex justify-between items-center mb-2.5">
+                <h2 className="text-[15px] font-bold text-slate-800 dark:text-white">Xu hướng thu chi</h2>
                 <Link href="/analytics" aria-label="Xem chi tiết"
-                    className="flex items-center justify-center w-[30px] h-[30px] rounded-[8px] text-brand dark:text-brand-light border border-brand/25 dark:border-white/10 bg-brand-light/60 dark:bg-slate-900/60 shadow-sm hover:bg-brand-light/80 dark:hover:bg-slate-800/70 transition-all">
-                    <ActionIcon type="arrowRight" size={16} tile={false} color="currentColor" />
+                    className="flex items-center justify-center w-7 h-7 rounded-[8px] text-brand dark:text-brand-light border border-brand/25 dark:border-white/10 bg-brand-light/60 dark:bg-slate-900/60 shadow-sm hover:bg-brand-light/80 dark:hover:bg-slate-800/70 transition-all">
+                    <ActionIcon type="arrowRight" size={15} tile={false} color="currentColor" />
                 </Link>
             </div>
 
-            <div className="bg-white dark:bg-surface rounded-[20px] p-4 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+            <div className="bg-white dark:bg-surface rounded-2xl p-3 border border-gray-100 dark:border-slate-700 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
                 {/* Range segmented control */}
-                <div className="inline-flex p-1 rounded-xl border border-slate-200/70 dark:border-slate-700 bg-slate-50 dark:bg-surface/40 mb-2">
+                <div className="inline-flex p-0.5 rounded-lg border border-slate-200/70 dark:border-slate-700 bg-slate-50 dark:bg-surface/40 mb-2">
                     {RANGES.map(r => (
                         <button key={r.key}
                             onClick={() => setRange(r.key)}
                             className={cn(
-                                'px-5 py-1.5 rounded-[8px] text-sm font-bold transition-all',
+                                'px-3 py-1 rounded-md text-[11px] font-bold transition-all',
                                 range === r.key
                                     ? 'bg-brand text-white shadow-md shadow-brand/30'
                                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -202,7 +202,7 @@ function SpendingTrendChartBase({ transactions }: SpendingTrendChartProps) {
                     ))}
                 </div>
 
-                <ResponsiveContainer width="100%" height={192}>
+                <ResponsiveContainer width="100%" height={158}>
                     <AreaChart data={data} margin={{ top: 36, right: 10, bottom: 0, left: -18 }}>
                         <defs>
                             <linearGradient id="trendGreen" x1="0" y1="0" x2="0" y2="1">
