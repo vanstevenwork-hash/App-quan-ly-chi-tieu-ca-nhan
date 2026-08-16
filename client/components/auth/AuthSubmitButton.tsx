@@ -37,7 +37,7 @@ export default function AuthSubmitButton({
             {/* Idle content — cross-fades out on submit */}
             <span className={cn('absolute inset-0 flex items-center justify-center transition-opacity duration-200', loading ? 'opacity-0' : 'opacity-100')}>
                 {leftIcon && (
-                    <span className="absolute left-3 w-10 h-10 rounded-full bg-white/15 flex items-center justify-center">{leftIcon}</span>
+                    <span className="absolute left-2.5 w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">{leftIcon}</span>
                 )}
                 <span>{idleLabel}</span>
                 <CustomIcon type="arrowRight" size={18} tile={false} color="currentColor" className="absolute right-5" />

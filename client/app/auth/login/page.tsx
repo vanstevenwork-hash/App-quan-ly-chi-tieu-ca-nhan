@@ -104,7 +104,7 @@ export default function LoginPage() {
         <div className="relative flex flex-col overflow-hidden"
             style={{
                 minHeight: '100dvh',
-                background: 'linear-gradient(180deg, #0b0828 0%, #17104a 35%, #6f5bc9 68%, #f0edff 100%)',
+                background: 'linear-gradient(180deg, #0b0828 0%, #17104a 34%, #4a3a9e 62%, #6f5bc9 100%)',
             }}>
             {/* Artwork (lightweight WebP) — drops onto the gradient base. Falls back
                 gracefully to the gradient + glows if the file isn't present yet. */}
@@ -117,10 +117,10 @@ export default function LoginPage() {
             <div className="absolute pointer-events-none rounded-full" style={{ width: 380, height: 380, bottom: -180, right: -100, background: 'rgba(124,58,237,0.20)', filter: 'blur(90px)', mixBlendMode: 'screen' }} />
 
             {/* ── Top: logo + welcome (over the illustration) ── */}
-            <div className="relative z-10 px-6 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.75rem)' }}>
-                <WLogo className="w-[78px] h-auto mb-6 drop-shadow-[0_10px_24px_rgba(124,92,246,0.45)]" />
-                <h1 className="text-[36px] font-extrabold text-white leading-[1.1] tracking-tight">Chào mừng bạn!</h1>
-                <p className="text-white/70 text-[15px] mt-2.5 leading-relaxed">Đăng nhập để tiếp tục quản lý<br />tài chính thông minh</p>
+            <div className="relative z-10 px-6 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}>
+                <WLogo className="w-16 h-auto mb-4 drop-shadow-[0_10px_24px_rgba(124,92,246,0.45)]" />
+                <h1 className="text-[30px] font-extrabold text-white leading-[1.1] tracking-tight">Chào mừng bạn!</h1>
+                <p className="text-white/70 text-[14px] mt-2 leading-relaxed">Đăng nhập để tiếp tục quản lý<br />tài chính thông minh</p>
             </div>
 
             {/* ── Bottom: floating frosted glass form card ── */}
@@ -130,25 +130,25 @@ export default function LoginPage() {
                     backdropFilter: 'blur(28px)',
                     WebkitBackdropFilter: 'blur(28px)',
                     boxShadow: '0 24px 60px -20px rgba(43,25,110,0.38), inset 0 1px 0 rgba(255,255,255,0.9)',
-                    marginBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)',
+                    marginBottom: 'calc(env(safe-area-inset-bottom) + 1rem)',
                 }}>
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-3">
                     {/* Email */}
                     <div>
-                        <label className="text-[15px] font-bold text-slate-700 mb-2 block">Email</label>
+                        <label className="text-[13px] font-bold text-slate-700 mb-1.5 block">Email</label>
                         <div className="relative">
-                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-brand-light/70 flex items-center justify-center">
-                                <CustomIcon type="mail" size={16} tile={false} color="#6C4DE6" />
+                            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-brand-light/70 flex items-center justify-center">
+                                <CustomIcon type="mail" size={14} tile={false} color="#6C4DE6" />
                             </div>
                             <input
                                 type="email"
                                 placeholder="you@email.com"
                                 value={email}
                                 onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
-                                className={`w-full h-14 rounded-2xl bg-white pl-[52px] pr-11 text-[15px] font-medium text-slate-900 outline-none border transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15 ${errors.email ? 'border-red-400' : 'border-slate-200'}`}
+                                className={`w-full h-11 rounded-xl bg-white pl-10 pr-9 text-sm font-medium text-slate-900 outline-none border transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15 ${errors.email ? 'border-red-400' : 'border-slate-200'}`}
                             />
                             {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
-                                <CustomIcon type="checkCircle" size={18} tile={false} color="#6C4DE6" className="absolute right-4 top-1/2 -translate-y-1/2" />
+                                <CustomIcon type="checkCircle" size={16} tile={false} color="#6C4DE6" className="absolute right-3 top-1/2 -translate-y-1/2" />
                             )}
                         </div>
                         {errors.email && <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>}
@@ -156,30 +156,30 @@ export default function LoginPage() {
 
                     {/* Password */}
                     <div>
-                        <label className="text-[15px] font-bold text-slate-700 mb-2 block">Mật khẩu</label>
+                        <label className="text-[13px] font-bold text-slate-700 mb-1.5 block">Mật khẩu</label>
                         <div className="relative">
-                            <div className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-brand-light/70 flex items-center justify-center">
-                                <CustomIcon type="lock" size={16} tile={false} color="#6C4DE6" />
+                            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-brand-light/70 flex items-center justify-center">
+                                <CustomIcon type="lock" size={14} tile={false} color="#6C4DE6" />
                             </div>
                             <input
                                 type={showPass ? 'text' : 'password'}
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }}
-                                className={`w-full h-14 rounded-2xl bg-white pl-[52px] pr-12 text-[15px] font-medium text-slate-900 outline-none border transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15 ${errors.password ? 'border-red-400' : 'border-slate-200'}`}
+                                className={`w-full h-11 rounded-xl bg-white pl-10 pr-10 text-sm font-medium text-slate-900 outline-none border transition-colors placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/15 ${errors.password ? 'border-red-400' : 'border-slate-200'}`}
                             />
                             <button type="button" onClick={() => setShowPass(!showPass)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                                {showPass ? <CustomIcon type="eyeOff" size={18} tile={false} color="currentColor" /> : <CustomIcon type="eye" size={18} tile={false} color="currentColor" />}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                {showPass ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" />}
                             </button>
                         </div>
                         {errors.password && <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>}
                     </div>
 
-                    <div className="text-right -mt-1">
+                    <div className="text-right -mt-0.5">
                         <button type="button"
                             onClick={() => { setShowForgotPwd(true); setForgotEmail(''); setForgotSuccess(false); }}
-                            className="text-brand text-sm font-bold hover:underline">
+                            className="text-brand text-[13px] font-bold hover:underline">
                             Quên mật khẩu?
                         </button>
                     </div>
@@ -190,27 +190,28 @@ export default function LoginPage() {
                         loading={loading}
                         idleLabel="Đăng nhập"
                         loadingLabel="Đang đăng nhập..."
-                        leftIcon={<Fingerprint className="w-5 h-5 text-white" />}
+                        leftIcon={<Fingerprint className="w-4 h-4 text-white" />}
+                        className="h-[52px] text-[15px]"
                     />
                 </form>
 
                 {/* Divider */}
-                <div className="flex items-center gap-3 my-5">
+                <div className="flex items-center gap-3 my-3.5">
                     <div className="flex-1 h-px bg-slate-200" />
-                    <span className="text-slate-400 text-xs font-medium">hoặc đăng nhập bằng</span>
+                    <span className="text-slate-400 text-[11px] font-medium">hoặc đăng nhập bằng</span>
                     <div className="flex-1 h-px bg-slate-200" />
                 </div>
 
                 {/* Social Login */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                     {[
                         { label: 'Google', icon: <GoogleIcon /> },
                         { label: 'Apple', icon: <AppleIcon /> },
                         { label: 'Facebook', icon: <FacebookIcon /> },
                     ].map((s) => (
                         <button key={s.label} onClick={handleDemoLogin}
-                            className="flex flex-col items-center gap-1.5 py-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:border-brand/40 hover:shadow-md transition-all active:scale-95 text-[13px] font-semibold text-slate-700">
-                            <span className="text-2xl leading-none">{s.icon}</span>
+                            className="flex flex-col items-center gap-1 py-2.5 rounded-xl bg-white border border-slate-200/80 shadow-sm hover:border-brand/40 hover:shadow-md transition-all active:scale-95 text-[11px] font-semibold text-slate-700">
+                            <span className="text-lg leading-none">{s.icon}</span>
                             {s.label}
                         </button>
                     ))}
@@ -218,21 +219,21 @@ export default function LoginPage() {
 
                 {/* Biometric quick login */}
                 <button onClick={handleDemoLogin}
-                    className="w-full mt-3 flex items-center gap-3 px-3.5 py-3 rounded-2xl bg-white/70 border border-slate-200/70 hover:bg-white transition-colors active:scale-[0.99] text-left">
-                    <span className="w-11 h-11 rounded-full bg-gradient-to-br from-[#8B7CF6] to-[#6C4DE6] flex items-center justify-center flex-shrink-0 shadow-md shadow-brand/30">
-                        <Fingerprint className="w-6 h-6 text-white" />
+                    className="w-full mt-2.5 flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/70 border border-slate-200/70 hover:bg-white transition-colors active:scale-[0.99] text-left">
+                    <span className="w-9 h-9 rounded-full bg-gradient-to-br from-[#8B7CF6] to-[#6C4DE6] flex items-center justify-center flex-shrink-0 shadow-md shadow-brand/30">
+                        <Fingerprint className="w-5 h-5 text-white" />
                     </span>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-slate-800">Đăng nhập nhanh với sinh trắc học</p>
-                        <p className="text-[11px] text-slate-400">An toàn & bảo mật tuyệt đối</p>
+                        <p className="text-[13px] font-bold text-slate-800">Đăng nhập nhanh với sinh trắc học</p>
+                        <p className="text-[10px] text-slate-400">An toàn & bảo mật tuyệt đối</p>
                     </div>
-                    <CustomIcon type="chevronRight" size={18} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
+                    <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                 </button>
 
                 {/* Register link */}
-                <div className="text-center pt-5 pb-1">
-                    <span className="text-slate-500 text-sm">Chưa có tài khoản? </span>
-                    <Link href={`/auth/register${authSuffix}`} className="text-brand font-bold text-sm hover:underline">
+                <div className="text-center pt-4">
+                    <span className="text-slate-500 text-[13px]">Chưa có tài khoản? </span>
+                    <Link href={`/auth/register${authSuffix}`} className="text-brand font-bold text-[13px] hover:underline">
                         Đăng ký ngay
                     </Link>
                 </div>
