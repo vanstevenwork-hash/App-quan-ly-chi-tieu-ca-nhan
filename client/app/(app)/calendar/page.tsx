@@ -6,8 +6,6 @@ import { useCards } from '@/hooks/useCards';
 import { useUIStore } from '@/store/useStore';
 import { useDayNotes } from '@/hooks/useDayNotes';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
-import AddTransactionModal from '@/components/AddTransactionModal';
-import TransactionDetailModal from '@/components/TransactionDetailModal';
 import DayCell from '@/components/calendar/DayCell';
 import DayActionSheet from '@/components/calendar/DayActionSheet';
 import ImageNoteUploadModal, { type ImageNoteUploadModalHandle } from '@/components/calendar/ImageNoteUploadModal';
@@ -17,6 +15,13 @@ import CategoryIcon from '@/components/icons/CategoryIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { cn, formatNumber } from '@/lib/utils';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+// Interaction-only modals — split out of the calendar's initial JS (ssr:false;
+// they render nothing until opened). ImageNoteUploadModal stays static because
+// it's driven by an imperative ref handle that next/dynamic can't forward.
+const AddTransactionModal = dynamic(() => import('@/components/AddTransactionModal'), { ssr: false });
+const TransactionDetailModal = dynamic(() => import('@/components/TransactionDetailModal'), { ssr: false });
 
 const DAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 const MONTHS = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',

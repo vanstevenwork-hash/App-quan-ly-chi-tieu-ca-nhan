@@ -2,13 +2,26 @@
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useMemo, useCallback, useState } from 'react';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
-import AddTransactionModal from '@/components/AddTransactionModal';
-import TransactionDetailModal from '@/components/TransactionDetailModal';
-import NotificationPanel from '@/components/NotificationPanel';
-import SpendingTrendChart from '@/components/dashboard/SpendingTrendChart';
 import RecentTransactionsList from '@/components/dashboard/RecentTransactionsList';
 import ImportantAlertsSection from '@/components/dashboard/ImportantAlertsSection';
-import GameInvitePopupModal from '@/components/games/GameInvitePopupModal';
+import dynamic from 'next/dynamic';
+
+// ── Code-split heavy / interaction-only pieces out of the dashboard's initial JS.
+// Modals render nothing until opened; the trend chart drags in recharts, so it
+// streams in behind a skeleton instead of blocking first paint. ─────────────────
+const SpendingTrendChart = dynamic(() => import('@/components/dashboard/SpendingTrendChart'), {
+    ssr: false,
+    loading: () => (
+        <div>
+            <div className="h-5 w-40 rounded-md bg-slate-200/70 dark:bg-slate-700/50 animate-pulse mb-2.5" />
+            <div className="h-[236px] rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 animate-pulse" />
+        </div>
+    ),
+});
+const AddTransactionModal = dynamic(() => import('@/components/AddTransactionModal'), { ssr: false });
+const TransactionDetailModal = dynamic(() => import('@/components/TransactionDetailModal'), { ssr: false });
+const NotificationPanel = dynamic(() => import('@/components/NotificationPanel'), { ssr: false });
+const GameInvitePopupModal = dynamic(() => import('@/components/games/GameInvitePopupModal'), { ssr: false });
 import { useAuthStore, useUIStore } from '@/store/useStore';
 import { useTransactions } from '@/hooks/useTransactions';
 import { toast } from 'sonner';
