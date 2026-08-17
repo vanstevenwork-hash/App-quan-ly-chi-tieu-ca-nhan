@@ -50,6 +50,7 @@ export const authApi = {
         api.post('/auth/register', data),
     login: (data: { email: string; password: string }) =>
         api.post('/auth/login', data),
+    getMe: () => api.get('/auth/me'),
     getProfile: () => api.get('/auth/profile'),
     updateProfile: (data: object) => api.put('/auth/profile', data),
     forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),

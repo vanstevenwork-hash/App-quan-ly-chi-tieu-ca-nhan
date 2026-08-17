@@ -62,13 +62,31 @@ export default function LoginPage() {
         const t0 = Date.now();
         try {
             const res = await authApi.login({ email, password });
-            login(res.data.user, res.data.token);
+            const token = res.data.token;
+            // The backend's /auth/login returns ONLY { token } — no user object —
+            // so res.data.user is undefined. Persist the token first (so the
+            // interceptor authorizes the follow-up call), then fetch the real
+            // profile from /auth/me. If that hiccups we still log in with a
+            // minimal user built from the email, so navigation always proceeds.
+            if (typeof window !== 'undefined') localStorage.setItem('token', token);
+            let profile: any = res.data.user;
+            if (!profile) {
+                try { profile = (await authApi.getMe()).data; } catch { /* fall back below */ }
+            }
+            const user = {
+                _id: profile?.id || profile?._id || '',
+                name: profile?.name || email.split('@')[0],
+                email: profile?.email || email,
+                avatar: profile?.avatar || '',
+                currency: profile?.currency || 'VND',
+            };
+            login(user, token);
             // Let the burst → spinner FX finish before leaving (min ~900ms on success).
             const wait = 900 - (Date.now() - t0);
             if (wait > 0) await new Promise(r => setTimeout(r, wait));
             // Return to the page that bounced them here (e.g. a shared game link).
             const redirect = new URLSearchParams(window.location.search).get('redirect');
-            router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
+            router.replace(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
         } catch (err: any) {
             const msg = err?.response?.data?.message || 'Email hoặc mật khẩu không đúng';
             setErrors({ general: msg });
@@ -119,8 +137,8 @@ export default function LoginPage() {
             {/* ── Top: logo + welcome (over the illustration) ── */}
             <div className="relative z-10 px-6 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)' }}>
                 <WLogo className="w-16 h-auto mb-4 drop-shadow-[0_10px_24px_rgba(124,92,246,0.45)]" />
-                <h1 className="text-[30px] font-extrabold text-white leading-[1.1] tracking-tight">Chào mừng bạn!</h1>
-                <p className="text-white/70 text-[14px] mt-2 leading-relaxed">Đăng nhập để tiếp tục quản lý<br />tài chính thông minh</p>
+                <h1 className="text-[25px] font-extrabold text-white leading-[1.15] tracking-tight">Chào mừng bạn!</h1>
+                <p className="text-white/70 text-[13px] mt-2 leading-relaxed">Đăng nhập để tiếp tục quản lý<br />tài chính thông minh</p>
             </div>
 
             {/* ── Bottom: floating frosted glass form card ── */}

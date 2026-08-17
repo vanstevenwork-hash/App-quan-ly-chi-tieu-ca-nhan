@@ -36,11 +36,26 @@ export default function RegisterPage() {
         const t0 = Date.now();
         try {
             const res = await authApi.register({ name, email, password });
-            login(res.data.user, res.data.token);
+            const token = res.data.token;
+            // /auth/register returns only { token } — fetch the real profile from
+            // /auth/me, with a name/email fallback so navigation always proceeds.
+            if (typeof window !== 'undefined') localStorage.setItem('token', token);
+            let profile: any = res.data.user;
+            if (!profile) {
+                try { profile = (await authApi.getMe()).data; } catch { /* fall back below */ }
+            }
+            const user = {
+                _id: profile?.id || profile?._id || '',
+                name: profile?.name || name,
+                email: profile?.email || email,
+                avatar: profile?.avatar || '',
+                currency: profile?.currency || 'VND',
+            };
+            login(user, token);
             const wait = 900 - (Date.now() - t0);
             if (wait > 0) await new Promise(r => setTimeout(r, wait));
             const redirect = new URLSearchParams(window.location.search).get('redirect');
-            router.push(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
+            router.replace(redirect && redirect.startsWith('/') ? redirect : '/dashboard');
         } catch (err: any) {
             // Never fake a successful registration on failure — that leaves the
             // user thinking they have an account when nothing was created on
