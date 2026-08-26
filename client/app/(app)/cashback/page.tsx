@@ -215,23 +215,6 @@ export default function CashbackPage() {
         return { totalCap, hasUnlimited };
     }, [cashbackCards]);
 
-    // Insight: when cards hit their monthly cap, suggest the best card to move spending to
-    const insight = useMemo(() => {
-        const rows = creditCards.map(card => {
-            const rm = rawMonthly.find(r => r.card._id === card._id && r.year === curMonth.year && r.month === curMonth.month);
-            return { card, est: rm?.estimatedAmount ?? 0, capped: rm?.capped ?? false };
-        });
-        const cappedCount = rows.filter(r => r.capped).length;
-        if (cappedCount === 0) return null;
-        const best = rows
-            .filter(r => !r.capped && (r.card.cashbackRate || 0) > 0)
-            .map(r => ({ ...r, remaining: r.card.cashbackCap > 0 ? r.card.cashbackCap - r.est : Infinity }))
-            .filter(r => r.remaining > 0)
-            .sort((a, b) => (b.card.cashbackRate - a.card.cashbackRate) || (b.remaining - a.remaining))[0];
-        if (!best) return null;
-        return { cappedCount, best };
-    }, [creditCards, rawMonthly, curMonth]);
-
     // ── Month-first grouping for the "Theo tháng" view ──────────────
     // Newest month first; consecutive months with no cashback collapse into one muted range row.
     type MonthRow = { card: Card; estimatedAmount: number; displayAmount: number; status: 'pending' | 'received'; capped: boolean };
@@ -352,8 +335,8 @@ export default function CashbackPage() {
                             <p className="text-slate-500 dark:text-slate-300 text-sm font-medium">Tổng hoàn tiền</p>
                             <UtilityIcon type="coins" size={32} tile={false} />
                         </div>
-                        <p className="text-slate-800 dark:text-white text-[30px] font-bold tracking-tight leading-none">
-                            {fmt(totalReceived + totalPending + sharedCashbackTotal)}<span className="text-lg text-slate-400 font-medium ml-0.5">₫</span>
+                        <p className="text-slate-800 dark:text-white text-[24px] font-bold tracking-tight leading-none">
+                            {fmt(totalReceived + totalPending + sharedCashbackTotal)}<span className="text-base text-slate-400 font-medium ml-0.5">₫</span>
                         </p>
                         {sharedCashbackTotal > 0 && (
                             <p className="text-xs text-indigo-500 dark:text-indigo-400 font-semibold mt-1">
@@ -393,20 +376,6 @@ export default function CashbackPage() {
                     </div>
                 </div>
 
-                {/* Insight: cards at their cap this month → where to move spending */}
-                {insight && (
-                    <div className="flex items-center gap-3 rounded-[20px] p-4 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/25">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
-                            <UtilityIcon type="sparkles" size={18} tile={false} color="#8B5CF6" />
-                        </div>
-                        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                            <b className="text-slate-800 dark:text-white">{insight.cappedCount} thẻ</b> đã chạm trần hoàn tiền tháng {curMonth.month + 1}. Chuyển chi tiêu sang <b className="text-slate-800 dark:text-white">{insight.best.card.bankShortName || insight.best.card.bankName}</b>
-                            {insight.best.remaining !== Infinity
-                                ? <> — còn <b className="text-slate-800 dark:text-white">{fmtShort(insight.best.remaining)}</b> hạn mức hoàn {insight.best.card.cashbackRate}%.</>
-                                : <> — hoàn {insight.best.card.cashbackRate}% không giới hạn.</>}
-                        </p>
-                    </div>
-                )}
 
                 {/* Trend chart — value labels on top, current month highlighted */}
                 <div>
