@@ -267,14 +267,14 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-6 mt-3">
                             <Link href="/analytics" className="group">
                                 <p className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
-                                    <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" /> +{fmt(summary.income)}
+                                    +{fmt(summary.income)} <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" />
                                 </p>
                                 <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Thu nhập</p>
                             </Link>
                             <div className="w-px h-8 bg-slate-200 dark:bg-white/15" />
                             <Link href="/analytics" className="group">
                                 <p className="inline-flex items-center gap-1 text-red-500 dark:text-red-400 text-sm font-bold">
-                                    <UtilityIcon type="trendingDown" size={14} tile={false} color="#EF4444" /> -{fmt(summary.expense)}
+                                    -{fmt(summary.expense)} <UtilityIcon type="trendingDown" size={14} tile={false} color="#EF4444" />
                                 </p>
                                 <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Chi tiêu</p>
                             </Link>

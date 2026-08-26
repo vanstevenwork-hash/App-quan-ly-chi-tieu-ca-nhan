@@ -1,0 +1,6 @@
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<defs><mask id="m"><rect width="24" height="24" fill="white"/><ellipse cx="12" cy="8.4" rx="3.4" ry="1.3" fill="black" opacity="0.85"/></mask></defs>
+<ellipse cx="12" cy="17.3" rx="8.2" ry="3" fill="currentColor" opacity="0.5"/>
+<ellipse cx="12" cy="13.7" rx="8.2" ry="3" fill="currentColor" opacity="0.75"/>
+<ellipse cx="12" cy="10.1" rx="8.2" ry="3" fill="currentColor" mask="url(#m)"/>
+</svg>

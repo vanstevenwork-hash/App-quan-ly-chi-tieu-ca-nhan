@@ -25,6 +25,8 @@ interface CardPaymentModalProps {
     onPaid?: () => void;
     creditCards: Card[];
     accounts?: Card[];
+    /** Pre-select this card when opening (e.g. the card whose "Thanh toán" was tapped). */
+    initialCardId?: string;
 }
 
 const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
@@ -42,7 +44,7 @@ const QUICK_PRESETS = (balance: number, minPay: number) => [
     { label: `Toàn bộ\n${fmtShort(balance)}đ`, value: balance },
 ];
 
-export default function CardPaymentModal({ open, onClose, onPaid, creditCards, accounts }: CardPaymentModalProps) {
+export default function CardPaymentModal({ open, onClose, onPaid, creditCards, accounts, initialCardId }: CardPaymentModalProps) {
     const [mounted, setMounted] = useState(false);
     const [selectedId, setSelectedId] = useState('');
     const [sourceId, setSourceId] = useState('');
@@ -54,12 +56,14 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
 
     useEffect(() => {
         if (open) {
-            // auto-select the card with highest balance
-            const first = creditCards.sort((a, b) => b.balance - a.balance)[0];
+            // Prefer the card whose "Thanh toán" was tapped; otherwise the
+            // card with the highest balance.
+            const tapped = initialCardId ? creditCards.find(c => c._id === initialCardId) : undefined;
+            const first = tapped || [...creditCards].sort((a, b) => b.balance - a.balance)[0];
             setSelectedId(first?._id || '');
             setAmount('');
         }
-    }, [open, creditCards]);
+    }, [open, creditCards, initialCardId]);
 
     useEffect(() => {
         if (!selectedId || !accounts?.length) return;
@@ -77,6 +81,25 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
 
     const selectedCard = creditCards.find(c => c._id === selectedId);
     const balance = selectedCard?.balance || 0;
+
+    // Days until this card's payment due date (null when no due day set).
+    const dueDaysOf = (card: Card): number | null => {
+        if (!card.paymentDueDay) return null;
+        const now = new Date();
+        const due = new Date(now.getFullYear(), now.getMonth(), card.paymentDueDay);
+        if (due <= now) due.setMonth(due.getMonth() + 1);
+        return Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
+    };
+    // Nearest due date first; cards already paid off (dư nợ = 0) sink to the bottom.
+    const sortedCards = [...creditCards].sort((a, b) => {
+        const aPaid = a.balance === 0, bPaid = b.balance === 0;
+        if (aPaid !== bPaid) return aPaid ? 1 : -1;
+        const da = dueDaysOf(a), db = dueDaysOf(b);
+        if (da === null && db === null) return b.balance - a.balance;
+        if (da === null) return 1;
+        if (db === null) return -1;
+        return da - db;
+    });
     const minPay = Math.ceil(balance * 0.05);
     const remaining = balance - (parseInt(amount.replace(/\D/g, '') || '0'));
 
@@ -142,35 +165,29 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                         <>
                             <div>
                                 <p className="text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">Chọn thẻ</p>
-                                <div className="flex flex-col gap-2">
-                                    {creditCards.map(card => {
-                                        const dueDays = (() => {
-                                            if (!card.paymentDueDay) return null;
-                                            const now = new Date();
-                                            const due = new Date(now.getFullYear(), now.getMonth(), card.paymentDueDay);
-                                            if (due <= now) due.setMonth(due.getMonth() + 1);
-                                            return Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
-                                        })();
+                                <div className="flex flex-col gap-1.5">
+                                    {sortedCards.map(card => {
+                                        const dueDays = dueDaysOf(card);
                                         const isUrgent = dueDays !== null && dueDays <= 5;
                                         const isDisabled = card.balance === 0;
                                         return (
                                             <button key={card._id} onClick={() => { setSelectedId(card._id); setAmount(''); }}
                                                 disabled={isDisabled}
-                                                className={cn('flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all text-left',
+                                                className={cn('flex items-center gap-2.5 p-2.5 min-h-[62px] rounded-xl border-2 transition-all text-left',
                                                     isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700' :
                                                         selectedId === card._id ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-600')}>
-                                                <div className="w-10 h-10 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center justify-center flex-shrink-0">
+                                                <div className="w-9 h-9 rounded-lg bg-white border border-gray-100 shadow-sm flex items-center justify-center flex-shrink-0">
                                                     {(() => {
                                                         const cardBankLogo = banks.find(x => x.shortName === card.bankShortName)?.logo;
                                                         return cardBankLogo ? (
-                                                            <Image src={cardBankLogo} width={24} height={24} className="w-6 h-6 object-contain grayscale-0 group-disabled:grayscale" alt="" />
+                                                            <Image src={cardBankLogo} width={20} height={20} className="w-5 h-5 object-contain grayscale-0 group-disabled:grayscale" alt="" />
                                                         ) : (
-                                                            <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />
+                                                            <ActionIcon type="creditCard" size={18} tile={false} color="#6366F1" />
                                                         );
                                                     })()}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-semibold text-sm text-gray-900 dark:text-white">{card.bankName} ••{card.cardNumber}</p>
+                                                    <p className="font-semibold text-[13px] text-gray-900 dark:text-white truncate">{card.bankName} ••{card.cardNumber}</p>
                                                     <p className={cn("text-xs font-medium", isDisabled ? "text-gray-400 dark:text-slate-500" : "text-red-500 dark:text-red-400")}>
                                                         Dư nợ: {fmt(card.balance)}đ
                                                     </p>

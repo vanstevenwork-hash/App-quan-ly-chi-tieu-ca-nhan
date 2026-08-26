@@ -222,19 +222,19 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
                 : 'bg-green-50 text-green-600';
 
     return (
-        <div className="bg-white dark:bg-surface rounded-xl p-4 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
-            <div className="flex items-center gap-3">
+        <div className="bg-white dark:bg-surface rounded-xl p-2.5 border border-gray-100 dark:border-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between hover:shadow-md transition-all cursor-pointer group">
+            <div className="flex items-center gap-2.5">
                 {(() => {
                     const logoUrl = logoOf(card.bankShortName, card.bankName);
                     return logoUrl ? (
                         <img
                             src={logoUrl}
                             alt={card.bankShortName || card.bankName}
-                            className="w-12 h-12 rounded-xl object-contain bg-white dark:bg-white/90 p-1.5 border border-gray-100 dark:border-slate-800 shadow-sm flex-shrink-0"
+                            className="w-10 h-10 rounded-lg object-contain bg-white dark:bg-white/90 p-1 border border-gray-100 dark:border-slate-800 shadow-sm flex-shrink-0"
                             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                     ) : (
-                        <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0', iconBg)}>
+                        <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0', iconBg)}>
                             {isCrypto ? <CustomIcon type="bitcoin" size={20} tile={false} color="currentColor" className="w-5 h-5" /> : 
                              isEWallet ? <UtilityIcon type="eWallet" size={20} tile={false} color="#8B5CF6" /> :
                              isSavings ? <UtilityIcon type="soTietKiem" size={20} tile={false} color="#F0A319" /> :
@@ -306,6 +306,7 @@ export default function AccountsPage() {
     const [activeTab, setActiveTab] = useState<'cards' | 'savings'>('cards');
     const [showForm, setShowForm] = useState(false);
     const [showPayment, setShowPayment] = useState(false);
+    const [payTargetId, setPayTargetId] = useState('');
     const [editCard, setEditCard] = useState<Card | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Card | null>(null);
 
@@ -442,7 +443,7 @@ export default function AccountsPage() {
                     </div>
 
                     {/* Tabs */}
-                    <div className="mt-5 bg-slate-100/50 dark:bg-surface/50 backdrop-blur-sm rounded-xl p-1.5 flex gap-1.5 border border-slate-200/50 dark:border-slate-800/50">
+                    <div className="mt-3 bg-slate-100/50 dark:bg-surface/50 backdrop-blur-sm rounded-xl p-1.5 flex gap-1.5 border border-slate-200/50 dark:border-slate-800/50">
                         {(['cards', 'savings'] as const).map(tab => (
                             <button key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -478,7 +479,7 @@ export default function AccountsPage() {
                     </div>
                 </div>
 
-                <div className="px-5 py-4 space-y-5">
+                <div className="px-5 py-4 space-y-3">
 
                     {/* ── Maturity alert ───────────────────────────────── */}
                     {maturityAlerts.map(card => (
@@ -507,7 +508,7 @@ export default function AccountsPage() {
                                         findApiBank={findApiBank}
                                         onEdit={(card) => { setEditCard(card); setShowForm(true); }}
                                         onDelete={(id) => setDeleteTarget(creditCards.find(c => c._id === id) || null)}
-                                        onPay={() => setShowPayment(true)}
+                                        onPay={(id) => { setPayTargetId(id); setShowPayment(true); }}
                                         onAddNew={() => openAdd('credit')}
                                         onViewDetail={(id) => router.push(`/cards/${id}`)}
                                     />
@@ -538,7 +539,7 @@ export default function AccountsPage() {
                                 </div>
                                 {debitCards.length > 0 ? (
                                     paymentAccountsExpanded ? (
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                             {debitCards.map(card => (
                                                 <AccountRow key={card._id} card={card}
                                                     onEdit={() => { setEditCard(card); setShowForm(true); }}
@@ -646,6 +647,7 @@ export default function AccountsPage() {
                     onPaid={() => { refetch(); }}
                     creditCards={creditCards}
                     accounts={debitCards}
+                    initialCardId={payTargetId}
                 />
             </div>
         </div>

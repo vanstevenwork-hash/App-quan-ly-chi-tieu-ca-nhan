@@ -25,11 +25,41 @@ const CARD_GRADIENTS = [
     'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)',
 ];
 
+// Real bank brand colours, keyed by bankShortName (uppercase) — so each card
+// reads as its actual bank (Techcombank red, VCB green, …) instead of a generic
+// gradient. The glass overlay adds the light play on top of this flat base.
+const BANK_BRAND_COLORS: Record<string, string> = {
+    TCB: '#EC1C24', TECHCOMBANK: '#EC1C24',
+    VCB: '#009B4C', VIETCOMBANK: '#009B4C',
+    BIDV: '#00558C',
+    CTG: '#0060A9', VTB: '#0060A9', VIETINBANK: '#0060A9',
+    ACB: '#0055A4',
+    MB: '#1F3A93', MBB: '#1F3A93',
+    VPB: '#00A651', VPBANK: '#00A651',
+    STB: '#004A99', SACOMBANK: '#004A99',
+    TPB: '#6A2C91', TPBANK: '#6A2C91',
+    MSB: '#E5231B',
+    SHB: '#005BAC',
+    HDB: '#E30613', HDBANK: '#E30613',
+    OCB: '#12904F',
+    VIB: '#003C71',
+    SCB: '#8A1538',
+    EIB: '#004B8D', EXIMBANK: '#004B8D',
+    LPB: '#A81E22', LPBANK: '#A81E22',
+    SEAB: '#E4002B', SEABANK: '#E4002B',
+    NAB: '#8B1A2B', NAMABANK: '#8B1A2B',
+    MOMO: '#A50064',
+    ZALOPAY: '#0068FF',
+    VNPAY: '#005BAA',
+    CAKE: '#EF3E9E',
+};
+
 function getGradient(card: Card, idx: number): string {
     if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
-    // A single vibrant brand colour reads far cleaner than blending two
-    // unrelated hues (bankColor→color muddied to olive/brown). The glass
-    // overlay adds the light play, so a flat base stays crisp and saturated.
+    // Prefer the real bank brand colour so each card looks like its bank.
+    const brand = BANK_BRAND_COLORS[(card.bankShortName || '').toUpperCase()];
+    if (brand) return brand;
+    // Otherwise honour an explicitly-set colour, else a fallback gradient.
     const base = (card.bankColor && card.bankColor !== '#1B4FD8') ? card.bankColor
         : (card.color && card.color !== '#6C63FF') ? card.color
             : null;
@@ -260,7 +290,7 @@ interface CreditCardCarouselProps {
     findApiBank: (bankShortName?: string, bankName?: string) => { logo?: string } | undefined;
     onEdit: (card: Card) => void;
     onDelete: (id: string) => void;
-    onPay: () => void;
+    onPay: (id: string) => void;
     onAddNew: () => void;
     onViewDetail?: (id: string) => void;
 }
@@ -340,7 +370,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                                 >
                                     {isFront
                                         ? <CardFace card={card} idx={origIdx(card)} bankLogoUrl={logoOf(card)}
-                                            onEdit={() => onEdit(card)} onDelete={() => onDelete(card._id)} onPay={onPay} />
+                                            onEdit={() => onEdit(card)} onDelete={() => onDelete(card._id)} onPay={() => onPay(card._id)} />
                                         : <CardBack card={card} idx={origIdx(card)} />}
                                 </div>
                             );
