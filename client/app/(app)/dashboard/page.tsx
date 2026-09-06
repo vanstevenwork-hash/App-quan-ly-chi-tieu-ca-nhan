@@ -231,10 +231,10 @@ export default function DashboardPage() {
             <main className="px-5 space-y-3">
 
                 {/* ── Net worth — boxless, sits directly on the page background ── */}
-                <div className="anim-scale-in relative px-1 pt-1 pb-1">
+                <div className="anim-scale-in relative px-1 pt-2 pb-1">
                     {/* Label + eye toggle */}
                     <div className="flex items-center gap-1.5">
-                        <Link href="/wealth" className="text-slate-400 dark:text-slate-400 text-[15px] font-bold hover:text-purple-500 dark:hover:text-purple-300 transition-colors">Tài sản ròng</Link>
+                        <Link href="/wealth" className="text-slate-800 dark:text-white text-[15px] font-normal hover:text-purple-500 dark:hover:text-purple-300 transition-colors">Tài sản ròng</Link>
                         <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
                             {hideBalance ? <CustomIcon type="eyeOff" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px]" /> : <CustomIcon type="eye" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px]" />}
                         </button>
