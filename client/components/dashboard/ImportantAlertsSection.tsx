@@ -28,10 +28,10 @@ function AlertCard({
     const isCredit = variant === 'credit';
     return (
         <button onClick={onClick} className={cn(
-            'w-full text-left rounded-xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200 px-3 py-2.5 flex items-center gap-2.5 border',
+            'w-full text-left rounded-xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200 px-3 py-2.5 flex items-center gap-2.5 border backdrop-blur-md',
             urgent
-                ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 ring-1 ring-red-200/70 dark:ring-red-500/20'
-                : 'bg-white dark:bg-surface border-gray-100 dark:border-slate-700/50'
+                ? 'bg-red-50/75 dark:bg-red-500/10 border-red-200/70 dark:border-red-500/30 ring-1 ring-red-200/60 dark:ring-red-500/20'
+                : 'bg-white/65 dark:bg-surface/55 border-white/60 dark:border-slate-700/40'
         )}>
             {/* Icon tile, colored by alert type */}
             <div className={cn(
@@ -188,7 +188,6 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
             />
         )),
     ];
-    const hiddenCount = alerts.length - VISIBLE_ALERTS;
 
     return (
         <section className="anim-fade-up-d2">
@@ -203,13 +202,6 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
             </div>
             <div className="space-y-2">
                 {alerts.slice(0, VISIBLE_ALERTS)}
-                {hiddenCount > 0 && (
-                    <button onClick={onOpen}
-                        className="w-full flex items-center justify-center gap-1 py-2.5 text-[13px] font-bold text-primary dark:text-purple-300 hover:opacity-80 active:scale-[0.99] transition">
-                        Xem thêm {hiddenCount} thông báo
-                        <ActionIcon type="chevronRight" size={14} tile={false} color="currentColor" />
-                    </button>
-                )}
             </div>
         </section>
     );
