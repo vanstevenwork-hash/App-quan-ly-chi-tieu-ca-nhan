@@ -13,14 +13,19 @@ import { toast } from 'sonner';
 const fmtFull = (n: number) => formatNumber(n);
 
 function AlertCard({
-    title, sub, amount, badge, variant, onClick,
+    title, sub, amount, badge, variant, urgent = false, onClick,
 }: {
     title: string; sub: string; amount: string; badge: string;
-    variant: 'credit' | 'savings'; onClick: () => void;
+    variant: 'credit' | 'savings'; urgent?: boolean; onClick: () => void;
 }) {
     const isCredit = variant === 'credit';
     return (
-        <button onClick={onClick} className="w-full text-left bg-white dark:bg-surface rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200 px-3 py-2.5 flex items-center gap-2.5">
+        <button onClick={onClick} className={cn(
+            'w-full text-left rounded-xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all duration-200 px-3 py-2.5 flex items-center gap-2.5 border',
+            urgent
+                ? 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/30 ring-1 ring-red-200/70 dark:ring-red-500/20'
+                : 'bg-white dark:bg-surface border-gray-100 dark:border-slate-700/50'
+        )}>
             {/* Icon tile, colored by alert type */}
             <div className={cn(
                 'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
@@ -50,10 +55,12 @@ function AlertCard({
                     {amount}
                 </p>
                 <span className={cn(
-                    'inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                    isCredit
-                        ? 'bg-red-50 border-red-200 text-red-500 dark:bg-red-500/15 dark:border-red-500/30 dark:text-red-400'
-                        : 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-400'
+                    'inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap',
+                    urgent
+                        ? 'bg-red-500 border-red-500 text-white shadow-sm shadow-red-500/30 animate-pulse'
+                        : isCredit
+                            ? 'bg-red-50 border-red-200 text-red-500 dark:bg-red-500/15 dark:border-red-500/30 dark:text-red-400'
+                            : 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-400'
                 )}>
                     {badge}
                 </span>
@@ -131,17 +138,37 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
         ...(onRespondGame ? gameInvites.map(item => (
             <GameInviteCard key={`game-${item._id}`} item={item} onRespond={onRespondGame} />
         )) : []),
-        ...creditAlerts.map(({ card, dueThisCycle }) => (
-            <AlertCard
-                key={`credit-${card._id}`}
-                title={`Sao kê ${card.bankName}`}
-                sub="Cần thanh toán kỳ này"
-                amount={`${fmtFull(dueThisCycle)}đ`}
-                badge="Cần thanh toán"
-                variant="credit"
-                onClick={onOpen}
-            />
-        )),
+        ...creditAlerts.map(({ card, dueThisCycle }) => {
+            // Days until the upcoming payment due date → urgency-aware badge:
+            // due within 3 days (or today) reads as red + pulsing; otherwise the
+            // plain due date. Easy to spot which cards actually need action now.
+            let dueDays: number | null = null;
+            let dueDate: Date | null = null;
+            if (card.paymentDueDay) {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                dueDate = new Date(now.getFullYear(), now.getMonth(), card.paymentDueDay);
+                if (dueDate < today) dueDate.setMonth(dueDate.getMonth() + 1);
+                dueDays = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000);
+            }
+            const urgent = dueDays !== null && dueDays <= 3;
+            const dueBadge = dueDays === null ? 'Cần thanh toán'
+                : dueDays === 0 ? '⚠️ Đến hạn hôm nay'
+                    : dueDays <= 3 ? `⚠️ Còn ${dueDays} ngày`
+                        : `Đến hạn ${dueDate!.getDate()}/${dueDate!.getMonth() + 1}`;
+            return (
+                <AlertCard
+                    key={`credit-${card._id}`}
+                    title={`Sao kê ${card.bankName}`}
+                    sub={dueDays === null || dueDays > 3 ? 'Cần thanh toán kỳ này' : dueDays === 0 ? 'Đến hạn hôm nay' : `Còn ${dueDays} ngày để thanh toán`}
+                    amount={`${fmtFull(dueThisCycle)}đ`}
+                    badge={dueBadge}
+                    variant="credit"
+                    urgent={urgent}
+                    onClick={onOpen}
+                />
+            );
+        }),
         ...savingsCards.map(card => (
             <AlertCard
                 key={`savings-${card._id}`}

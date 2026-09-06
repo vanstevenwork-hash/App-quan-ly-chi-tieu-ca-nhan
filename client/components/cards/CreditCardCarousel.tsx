@@ -16,15 +16,6 @@ const fmtShort = (n: number) => {
     return `${Math.round(n / 1_000)}k`;
 };
 
-const CARD_GRADIENTS = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)',
-];
-
 // Real bank brand colours, keyed by bankShortName (uppercase) — so each card
 // reads as its actual bank (Techcombank red, VCB green, …) instead of a generic
 // gradient. The glass overlay adds the light play on top of this flat base.
@@ -54,7 +45,7 @@ const BANK_BRAND_COLORS: Record<string, string> = {
     CAKE: '#EF3E9E',
 };
 
-function getGradient(card: Card, idx: number): string {
+function getGradient(card: Card, _idx: number): string {
     if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
     // Prefer the real bank brand colour so each card looks like its bank.
     const brand = BANK_BRAND_COLORS[(card.bankShortName || '').toUpperCase()];
@@ -64,7 +55,9 @@ function getGradient(card: Card, idx: number): string {
         : (card.color && card.color !== '#6C63FF') ? card.color
             : null;
     if (base) return base;
-    return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
+    // No colour set → brand purple (keeps uncoloured cards consistent with the
+    // app's violet theme instead of a random blue/other gradient).
+    return 'linear-gradient(135deg, #6757ff 0%, #8b5cf6 55%, #c084fc 100%)';
 }
 
 function cardTextStyle(color: string) {
@@ -337,7 +330,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
 
             {loading && (
                 <div className="px-6">
-                    <div className="w-full h-[200px] rounded-[22px] bg-gray-100 dark:bg-slate-800 animate-pulse" />
+                    <div className="w-full h-[190px] rounded-[22px] bg-gray-100 dark:bg-slate-800 animate-pulse" />
                 </div>
             )}
 
@@ -350,7 +343,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
             {/* ── Deck ── */}
             {!loading && creditCards.length > 0 && (
                 <div className="px-6">
-                    <div className="relative h-[200px]">
+                    <div className="relative h-[190px]">
                         {stack.map((card, depth) => {
                             const d = Math.min(depth, MAX_PEEK);
                             const isFront = depth === 0;

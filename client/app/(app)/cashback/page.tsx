@@ -268,9 +268,19 @@ export default function CashbackPage() {
         now: i === months.length - 1,
     })), [rawMonthly, months]);
 
+    // Total of "received" cashback. Iterate every received record (so historical
+    // months outside the current window aren't lost), but prefer the LIVE
+    // per-card/month estimate from rawMonthly so editing a transaction
+    // recalculates the total. A user-entered receivedAmount always wins; only
+    // the auto-estimated ones track transaction edits; the record's stored
+    // estimate is the last-resort fallback for out-of-window months.
     const totalReceived = useMemo(() =>
-        records.filter(r => r.status === 'received').reduce((sum, r) => sum + (r.receivedAmount ?? r.estimatedAmount), 0),
-        [records]);
+        records.filter(r => r.status === 'received').reduce((sum, r) => {
+            if (r.receivedAmount != null) return sum + r.receivedAmount;
+            const live = rawMonthly.find(x => x.card._id === r.cardId && x.year === r.year && x.month === r.month);
+            return sum + (live ? live.estimatedAmount : r.estimatedAmount);
+        }, 0),
+        [records, rawMonthly]);
 
     const totalPending = useMemo(() =>
         cardMonthly.reduce((sum, c) => sum + c.monthRows.filter(r => r.status === 'pending').reduce((s, r) => s + r.estimatedAmount, 0), 0),

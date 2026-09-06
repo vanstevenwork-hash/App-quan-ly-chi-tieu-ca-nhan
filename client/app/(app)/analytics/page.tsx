@@ -1,6 +1,8 @@
 'use client';
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useCards, type Card } from '@/hooks/useCards';
+import { resolveCardId } from '@/lib/cashback';
 import { transactionsApi } from '@/lib/api';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
@@ -30,6 +32,20 @@ const fmt = (n: number) => {
     return `${n}`;
 };
 const fmtFull = (n: number) => formatNumber(n);
+
+// "Thẻ VIB ••4021" / "Ví MoMo" / "Tiền mặt" — same source label the dashboard feed uses.
+function sourceLabel(t: any, cards: Card[]): string {
+    if (t.paymentMethod === 'card') {
+        const card = cards.find(c => c._id === resolveCardId(t));
+        if (card) {
+            return card.cardType === 'eWallet'
+                ? `Ví ${card.bankShortName}`
+                : `Thẻ ${card.bankShortName} ••${card.cardNumber}`;
+        }
+        return 'Thẻ';
+    }
+    return 'Tiền mặt';
+}
 
 // ─── Custom Chart Dots ───────────────────────────────────────────────────
 const createCustomDot = (color: string, dataKey: string, lastIndex: number) => {
@@ -127,6 +143,7 @@ export default function AnalyticsPage() {
 
     // Global store: only used for the always-recent 14-day trend chart and CRUD (create/update/delete).
     const { transactions: recentTransactions, deleteTransaction } = useTransactions();
+    const { cards: allCards } = useCards();
 
     // Period-scoped data (summary/category-breakdown/list), fetched straight from the
     // backend's already-existing month/year-aware endpoints so each tab reflects its own period.
@@ -489,11 +506,15 @@ export default function AnalyticsPage() {
                                                 />
                                                 <div className="min-w-0 flex-1">
                                                     <p className="font-bold text-[13px] text-slate-800 dark:text-slate-200 truncate">{t.note || t.category}</p>
-                                                    <div className="flex items-center gap-1.5 mt-0.5">
-                                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter">{t.category}</span>
-                                                        <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-                                                        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500">
-                                                            {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                                                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter flex-shrink-0">{t.category}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                                                        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 flex-shrink-0">
+                                                            {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} {new Date(t.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                        <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                                                        <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                                                            {sourceLabel(t, allCards)}
                                                         </span>
                                                     </div>
                                                 </div>
