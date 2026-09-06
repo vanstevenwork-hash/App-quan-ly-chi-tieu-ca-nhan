@@ -13,6 +13,7 @@ import { useNotificationStore } from '@/hooks/useNotifications';
 import { cn, formatNumber } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
 import { authApi, telegramApi, emailApi } from '@/lib/api';
+import { isPushSupported, isPushEnabled, enablePush, disablePush } from '@/lib/push';
 import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
@@ -108,6 +109,11 @@ export default function SettingsPage() {
     // Security preferences — stored locally on this device
     const [hideBalanceOnOpen, setHideBalanceOnOpen] = useState(false);
 
+    // Morning push reminder
+    const [pushSupported, setPushSupported] = useState(true);
+    const [pushOn, setPushOn] = useState(false);
+    const [pushBusy, setPushBusy] = useState(false);
+
     // Data refresh
     const [refreshing, setRefreshing] = useState(false);
     const [lastSync, setLastSync] = useState<string | null>(null);
@@ -132,7 +138,31 @@ export default function SettingsPage() {
         telegramApi.getStatus()
             .then(res => setTgConnected(!!res.data?.connected))
             .catch(() => setTgConnected(false));
+        const supported = isPushSupported();
+        setPushSupported(supported);
+        if (supported) isPushEnabled().then(setPushOn).catch(() => setPushOn(false));
     }, []);
+
+    const handleTogglePush = async (next: boolean) => {
+        if (pushBusy) return;
+        setPushBusy(true);
+        try {
+            if (next) {
+                await enablePush();
+                setPushOn(true);
+                toast.success('Đã bật thông báo buổi sáng (8:00) 🔔');
+            } else {
+                await disablePush();
+                setPushOn(false);
+                toast.success('Đã tắt thông báo buổi sáng');
+            }
+        } catch (e: any) {
+            toast.error(e?.message || 'Không bật được thông báo');
+            setPushOn(await isPushEnabled().catch(() => false));
+        } finally {
+            setPushBusy(false);
+        }
+    };
 
     const handleTelegram = async () => {
         // Already linked → offer to disconnect
@@ -469,6 +499,20 @@ export default function SettingsPage() {
                                 />
                             }
                         />
+                        {pushSupported && (
+                            <SettingItem
+                                icon={<CustomIcon type="bell" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
+                                label="Thông báo buổi sáng"
+                                sublabel={pushBusy ? 'Đang xử lý…' : pushOn ? 'Nhắc thẻ đến hạn lúc 8:00 mỗi sáng' : 'Nhắc thanh toán & ghi chi tiêu lúc 8:00'}
+                                right={
+                                    <Switch
+                                        checked={pushOn}
+                                        disabled={pushBusy}
+                                        onCheckedChange={handleTogglePush}
+                                    />
+                                }
+                            />
+                        )}
                         <SettingItem
                             icon={<CustomIcon type="globe" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
                             label="Ngôn ngữ"

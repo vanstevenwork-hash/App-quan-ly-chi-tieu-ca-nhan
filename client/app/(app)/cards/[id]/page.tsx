@@ -117,7 +117,7 @@ export default function CardDetailPage() {
 
     const dueThisCycle = useMemo(() => {
         if (!card) return 0;
-        return getDueThisCycle(card.balance, transactions, card._id);
+        return getDueThisCycle(card.balance, transactions, card._id, card.statementDay);
     }, [card, transactions]);
 
     const apiBank = useMemo(() => {

@@ -10,6 +10,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, XAx
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { cn, formatNumber } from '@/lib/utils';
 import AddTransactionModal from '@/components/AddTransactionModal';
+import dynamic from 'next/dynamic';
+const TransactionDetailModal = dynamic(() => import('@/components/TransactionDetailModal'), { ssr: false });
 import PageHeader from '@/components/PageHeader';
 import RefreshButton from '@/components/RefreshButton';
 import { toast } from 'sonner';
@@ -32,6 +34,15 @@ const fmt = (n: number) => {
     return `${n}`;
 };
 const fmtFull = (n: number) => formatNumber(n);
+
+// "2,8tr" / "20k" — same compact amount style as the dashboard feed.
+const fmtViShort = (n: number) => {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1).replace('.', ',')}tỷ`.replace(',0tỷ', 'tỷ');
+    if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2).replace('.', ',')}tr`.replace(/,?0+tr$/, 'tr');
+    if (abs >= 1_000) return `${Math.round(abs / 1_000)}k`;
+    return `${Math.round(abs)}`;
+};
 
 // "Thẻ VIB ••4021" / "Ví MoMo" / "Tiền mặt" — same source label the dashboard feed uses.
 function sourceLabel(t: any, cards: Card[]): string {
@@ -76,6 +87,22 @@ const createCustomDot = (color: string, dataKey: string, lastIndex: number) => {
     };
 };
 
+// Theme-aware tooltip for the category pie chart (recharts' default is a fixed
+// white box that stays white in dark mode).
+const PieTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+        const p = payload[0];
+        return (
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-2xl px-3 py-2 shadow-xl flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: p.payload?.color }} />
+                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{p.name}</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white ml-1">{fmt(p.value)}đ</span>
+            </div>
+        );
+    }
+    return null;
+};
+
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         const income = payload.find((p: any) => p.dataKey === 'income')?.value || 0;
@@ -84,7 +111,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         const isPositive = diff >= 0;
 
         return (
-            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/50 rounded-2xl p-4 shadow-xl min-w-[200px] anim-scale-in">
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-700/50 rounded-2xl p-4 shadow-xl min-w-[200px] anim-scale-in">
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">{label}</p>
                 <div className="space-y-2.5 mb-4">
                     <div className="flex items-center justify-between gap-4">
@@ -92,17 +119,17 @@ const CustomTooltip = ({ active, payload, label }: any) => {
                             <div className="w-1 h-4 rounded-full bg-[#10B981]" />
                             <span className="text-xs font-medium text-slate-400">Thu nhập</span>
                         </div>
-                        <span className="text-xs font-bold text-white">+{fmtFull(Math.abs(income))}đ</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">+{fmtFull(Math.abs(income))}đ</span>
                     </div>
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-4 rounded-full bg-[#F43F5E]" />
                             <span className="text-xs font-medium text-slate-400">Chi tiêu</span>
                         </div>
-                        <span className="text-xs font-bold text-white">-{fmtFull(Math.abs(expense))}đ</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-white">-{fmtFull(Math.abs(expense))}đ</span>
                     </div>
                 </div>
-                <div className="pt-3 border-t border-white/5 border-slate-700/50 flex justify-between items-center gap-2">
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-700/50 flex justify-between items-center gap-2">
                     <div className="flex items-center gap-2">
                         <div className={cn(
                             "w-6 h-6 rounded-full flex items-center justify-center transition-colors",
@@ -138,6 +165,10 @@ export default function AnalyticsPage() {
     const [filterType, setFilterType] = useState<'all' | 'expense' | 'income'>('all');
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingTx, setEditingTx] = useState<any>(null);
+    const [selectedTx, setSelectedTx] = useState<any>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 10;
     const [customStart, setCustomStart] = useState('');
     const [customEnd, setCustomEnd] = useState(() => toISODate(new Date()));
 
@@ -274,6 +305,16 @@ export default function AnalyticsPage() {
     const filteredTx = useMemo(
         () => periodTx.filter(t => filterType === 'all' || t.type === filterType),
         [periodTx, filterType]
+    );
+
+    // Paginate the list (10 per page). Reset to page 1 whenever the filter or
+    // period changes so we never land on an out-of-range page.
+    const totalPages = Math.max(1, Math.ceil(filteredTx.length / PAGE_SIZE));
+    useEffect(() => { setPage(1); }, [filterType, periodTab, periodTx]);
+    const currentPage = Math.min(page, totalPages);
+    const pagedTx = useMemo(
+        () => filteredTx.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+        [filteredTx, currentPage]
     );
 
     const handleExport = () => {
@@ -492,11 +533,13 @@ export default function AnalyticsPage() {
                                     <p className="text-slate-400 dark:text-slate-500 text-xs font-medium italic">Không tìm thấy giao dịch nào</p>
                                 </div>
                             ) : (
-                                filteredTx.map(t => {
+                                pagedTx.map(t => {
                                     const cat = CATEGORIES_MAP.get(t.category) || CATEGORIES[CATEGORIES.length - 1];
                                     const isIncome = t.type === 'income';
                                     return (
-                                        <div key={t._id} className="bg-white dark:bg-surface rounded-2xl p-3 flex items-center justify-between gap-2 border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all">
+                                        <div key={t._id}
+                                            onClick={() => { setSelectedTx(t); setIsDetailOpen(true); }}
+                                            className="bg-white dark:bg-surface rounded-2xl p-3 flex items-center justify-between gap-2 border border-slate-100 dark:border-slate-800 hover:border-purple-200 dark:hover:border-purple-900 group transition-all cursor-pointer">
                                             <div className="flex items-center gap-3 flex-1 min-w-0">
                                                 <CategoryIcon
                                                     type={cat.catIconType || 'khac'}
@@ -505,15 +548,15 @@ export default function AnalyticsPage() {
                                                     className="flex-shrink-0"
                                                 />
                                                 <div className="min-w-0 flex-1">
-                                                    <p className="font-bold text-[13px] text-slate-800 dark:text-slate-200 truncate">{t.note || t.category}</p>
-                                                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
-                                                        <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tighter flex-shrink-0">{t.category}</span>
+                                                    <p className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{t.note || t.category}</p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+                                                        <span className="flex-shrink-0">{t.category}</span>
                                                         <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
-                                                        <span className="text-[9px] font-medium text-slate-400 dark:text-slate-500 flex-shrink-0">
+                                                        <span className="flex-shrink-0">
                                                             {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} {new Date(t.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                         <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
-                                                        <span className="text-[9px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                                                        <span className="truncate">
                                                             {sourceLabel(t, allCards)}
                                                         </span>
                                                     </div>
@@ -522,10 +565,10 @@ export default function AnalyticsPage() {
                                             <div className="relative h-10 min-w-[80px] overflow-hidden flex items-center justify-end">
                                                 {/* Amount View */}
                                                 <div className="flex flex-col items-end transition-all duration-300 group-hover:-translate-y-full group-hover:opacity-0">
-                                                    <p className={cn('text-[13px] font-black leading-none', isIncome ? 'text-emerald-500' : 'text-slate-900 dark:text-white')}>
-                                                        {isIncome ? '+' : '-'}{fmt(t.amount)}₫
+                                                    <p className={cn('text-[13px] font-bold tabular-nums leading-none', isIncome ? 'text-emerald-500' : 'text-red-400')}>
+                                                        {isIncome ? '+' : '-'}{fmtViShort(t.amount)}
                                                     </p>
-                                                    {isIncome && <span className="text-[7px] font-bold text-emerald-400 uppercase mt-1">Đã cộng</span>}
+                                                    {isIncome && <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1">Đã cộng</span>}
                                                 </div>
 
                                                 {/* Hover Actions */}
@@ -545,6 +588,28 @@ export default function AnalyticsPage() {
                                 })
                             )}
                         </div>
+                        {/* Pagination — 10 giao dịch mỗi trang */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between mt-3 px-1">
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage <= 1}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-surface border border-slate-100 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:border-purple-200 dark:hover:border-purple-900 transition-all">
+                                    <CustomIcon type="chevronLeft" size={14} tile={false} color="currentColor" />
+                                    Trước
+                                </button>
+                                <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
+                                    Trang {currentPage}/{totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage >= totalPages}
+                                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[13px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-surface border border-slate-100 dark:border-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:border-purple-200 dark:hover:border-purple-900 transition-all">
+                                    Sau
+                                    <CustomIcon type="chevronRight" size={14} tile={false} color="currentColor" />
+                                </button>
+                            </div>
+                        )}
                     </section>
 
                     {/* ── Category pie chart ──────────────────────────── */}
@@ -562,10 +627,7 @@ export default function AnalyticsPage() {
                                                 <Cell key={i} fill={entry.color} />
                                             ))}
                                         </Pie>
-                                        <Tooltip
-                                            formatter={(v: number | undefined) => v != null ? [`${fmt(v)}đ`, ''] : ['-', '']}
-                                            contentStyle={{ borderRadius: 16, border: 'none', boxShadow: '0 8px 30px rgba(0,0,0,0.1)', fontSize: 12 }}
-                                        />
+                                        <Tooltip content={<PieTooltip />} />
                                     </PieChart>
                                 </ResponsiveContainer>
 
@@ -636,6 +698,14 @@ export default function AnalyticsPage() {
                 onClose={() => { setShowAddModal(false); setEditingTx(null); }}
                 onSaved={refetch}
                 initialData={editingTx}
+            />
+
+            <TransactionDetailModal
+                open={isDetailOpen}
+                transaction={selectedTx}
+                onClose={() => setIsDetailOpen(false)}
+                onEdit={(tx) => { setIsDetailOpen(false); handleEdit(tx); }}
+                onDelete={(id) => { setIsDetailOpen(false); handleDelete(id); }}
             />
         </div>
     );

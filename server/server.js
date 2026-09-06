@@ -57,6 +57,7 @@ app.use('/api/game-matches', require('./routes/gameMatches'));
 app.use('/api/telegram', require('./routes/telegram'));
 app.use('/api/email', require('./routes/email'));
 app.use('/api/categories', require('./routes/categories'));
+app.use('/api/push', require('./routes/push'));
 
 // ===== SSE Stream endpoint =====
 // GET /api/notifications/stream  (auth via ?token=... query param)
@@ -144,7 +145,39 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`🃏 Socket.io /games namespace ready`);
   registerTelegramWebhook();
   scheduleEmailAutoImport();
+  scheduleMorningPush();
 });
+
+// Fire the morning push batch once a day at PUSH_MORNING_HOUR in Vietnam time
+// (default 08:00 ICT) while the instance is awake. The hour + day are computed
+// in Asia/Ho_Chi_Minh explicitly, so it fires at the right wall-clock time no
+// matter what timezone the host runs in (Render is UTC). On a sleeping
+// free-tier host an external cron hitting /api/push/cron is what actually wakes
+// it — this is the fallback.
+const PUSH_TZ = 'Asia/Ho_Chi_Minh';
+function vnNow() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: PUSH_TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: 'numeric', hour12: false,
+  }).formatToParts(new Date());
+  const get = (t) => parts.find(p => p.type === t)?.value;
+  return { hour: Number(get('hour')) % 24, dateKey: `${get('year')}-${get('month')}-${get('day')}` };
+}
+function scheduleMorningPush() {
+  const { pushEnabled, sendMorningToAll } = require('./controllers/pushController');
+  if (!pushEnabled) return;
+  const hour = Number(process.env.PUSH_MORNING_HOUR || 8);
+  let lastRunKey = null;
+  const tick = () => {
+    const { hour: vnHour, dateKey } = vnNow();
+    if (vnHour === hour && lastRunKey !== dateKey) {
+      lastRunKey = dateKey;
+      sendMorningToAll().catch(e => console.error('🔔 morning push:', e.message));
+    }
+  };
+  setInterval(tick, 5 * 60_000).unref?.();   // check every 5 min
+  console.log(`🔔 Morning push scheduled at ${hour}:00 giờ VN (${PUSH_TZ}).`);
+}
 
 // Auto-import bank emails on an internal timer (fallback for when the instance is
 // awake). On a sleeping free-tier host an external cron hitting /api/email/cron is

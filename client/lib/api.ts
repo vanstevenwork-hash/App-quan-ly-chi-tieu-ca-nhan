@@ -79,6 +79,14 @@ export const telegramApi = {
     unlink: () => api.post('/telegram/unlink'),
 };
 
+// Web push (morning reminders)
+export const pushApi = {
+    getPublicKey: () => api.get('/push/public-key'),
+    subscribe: (sub: object) => api.post('/push/subscribe', sub),
+    unsubscribe: (endpoint: string) => api.post('/push/unsubscribe', { endpoint }),
+    test: () => api.post('/push/test'),
+};
+
 // Accounts
 export const accountsApi = {
     getAll: () => api.get('/accounts'),

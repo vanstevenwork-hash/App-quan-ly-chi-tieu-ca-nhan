@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
+import { useTransactions } from '@/hooks/useTransactions';
 import CardFormModal from '@/components/CardFormModal';
 import CardPaymentModal from '@/components/CardPaymentModal';
 import CreditCardCarousel from '@/components/cards/CreditCardCarousel';
@@ -302,6 +303,7 @@ export default function AccountsPage() {
     const router = useRouter();
     const { cards, totalBalance, totalDebt, loading, error, createCard, updateCard, deleteCard, setDefaultCard, refetch } = useCards();
     const { banks: fetchedBanks, fetchBanks } = useBanks();
+    const { transactions } = useTransactions();
     useEffect(() => { fetchBanks(); }, [fetchBanks]);
     const [activeTab, setActiveTab] = useState<'cards' | 'savings'>('cards');
     const [showForm, setShowForm] = useState(false);
@@ -505,6 +507,7 @@ export default function AccountsPage() {
                                     <CreditCardCarousel
                                         loading={loading}
                                         creditCards={creditCards}
+                                        transactions={transactions}
                                         findApiBank={findApiBank}
                                         onEdit={(card) => { setEditCard(card); setShowForm(true); }}
                                         onDelete={(id) => setDeleteTarget(creditCards.find(c => c._id === id) || null)}

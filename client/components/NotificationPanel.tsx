@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
-import { cn, formatNumber } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAuthStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
@@ -89,7 +89,14 @@ import InviteCard from '@/components/InviteCard';
 
 const GAME_LABELS: Record<string, string> = { tien_len: 'Tiến lên miền Nam', phom: 'Phỏm' };
 
-const fmtFull = (n: number) => formatNumber(n);
+// "2,8tr" / "20k" — compact amount (no "đ"), matching the transaction feed.
+const fmtViShort = (n: number) => {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1).replace('.', ',')}tỷ`.replace(',0tỷ', 'tỷ');
+    if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2).replace('.', ',')}tr`.replace(/,?0+tr$/, 'tr');
+    if (abs >= 1_000) return `${Math.round(abs / 1_000)}k`;
+    return `${Math.round(abs)}`;
+};
 
 function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open: boolean; initialTab?: PanelTab }) {
     const { isAuthenticated } = useAuthStore();
@@ -374,18 +381,52 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                     })}
                                     {creditAlerts.map(({ card, dueThisCycle }) => {
                                         const logo = getMatchingLogo(card.bankName) || getMatchingLogo(card.bankShortName);
+                                        // Upcoming payment due date + days remaining (urgent within 3 days).
+                                        let dueDays: number | null = null;
+                                        let dueDate: Date | null = null;
+                                        if (card.paymentDueDay) {
+                                            const now = new Date();
+                                            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                                            dueDate = new Date(now.getFullYear(), now.getMonth(), card.paymentDueDay);
+                                            if (dueDate < today) dueDate.setMonth(dueDate.getMonth() + 1);
+                                            dueDays = Math.round((dueDate.getTime() - today.getTime()) / 86_400_000);
+                                        }
+                                        const urgent = dueDays !== null && dueDays <= 3;
+                                        const dueBadge = dueDays === null ? null
+                                            : dueDays === 0 ? '⚠️ Đến hạn hôm nay'
+                                                : dueDays <= 3 ? `⚠️ Còn ${dueDays} ngày`
+                                                    : `Còn ${dueDays} ngày`;
                                         return (
                                             <div key={card._id}
                                                 onClick={() => { router.push(`/cards/${card._id}`); onClose(); }}
-                                                className="flex px-4 py-3 gap-4 cursor-pointer rounded-2xl bg-red-50/60 dark:bg-red-900/10 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                                className={cn("flex px-4 py-3 gap-4 cursor-pointer rounded-2xl transition-colors",
+                                                    urgent
+                                                        ? "bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-500/30 hover:bg-red-100/70 dark:hover:bg-red-900/30"
+                                                        : "bg-red-50/60 dark:bg-red-900/10 hover:bg-red-50 dark:hover:bg-red-900/20")}>
                                                 <div className={cn("w-12 h-12 border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
                                                     {logo
                                                         ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
                                                         : '💳'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[15px] font-bold text-gray-900 dark:text-white truncate">Sao kê {card.bankName}</p>
-                                                    <p className="text-[13.5px] text-red-500 dark:text-red-400 mt-1 font-medium">Cần thanh toán kỳ này: {fmtFull(dueThisCycle)}đ</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <p className="text-[15px] font-bold text-gray-900 dark:text-white truncate">Sao kê {card.bankName}</p>
+                                                        {dueBadge && (
+                                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap flex-shrink-0",
+                                                                urgent
+                                                                    ? "bg-red-500 border-red-500 text-white shadow-sm shadow-red-500/30 animate-pulse"
+                                                                    : "bg-red-50 border-red-200 text-red-500 dark:bg-red-500/15 dark:border-red-500/30 dark:text-red-400")}>
+                                                                {dueBadge}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[13.5px] text-red-500 dark:text-red-400 mt-1 font-medium">Cần thanh toán kỳ này: {fmtViShort(dueThisCycle)}</p>
+                                                    {dueDate && (
+                                                        <p className="text-[12px] text-gray-500 dark:text-slate-400 mt-0.5 font-medium">
+                                                            Hạn thanh toán: {dueDate.getDate()}/{dueDate.getMonth() + 1}
+                                                            {card.statementDay ? ` · Sao kê ngày ${card.statementDay}` : ''}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -403,7 +444,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[15px] font-bold text-gray-900 dark:text-white truncate">Sổ tiết kiệm {card.bankShortName}</p>
-                                                    <p className="text-[13.5px] text-amber-600 dark:text-amber-400 mt-1 font-medium">Kiểm tra kỳ hạn — {fmtFull(card.balance)}đ</p>
+                                                    <p className="text-[13.5px] text-amber-600 dark:text-amber-400 mt-1 font-medium">Kiểm tra kỳ hạn — {fmtViShort(card.balance)}</p>
                                                 </div>
                                             </div>
                                         );

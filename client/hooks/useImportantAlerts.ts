@@ -28,7 +28,7 @@ export function useImportantAlerts() {
     const creditAlerts = useMemo<CreditAlert[]>(
         () => cards
             .filter(c => c.cardType === 'credit' && c.balance > 0)
-            .map(card => ({ card, dueThisCycle: getDueThisCycle(card.balance, transactions, card._id) }))
+            .map(card => ({ card, dueThisCycle: getDueThisCycle(card.balance, transactions, card._id, card.statementDay) }))
             .filter(x => x.dueThisCycle > 0),
         [cards, transactions]
     );

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { getBankLogo } from '@/lib/bankLogos';
 import { cn, formatNumber } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
+import { getDueThisCycle } from '@/lib/cardDue';
 
 const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
@@ -88,8 +89,8 @@ function daysUntilPayment(paymentDueDay: number): number | null {
 }
 
 // ── The full, detailed card face (fills its parent box) ──
-function CardFace({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
-    card: Card; idx: number; bankLogoUrl?: string;
+function CardFace({ card, idx, onEdit, onDelete, onPay, bankLogoUrl, dueThisCycle }: {
+    card: Card; idx: number; bankLogoUrl?: string; dueThisCycle: number;
     onEdit: () => void; onDelete: () => void; onPay: () => void;
 }) {
     const isPooled = card.sharedLimit && (card.sharedGroupSize ?? 1) > 1;
@@ -97,7 +98,12 @@ function CardFace({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
     const effBalance = isPooled ? (card.groupBalance ?? card.balance) : card.balance;
     const usedPct = effLimit > 0 ? Math.min((effBalance / effLimit) * 100, 100) : 0;
     const dueDays = daysUntilPayment(card.paymentDueDay);
-    const isUrgent = dueDays !== null && dueDays <= 5;
+    // Only treat the due date as a real to-do when something is actually due
+    // THIS statement cycle — charges posted after the last statement close bill
+    // next cycle, so they must not trigger an urgent "pay now" state.
+    const hasDueThisCycle = dueThisCycle > 0;
+    const showDue = hasDueThisCycle && dueDays !== null;
+    const isUrgent = showDue && dueDays <= 5;
     const ts = cardTextStyle(card.color);
     const [logoError, setLogoError] = useState(false);
     const logoUrl = bankLogoUrl || getBankLogo(card.bankShortName, card.bankName);
@@ -160,7 +166,7 @@ function CardFace({ card, idx, onEdit, onDelete, onPay, bankLogoUrl }: {
                         <p className="text-[11px] mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
                         <p className="text-2xl font-bold tracking-tight" style={{ color: ts.text }}>{fmt(card.balance)}₫</p>
                     </div>
-                    {dueDays !== null ? (
+                    {showDue ? (
                         <div className="text-right">
                             <p className="text-[11px] mb-1" style={{ color: ts.subtext }}>Hạn thanh toán</p>
                             <div className="flex items-center gap-1 justify-end">
@@ -280,6 +286,9 @@ function CardRow({ card, idx, active, onClick }: {
 interface CreditCardCarouselProps {
     loading: boolean;
     creditCards: Card[];
+    /** Transactions on these cards — used to compute what's actually due this
+     *  statement cycle (charges after the last close bill next cycle). */
+    transactions?: any[];
     findApiBank: (bankShortName?: string, bankName?: string) => { logo?: string } | undefined;
     onEdit: (card: Card) => void;
     onDelete: (id: string) => void;
@@ -288,7 +297,7 @@ interface CreditCardCarouselProps {
     onViewDetail?: (id: string) => void;
 }
 
-function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onDelete, onPay, onAddNew, onViewDetail }: CreditCardCarouselProps) {
+function CreditCardCarouselBase({ loading, creditCards, transactions = [], findApiBank, onEdit, onDelete, onPay, onAddNew, onViewDetail }: CreditCardCarouselProps) {
     const [sheetOpen, setSheetOpen] = useState(false);
     const [frontId, setFrontId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
@@ -363,6 +372,7 @@ function CreditCardCarouselBase({ loading, creditCards, findApiBank, onEdit, onD
                                 >
                                     {isFront
                                         ? <CardFace card={card} idx={origIdx(card)} bankLogoUrl={logoOf(card)}
+                                            dueThisCycle={getDueThisCycle(card.balance, transactions, card._id, card.statementDay)}
                                             onEdit={() => onEdit(card)} onDelete={() => onDelete(card._id)} onPay={() => onPay(card._id)} />
                                         : <CardBack card={card} idx={origIdx(card)} />}
                                 </div>

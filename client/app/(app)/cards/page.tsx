@@ -142,7 +142,7 @@ export default function CardsPage() {
     // by the next due date.
     const paymentAlerts = useMemo(() =>
         creditCards
-            .map(c => ({ card: c, dueThisCycle: getDueThisCycle(c.balance, transactions, c._id), days: daysUntilPayment(c.paymentDueDay) }))
+            .map(c => ({ card: c, dueThisCycle: getDueThisCycle(c.balance, transactions, c._id, c.statementDay), days: daysUntilPayment(c.paymentDueDay) }))
             .filter(x => x.dueThisCycle > 0 && x.card.paymentDueDay > 0)
             .filter(x => x.days !== null && x.days <= 30)
             .sort((a, b) => (a.days ?? 99) - (b.days ?? 99))
@@ -211,6 +211,7 @@ export default function CardsPage() {
                 <CreditCardCarousel
                     loading={loading}
                     creditCards={creditCards}
+                    transactions={transactions}
                     findApiBank={findApiBank}
                     onEdit={handleEditCard}
                     onDelete={handleDeleteCardClick}

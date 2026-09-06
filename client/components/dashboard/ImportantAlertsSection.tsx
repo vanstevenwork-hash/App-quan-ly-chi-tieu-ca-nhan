@@ -3,14 +3,21 @@ import { memo, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
-import { cn, formatNumber } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
 import type { SharedCardItem } from '@/hooks/useCardShares';
 import type { GameMatch } from '@/hooks/useGameMatches';
 import InviteCard from '@/components/InviteCard';
 import { toast } from 'sonner';
 
-const fmtFull = (n: number) => formatNumber(n);
+// "2,8tr" / "20k" — compact amount (no "đ"), matching the transaction feed.
+const fmtViShort = (n: number) => {
+    const abs = Math.abs(n);
+    if (abs >= 1_000_000_000) return `${(abs / 1_000_000_000).toFixed(1).replace('.', ',')}tỷ`.replace(',0tỷ', 'tỷ');
+    if (abs >= 1_000_000) return `${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 1 : 2).replace('.', ',')}tr`.replace(/,?0+tr$/, 'tr');
+    if (abs >= 1_000) return `${Math.round(abs / 1_000)}k`;
+    return `${Math.round(abs)}`;
+};
 
 function AlertCard({
     title, sub, amount, badge, variant, urgent = false, onClick,
@@ -161,7 +168,7 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
                     key={`credit-${card._id}`}
                     title={`Sao kê ${card.bankName}`}
                     sub={dueDays === null || dueDays > 3 ? 'Cần thanh toán kỳ này' : dueDays === 0 ? 'Đến hạn hôm nay' : `Còn ${dueDays} ngày để thanh toán`}
-                    amount={`${fmtFull(dueThisCycle)}đ`}
+                    amount={fmtViShort(dueThisCycle)}
                     badge={dueBadge}
                     variant="credit"
                     urgent={urgent}
@@ -174,7 +181,7 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
                 key={`savings-${card._id}`}
                 title={`Sổ tiết kiệm ${card.bankShortName}`}
                 sub="Kiểm tra kỳ hạn"
-                amount={`${fmtFull(card.balance)}đ`}
+                amount={fmtViShort(card.balance)}
                 badge="Xem chi tiết"
                 variant="savings"
                 onClick={onOpen}
