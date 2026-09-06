@@ -245,7 +245,7 @@ export default function DashboardPage() {
                     </Link>
 
                     {/* Thu / Chi — plain coloured text + icon, no pill, no labels */}
-                    <div className="flex items-center gap-4 mt-2.5">
+                    <div className="flex items-center gap-4 ">
                         <Link href="/analytics" className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-[13px] font-bold tabular-nums active:scale-95 transition">
                             <UtilityIcon type="trendingUp" size={15} tile={false} color="#10B981" />
                             +{fmt(summary.income)}
@@ -260,30 +260,34 @@ export default function DashboardPage() {
                 {/* ── Savings & card debt shortcut tiles ── */}
                 <div className="anim-fade-up-d1 grid grid-cols-2 gap-3">
                     <Link href="/savings"
-                        className="bg-white dark:bg-surface rounded-xl px-3 pt-2 pb-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-purple-200 dark:hover:border-purple-500/40 hover:shadow-md transition-all active:scale-95 group">
+                        className="bg-white/65 dark:bg-surface/55 backdrop-blur-md rounded-xl px-2.5 py-2 flex items-center gap-2.5 border border-white/60 dark:border-slate-700/40 shadow-sm hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-500/40 transition-all active:scale-[0.98] group">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                            <CustomIcon type="soTietKiem" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-emerald-500 dark:text-emerald-400" />
+                        </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
-                            <p className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400 text-money leading-tight truncate">
-                                {hideBalance ? '••' : fmt(totalSavings)}
+                            <p className="text-[16px] font-bold text-emerald-600 dark:text-emerald-400 text-money leading-tight truncate">
+                                {hideBalance ? '••••' : `${fmt(totalSavings)}đ`}
                             </p>
-                            <p className="text-[10px] text-slate-400 truncate">
-                                {savingsCount > 0 ? `${savingsCount} sổ tiết kiệm` : 'Chưa có sổ nào'}
+                            <p className="text-[10.5px] text-slate-400 truncate">
+                                Tiết kiệm · {savingsCount > 0 ? `${savingsCount} sổ` : 'Chưa có sổ'}
                             </p>
                         </div>
-                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d1 w-4 h-4 text-purple-400 flex-shrink-0" />
+                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d1 w-4 h-4 text-slate-300 dark:text-slate-500 flex-shrink-0" />
                     </Link>
                     <Link href="/cards"
-                        className="bg-white dark:bg-surface rounded-xl px-3 pt-2 pb-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-500/40 hover:shadow-md transition-all active:scale-95 group">
+                        className="bg-white/65 dark:bg-surface/55 backdrop-blur-md rounded-xl px-2.5 py-2 flex items-center gap-2.5 border border-white/60 dark:border-slate-700/40 shadow-sm hover:shadow-md hover:border-red-200 dark:hover:border-red-500/40 transition-all active:scale-[0.98] group">
+                        <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/15 flex items-center justify-center flex-shrink-0">
+                            <CustomIcon type="creditCard" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-red-500 dark:text-red-400" />
+                        </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
-                            <p className="text-[15px] font-bold text-red-500 text-money leading-tight truncate">
-                                {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
+                            <p className="text-[16px] font-bold text-red-500 dark:text-red-400 text-money leading-tight truncate">
+                                {hideBalance ? '••••' : (totalDebt > 0 ? `-${fmt(totalDebt)}đ` : '0đ')}
                             </p>
-                            <p className="text-[10px] text-slate-400 truncate">
-                                {creditCount > 0 ? `${creditCount} thẻ tín dụng` : 'Chưa có thẻ nào'}
+                            <p className="text-[10.5px] text-slate-400 truncate">
+                                Dư nợ · {creditCount > 0 ? `${creditCount} thẻ` : 'Chưa có thẻ'}
                             </p>
                         </div>
-                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d2 w-4 h-4 text-purple-400 flex-shrink-0" />
+                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d2 w-4 h-4 text-slate-300 dark:text-slate-500 flex-shrink-0" />
                     </Link>
                 </div>
 
