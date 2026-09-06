@@ -44,6 +44,22 @@ const fmt = (n: number) => {
 };
 const fmtFull = formatNumber;
 
+// Build a smooth-ish sparkline (line + area path) from a numeric series,
+// normalised into a w×h box. Returns empty paths when there's too little data.
+function sparkPath(series: number[], w: number, h: number, pad = 3) {
+    const n = series.length;
+    if (n < 2) return { line: '', area: '', up: true };
+    const min = Math.min(...series);
+    const max = Math.max(...series);
+    const range = max - min || 1;
+    const x = (i: number) => pad + (i / (n - 1)) * (w - pad * 2);
+    const y = (v: number) => h - pad - ((v - min) / range) * (h - pad * 2);
+    let line = `M ${x(0).toFixed(1)} ${y(series[0]).toFixed(1)}`;
+    for (let i = 1; i < n; i++) line += ` L ${x(i).toFixed(1)} ${y(series[i]).toFixed(1)}`;
+    const area = `${line} L ${x(n - 1).toFixed(1)} ${h} L ${x(0).toFixed(1)} ${h} Z`;
+    return { line, area, up: series[n - 1] >= series[0] };
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
     const { user } = useAuthStore();
@@ -70,6 +86,24 @@ export default function DashboardPage() {
         () => cards.filter(c => c.cardType === 'savings').reduce((s, c) => s + c.balance, 0),
         [cards]
     );
+    const savingsCount = useMemo(() => cards.filter(c => c.cardType === 'savings').length, [cards]);
+    const creditCount = useMemo(() => cards.filter(c => c.cardType === 'credit').length, [cards]);
+
+    // Real 30-day cash-flow trend (cumulative income − expense per day) → sparkline.
+    const netTrend = useMemo(() => {
+        const days = 30;
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        start.setDate(start.getDate() - days);
+        const buckets = new Array(days + 1).fill(0);
+        transactions.forEach((t: any) => {
+            const idx = Math.floor((new Date(t.date).getTime() - start.getTime()) / 86_400_000);
+            if (idx >= 0 && idx <= days) buckets[idx] += t.type === 'income' ? t.amount : -t.amount;
+        });
+        let acc = 0;
+        return buckets.map(v => (acc += v));
+    }, [transactions]);
+    const spark = useMemo(() => sparkPath(netTrend, 150, 60), [netTrend]);
 
     const creditCardsForCashback = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
     // Shared cards (e.g. my wife's credit card) are our spending too — fold
@@ -218,105 +252,112 @@ export default function DashboardPage() {
 
             <main className="px-5 space-y-4">
 
-                {/* ── Asset card: light lavender / dark navy→purple with aurora glow ── */}
-                <div className="anim-scale-in relative overflow-hidden rounded-[20px] p-4 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#191E36] dark:via-[#151829] dark:to-[#141224] border border-[#E9D5FF] dark:border-slate-700/50">
-                    {/* Aurora glow — confined to the bottom-right corner, card stays mostly dark navy */}
-                    <div aria-hidden className="absolute inset-0 pointer-events-none">
-                        {/* deep-purple bloom hugging the corner */}
-                        <div
-                            className="absolute -bottom-24 -right-24 w-72 h-56 opacity-35 dark:opacity-70"
-                            style={{ background: 'radial-gradient(ellipse at center, rgba(109,40,217,0.45) 0%, rgba(91,33,182,0.22) 45%, transparent 70%)', filter: 'blur(24px)' }}
-                        />
-                        {/* small bright core, right at the corner */}
-                        <div
-                            className="absolute -bottom-14 -right-6 w-40 h-28 opacity-30 dark:opacity-60"
-                            style={{ background: 'radial-gradient(ellipse at center, rgba(167,139,250,0.45) 0%, transparent 65%)', filter: 'blur(14px)' }}
-                        />
-                        {/* silk light-lines, right half only */}
-                        <svg className="absolute bottom-0 right-0 w-2/3 h-24 opacity-20 dark:opacity-35" viewBox="0 0 260 96" fill="none" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="assetSilk" x1="0" y1="0" x2="260" y2="0" gradientUnits="userSpaceOnUse">
-                                    <stop stopColor="#C4B5FD" stopOpacity="0" />
-                                    <stop offset="0.6" stopColor="#C4B5FD" stopOpacity="0.8" />
-                                    <stop offset="1" stopColor="#8B5CF6" stopOpacity="0" />
-                                </linearGradient>
-                            </defs>
-                            <path d="M0 96 C 90 64, 170 92, 260 36" stroke="url(#assetSilk)" strokeWidth="0.8" />
-                            <path d="M20 100 C 110 74, 190 96, 260 50" stroke="url(#assetSilk)" strokeWidth="0.6" />
-                            <path d="M60 104 C 140 86, 210 100, 260 66" stroke="url(#assetSilk)" strokeWidth="0.5" />
-                            <path d="M110 106 C 175 96, 225 104, 260 82" stroke="url(#assetSilk)" strokeWidth="0.4" />
-                        </svg>
-                        {/* rim light, bottom-right edge only */}
-                        <div className="absolute bottom-0 right-6 left-1/2 h-px bg-gradient-to-r from-transparent via-purple-400/30 dark:via-purple-300/50 to-transparent" />
+                {/* ── Overview: net-worth hero (left) + savings/debt cards (right) ── */}
+                <div className="anim-scale-in grid grid-cols-1 sm:grid-cols-[1.7fr_1fr] gap-3">
+
+                    {/* Hero: Net worth */}
+                    <div className="relative overflow-hidden rounded-[20px] p-4 shadow-[0_4px_20px_-2px_rgba(139,92,246,0.12)] dark:shadow-xl bg-gradient-to-br from-white to-[#F5F3FF] dark:from-[#191E36] dark:via-[#151829] dark:to-[#141224] border border-[#E9D5FF] dark:border-slate-700/50">
+                        {/* Aurora corner glow */}
+                        <div aria-hidden className="absolute inset-0 pointer-events-none">
+                            <div className="absolute -bottom-24 -right-24 w-72 h-56 opacity-30 dark:opacity-60"
+                                style={{ background: 'radial-gradient(ellipse at center, rgba(109,40,217,0.4) 0%, rgba(91,33,182,0.2) 45%, transparent 70%)', filter: 'blur(24px)' }} />
+                            <div className="absolute -bottom-14 -right-6 w-40 h-28 opacity-25 dark:opacity-55"
+                                style={{ background: 'radial-gradient(ellipse at center, rgba(167,139,250,0.4) 0%, transparent 65%)', filter: 'blur(14px)' }} />
+                        </div>
+
+                        {/* Real 30-day cash-flow trend sparkline, right half */}
+                        {spark.line && (
+                            <svg aria-hidden viewBox="0 0 150 60" preserveAspectRatio="none"
+                                className="absolute top-0 right-0 h-full w-[55%] pointer-events-none opacity-90">
+                                <defs>
+                                    <linearGradient id="nwSpark" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#34D399" stopOpacity="0.28" />
+                                        <stop offset="100%" stopColor="#34D399" stopOpacity="0" />
+                                    </linearGradient>
+                                </defs>
+                                <path d={spark.area} fill="url(#nwSpark)" />
+                                <path d={spark.line} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                            </svg>
+                        )}
+
+                        <div className="relative z-10">
+                            {/* Icon + title + subtitle + eye toggle */}
+                            <div className="flex items-center gap-2.5 mb-2.5">
+                                <div className="w-10 h-10 rounded-xl bg-purple-500/15 dark:bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                                    <CustomIcon type="wallet" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-500 dark:text-purple-300" />
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <Link href="/wealth" className="text-slate-700 dark:text-white text-[15px] font-bold hover:text-purple-500 dark:hover:text-purple-200 transition-colors">Tài sản ròng</Link>
+                                        <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
+                                            {hideBalance ? <CustomIcon type="eyeOff" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px]" /> : <CustomIcon type="eye" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px]" />}
+                                        </button>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 dark:text-slate-400 leading-tight truncate">Tổng tài sản trừ đi nợ phải trả</p>
+                                </div>
+                            </div>
+
+                            {/* Amount */}
+                            <p className="text-slate-800 dark:text-white text-[22px] font-bold tracking-tight leading-none text-money">
+                                {hideBalance ? '******' : fmtFull(netWorth)}
+                                <span className="text-base font-semibold text-slate-400 dark:text-slate-500 ml-0.5">đ</span>
+                            </p>
+
+                            {/* Income / expense pills */}
+                            <div className="flex items-stretch gap-2 mt-3.5 max-w-[340px]">
+                                <Link href="/analytics" className="flex-1 group">
+                                    <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 px-2.5 py-1.5 flex items-center gap-1.5">
+                                        <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" />
+                                        <span className="text-emerald-600 dark:text-emerald-400 text-[13px] font-bold tabular-nums truncate">+{fmt(summary.income)}</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1 pl-1 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Thu nhập</p>
+                                </Link>
+                                <Link href="/analytics" className="flex-1 group">
+                                    <div className="rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 px-2.5 py-1.5 flex items-center gap-1.5">
+                                        <UtilityIcon type="trendingDown" size={14} tile={false} color="#EF4444" />
+                                        <span className="text-red-500 dark:text-red-400 text-[13px] font-bold tabular-nums truncate">-{fmt(summary.expense)}</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-1 pl-1 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Chi tiêu</p>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="relative z-10">
-                        {/* Label + eye toggle (cashback badge moved to the header) */}
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                            <Link href="/wealth" className="text-slate-500 dark:text-slate-300 text-sm font-medium hover:text-purple-500 dark:hover:text-white transition-colors">Tài sản ròng</Link>
-                            <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
-                                {hideBalance ? <CustomIcon type="eyeOff" size={16} tile={false} color="currentColor" className="w-4 h-4" /> : <CustomIcon type="eye" size={16} tile={false} color="currentColor" className="w-4 h-4" />}
-                            </button>
-                        </div>
-
-                        <p className="text-slate-800 dark:text-white text-[21px] font-bold tracking-tight leading-none text-money">
-                            {hideBalance ? '*******' : `${fmtFull(netWorth)}đ`}
-                        </p>
-
-                        {/* Thu/Chi — value on top, label below, split by divider */}
-                        <div className="flex items-center gap-6 mt-3">
-                            <Link href="/analytics" className="group">
-                                <p className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-sm font-bold">
-                                    +{fmt(summary.income)} <UtilityIcon type="trendingUp" size={14} tile={false} color="#10B981" />
+                    {/* Right column: savings + card debt, stacked */}
+                    <div className="grid grid-rows-2 gap-3">
+                        <Link href="/savings"
+                            className="bg-white dark:bg-surface rounded-[16px] p-3 flex items-center gap-2.5 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-500/40 hover:shadow-md transition-all active:scale-[0.98] group">
+                            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
+                                <CustomIcon type="piggyBank" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-emerald-500 dark:text-emerald-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-100 leading-tight truncate">Sổ tiết kiệm</p>
+                                <p className="text-[10.5px] text-slate-400 truncate">
+                                    {savingsCount > 0 ? `${savingsCount} sổ tiết kiệm` : 'Chưa có sổ nào'}
                                 </p>
-                                <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Thu nhập</p>
-                            </Link>
-                            <div className="w-px h-8 bg-slate-200 dark:bg-white/15" />
-                            <Link href="/analytics" className="group">
-                                <p className="inline-flex items-center gap-1 text-red-500 dark:text-red-400 text-sm font-bold">
-                                    -{fmt(summary.expense)} <UtilityIcon type="trendingDown" size={14} tile={false} color="#EF4444" />
+                            </div>
+                            <span className="text-[13px] font-bold text-emerald-600 dark:text-emerald-400 text-money tabular-nums flex-shrink-0">
+                                {hideBalance ? '••••' : fmt(totalSavings)}<span className="text-[10px] text-slate-400 ml-0.5">đ</span>
+                            </span>
+                            <CustomIcon type="chevronRight" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px] text-slate-300 dark:text-slate-500 flex-shrink-0" />
+                        </Link>
+                        <Link href="/cards"
+                            className="bg-white dark:bg-surface rounded-[16px] p-3 flex items-center gap-2.5 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-red-200 dark:hover:border-red-500/40 hover:shadow-md transition-all active:scale-[0.98] group">
+                            <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/15 flex items-center justify-center flex-shrink-0">
+                                <CustomIcon type="creditCard" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-red-500 dark:text-red-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-100 leading-tight truncate">Dư nợ thẻ</p>
+                                <p className="text-[10.5px] text-slate-400 truncate">
+                                    {creditCount > 0 ? `${creditCount} thẻ tín dụng` : 'Chưa có thẻ nào'}
                                 </p>
-                                <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5 group-hover:text-slate-500 dark:group-hover:text-slate-300 transition-colors">Chi tiêu</p>
-                            </Link>
-                        </div>
+                            </div>
+                            <span className="text-[13px] font-bold text-red-500 dark:text-red-400 text-money tabular-nums flex-shrink-0">
+                                {hideBalance ? '••••' : (totalDebt > 0 ? fmt(totalDebt) : '0')}<span className="text-[10px] text-slate-400 ml-0.5">đ</span>
+                            </span>
+                            <CustomIcon type="chevronRight" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px] text-slate-300 dark:text-slate-500 flex-shrink-0" />
+                        </Link>
                     </div>
-                </div>
-
-                {/* ── Savings & card debt shortcut tiles ── */}
-                <div className="anim-fade-up-d1 grid grid-cols-2 gap-3">
-                    <Link href="/savings"
-                        className="bg-white dark:bg-surface rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-purple-200 dark:hover:border-purple-500/40 hover:shadow-md transition-all active:scale-95 group">
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Tiết kiệm</p>
-                            <p className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400 text-money leading-tight truncate">
-                                {hideBalance ? '••' : fmt(totalSavings)}
-                            </p>
-                            <p className="text-[10px] text-slate-400 truncate">
-                                {cards.filter(c => c.cardType === 'savings').length > 0
-                                    ? `${cards.filter(c => c.cardType === 'savings').length} sổ tiết kiệm`
-                                    : 'Chưa có sổ nào'}
-                            </p>
-                        </div>
-                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d1 w-4 h-4 text-purple-400 flex-shrink-0" />
-                    </Link>
-                    <Link href="/cards"
-                        className="bg-white dark:bg-surface rounded-xl p-3 flex items-center gap-3 border border-gray-100 dark:border-slate-700 shadow-sm hover:border-blue-200 dark:hover:border-blue-500/40 hover:shadow-md transition-all active:scale-95 group">
-                        {/* <div className="w-11 h-11 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                            <CustomIcon type="creditCard" size={20} tile={false} color="currentColor" className="w-5 h-5 text-blue-600 dark:text-blue-300" />
-                        </div> */}
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Dư nợ thẻ</p>
-                            <p className="text-[15px] font-bold text-red-500 text-money leading-tight truncate">
-                                {hideBalance ? '••' : (totalDebt > 0 ? `-${fmt(totalDebt)}` : '0')}
-                            </p>
-                            <p className="text-[10px] text-slate-400 truncate">
-                                {cards.filter(c => c.cardType === 'credit').length > 0
-                                    ? `${cards.filter(c => c.cardType === 'credit').length} thẻ tín dụng`
-                                    : 'Chưa có thẻ nào'}
-                            </p>
-                        </div>
-                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d2 w-4 h-4 text-purple-400 flex-shrink-0" />
-                    </Link>
                 </div>
 
 

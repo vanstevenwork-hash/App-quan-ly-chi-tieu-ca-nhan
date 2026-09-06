@@ -69,13 +69,16 @@ const createCustomDot = (color: string, dataKey: string, lastIndex: number) => {
                 ? `${(val / 1_000_000).toFixed(1).replace('.0', '')}tr`
                 : `${val >= 1000 ? Math.round(val / 1000) + 'k' : val}`;
             const rectW = valStr.length > 3 ? 46 : 38;
+            // Keep the value bubble inside the plot: clamp its top so a tall
+            // final point doesn't push it off the top edge (gets clipped).
+            const rectY = Math.max(2, cy - 38);
             return (
                 <g key={`dot-${index}-${dataKey}`}>
                     <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.15} />
                     <circle cx={cx} cy={cy} r={7} className="fill-white dark:fill-slate-900" />
                     <circle cx={cx} cy={cy} r={4.5} fill={color} />
-                    <rect x={cx - rectW / 2} y={cy - 38} width={rectW} height={22} rx={10} fill={color} />
-                    <text x={cx} y={cy - 27} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight="bold">
+                    <rect x={cx - rectW / 2} y={rectY} width={rectW} height={22} rx={10} fill={color} />
+                    <text x={cx} y={rectY + 11} fill="#fff" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight="bold">
                         {valStr}
                     </text>
                 </g>
@@ -476,7 +479,7 @@ export default function AnalyticsPage() {
                         </div>
                         {chartData.some(d => d.income > 0 || d.expense > 0) ? (
                         <ResponsiveContainer width="100%" height={160}>
-                            <AreaChart data={chartData} margin={{ top: 8, right: 6, bottom: 0, left: -20 }}>
+                            <AreaChart data={chartData} margin={{ top: 28, right: 30, bottom: 0, left: -20 }}>
                                 <defs>
                                     <linearGradient id="aIncome" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#34D399" stopOpacity={0.28} />
@@ -552,12 +555,8 @@ export default function AnalyticsPage() {
                                                     <div className="flex items-center gap-1.5 mt-0.5 min-w-0 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                                                         <span className="flex-shrink-0">{t.category}</span>
                                                         <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
-                                                        <span className="flex-shrink-0">
-                                                            {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} {new Date(t.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                                        </span>
-                                                        <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
                                                         <span className="truncate">
-                                                            {sourceLabel(t, allCards)}
+                                                            {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} {new Date(t.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -568,7 +567,9 @@ export default function AnalyticsPage() {
                                                     <p className={cn('text-[13px] font-bold tabular-nums leading-none', isIncome ? 'text-emerald-500' : 'text-red-400')}>
                                                         {isIncome ? '+' : '-'}{fmtViShort(t.amount)}
                                                     </p>
-                                                    {isIncome && <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-1">Đã cộng</span>}
+                                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate max-w-[120px]">
+                                                        {sourceLabel(t, allCards)}
+                                                    </span>
                                                 </div>
 
                                                 {/* Hover Actions */}
