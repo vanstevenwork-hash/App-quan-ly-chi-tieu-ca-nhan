@@ -159,7 +159,8 @@ export const cardSharesApi = {
     getIncoming: () => api.get('/card-shares/incoming'),
     getMyShares: () => api.get('/card-shares/my-shares'),
     getCardShares: (cardId: string) => api.get(`/card-shares/card/${cardId}`),
-    getCashback: (cardId: string) => api.get(`/card-shares/${cardId}/cashback`),
+    getCashback: (cardId: string, params?: { month: number; year: number } | { startDate: string; endDate: string }) =>
+        api.get(`/card-shares/${cardId}/cashback`, { params }),
     revoke: (id: string) => api.delete(`/card-shares/${id}`),
 };
 

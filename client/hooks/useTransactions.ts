@@ -14,6 +14,8 @@ export interface Transaction {
     date: string;
     paymentMethod: string;
     cardId?: string;
+    // Transaction fee (phí quẹt thẻ) in đồng; % is derived. Reduces net cashback.
+    feeAmount?: number;
     // Installment
     isInstallment?: boolean;
     installmentMonths?: number;

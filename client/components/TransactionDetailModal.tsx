@@ -21,6 +21,7 @@ interface Transaction {
     paymentMethod: string;
     cardId?: any;
     receiptImage?: string;
+    feeAmount?: number;
     isInstallment?: boolean;
     installmentMonths?: number;
     installmentMonthly?: number;
@@ -183,6 +184,24 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                                 </p>
                             </div>
                         </div>
+
+                        {/* Phí giao dịch — only when charged */}
+                        {(transaction.feeAmount || 0) > 0 && (
+                            <div className="flex items-center justify-between py-3.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                                        <CustomIcon type="receipt" size={18} tile={false} color="#F59E0B" />
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Phí giao dịch</span>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-red-500 dark:text-red-400">-{fmtFull(transaction.feeAmount || 0)}đ</p>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                                        {((transaction.feeAmount || 0) / transaction.amount * 100).toFixed(2).replace(/\.?0+$/, '')}% · trừ vào tiền hoàn
+                                    </p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Ghi chú — only when present */}
                         {transaction.note && (

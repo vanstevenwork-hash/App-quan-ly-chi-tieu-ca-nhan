@@ -6,6 +6,11 @@ import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useCards } from '@/hooks/useCards';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useCashbackRecords } from '@/hooks/useCashbackRecords';
+import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import CategoryIcon from '@/components/icons/CategoryIcon';
 import { useAuthStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -82,6 +87,13 @@ const formatDateTime = (dateStr: string) => {
     return `${hours}:${mins} ${day}/${month}/${year}`;
 };
 
+// Compact time for the right rail of a notification row: HH:mm on top, DD/MM below.
+const compactTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const p = (n: number) => n.toString().padStart(2, '0');
+    return { time: `${p(d.getHours())}:${p(d.getMinutes())}`, date: `${p(d.getDate())}/${p(d.getMonth() + 1)}` };
+};
+
 import { useBanks } from '@/hooks/useBanks';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { E_WALLETS, CRYPTOS } from '@/lib/constants';
@@ -98,10 +110,70 @@ const fmtViShort = (n: number) => {
     return `${Math.round(abs)}`;
 };
 
+// Days until a card's upcoming payment due date (null when no due day set) —
+// used to sort the most-urgent statements to the top.
+function daysUntilDue(paymentDueDay?: number): number | null {
+    if (!paymentDueDay) return null;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const due = new Date(now.getFullYear(), now.getMonth(), paymentDueDay);
+    if (due < today) due.setMonth(due.getMonth() + 1);
+    return Math.round((due.getTime() - today.getTime()) / 86_400_000);
+}
+
 function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open: boolean; initialTab?: PanelTab }) {
     const { isAuthenticated } = useAuthStore();
     const { notifications, loading, markRead, markAllRead } = useNotifications();
     const { creditAlerts, savingsAlerts, shareInvites, respondToShare, gameInvites, respondToGame, count: alertCount } = useImportantAlerts();
+    const { cards } = useCards();
+    const { transactions } = useTransactions();
+    const { records } = useCashbackRecords();
+    const [historyTab, setHistoryTab] = useState<'all' | 'payment' | 'credit' | 'cashback'>('all');
+
+    // Cashback history — computed from transactions (full history, not just saved
+    // records) per credit card per month; net of fees via getCappedCashbackTotal.
+    const cashbackHistory = useMemo(() => {
+        const rows: { card: any; year: number; month: number; amount: number; status: 'pending' | 'received' }[] = [];
+        cards.filter(c => c.cardType === 'credit').forEach(card => {
+            const cardTxs = transactions.filter(t => t.type === 'expense' && t.paymentMethod === 'card' && resolveCardId(t) === card._id);
+            const byMonth = new Map<string, { year: number; month: number; txs: typeof cardTxs }>();
+            cardTxs.forEach(t => {
+                const d = new Date(t.date);
+                const key = `${d.getFullYear()}-${d.getMonth()}`;
+                if (!byMonth.has(key)) byMonth.set(key, { year: d.getFullYear(), month: d.getMonth(), txs: [] });
+                byMonth.get(key)!.txs.push(t);
+            });
+            byMonth.forEach(({ year, month, txs }) => {
+                const amount = getCappedCashbackTotal(txs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+                if (amount <= 0) return;
+                const rec = records.find(r => r.cardId === card._id && r.year === year && r.month === month);
+                rows.push({ card, year, month, amount, status: rec?.status || 'pending' });
+            });
+        });
+        rows.sort((a, b) => (b.year - a.year) || (b.month - a.month));
+        return rows;
+    }, [cards, transactions, records]);
+
+    // Transactions filtered by account type, for the Thanh toán / Tín dụng tabs
+    // (grouped by day, newest first). 'payment' = cash + debit/ví; 'credit' = thẻ
+    // tín dụng only.
+    const txHistoryGroups = useMemo(() => {
+        if (historyTab !== 'payment' && historyTab !== 'credit') return null;
+        const cardById = new Map(cards.map(c => [c._id, c]));
+        const filtered = transactions.filter(t => {
+            const cid = resolveCardId(t);
+            const card = cid ? cardById.get(cid) : undefined;
+            const isCredit = t.paymentMethod === 'card' && card?.cardType === 'credit';
+            return historyTab === 'credit' ? isCredit : !isCredit;
+        });
+        const groups: Record<string, typeof filtered> = {};
+        [...filtered].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).forEach(t => {
+            const d = new Date(t.date);
+            const key = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+            (groups[key] ||= []).push(t);
+        });
+        return groups;
+    }, [historyTab, transactions, cards]);
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     useEffect(() => {
@@ -114,7 +186,6 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
     useEffect(() => {
         if (open && initialTab) setActiveTab(initialTab);
     }, [open, initialTab]);
-    const [historyTab, setHistoryTab] = useState<'all' | 'payment' | 'credit'>('all');
     const [selectedNotification, setSelectedNotification] = useState<any>(null);
     const [viewMode, setViewMode] = useState<'notifications' | 'balance_history'>('notifications');
     const router = useRouter();
@@ -160,27 +231,32 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                     {items.map(n => {
                         const meta = TYPE_MAP[n.type] || TYPE_MAP.general;
                         const matchLogo = getMatchingLogo(n.title) || getMatchingLogo(n.message);
+                        const t = compactTime(n.createdAt);
                         return (
                             <div key={n._id} onClick={() => { if (!n.isRead) markRead(n._id); setSelectedNotification(n); }}
-                                className={cn("flex px-4 py-3 gap-4 cursor-pointer rounded-2xl transition-colors", !n.isRead ? 'bg-[#F9FAFB] dark:bg-slate-800/60' : 'bg-white dark:bg-surface hover:bg-gray-50 dark:hover:bg-slate-800')}>
-                                <div className={cn("w-12 h-12 border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-[#F8FAFC] dark:bg-slate-800 overflow-hidden", matchLogo ? 'rounded-xl' : 'rounded-full')}>
+                                className={cn("flex items-center px-3 py-2.5 gap-3 cursor-pointer rounded-2xl transition-colors", !n.isRead ? 'bg-[#F9FAFB] dark:bg-slate-800/60' : 'bg-white dark:bg-surface hover:bg-gray-50 dark:hover:bg-slate-800')}>
+                                <div className={cn("w-10 h-10 border border-gray-100 dark:border-transparent flex items-center justify-center text-lg flex-shrink-0 bg-[#F8FAFC] dark:bg-slate-800 overflow-hidden", matchLogo ? 'rounded-xl' : 'rounded-full')}>
                                     {matchLogo ? (
-                                        <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-xl">
+                                        <div className="w-10 h-10 p-1.5 flex items-center justify-center bg-white rounded-xl">
                                             <img src={matchLogo} alt="bank" className="w-full h-full object-contain" />
                                         </div>
                                     ) : (
                                         renderNotifIcon(n) ?? (
-                                            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: meta.bg || '#F8FAFC' }}>
+                                            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: meta.bg || '#F8FAFC' }}>
                                                 {n.icon || meta.icon}
                                             </div>
                                         )
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className={cn("text-[15px] leading-snug", !n.isRead ? 'font-bold text-gray-900 dark:text-white' : 'font-semibold text-gray-900 dark:text-slate-200')}>{n.title}</p>
-                                    <p className="text-[13.5px] text-gray-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">{n.message}</p>
-                                    <p className="text-[12px] text-gray-400 dark:text-slate-500 mt-1.5 font-medium">vào lúc {formatDateTime(n.createdAt)}</p>
+                                    <p className={cn("text-[14px] leading-snug truncate", !n.isRead ? 'font-bold text-gray-900 dark:text-white' : 'font-semibold text-gray-900 dark:text-slate-200')}>{n.title}</p>
+                                    <p className="text-[12.5px] text-gray-500 dark:text-slate-400 mt-0.5 truncate">{n.message}</p>
                                 </div>
+                                <div className="text-right flex-shrink-0 leading-tight">
+                                    <p className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 tabular-nums">{t.time}</p>
+                                    <p className="text-[10px] text-gray-400 dark:text-slate-500 tabular-nums mt-0.5">{t.date}</p>
+                                </div>
+                                {!n.isRead && <span className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />}
                             </div>
                         )
                     })}
@@ -259,23 +335,102 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
                                 <button onClick={() => setHistoryTab('all')} className={cn("px-4 py-2 rounded-full whitespace-nowrap text-[14px]", historyTab === 'all' ? "bg-[#CCFBF1] dark:bg-teal-900/30 text-[#0F766E] dark:text-teal-400 font-semibold" : "bg-transparent border border-gray-100 dark:border-slate-800 text-gray-500 dark:text-slate-400 font-medium")}>Tổng quan</button>
                                 <button onClick={() => setHistoryTab('payment')} className={cn("px-4 py-2 rounded-full whitespace-nowrap text-[14px]", historyTab === 'payment' ? "bg-[#CCFBF1] dark:bg-teal-900/30 text-[#0F766E] dark:text-teal-400 font-semibold" : "bg-transparent border border-gray-100 dark:border-slate-800 text-gray-500 dark:text-slate-400 font-medium")}>Tài khoản thanh toán</button>
-                                <button onClick={() => setHistoryTab('credit')} className={cn("px-4 py-2 rounded-full whitespace-nowrap text-[14px]", historyTab === 'credit' ? "bg-[#CCFBF1] dark:bg-teal-900/30 text-[#0F766E] dark:text-teal-400 font-semibold" : "bg-transparent border border-gray-100 dark:border-slate-800 text-gray-500 dark:text-slate-400 font-medium")}>Tài khoản Ca...</button>
+                                <button onClick={() => setHistoryTab('credit')} className={cn("px-4 py-2 rounded-full whitespace-nowrap text-[14px]", historyTab === 'credit' ? "bg-[#CCFBF1] dark:bg-teal-900/30 text-[#0F766E] dark:text-teal-400 font-semibold" : "bg-transparent border border-gray-100 dark:border-slate-800 text-gray-500 dark:text-slate-400 font-medium")}>Tín dụng</button>
+                                <button onClick={() => setHistoryTab('cashback')} className={cn("px-4 py-2 rounded-full whitespace-nowrap text-[14px]", historyTab === 'cashback' ? "bg-[#CCFBF1] dark:bg-teal-900/30 text-[#0F766E] dark:text-teal-400 font-semibold" : "bg-transparent border border-gray-100 dark:border-slate-800 text-gray-500 dark:text-slate-400 font-medium")}>Hoàn tiền</button>
                             </div>
                         </div>
 
-                        {loading && <div className="p-8 text-center text-gray-400 dark:text-slate-500 text-sm">Đang tải...</div>}
-                        {!loading && hFiltered.length === 0 && (
+                        {/* ── Cashback history tab ── */}
+                        {historyTab === 'cashback' && (
+                            cashbackHistory.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center gap-3 p-10 mt-10">
+                                    <UtilityIcon type="coins" size={44} tile={false} />
+                                    <p className="text-gray-400 dark:text-slate-500 text-sm">Chưa có lịch sử hoàn tiền</p>
+                                </div>
+                            ) : (
+                                <div className="p-4 space-y-2">
+                                    {cashbackHistory.map(row => {
+                                        const logo = getMatchingLogo(row.card.bankName) || getMatchingLogo(row.card.bankShortName);
+                                        const received = row.status === 'received';
+                                        return (
+                                            <div key={`${row.card._id}-${row.year}-${row.month}`}
+                                                onClick={() => { router.push('/cashback'); onClose(); }}
+                                                className="flex items-center px-3 py-2.5 gap-3 cursor-pointer rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
+                                                <div className={cn("w-10 h-10 flex items-center justify-center flex-shrink-0 bg-white dark:bg-slate-800 border border-gray-100 dark:border-transparent overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
+                                                    {logo
+                                                        ? <div className="w-10 h-10 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
+                                                        : '🎁'}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">Hoàn tiền {row.card.bankShortName || row.card.bankName}</p>
+                                                    <p className="text-[11.5px] text-gray-500 dark:text-slate-400 truncate mt-0.5">Tháng {row.month + 1}/{row.year}</p>
+                                                </div>
+                                                <div className="text-right flex-shrink-0">
+                                                    <p className="text-[14px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums leading-tight">+{fmtViShort(row.amount)}</p>
+                                                    <span className={cn("inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap",
+                                                        received
+                                                            ? "bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-500/15 dark:border-emerald-500/30 dark:text-emerald-400"
+                                                            : "bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-400")}>
+                                                        {received ? 'Đã nhận' : 'Chờ nhận'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )
+                        )}
+
+                        {/* ── Thanh toán / Tín dụng tabs: real transactions filtered by account type ── */}
+                        {txHistoryGroups && (
+                            Object.keys(txHistoryGroups).length === 0 ? (
+                                <div className="flex flex-col items-center justify-center gap-3 p-10 mt-10">
+                                    <CustomIcon type="history" size={44} tile={false} color="currentColor" className="w-11 h-11 text-gray-200 dark:text-slate-700" />
+                                    <p className="text-gray-400 dark:text-slate-500 text-sm">Chưa có giao dịch</p>
+                                </div>
+                            ) : (
+                                <div className="p-4 space-y-4">
+                                    {Object.entries(txHistoryGroups).map(([dateStr, txs]) => (
+                                        <div key={dateStr}>
+                                            <h4 className="text-[13px] font-semibold text-[#475569] dark:text-slate-400 mb-2 px-1">{dateStr}</h4>
+                                            <div className="bg-white dark:bg-surface rounded-[20px] p-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-800">
+                                                {txs.map(t => {
+                                                    const isIncome = t.type === 'income';
+                                                    return (
+                                                        <div key={t._id} className="flex items-center gap-3 px-2.5 py-2.5 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer rounded-2xl" onClick={() => { router.push('/analytics'); onClose(); }}>
+                                                            <CategoryIcon type={CATEGORY_LABEL_TO_TYPE[t.category] || 'khac'} size={40} tile className="flex-shrink-0" />
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-[13.5px] text-[#334155] dark:text-slate-200 font-medium truncate">{t.note || t.category}</p>
+                                                                <p className="text-[12px] text-gray-400 dark:text-slate-500 mt-0.5 truncate">
+                                                                    {t.category}{(t.feeAmount || 0) > 0 ? ` · phí ${fmtViShort(t.feeAmount || 0)}` : ''}
+                                                                </p>
+                                                            </div>
+                                                            <div className={cn("text-[13.5px] font-bold tabular-nums whitespace-nowrap flex-shrink-0", isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#334155] dark:text-slate-200')}>
+                                                                {isIncome ? '+' : '-'}{fmtViShort(t.amount)}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        )}
+
+                        {historyTab === 'all' && loading && <div className="p-8 text-center text-gray-400 dark:text-slate-500 text-sm">Đang tải...</div>}
+                        {historyTab === 'all' && !loading && hFiltered.length === 0 && (
                             <div className="flex flex-col items-center justify-center gap-3 p-10 mt-10">
                                 <CustomIcon type="history" size={48} tile={false} color="currentColor" className="w-12 h-12 text-gray-200 dark:text-slate-700" />
                                 <p className="text-gray-400 dark:text-slate-500 text-sm">Không có giao dịch nào</p>
                             </div>
                         )}
 
-                        <div className="p-4 space-y-6">
+                        {historyTab === 'all' && <div className="p-4 space-y-4">
                             {Object.entries(hGrouped).map(([dateStr, items]) => (
                                 <div key={dateStr}>
-                                    <h4 className="text-[15px] font-semibold text-[#475569] dark:text-slate-400 mb-3 px-1">{dateStr}</h4>
-                                    <div className="bg-white dark:bg-surface rounded-[20px] p-2 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-800">
+                                    <h4 className="text-[13px] font-semibold text-[#475569] dark:text-slate-400 mb-2 px-1">{dateStr}</h4>
+                                    <div className="bg-white dark:bg-surface rounded-[20px] p-1.5 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-50 dark:border-slate-800 divide-y divide-gray-50 dark:divide-slate-800">
                                         {items.map(n => {
                                             // Extract actual amount logically from the notification message text if possible
                                             // VD "Giao dịch 40.000 đ tại ..."
@@ -285,15 +440,15 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                             const histLogo = getMatchingLogo(n.title) || getMatchingLogo(n.message);
 
                                             return (
-                                                <div key={n._id} className="flex items-center gap-4 p-3 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer rounded-2xl" onClick={() => setSelectedNotification(n)}>
-                                                    <div className={cn("w-12 h-12 bg-[#F1F5F9] dark:bg-slate-800 border border-gray-100 dark:border-transparent flex items-center justify-center flex-shrink-0", histLogo ? 'rounded-xl' : 'rounded-full')}>
+                                                <div key={n._id} className="flex items-center gap-3 px-2.5 py-2.5 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer rounded-2xl" onClick={() => setSelectedNotification(n)}>
+                                                    <div className={cn("w-10 h-10 bg-[#F1F5F9] dark:bg-slate-800 border border-gray-100 dark:border-transparent flex items-center justify-center flex-shrink-0", histLogo ? 'rounded-xl' : 'rounded-full')}>
                                                         {getHistoryIcon(n)}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-[15px] text-[#334155] dark:text-slate-200 font-medium truncate">{n.title}</p>
-                                                        <p className="text-[13px] text-gray-400 dark:text-slate-500 mt-0.5 truncate">{n.message}</p>
+                                                        <p className="text-[13.5px] text-[#334155] dark:text-slate-200 font-medium truncate">{n.title}</p>
+                                                        <p className="text-[12px] text-gray-400 dark:text-slate-500 mt-0.5 truncate">{n.message}</p>
                                                     </div>
-                                                    <div className={cn("text-[15px] font-medium whitespace-nowrap", isIncome ? 'text-[#10B981] dark:text-emerald-400' : 'text-[#334155] dark:text-slate-200')}>
+                                                    <div className={cn("text-[13.5px] font-bold tabular-nums whitespace-nowrap flex-shrink-0", isIncome ? 'text-[#10B981] dark:text-emerald-400' : 'text-[#334155] dark:text-slate-200')}>
                                                         {isIncome ? '+' : '-'}{amountStr} đ
                                                     </div>
                                                 </div>
@@ -302,7 +457,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                     </div>
                                 </div>
                             ))}
-                        </div>
+                        </div>}
                     </div>
                 );
             })() : (
@@ -379,7 +534,12 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                             />
                                         );
                                     })}
-                                    {creditAlerts.map(({ card, dueThisCycle }) => {
+                                    {[...creditAlerts].sort((a, b) => {
+                                        // Nearest due date first; cards without a due day sink to the bottom.
+                                        const da = daysUntilDue(a.card.paymentDueDay);
+                                        const db = daysUntilDue(b.card.paymentDueDay);
+                                        return (da ?? Infinity) - (db ?? Infinity);
+                                    }).map(({ card, dueThisCycle }) => {
                                         const logo = getMatchingLogo(card.bankName) || getMatchingLogo(card.bankShortName);
                                         // Upcoming payment due date + days remaining (urgent within 3 days).
                                         let dueDays: number | null = null;
@@ -399,33 +559,31 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                         return (
                                             <div key={card._id}
                                                 onClick={() => { router.push(`/cards/${card._id}`); onClose(); }}
-                                                className={cn("flex px-4 py-3 gap-4 cursor-pointer rounded-2xl transition-colors",
+                                                className={cn("flex items-center px-3 py-2.5 gap-3 cursor-pointer rounded-2xl border transition-colors",
                                                     urgent
-                                                        ? "bg-red-50 dark:bg-red-900/20 ring-1 ring-red-200 dark:ring-red-500/30 hover:bg-red-100/70 dark:hover:bg-red-900/30"
-                                                        : "bg-red-50/60 dark:bg-red-900/10 hover:bg-red-50 dark:hover:bg-red-900/20")}>
-                                                <div className={cn("w-12 h-12 border border-gray-100 dark:border-transparent flex items-center justify-center text-xl flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
+                                                        ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-500/30 ring-1 ring-red-200 dark:ring-red-500/30 hover:bg-red-100/70 dark:hover:bg-red-900/30"
+                                                        : "bg-white dark:bg-surface border-gray-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50")}>
+                                                <div className={cn("w-10 h-10 border border-gray-100 dark:border-transparent flex items-center justify-center text-lg flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
                                                     {logo
-                                                        ? <div className="w-12 h-12 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
+                                                        ? <div className="w-10 h-10 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
                                                         : '💳'}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="text-[15px] font-bold text-gray-900 dark:text-white truncate">Sao kê {card.bankName}</p>
-                                                        {dueBadge && (
-                                                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap flex-shrink-0",
-                                                                urgent
-                                                                    ? "bg-red-500 border-red-500 text-white shadow-sm shadow-red-500/30 animate-pulse"
-                                                                    : "bg-red-50 border-red-200 text-red-500 dark:bg-red-500/15 dark:border-red-500/30 dark:text-red-400")}>
-                                                                {dueBadge}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <p className="text-[13.5px] text-red-500 dark:text-red-400 mt-1 font-medium">Cần thanh toán kỳ này: {fmtViShort(dueThisCycle)}</p>
-                                                    {dueDate && (
-                                                        <p className="text-[12px] text-gray-500 dark:text-slate-400 mt-0.5 font-medium">
-                                                            Hạn thanh toán: {dueDate.getDate()}/{dueDate.getMonth() + 1}
-                                                            {card.statementDay ? ` · Sao kê ngày ${card.statementDay}` : ''}
-                                                        </p>
+                                                    <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">Sao kê {card.bankName}</p>
+                                                    <p className="text-[11.5px] text-gray-500 dark:text-slate-400 truncate mt-0.5">
+                                                        {dueDate ? `Hạn ${dueDate.getDate()}/${dueDate.getMonth() + 1}` : 'Cần thanh toán'}
+                                                        {card.statementDay ? ` · SK ngày ${card.statementDay}` : ''}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right flex-shrink-0">
+                                                    <p className="text-[14px] font-bold text-red-500 dark:text-red-400 tabular-nums leading-tight">{fmtViShort(dueThisCycle)}</p>
+                                                    {dueBadge && (
+                                                        <span className={cn("inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap",
+                                                            urgent
+                                                                ? "bg-red-500 border-red-500 text-white shadow-sm shadow-red-500/30 animate-pulse"
+                                                                : "bg-red-50 border-red-200 text-red-500 dark:bg-red-500/15 dark:border-red-500/30 dark:text-red-400")}>
+                                                            {dueBadge}
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>

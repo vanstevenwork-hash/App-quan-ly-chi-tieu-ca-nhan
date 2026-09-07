@@ -31,6 +31,7 @@ export const metadata: Metadata = {
 };
 
 import ThemeProvider from '@/components/ThemeProvider';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${manrope.className} antialiased bg-[#F0F2F8] dark:bg-surface-deep`}>
         <ThemeProvider />
+        <ServiceWorkerRegister />
         <Toaster
           position="top-center"
           richColors

@@ -41,13 +41,19 @@ export default function AddTransactionModal({
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
     const [saving, setSaving] = useState(false);
     const { createTransaction, updateTransaction } = useTransactions();
-    const [errors, setErrors] = useState<{ amount?: string; category?: string }>({});
+    const [errors, setErrors] = useState<{ amount?: string; category?: string; fee?: string }>({});
     // Bill Scanner
     const [showScanner, setShowScanner] = useState(false);
     const [receiptImage, setReceiptImage] = useState('');
     // Installment (Trả góp)
     const [isInstallment, setIsInstallment] = useState(false);
     const [installmentMonths, setInstallmentMonths] = useState(12);
+
+    // Transaction fee (phí quẹt thẻ). Canonical value is the đồng amount; % is
+    // derived. The two inputs stay in sync (edit one → the other recomputes).
+    const [hasFee, setHasFee] = useState(false);
+    const [feePctStr, setFeePctStr] = useState('');
+    const [feeAmtStr, setFeeAmtStr] = useState('');
     const { banks: fetchedBanks, fetchBanks } = useBanks();
 
     const { cards } = useCards();
@@ -92,6 +98,13 @@ export default function AddTransactionModal({
                 setIsInstallment(initialData.isInstallment || false);
                 setInstallmentMonths(initialData.installmentMonths || 12);
                 setReceiptImage(initialData.receiptImage || '');
+
+                const initFee = initialData.feeAmount || 0;
+                setHasFee(initFee > 0);
+                setFeeAmtStr(initFee > 0 ? String(initFee) : '');
+                setFeePctStr(initFee > 0 && initialData.amount
+                    ? ((initFee / initialData.amount) * 100).toFixed(2).replace(/\.?0+$/, '')
+                    : '');
             } else {
                 setType(defaultType);
                 setAmount('');
@@ -103,6 +116,9 @@ export default function AddTransactionModal({
                 setIsInstallment(false);
                 setInstallmentMonths(12);
                 setReceiptImage('');
+                setHasFee(false);
+                setFeePctStr('');
+                setFeeAmtStr('');
                 setShowScanner(autoOpenScanner);
             }
             setErrors({});
@@ -174,10 +190,30 @@ export default function AddTransactionModal({
     const amountNum = parseInt(amount) || 0;
     const monthlyPayment = isInstallment && installmentMonths > 0 ? Math.ceil(amountNum / installmentMonths) : 0;
 
+    // ── Fee (phí) — the two inputs mirror each other ──
+    const feeAmountNum = hasFee ? (parseInt(feeAmtStr) || 0) : 0;
+    const onFeePct = (v: string) => {
+        const clean = v.replace(/[^0-9.]/g, '');
+        setFeePctStr(clean);
+        const p = parseFloat(clean) || 0;
+        setFeeAmtStr(amountNum > 0 && clean ? String(Math.round(amountNum * p / 100)) : '');
+    };
+    const onFeeAmt = (v: string) => {
+        const digits = v.replace(/\D/g, '');
+        setFeeAmtStr(digits);
+        const a = parseInt(digits) || 0;
+        setFeePctStr(amountNum > 0 && digits ? ((a / amountNum) * 100).toFixed(2).replace(/\.?0+$/, '') : '');
+    };
+    // Net cashback preview = gross cashback of the selected card − fee.
+    const feeCard = [...creditCards, ...sharedCardList].find(c => c._id === selectedCardId);
+    const grossCashback = feeCard ? amountNum * ((feeCard.cashbackRate || 0) / 100) : 0;
+    const netCashback = grossCashback - feeAmountNum;
+
     const handleSave = async () => {
-        const errs: { amount?: string; category?: string } = {};
+        const errs: { amount?: string; category?: string; fee?: string } = {};
         if (!amount || parseInt(amount) <= 0) errs.amount = 'Vui lòng nhập số tiền hợp lệ';
         if (!category) errs.category = 'Vui lòng chọn danh mục';
+        if (selectedCardId !== 'cash' && hasFee && feeAmountNum > amountNum) errs.fee = 'Phí không được lớn hơn số tiền giao dịch';
         setErrors(errs);
         if (Object.keys(errs).length > 0) return;
         setSaving(true);
@@ -195,6 +231,7 @@ export default function AddTransactionModal({
                 installmentMonths: paymentTab === 'credit' && isInstallment ? installmentMonths : 0,
                 installmentMonthly: paymentTab === 'credit' && isInstallment ? monthlyPayment : 0,
                 installmentStartDate: paymentTab === 'credit' && isInstallment ? new Date(date) : undefined,
+                feeAmount: selectedCardId !== 'cash' && hasFee ? feeAmountNum : 0,
             };
 
             console.log('Saving transaction payload:', payload);
@@ -562,6 +599,87 @@ export default function AddTransactionModal({
                                         </div>
                                     ) : (
                                         <p className="text-xs text-center text-slate-400 italic">Nhập số tiền để xem số tiền mỗi tháng</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Phí giao dịch — cho giao dịch trả bằng thẻ ── */}
+                    {selectedCardId !== 'cash' && type === 'expense' && (
+                        <div className="flex flex-col gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setHasFee(v => !v)}
+                                className={cn(
+                                    'flex items-center justify-between w-full rounded-xl p-3 border-2 transition-all',
+                                    hasFee
+                                        ? 'border-amber-400 bg-amber-50/60 dark:bg-amber-900/15'
+                                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface hover:border-slate-300 dark:hover:border-slate-600'
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className={cn(
+                                        'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
+                                        hasFee ? 'bg-amber-400 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                    )}>
+                                        <CustomIcon type="receipt" size={16} tile={false} color="currentColor" className="w-4 h-4" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className={cn('text-sm font-bold', hasFee ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-300')}>
+                                            Giao dịch bị tính phí
+                                        </p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500">Phí sẽ trừ vào tiền hoàn</p>
+                                    </div>
+                                </div>
+                                <div className={cn(
+                                    'w-12 h-6 rounded-full transition-colors flex items-center px-1 flex-shrink-0',
+                                    hasFee ? 'bg-amber-400' : 'bg-slate-200 dark:bg-slate-700'
+                                )}>
+                                    <div className={cn(
+                                        'w-4 h-4 rounded-full bg-white shadow-sm transition-transform',
+                                        hasFee ? 'translate-x-6' : 'translate-x-0'
+                                    )} />
+                                </div>
+                            </button>
+
+                            {hasFee && (
+                                <div className="space-y-2 px-1">
+                                    {/* 2 cột: % ↔ số tiền phí, khớp 2 chiều */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 block">Phí (%)</label>
+                                            <div className="relative">
+                                                <input inputMode="decimal" value={feePctStr} onChange={e => onFeePct(e.target.value)} placeholder="0"
+                                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface px-3 py-2 pr-7 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-amber-400 transition-colors" />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">%</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 block">Số tiền phí</label>
+                                            <div className="relative">
+                                                <input inputMode="numeric" value={feeAmtStr ? formatNumber(parseInt(feeAmtStr)) : ''} onChange={e => onFeeAmt(e.target.value)} placeholder="0"
+                                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-surface px-3 py-2 pr-7 text-sm font-bold text-slate-800 dark:text-white outline-none focus:border-amber-400 transition-colors" />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">₫</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {errors.fee && <p className="text-xs text-red-500">{errors.fee}</p>}
+
+                                    {/* Preview hoàn ròng = hoàn − phí */}
+                                    {feeCard && (feeCard.cashbackRate || 0) > 0 && amountNum > 0 && (
+                                        <div className="rounded-xl bg-amber-50/70 dark:bg-amber-900/15 border border-amber-100 dark:border-amber-500/20 px-3 py-2 text-[12px] flex items-center justify-between gap-2">
+                                            <span className="text-slate-500 dark:text-slate-400 flex-shrink-0">Hoàn ước tính</span>
+                                            <span className="font-bold tabular-nums text-right">
+                                                <span className="text-emerald-600 dark:text-emerald-400">+{formatNumber(Math.round(grossCashback))}</span>
+                                                <span className="text-slate-400"> − </span>
+                                                <span className="text-red-500">{formatNumber(feeAmountNum)}</span>
+                                                <span className="text-slate-400"> = </span>
+                                                <span className={netCashback >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}>
+                                                    {netCashback >= 0 ? '+' : ''}{formatNumber(Math.round(netCashback))}₫
+                                                </span>
+                                            </span>
+                                        </div>
                                     )}
                                 </div>
                             )}

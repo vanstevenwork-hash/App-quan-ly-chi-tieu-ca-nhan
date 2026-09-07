@@ -2,7 +2,9 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCards, type Card } from '@/hooks/useCards';
-import { resolveCardId } from '@/lib/cashback';
+import { useCardShares } from '@/hooks/useCardShares';
+import { cardSharesApi } from '@/lib/api';
+import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
 import { transactionsApi } from '@/lib/api';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
@@ -178,6 +180,11 @@ export default function AnalyticsPage() {
     // Global store: only used for the always-recent 14-day trend chart and CRUD (create/update/delete).
     const { transactions: recentTransactions, deleteTransaction } = useTransactions();
     const { cards: allCards } = useCards();
+    const { sharedCards } = useCardShares();
+    // Shared-card (thẻ chung) cashback scoped to the SELECTED period — fetched
+    // from the backend with the period's date range so it lines up with the rest
+    // of the stats table (own-card figures are all period-scoped too).
+    const [periodShared, setPeriodShared] = useState(0);
 
     // Period-scoped data (summary/category-breakdown/list), fetched straight from the
     // backend's already-existing month/year-aware endpoints so each tab reflects its own period.
@@ -263,6 +270,17 @@ export default function AnalyticsPage() {
 
     useEffect(() => { fetchPeriodData(); }, [fetchPeriodData]);
 
+    // Fetch shared-card cashback for the current period's date range.
+    useEffect(() => {
+        const params = paramsForPeriod();
+        if (!params || sharedCards.length === 0) { setPeriodShared(0); return; }
+        let alive = true;
+        Promise.all(sharedCards.map(sc =>
+            cardSharesApi.getCashback(sc.card._id, params).then(r => r.data?.data?.cashbackEarned || 0).catch(() => 0)
+        )).then(vals => { if (alive) setPeriodShared(vals.reduce((s, v) => s + v, 0)); });
+        return () => { alive = false; };
+    }, [paramsForPeriod, sharedCards]);
+
     // Chart data — follows the selected period tab. Daily buckets, folded to
     // weekly if the range is very long (custom multi-month) so labels stay legible.
     const chartData = useMemo(() => {
@@ -309,6 +327,35 @@ export default function AnalyticsPage() {
         () => periodTx.filter(t => filterType === 'all' || t.type === filterType),
         [periodTx, filterType]
     );
+
+    // Breakdown table for the selected period — salary and cashback are kept
+    // SEPARATE from ordinary income so the numbers read cleanly.
+    const stats = useMemo(() => {
+        const salary = periodTx
+            .filter(t => t.type === 'income' && t.category === 'Lương')
+            .reduce((s, t) => s + t.amount, 0);
+        const otherIncome = periodTx
+            .filter(t => t.type === 'income' && t.category !== 'Lương')
+            .reduce((s, t) => s + t.amount, 0);
+        // Total transaction fees paid on card transactions this period.
+        const fees = periodTx
+            .filter(t => t.paymentMethod === 'card')
+            .reduce((s, t) => s + (t.feeAmount || 0), 0);
+        // Gross cashback per credit card (fee stripped → gross), capped/min-gated.
+        const gross = allCards
+            .filter(c => c.cardType === 'credit')
+            .reduce((sum, card) => {
+                const cardTxs = periodTx
+                    .filter(t => t.type === 'expense' && t.paymentMethod === 'card' && resolveCardId(t) === card._id)
+                    .map(t => ({ date: t.date, amount: t.amount }));
+                return sum + getCappedCashbackTotal(cardTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+            }, 0);
+        // Shared-card (thẻ chung) cashback comes from the backend as a single
+        // current-month figure (not period-scoped, not fee-adjusted) — shown as
+        // its own line and folded into the net.
+        const shared = periodShared;
+        return { salary, otherIncome, gross, fees, shared, netCashback: gross - fees + shared };
+    }, [periodTx, allCards, periodShared]);
 
     // Paginate the list (10 per page). Reset to page 1 whenever the filter or
     // period changes so we never land on an out-of-range page.
@@ -468,6 +515,51 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div className="space-y-4">
+                    {/* ── Bảng thống kê: Thu nhập & Hoàn tiền tách bạch ── */}
+                    <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
+                        <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-1">Bảng thống kê · {periodTab}</h2>
+
+                        {/* Nhóm thu nhập */}
+                        <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[13px] text-slate-600 dark:text-slate-300 flex items-center gap-2"><span>💰</span>Lương</span>
+                                <span className="text-[13px] font-bold text-slate-800 dark:text-slate-100 tabular-nums">{fmtFull(stats.salary)}đ</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[13px] text-slate-600 dark:text-slate-300 flex items-center gap-2"><span>📥</span>Thu nhập khác</span>
+                                <span className="text-[13px] font-bold text-slate-800 dark:text-slate-100 tabular-nums">{fmtFull(stats.otherIncome)}đ</span>
+                            </div>
+                            <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                                <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">Tổng thu nhập</span>
+                                <span className="text-[13.5px] font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{fmtFull(stats.salary + stats.otherIncome)}đ</span>
+                            </div>
+                        </div>
+
+                        {/* Nhóm hoàn tiền — tách riêng, KHÔNG tính vào thu nhập */}
+                        <div className="mt-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-700 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[13px] text-slate-600 dark:text-slate-300 flex items-center gap-2"><span>🎁</span>Tổng hoàn tiền</span>
+                                <span className="text-[13px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmtFull(Math.round(stats.gross))}đ</span>
+                            </div>
+                            {stats.shared > 0 && (
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[13px] text-slate-600 dark:text-slate-300 flex items-center gap-2"><span>🤝</span>Hoàn thẻ chung</span>
+                                    <span className="text-[13px] font-bold text-indigo-500 dark:text-indigo-400 tabular-nums">+{fmtFull(Math.round(stats.shared))}đ</span>
+                                </div>
+                            )}
+                            <div className="flex items-center justify-between">
+                                <span className="text-[13px] text-slate-600 dark:text-slate-300 flex items-center gap-2"><span>🧾</span>Phí giao dịch</span>
+                                <span className="text-[13px] font-bold text-red-500 dark:text-red-400 tabular-nums">-{fmtFull(stats.fees)}đ</span>
+                            </div>
+                            <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                                <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400">Hoàn ròng</span>
+                                <span className={cn('text-[13.5px] font-black tabular-nums', stats.netCashback >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
+                                    {stats.netCashback >= 0 ? '+' : ''}{fmtFull(Math.round(stats.netCashback))}đ
+                                </span>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* ── Trend chart ─────────────────────────────────── */}
                     <section className="bg-white dark:bg-surface rounded-[2rem] p-4 border border-slate-100 dark:border-slate-800 shadow-sm shadow-slate-200/50 dark:shadow-none">
                         <div className="flex items-center justify-between mb-4">
@@ -558,6 +650,12 @@ export default function AnalyticsPage() {
                                                         <span className="truncate">
                                                             {new Date(t.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} {new Date(t.date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
+                                                        {(t.feeAmount || 0) > 0 && (
+                                                            <>
+                                                                <span className="w-1 h-1 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                                                                <span className="text-amber-600 dark:text-amber-400 font-semibold flex-shrink-0">phí {fmtViShort(t.feeAmount)}</span>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

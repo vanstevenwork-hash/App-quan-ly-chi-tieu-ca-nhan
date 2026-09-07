@@ -58,7 +58,7 @@ exports.getTransaction = async (req, res) => {
 exports.createTransaction = async (req, res) => {
     try {
         console.log('🚀 SERVER: createTransaction REACHED!');
-        const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate, receiptImage } = req.body;
+        const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate, receiptImage, feeAmount } = req.body;
 
         // Determine the userId for the transaction:
         // If creating on a shared card, userId = card owner (so it shows up in card history)
@@ -80,6 +80,7 @@ exports.createTransaction = async (req, res) => {
             date: date ? new Date(date) : new Date(),
             cardId, paymentMethod,
             receiptImage,
+            feeAmount: Math.max(0, Math.min(Number(feeAmount) || 0, Number(amount) || 0)),
             isInstallment, installmentMonths, installmentMonthly, installmentStartDate,
             createdBy: req.user._id,
         });
@@ -151,6 +152,11 @@ exports.updateTransaction = async (req, res) => {
             }
         }
 
+        // Clamp fee to [0, amount] so it can never exceed the transaction value.
+        if (req.body.feeAmount != null) {
+            const amt = Number(req.body.amount ?? old.amount) || 0;
+            req.body.feeAmount = Math.max(0, Math.min(Number(req.body.feeAmount) || 0, amt));
+        }
         const updated = await Transaction.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
         // Reconciliation: Revert OLD impact and apply NEW impact

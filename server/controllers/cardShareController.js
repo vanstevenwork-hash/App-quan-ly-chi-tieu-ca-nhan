@@ -240,34 +240,61 @@ exports.getCashback = async (req, res) => {
         }
         const card = access.card;
 
+        // Date range: explicit startDate/endDate, or month/year, else current month.
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        let start, end;
+        if (req.query.startDate && req.query.endDate) {
+            start = new Date(req.query.startDate); start.setHours(0, 0, 0, 0);
+            end = new Date(req.query.endDate); end.setHours(23, 59, 59, 999);
+        } else if (req.query.month != null && req.query.year != null) {
+            const m = Number(req.query.month), y = Number(req.query.year);
+            start = new Date(y, m, 1); end = new Date(y, m + 1, 0, 23, 59, 59, 999);
+        } else {
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        }
 
         const txs = await Transaction.find({
             cardId,
             paymentMethod: 'card',
             type: 'expense',
             date: { $gte: start, $lte: end },
-        }).select('amount');
+        }).select('amount date feeAmount');
 
-        const totalSpend = txs.reduce((s, t) => s + t.amount, 0);
-        const rawCashback = totalSpend * (card.cashbackRate || 0) / 100;
+        // Net cashback, bucketed by calendar month (cap + min-spend apply monthly),
+        // minus transaction fees — matching the client's getCappedCashbackTotal.
+        const rate = card.cashbackRate || 0;
         const cap = card.cashbackCap || 0;
-        const cashbackEarned = cap > 0 ? Math.min(rawCashback, cap) : rawCashback;
+        const minSpend = card.cashbackMinSpend || 0;
+        const byMonth = new Map();
+        txs.forEach(t => {
+            const d = new Date(t.date);
+            const key = `${d.getFullYear()}-${d.getMonth()}`;
+            const b = byMonth.get(key) || { spend: 0, fee: 0 };
+            b.spend += t.amount;
+            b.fee += t.feeAmount || 0;
+            byMonth.set(key, b);
+        });
+        let net = 0, totalSpend = 0, gross = 0, cappedFlag = false;
+        byMonth.forEach(({ spend, fee }) => {
+            totalSpend += spend;
+            const g = spend * rate / 100;
+            gross += g;
+            if (cap > 0 && g > cap) cappedFlag = true;
+            const earned = (minSpend > 0 && spend < minSpend) ? 0 : (cap > 0 ? Math.min(g, cap) : g);
+            net += earned - fee;
+        });
 
         res.json({
             success: true,
             data: {
                 cardId: card._id,
                 bankName: card.bankName,
-                cashbackRate: card.cashbackRate || 0,
+                cashbackRate: rate,
                 cashbackCap: cap,
-                month: now.getMonth(),
-                year: now.getFullYear(),
                 totalSpend,
-                cashbackEarned,
-                capped: cap > 0 && rawCashback > cap,
+                cashbackEarned: net,   // net of fees (cashback ròng)
+                capped: cappedFlag,
             },
         });
     } catch (err) {

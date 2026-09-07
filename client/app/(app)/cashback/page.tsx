@@ -133,11 +133,15 @@ export default function CashbackPage() {
             );
             return months.map(({ year, month, label }) => {
                 const monthTxs = cardTxs.filter(t => { const d = new Date(t.date); return d.getFullYear() === year && d.getMonth() === month; });
+                // estimatedAmount is NET (cashback − phí) — getCappedCashbackTotal
+                // subtracts each tx's feeAmount. `fee` is tracked separately so the
+                // page can surface how much fee reduced the reward.
                 const estimatedAmount = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+                const fee = monthTxs.reduce((s, t) => s + (t.feeAmount || 0), 0);
                 // Uncapped total — when it exceeds the cap, the row shows "chạm trần"
                 const rawAmount = monthTxs.reduce((s, t) => s + t.amount, 0) * (card.cashbackRate || 0) / 100;
                 const capped = card.cashbackCap > 0 && rawAmount > card.cashbackCap;
-                return { card, year, month, label, estimatedAmount, capped };
+                return { card, year, month, label, estimatedAmount, capped, fee };
             });
         });
     }, [creditCards, transactions, months]);
@@ -190,6 +194,9 @@ export default function CashbackPage() {
         return [...own, ...shared].sort((a, b) => b.amount - a.amount);
     }, [creditCards, rawMonthly, records, curMonth, sharedCashback, sharedCards, getCardLogo]);
     const allCardsCashbackTotal = useMemo(() => allCardsCashback.reduce((s, c) => s + c.amount, 0), [allCardsCashback]);
+    // Total transaction fees already deducted from the cashback shown (so the
+    // displayed total is net). Surfaced as a note so the reduction is visible.
+    const totalFees = useMemo(() => rawMonthly.reduce((s, r) => s + (r.fee || 0), 0), [rawMonthly]);
 
     // Ceiling of cashback earnable this month = sum of each card's monthly cap.
     // Cards with a rate but no cap are unlimited → tracked separately so we can
@@ -351,6 +358,11 @@ export default function CashbackPage() {
                         {sharedCashbackTotal > 0 && (
                             <p className="text-xs text-indigo-500 dark:text-indigo-400 font-semibold mt-1">
                                 Gồm +{fmt(sharedCashbackTotal)}₫ từ thẻ chung
+                            </p>
+                        )}
+                        {totalFees > 0 && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-1">
+                                Đã trừ {fmt(totalFees)}₫ phí giao dịch (hoàn ròng)
                             </p>
                         )}
 

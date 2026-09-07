@@ -67,6 +67,7 @@ function TransactionRow({ t, cards, sharedOwner, onClick }: { t: any; cards: Car
                 <p className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">{t.note || t.category}</p>
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 truncate">
                     {t.category} · {time}
+                    {(t.feeAmount || 0) > 0 && <span className="text-amber-600 dark:text-amber-400 font-semibold"> · phí {fmtViShort(t.feeAmount)}</span>}
                 </p>
             </div>
             <div className="flex flex-col items-end flex-shrink-0 ml-2">

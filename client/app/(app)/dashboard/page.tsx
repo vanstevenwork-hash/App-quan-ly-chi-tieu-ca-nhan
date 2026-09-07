@@ -233,10 +233,11 @@ export default function DashboardPage() {
                 {/* ── Net worth — boxless, sits directly on the page background ── */}
                 <div className="anim-scale-in relative px-1 pt-2 pb-1">
                     {/* Label + eye toggle */}
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                         <Link href="/wealth" className="text-slate-800 dark:text-white text-[15px] font-normal hover:text-purple-500 dark:hover:text-purple-300 transition-colors">Tài sản ròng</Link>
-                        <button onClick={() => setHideBalance(v => !v)} className="text-slate-400 hover:text-purple-500 dark:hover:text-white transition-colors">
-                            {hideBalance ? <CustomIcon type="eyeOff" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px]" /> : <CustomIcon type="eye" size={15} tile={false} color="currentColor" className="w-[15px] h-[15px]" />}
+                        <button type="button" onClick={() => setHideBalance(v => !v)} aria-label={hideBalance ? 'Hiện số dư' : 'Ẩn số dư'}
+                            className="p-1.5 -my-1 rounded-full text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:text-white dark:hover:bg-white/10 active:scale-90 transition-colors">
+                            {hideBalance ? <CustomIcon type="eyeOff" size={19} tile={false} color="currentColor" className="w-[19px] h-[19px]" /> : <CustomIcon type="eye" size={19} tile={false} color="currentColor" className="w-[19px] h-[19px]" />}
                         </button>
                     </div>
 

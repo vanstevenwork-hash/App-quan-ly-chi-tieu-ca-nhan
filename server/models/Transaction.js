@@ -12,6 +12,10 @@ const transactionSchema = new mongoose.Schema({
     paymentMethod: { type: String, default: 'cash' },
     // Receipt image (ảnh bill/hóa đơn)
     receiptImage: { type: String, default: '' },
+    // Transaction fee (phí giao dịch, ví dụ phí quẹt thẻ tín dụng) tính bằng đồng.
+    // % luôn suy ra = feeAmount / amount * 100 (không lưu để tránh lệch). Phí này
+    // được trừ vào tiền hoàn (cashback ròng = cashback − feeAmount).
+    feeAmount: { type: Number, default: 0 },
     // Installment (trả góp)
     isInstallment: { type: Boolean, default: false },
     installmentMonths: { type: Number, default: 0 },
