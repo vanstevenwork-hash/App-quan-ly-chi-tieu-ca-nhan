@@ -48,3 +48,26 @@ describe('statement-cycle due (now = 2026-09-06)', () => {
         expect(getDueThisCycle(500_000, [tx(500_000, '2026-09-06')], 'c1', undefined)).toBe(500_000);
     });
 });
+
+describe('getInstallmentPlans / schedule (now = 2026-09-06)', () => {
+    beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date(2026, 8, 6, 12, 0, 0)); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    const plan = { isInstallment: true, installmentMonths: 9, installmentMonthly: 100_000, amount: 900_000, date: '2026-07-10', installmentStartDate: '2026-07-10', cardId: 'c1' } as any;
+
+    it('supports a 9-month plan and tracks progress', async () => {
+        const { getInstallmentPlans } = await import('./cardDue');
+        const [p] = getInstallmentPlans([plan]);
+        expect(p.months).toBe(9);
+        expect(p.paid).toBe(2);
+        expect(p.remaining).toBe(7);
+        expect(p.endDate.getMonth()).toBe(2); // Mar 2027
+    });
+
+    it('schedule sums to remaining principal and ends after the last period', async () => {
+        const { getInstallmentPlans, getInstallmentSchedule } = await import('./cardDue');
+        const s = getInstallmentSchedule(getInstallmentPlans([plan]), 12);
+        expect(s.reduce((a, m) => a + m.amount, 0)).toBe(700_000);
+        expect(s[7].amount).toBe(0);
+    });
+});

@@ -74,6 +74,12 @@ exports.createTransaction = async (req, res) => {
             txUserId = accessResult.card.userId;
         }
 
+        // Installment only makes sense for a card expense; normalise the fields
+        // so bad input can't produce a plan with 0/negative months.
+        const months = Math.floor(Number(installmentMonths)) || 0;
+        const useInstallment = !!isInstallment && paymentMethod === 'card' && type === 'expense' && months > 0;
+        const monthly = useInstallment ? (Number(installmentMonthly) || Math.ceil(Number(amount) / months)) : 0;
+
         const t = await Transaction.create({
             userId: txUserId,
             type, amount, category, note,
@@ -81,7 +87,10 @@ exports.createTransaction = async (req, res) => {
             cardId, paymentMethod,
             receiptImage,
             feeAmount: Math.max(0, Math.min(Number(feeAmount) || 0, Number(amount) || 0)),
-            isInstallment, installmentMonths, installmentMonthly, installmentStartDate,
+            isInstallment: useInstallment,
+            installmentMonths: useInstallment ? months : 0,
+            installmentMonthly: monthly,
+            installmentStartDate: useInstallment ? (installmentStartDate || date || new Date()) : undefined,
             createdBy: req.user._id,
         });
 

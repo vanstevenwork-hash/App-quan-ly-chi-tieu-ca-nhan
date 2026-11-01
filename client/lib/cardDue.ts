@@ -20,20 +20,55 @@ interface InstallmentTx {
 // with "money due in future months you haven't reached yet". Using raw
 // `balance` for a payment-due notification overstates what's actually owed
 // this cycle.
-export function getActiveInstallmentPlans(transactions: InstallmentTx[], cardId: string) {
-    const now = new Date();
+export interface InstallmentPlan {
+    tx: InstallmentTx & { _id?: string; category?: string; note?: string };
+    cardId: string;
+    months: number;
+    monthly: number;
+    total: number;
+    remaining: number;   // kỳ còn lại, tính cả kỳ của tháng hiện tại
+    paid: number;
+    startDate: Date;
+    endDate: Date;       // tháng của kỳ cuối
+}
+
+// Every plan that still has periods left, optionally limited to one card.
+export function getInstallmentPlans(transactions: InstallmentTx[], cardId?: string, now: Date = new Date()): InstallmentPlan[] {
     return transactions
-        .filter(t => t.isInstallment && (t.installmentMonths || 0) > 0 && resolveCardId(t) === cardId)
+        .filter(t => t.isInstallment && (t.installmentMonths || 0) > 0 && (!cardId || resolveCardId(t) === cardId))
         .map(t => {
             const startDate = t.installmentStartDate ? new Date(t.installmentStartDate) : new Date(t.date);
             const months = t.installmentMonths as number;
-            const monthly = t.installmentMonthly as number;
+            const monthly = t.installmentMonthly || Math.ceil((t.amount || 0) / months);
             const elapsed = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-            const remaining = Math.max(0, months - elapsed);
-            const paid = Math.min(elapsed, months);
-            return { months, monthly, remaining, paid };
+            const remaining = Math.max(0, months - Math.max(0, elapsed));
+            const paid = Math.min(Math.max(0, elapsed), months);
+            const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + months - 1, 1);
+            return { tx: t as InstallmentPlan['tx'], cardId: resolveCardId(t), months, monthly, total: t.amount || 0, remaining, paid, startDate, endDate };
         })
         .filter(p => p.remaining > 0);
+}
+
+export function getActiveInstallmentPlans(transactions: InstallmentTx[], cardId: string) {
+    return getInstallmentPlans(transactions, cardId);
+}
+
+// Tiền phải trả mỗi tháng trong `count` tháng tới (bắt đầu từ tháng hiện tại).
+// Kỳ cuối của một gói được điều chỉnh để tổng các kỳ đúng bằng tổng gốc.
+export function getInstallmentSchedule(plans: InstallmentPlan[], count = 12, now: Date = new Date()) {
+    return Array.from({ length: count }, (_, i) => {
+        const month = new Date(now.getFullYear(), now.getMonth() + i, 1);
+        let amount = 0;
+        let planCount = 0;
+        for (const p of plans) {
+            if (i >= p.remaining) continue;
+            const periodIdx = p.paid + i; // 0-based kỳ thứ mấy của gói
+            const isLast = periodIdx === p.months - 1;
+            amount += isLast ? Math.max(0, p.total - p.monthly * (p.months - 1)) : p.monthly;
+            planCount++;
+        }
+        return { month, amount, planCount };
+    });
 }
 
 // The date the most recent statement closed. Given a card's statement-closing

@@ -554,8 +554,8 @@ export default function AddTransactionModal({
                                 <div className="space-y-3 px-1">
                                     <div>
                                         <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2">Số kỳ thanh toán</p>
-                                        <div className="grid grid-cols-6 gap-1.5">
-                                            {[3, 6, 12, 18, 24, 36].map(m => (
+                                        <div className="grid grid-cols-7 gap-1.5">
+                                            {[3, 6, 9, 12, 18, 24, 36].map(m => (
                                                 <button
                                                     key={m}
                                                     type="button"

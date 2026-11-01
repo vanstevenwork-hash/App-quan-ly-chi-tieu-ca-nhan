@@ -22,7 +22,7 @@ import RefreshButton from '@/components/RefreshButton';
 import { useUIStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
-import { getDueThisCycle } from '@/lib/cardDue';
+import { getDueThisCycle, getInstallmentPlans } from '@/lib/cardDue';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
@@ -121,20 +121,11 @@ export default function CardsPage() {
     const cashbackTotal = useMemo(() => cardCashbacks.reduce((sum, c) => sum + c.monthTotal, 0), [cardCashbacks]);
     const yearlyCashback = useMemo(() => cardCashbacks.reduce((sum, c) => sum + c.yearTotal, 0), [cardCashbacks]);
 
-    // Installment plans
-    const installmentPlans = useMemo(() =>
-        transactions.filter(t => (t as any).isInstallment && (t as any).installmentMonths > 0)
-            .map(t => {
-                const startDate = (t as any).installmentStartDate ? new Date((t as any).installmentStartDate) : new Date(t.date);
-                const months = (t as any).installmentMonths as number;
-                const monthly = (t as any).installmentMonthly as number;
-                const now = new Date();
-                const elapsed = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
-                const remaining = Math.max(0, months - elapsed);
-                const paid = Math.min(elapsed, months);
-                return { t, months, monthly, remaining, paid, startDate };
-            }).filter(p => p.remaining > 0),
-        [transactions]);
+    // Installment plans (credit cards only)
+    const installmentPlans = useMemo(() => {
+        const creditIds = new Set(creditCards.map(c => c._id));
+        return getInstallmentPlans(transactions as any[]).filter(p => creditIds.has(p.cardId));
+    }, [transactions, creditCards]);
 
     // ── Payment alerts (cards with amount due this cycle and due within 30d) ─
     // Uses dueThisCycle (not raw balance) so a card mid-installment doesn't
@@ -331,12 +322,13 @@ export default function CardsPage() {
                     <div className="px-5 mb-5">
                         <div className="flex items-center justify-between mb-2.5">
                             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">Kế hoạch trả góp</h3>
-                            <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full">
-                                {installmentPlans.length} gói
-                            </span>
+                            <button onClick={() => router.push('/installments')}
+                                className="text-xs font-semibold text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full active:scale-95">
+                                {installmentPlans.length} gói · Xem tổng ›
+                            </button>
                         </div>
                         <div className="bg-white dark:bg-surface rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700">
-                            {installmentPlans.map(({ t, months, monthly, remaining, paid }) => {
+                            {installmentPlans.map(({ tx: t, months, monthly, remaining, paid, total }) => {
                                 const paidPct = months > 0 ? Math.round((paid / months) * 100) : 0;
                                 return (
                                     <div key={t._id} className="p-4">
@@ -364,7 +356,7 @@ export default function CardsPage() {
                                             <span className="text-[10px] font-bold text-slate-500 w-8 text-right">{paidPct}%</span>
                                         </div>
                                         <div className="flex justify-between mt-1.5 text-[10px] text-slate-400">
-                                            <span>Tổng: {fmtShort(t.amount)}₫</span>
+                                            <span>Tổng: {fmtShort(total)}₫</span>
                                             <span>{paid}/{months} kỳ</span>
                                         </div>
                                     </div>
