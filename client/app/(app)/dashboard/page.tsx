@@ -30,6 +30,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
 import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { getInstallmentPlans, getInstallmentSchedule } from '@/lib/cardDue';
 import { useSharedCashback } from '@/hooks/useSharedCashback';
 import { useCardShares } from '@/hooks/useCardShares';
 import Link from 'next/link';
@@ -72,6 +73,18 @@ export default function DashboardPage() {
     );
     const savingsCount = useMemo(() => cards.filter(c => c.cardType === 'savings').length, [cards]);
     const creditCount = useMemo(() => cards.filter(c => c.cardType === 'credit').length, [cards]);
+
+    const installmentSummary = useMemo(() => {
+        const creditIds = new Set(cards.filter(c => c.cardType === 'credit').map(c => c._id));
+        const plans = getInstallmentPlans(transactions as any[]).filter(p => creditIds.has(p.cardId));
+        if (plans.length === 0) return null;
+        const monthly = getInstallmentSchedule(plans, 1)[0]?.amount ?? 0;
+        const totalPeriods = plans.reduce((s, p) => s + p.months, 0);
+        const paidPeriods = plans.reduce((s, p) => s + p.paid, 0);
+        return { count: plans.length, monthly, pct: totalPeriods ? Math.round((paidPeriods / totalPeriods) * 100) : 0 };
+    }, [cards, transactions]);
+
+    const tileW = installmentSummary ? 'flex-shrink-0 w-[42%] min-w-[140px]' : 'flex-1 min-w-0';
 
     const creditCardsForCashback = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
     // Shared cards (e.g. my wife's credit card) are our spending too — fold
@@ -259,13 +272,13 @@ export default function DashboardPage() {
                 </div>
 
                 {/* ── Savings & card debt shortcut tiles ── */}
-                <div className="anim-fade-up-d1 grid grid-cols-2 gap-3">
+                <div className="anim-fade-up-d1 flex gap-3 overflow-x-auto snap-x snap-proximity -mx-5 px-5 scroll-px-5 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <Link href="/savings"
-                        className="bg-white/65 dark:bg-surface/55 backdrop-blur-md rounded-xl px-2.5 py-2 flex items-center gap-2.5 border border-white/60 dark:border-slate-700/40 shadow-sm hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-500/40 transition-all active:scale-[0.98] group">
+                        className={`${tileW} relative snap-start bg-white/65 dark:bg-surface/55 backdrop-blur-md rounded-xl px-2.5 py-2 flex items-center gap-2.5 border border-white/60 dark:border-slate-700/40 shadow-sm hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-500/40 transition-all active:scale-[0.98] group`}>
                         <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
                             <CustomIcon type="soTietKiem" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-emerald-500 dark:text-emerald-400" />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-2">
                             <p className="text-[16px] font-bold text-emerald-600 dark:text-emerald-400 text-money leading-tight truncate">
                                 {hideBalance ? '••••' : `${fmt(totalSavings)}đ`}
                             </p>
@@ -273,14 +286,14 @@ export default function DashboardPage() {
                                 Tiết kiệm · {savingsCount > 0 ? `${savingsCount} sổ` : 'Chưa có sổ'}
                             </p>
                         </div>
-                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d1 w-4 h-4 text-slate-300 dark:text-slate-500 flex-shrink-0" />
+                    <CustomIcon type="chevronRight" size={14} tile={false} color="currentColor" className="absolute top-2 right-2 w-3.5 h-3.5 text-slate-300 dark:text-slate-500 pointer-events-none" />
                     </Link>
                     <Link href="/cards"
-                        className="bg-white/65 dark:bg-surface/55 backdrop-blur-md rounded-xl px-2.5 py-2 flex items-center gap-2.5 border border-white/60 dark:border-slate-700/40 shadow-sm hover:shadow-md hover:border-red-200 dark:hover:border-red-500/40 transition-all active:scale-[0.98] group">
+                        className={`${tileW} relative snap-start bg-white/65 dark:bg-surface/55 backdrop-blur-md rounded-xl px-2.5 py-2 flex items-center gap-2.5 border border-white/60 dark:border-slate-700/40 shadow-sm hover:shadow-md hover:border-red-200 dark:hover:border-red-500/40 transition-all active:scale-[0.98] group`}>
                         <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-500/15 flex items-center justify-center flex-shrink-0">
                             <CustomIcon type="creditCard" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-red-500 dark:text-red-400" />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 pr-2">
                             <p className="text-[16px] font-bold text-red-500 dark:text-red-400 text-money leading-tight truncate">
                                 {hideBalance ? '••••' : (totalDebt > 0 ? `-${fmt(totalDebt)}đ` : '0đ')}
                             </p>
@@ -288,8 +301,25 @@ export default function DashboardPage() {
                                 Dư nợ · {creditCount > 0 ? `${creditCount} thẻ` : 'Chưa có thẻ'}
                             </p>
                         </div>
-                        <CustomIcon type="chevronRight" size={16} tile={false} color="currentColor" className="anim-arrow-d2 w-4 h-4 text-slate-300 dark:text-slate-500 flex-shrink-0" />
+                    <CustomIcon type="chevronRight" size={14} tile={false} color="currentColor" className="absolute top-2 right-2 w-3.5 h-3.5 text-slate-300 dark:text-slate-500 pointer-events-none" />
                     </Link>
+                    {installmentSummary && (
+                        <Link href="/installments"
+                            className={`${tileW} relative snap-start bg-white/65 dark:bg-surface/55 backdrop-blur-md rounded-xl px-2.5 py-2 flex items-center gap-2.5 border border-white/60 dark:border-slate-700/40 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/40 transition-all active:scale-[0.98] group`}>
+                            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                                <CustomIcon type="calendar" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px] text-indigo-500 dark:text-indigo-400" />
+                            </div>
+                            <div className="flex-1 min-w-0 pr-2">
+                                <p className="text-[16px] font-bold text-indigo-600 dark:text-indigo-400 text-money leading-tight truncate">
+                                    {hideBalance ? '••••' : `${fmt(installmentSummary.monthly)}đ`}
+                                </p>
+                                <p className="text-[10.5px] text-slate-400 truncate">
+                                    Trả góp · {installmentSummary.count} khoản
+                                </p>
+                            </div>
+                    <CustomIcon type="chevronRight" size={14} tile={false} color="currentColor" className="absolute top-2 right-2 w-3.5 h-3.5 text-slate-300 dark:text-slate-500 pointer-events-none" />
+                    </Link>
+                    )}
                 </div>
 
 

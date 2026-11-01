@@ -33,7 +33,7 @@ export interface InstallmentPlan {
 }
 
 // Every plan that still has periods left, optionally limited to one card.
-export function getInstallmentPlans(transactions: InstallmentTx[], cardId?: string, now: Date = new Date()): InstallmentPlan[] {
+export function getInstallmentPlans(transactions: InstallmentTx[], cardId?: string, now: Date = new Date(), includeCompleted = false): InstallmentPlan[] {
     return transactions
         .filter(t => t.isInstallment && (t.installmentMonths || 0) > 0 && (!cardId || resolveCardId(t) === cardId))
         .map(t => {
@@ -46,7 +46,7 @@ export function getInstallmentPlans(transactions: InstallmentTx[], cardId?: stri
             const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + months - 1, 1);
             return { tx: t as InstallmentPlan['tx'], cardId: resolveCardId(t), months, monthly, total: t.amount || 0, remaining, paid, startDate, endDate };
         })
-        .filter(p => p.remaining > 0);
+        .filter(p => includeCompleted || p.remaining > 0);
 }
 
 export function getActiveInstallmentPlans(transactions: InstallmentTx[], cardId: string) {
