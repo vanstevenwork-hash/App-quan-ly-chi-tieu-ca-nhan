@@ -233,7 +233,11 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                         const matchLogo = getMatchingLogo(n.title) || getMatchingLogo(n.message);
                         const t = compactTime(n.createdAt);
                         return (
-                            <div key={n._id} onClick={() => { if (!n.isRead) markRead(n._id); setSelectedNotification(n); }}
+                            <div key={n._id} onClick={() => {
+                                if (!n.isRead) markRead(n._id);
+                                if (n.actionUrl === '/auto-actions') { router.push('/auto-actions'); onClose(); return; }
+                                setSelectedNotification(n);
+                            }}
                                 className={cn("flex items-center px-3 py-2.5 gap-3 cursor-pointer rounded-2xl transition-colors", !n.isRead ? 'bg-[#F9FAFB] dark:bg-slate-800/60' : 'bg-white dark:bg-surface hover:bg-gray-50 dark:hover:bg-slate-800')}>
                                 <div className={cn("w-10 h-10 border border-gray-100 dark:border-transparent flex items-center justify-center text-lg flex-shrink-0 bg-[#F8FAFC] dark:bg-slate-800 overflow-hidden", matchLogo ? 'rounded-xl' : 'rounded-full')}>
                                     {matchLogo ? (

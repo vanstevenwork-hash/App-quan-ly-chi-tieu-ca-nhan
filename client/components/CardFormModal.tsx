@@ -63,7 +63,7 @@ const EMPTY: CardFormData = {
     receiveAccountNumber: '', receiveQrImage: '',
     color: '#6C63FF', bankColor: '#1B4FD8', isDefault: false,
     interestRate: 0, depositDate: '', maturityDate: '', term: 12,
-    paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, cashbackMinSpend: 0, annualFee: 0, expirationDate: '', note: '',
+    paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, cashbackMinSpend: 0, annualFee: 0, autoDebit: true, expirationDate: '', note: '',
 };
 
 export default function CardFormModal({ open, onClose, onSave, editCard, initialType }: CardFormModalProps) {
@@ -109,6 +109,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                     cashbackCap: editCard.cashbackCap || 0,
                     cashbackMinSpend: editCard.cashbackMinSpend || 0,
                     annualFee: editCard.annualFee || 0,
+                    autoDebit: editCard.autoDebit !== false,
                     expirationDate: (editCard as any).expirationDate || '',
                     note: editCard.note || '',
                 });
@@ -683,6 +684,20 @@ data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=close
                                                 Sẽ chung hạn mức với: {sharedSiblings.map(c => c.bankName).join(', ')}
                                             </p>
                                         )}
+                                    </div>
+
+                                    {/* Auto-debit toggle */}
+                                    <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <div onClick={() => set('autoDebit', !form.autoDebit)}
+                                                className={cn('w-12 h-7 rounded-full transition-colors relative flex-shrink-0', form.autoDebit ? 'bg-brand' : 'bg-slate-200 dark:bg-slate-700')}>
+                                                <div className={cn('w-5 h-5 bg-white rounded-full absolute top-1 transition-all shadow-sm', form.autoDebit ? 'left-6' : 'left-1')} />
+                                            </div>
+                                            <span className="text-sm font-bold text-[#000000] dark:text-white">Tự động trừ tiền sau sao kê</span>
+                                        </label>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            Sau ngày chốt sao kê, app tự trừ số tiền phải trả kỳ đó từ tài khoản thanh toán cùng ngân hàng{form.bankShortName ? ` (${form.bankShortName})` : ''}, nếu tài khoản đủ tiền. Cần nhập ngày sao kê.
+                                        </p>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">

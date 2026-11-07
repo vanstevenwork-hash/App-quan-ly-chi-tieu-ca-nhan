@@ -22,10 +22,12 @@ async function main() {
         cardHolder: 'DEMO TRA GOP', cardNetwork: 'visa', color, creditLimit: 50_000_000,
         statementDay: 5, paymentDueDay: 25, cashbackRate: 1, expirationDate: '08/29', ...extra,
     });
-    const [vcb, tcb, vib] = await Promise.all([
-        mk('Vietcombank', 'VCB', '1234', '#0B6E4F', { isDefault: true }),
-        mk('Techcombank', 'TCB', '5678', '#D6001C', {}),
-        mk('VIB', 'VIB', '9012', '#1B4FD8', {}),
+    const [vcb, tcb, vib, mbb, acb] = await Promise.all([
+        mk('Vietcombank', 'VCB', '1234', '#0B6E4F', { isDefault: true, statementDay: 5, paymentDueDay: 25, cashbackRate: 1 }),
+        mk('Techcombank', 'TCB', '5678', '#D6001C', { statementDay: 18, paymentDueDay: 8, cashbackRate: 2 }),
+        mk('VIB', 'VIB', '9012', '#1B4FD8', { statementDay: 28, paymentDueDay: 15, cashbackRate: 0.5 }),
+        mk('MB Bank', 'MBB', '3456', '#1D3A8A', { statementDay: 10, paymentDueDay: 30 }),
+        mk('ACB', 'ACB', '7788', '#1E40AF', { statementDay: 0, paymentDueDay: 0 }),
     ]);
 
     // [card, category, note, amount, months, startedMonthsAgo]
@@ -50,14 +52,14 @@ async function main() {
         balance.set(String(card._id), (balance.get(String(card._id)) || 0) + amount);
     }
     // vài chi tiêu thường để dữ liệu trông thật
-    const normal = [[vcb, 'Ăn uống', 'Nhà hàng', 850_000, 0], [vcb, 'Di chuyển', 'Grab', 220_000, 0], [tcb, 'Hóa đơn', 'Tiền điện', 1_300_000, 1], [vib, 'Ăn uống', 'Cafe', 95_000, 0]];
+    const normal = [[vcb, 'Ăn uống', 'Nhà hàng', 850_000, 0], [vcb, 'Di chuyển', 'Grab', 220_000, 0], [tcb, 'Hóa đơn', 'Tiền điện', 1_300_000, 1], [vib, 'Ăn uống', 'Cafe', 95_000, 0], [mbb, 'Mua sắm', 'Siêu thị', 2_400_000, 1]];
     for (const [card, category, note, amount, ago] of normal) {
         docs.push({ userId: user._id, createdBy: user._id, type: 'expense', amount, category, note, date: monthsAgo(ago, 2), cardId: card._id, paymentMethod: 'card' });
         balance.set(String(card._id), (balance.get(String(card._id)) || 0) + amount);
     }
     await Transaction.insertMany(docs);
-    for (const c of [vcb, tcb, vib]) await Card.updateOne({ _id: c._id }, { balance: balance.get(String(c._id)) });
-    console.log(`Seeded ${docs.length} transactions, 3 cards for ${EMAIL} / 123456`);
+    for (const c of [vcb, tcb, vib, mbb, acb]) await Card.updateOne({ _id: c._id }, { balance: balance.get(String(c._id)) || 0 });
+    console.log(`Seeded ${docs.length} transactions, 5 cards for ${EMAIL} / 123456`);
     process.exit(0);
 }
 main().catch(e => { console.error(e); process.exit(1); });

@@ -1,12 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
-const { getAll, create, update, remove, setDefault, getSavingsSummary, updateBalance, payCard, renewSavings } = require('../controllers/cardController');
+const { getAll, create, update, remove, setDefault, getSavingsSummary, updateBalance, payCard, renewSavings, autoProcess, ackAutoEvents } = require('../controllers/cardController');
 
 router.use(protect);
 
 // Static routes MUST be before dynamic /:id
 router.get('/savings/summary', getSavingsSummary);
+router.post('/auto-process', autoProcess);
+router.post('/auto-process/ack', ackAutoEvents);
+const autoActions = require('../controllers/autoActionController');
+router.get('/auto-actions', autoActions.list);
+router.post('/auto-actions/:id/revert', autoActions.revert);
 
 router.route('/')
     .get(getAll)

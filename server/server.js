@@ -146,6 +146,7 @@ server.listen(PORT, '0.0.0.0', () => {
   registerTelegramWebhook();
   scheduleEmailAutoImport();
   scheduleMorningPush();
+  scheduleAutoFinance();
 });
 
 // Fire the morning push batch once a day at PUSH_MORNING_HOUR in Vietnam time
@@ -193,6 +194,20 @@ function scheduleEmailAutoImport() {
   const run = () => ingestAndNotify(2).catch(e => console.error('📧 email auto-import:', e.message));
   setTimeout(run, 90_000).unref?.();               // once shortly after boot
   setInterval(run, 30 * 60_000).unref?.();          // then every 30 min while awake
+}
+
+// Auto tất toán matured savings + auto-pay closed credit-card statements
+// (services/autoFinance.js) — shortly after boot, then hourly while awake.
+// The push cron endpoint also triggers it, for sleeping free-tier hosts.
+function scheduleAutoFinance() {
+  if (process.env.AUTO_FINANCE === 'false') return;
+  const { runAutoFinanceForAll } = require('./services/autoFinance');
+  const run = () => runAutoFinanceForAll()
+    .then(r => { if (r.savings || r.credit) console.log(`💸 auto-finance: ${r.savings} sổ tất toán, ${r.credit} thẻ trích nợ`); })
+    .catch(e => console.error('💸 auto-finance:', e.message));
+  setTimeout(run, 60_000).unref?.();
+  setInterval(run, 60 * 60_000).unref?.();
+  console.log('💸 Auto tất toán / trích nợ thẻ: quét mỗi giờ.');
 }
 
 // Point Telegram at our public webhook on boot so a fresh deploy is wired up

@@ -17,6 +17,10 @@ const notificationSchema = new mongoose.Schema(
         isRead: { type: Boolean, default: false },
         isImportant: { type: Boolean, default: false },
         actionUrl: { type: String },
+        // Created by an automatic job (auto tất toán / trích nợ). Surfaced as a
+        // toast the next time the user opens the app, then toastShown=true.
+        autoEvent: { type: Boolean, default: false },
+        toastShown: { type: Boolean, default: false },
     },
     { timestamps: true }
 );

@@ -116,6 +116,10 @@ export const cardsApi = {
     pay: (id: string, amount: number, sourceId?: string) => api.patch(`/cards/${id}/pay`, { amount, sourceId }),
     updateBalance: (id: string, amount: number, action: 'add' | 'set') => api.patch(`/cards/${id}/balance`, { amount, action }),
     renewSavings: (id: string, data: { newAmount: number; newRate: number; newTerm: number }) => api.post(`/cards/${id}/renew-savings`, data),
+    autoProcess: () => api.post('/cards/auto-process'),
+    ackAutoEvents: (ids: string[]) => api.post('/cards/auto-process/ack', { ids }),
+    autoActions: () => api.get('/cards/auto-actions'),
+    revertAutoAction: (id: string) => api.post(`/cards/auto-actions/${id}/revert`),
 };
 
 // Game Matches (real-time card games)

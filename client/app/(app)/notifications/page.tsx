@@ -51,6 +51,8 @@ function NotificationsContent() {
 
     const handleSelect = (n: NotificationItem) => {
         if (!n.isRead) markRead(n._id);
+        // Auto tất toán / trừ tiền thẻ → review & undo screen
+        if (n.actionUrl === '/auto-actions') router.push('/auto-actions');
     };
 
     return (
@@ -66,6 +68,13 @@ function NotificationsContent() {
                             </span>
                         )}
                     </div>
+                    <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => router.push('/auto-actions')}
+                        className="h-9 px-3 rounded-full bg-gray-100 dark:bg-slate-800 text-xs font-bold text-foreground"
+                    >
+                        Giao dịch tự động
+                    </button>
                     {unreadCount > 0 && (
                         <button
                             onClick={() => markAllRead()}
@@ -75,6 +84,7 @@ function NotificationsContent() {
                             <ActionIcon type="checkCheck" size={16} tile={false} color="currentColor" />
                         </button>
                     )}
+                    </div>
                 </div>
 
                 {/* Tabs */}

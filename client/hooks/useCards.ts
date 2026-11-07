@@ -42,6 +42,8 @@ export interface Card {
     cashbackCap: number;
     cashbackMinSpend: number;
     annualFee: number;
+    // Trích nợ tự động từ TK thanh toán cùng ngân hàng sau khi chốt sao kê
+    autoDebit?: boolean;
     expirationDate: string;
     note: string;
 }
@@ -73,6 +75,7 @@ export interface CardFormData {
     cashbackCap: number;
     cashbackMinSpend: number;
     annualFee: number;
+    autoDebit: boolean;
     expirationDate: string;
     note: string;
 }

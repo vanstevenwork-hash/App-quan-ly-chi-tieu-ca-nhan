@@ -219,6 +219,7 @@ export default function CardsPage() {
                             { icon: <CustomIcon type="wallet" size={20} tile={false} color="currentColor" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />, label: 'Giao dịch', bg: '#D1FAE5', bgDark: '#064E3B', onClick: openAddModal },
                             { icon: <CustomIcon type="history" size={20} tile={false} color="currentColor" className="w-5 h-5 text-orange-600 dark:text-orange-400" />, label: 'Lịch sử', bg: '#FEF3C7', bgDark: '#78350F', onClick: () => historyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
                             { icon: <CustomIcon type="coPhieu" size={20} tile={false} color="currentColor" className="w-5 h-5 text-purple-600 dark:text-purple-400" />, label: 'Báo cáo', bg: '#EDE9FE', bgDark: '#4C1D95', onClick: () => router.push('/analytics') },
+                            { icon: <CustomIcon type="calendar" size={20} tile={false} color="currentColor" className="w-5 h-5 text-rose-600 dark:text-rose-400" />, label: 'Sao kê', bg: '#FFE4E6', bgDark: '#881337', onClick: () => router.push('/statements') },
                         ].map((item: any) => (
                             <button key={item.label} onClick={item.onClick}
                                 className="flex flex-col items-center gap-2 group">

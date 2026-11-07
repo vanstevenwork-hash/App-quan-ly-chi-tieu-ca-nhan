@@ -17,6 +17,8 @@ export interface NotificationItem {
     isImportant: boolean;
     createdAt: string;
     relatedId?: string;
+    relatedModel?: string;
+    actionUrl?: string;
 }
 import { create } from 'zustand';
 

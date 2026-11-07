@@ -5,6 +5,7 @@ import BottomNav from '@/components/BottomNav';
 import AuthGuard from '@/components/AuthGuard';
 import { cn } from '@/lib/utils';
 import { useCustomCategoriesStore } from '@/hooks/useCustomCategories';
+import AutoFinanceRunner from '@/components/AutoFinanceRunner';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -17,6 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     return (
         <AuthGuard>
+            <AutoFinanceRunner />
             <div className="relative min-h-screen max-w-md mx-auto bg-background">
                 <main className={cn(!isGameMatch && 'pb-28')}>
                     {children}

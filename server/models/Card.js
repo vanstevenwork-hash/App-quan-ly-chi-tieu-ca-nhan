@@ -33,6 +33,14 @@ const cardSchema = new mongoose.Schema({
     depositDate: { type: Date, default: null },         // date deposited
     maturityDate: { type: Date, default: null },        // date matures
     term: { type: Number, default: 0 },                // months, e.g. 12
+    // Set when the book is closed out ("tất toán") — automatically once it
+    // matures. A settled book is also flipped to isActive=false.
+    settledAt: { type: Date, default: null },
+    settledAmount: { type: Number, default: 0 },       // principal + interest paid out
+    settledToCardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card', default: null },
+    // Set when the user undoes an auto tất toán: don't auto-settle again for
+    // this same maturityDate (renewing to a new date re-enables it).
+    skipAutoSettleFor: { type: Date, default: null },
     // === Credit-specific fields ===
     paymentDueDay: { type: Number, default: 0 },       // day of month, e.g. 25
     statementDay: { type: Number, default: 0 },        // statement cut day
@@ -40,6 +48,11 @@ const cardSchema = new mongoose.Schema({
     cashbackCap: { type: Number, default: 0 },         // hoàn tiền tối đa/tháng (VNĐ), 0 = không giới hạn
     cashbackMinSpend: { type: Number, default: 0 },    // chi tiêu tối thiểu/tháng mới được hoàn (VNĐ), 0 = không yêu cầu
     annualFee: { type: Number, default: 0 },           // phí thường niên (VNĐ), 0 = miễn phí/không có
+    // Trích nợ tự động: after the statement closes, pay the amount due from a
+    // payment account at the same bank (services/autoFinance.js).
+    autoDebit: { type: Boolean, default: true },
+    autoPaidCycle: { type: String, default: '' },      // statement-close key (YYYY-MM-DD) already handled
+    autoPayFailCycle: { type: String, default: '' },   // cycle we already warned "không đủ tiền" for
     // === General ===
     expirationDate: { type: String, default: '' }, // MM/YY or similar
     note: { type: String, default: '' },

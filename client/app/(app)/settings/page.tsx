@@ -49,6 +49,7 @@ const TILE_SHADOW = 'shadow-[0_1px_2px_rgba(17,12,46,0.04),0_8px_16px_-6px_rgba(
 const SHORTCUTS = [
     { href: '/cards', label: 'Quản lý thẻ', isAction: true, type: 'creditCard', bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: '#6366F1' },
     { href: '/cards/expiry', label: 'Hạn thẻ', isAction: true, type: 'calendar', bg: 'bg-rose-50 dark:bg-rose-900/20', color: '#F43F5E' },
+    { href: '/statements', label: 'Lịch sao kê', isAction: true, type: 'creditCard', bg: 'bg-violet-50 dark:bg-violet-900/20', color: '#8B5CF6' },
     { href: '/installments', label: 'Tổng trả góp', isAction: true, type: 'calendar', bg: 'bg-indigo-50 dark:bg-indigo-900/20', color: '#6366F1' },
     { href: '/cashback', label: 'Hoàn tiền', isUtil: true, type: 'hoanTien', bg: 'bg-emerald-50 dark:bg-emerald-900/20', color: '#10B981' },
     { href: '/savings', label: 'Tiết kiệm', isUtil: true, type: 'soTietKiem', bg: 'bg-amber-50 dark:bg-amber-900/20', color: '#F0A319' },

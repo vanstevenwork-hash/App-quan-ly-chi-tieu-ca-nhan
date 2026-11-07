@@ -92,7 +92,7 @@ exports.create = async (req, res) => {
             // Savings fields
             interestRate, depositDate, maturityDate, term,
             // Credit fields
-            paymentDueDay, statementDay, cashbackRate, cashbackCap, cashbackMinSpend, sharedLimit,
+            paymentDueDay, statementDay, cashbackRate, cashbackCap, cashbackMinSpend, sharedLimit, autoDebit,
             receiveAccountNumber, receiveQrImage, annualFee,
             cardNetwork, expirationDate,
             note,
@@ -120,6 +120,7 @@ exports.create = async (req, res) => {
             cashbackRate: cashbackRate || 0,
             cashbackCap: cashbackCap || 0,
             sharedLimit: sharedLimit || false,
+            autoDebit: autoDebit !== false,
             receiveAccountNumber: receiveAccountNumber || '',
             receiveQrImage: receiveQrImage || '',
             cashbackMinSpend: cashbackMinSpend || 0,
@@ -169,7 +170,7 @@ exports.update = async (req, res) => {
             'bankName', 'bankShortName', 'cardType', 'cardHolder',
             'balance', 'creditLimit', 'color', 'bankColor',
             'interestRate', 'depositDate', 'maturityDate', 'term',
-            'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'cashbackMinSpend', 'sharedLimit',
+            'paymentDueDay', 'statementDay', 'cashbackRate', 'cashbackCap', 'cashbackMinSpend', 'sharedLimit', 'autoDebit',
             'receiveAccountNumber', 'receiveQrImage', 'annualFee', 'cardNetwork', 'expirationDate', 'note',
         ];
         fields.forEach(f => { if (req.body[f] !== undefined) card[f] = req.body[f]; });
@@ -380,6 +381,55 @@ exports.renewSavings = async (req, res) => {
         });
 
         res.json({ success: true, data: card, interestEarned });
+    } catch (err) {
+        res.status(400).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  Run the automatic jobs for the caller right now (auto tất toán sổ
+//        đáo hạn + trích nợ thẻ tín dụng), then hand back every automatic
+//        event not yet shown to them — including ones the hourly background
+//        scan did while they were away — so the app can toast them on open.
+// @route POST /api/cards/auto-process
+exports.autoProcess = async (req, res) => {
+    try {
+        const { runAutoFinanceForUser } = require('../services/autoFinance');
+        const Notification = require('../models/Notification');
+        await runAutoFinanceForUser(req.user.id);
+        const AutoAction = require('../models/AutoAction');
+        // Not marked as seen here — only when the user confirms the on-open
+        // review popup (POST /auto-process/ack), so a closed tab or reload
+        // never makes a change slip by unreviewed.
+        const pending = await Notification.find({ userId: req.user.id, autoEvent: true, toastShown: false })
+            .sort({ createdAt: 1 }).limit(30).lean();
+        const actionIds = pending.filter(n => n.relatedModel === 'AutoAction').map(n => n.relatedId);
+        const actions = await AutoAction.find({ _id: { $in: actionIds }, userId: req.user.id }).lean();
+        const byId = new Map(actions.map(a => [a._id.toString(), a]));
+        res.json({
+            success: true,
+            data: pending.map(n => {
+                const a = n.relatedModel === 'AutoAction' ? byId.get(String(n.relatedId)) : null;
+                return {
+                    _id: n._id, title: n.title, message: n.message, type: n.type, createdAt: n.createdAt,
+                    // Warnings ("chưa trừ được") point at the credit card instead.
+                    cardId: a ? a.cardId : (n.relatedModel === 'Card' ? n.relatedId : null),
+                    action: a ? { _id: a._id, kind: a.kind, status: a.status, amount: a.amount, cardLabel: a.cardLabel, accountLabel: a.accountLabel } : null,
+                };
+            }),
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// @desc  User reviewed the on-open popup — stop showing these events
+// @route POST /api/cards/auto-process/ack   body: { ids: string[] }
+exports.ackAutoEvents = async (req, res) => {
+    try {
+        const Notification = require('../models/Notification');
+        const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+        await Notification.updateMany({ _id: { $in: ids }, userId: req.user.id, autoEvent: true }, { $set: { toastShown: true } });
+        res.json({ success: true });
     } catch (err) {
         res.status(400).json({ success: false, message: err.message });
     }

@@ -68,9 +68,9 @@ exports.clearAll = async (req, res) => {
 };
 
 // Helper — create notification from other controllers
-exports.createNotification = async ({ userId, title, message, type = 'transaction', icon = '🔔', iconBg = '#EEF2FF', isImportant = false, relatedId, relatedModel, actionUrl }) => {
+exports.createNotification = async ({ userId, title, message, type = 'transaction', icon = '🔔', iconBg = '#EEF2FF', isImportant = false, relatedId, relatedModel, actionUrl, autoEvent = false }) => {
     try {
-        const notif = await Notification.create({ userId, title, message, type, icon, iconBg, isImportant, relatedId, relatedModel, actionUrl });
+        const notif = await Notification.create({ userId, title, message, type, icon, iconBg, isImportant, relatedId, relatedModel, actionUrl, autoEvent });
         // Push realtime to browser via SSE
         try {
             const { pushSSE } = require('../sse');

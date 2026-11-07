@@ -177,6 +177,9 @@ exports.sendTest = async (req, res) => {
 
 // External scheduler hits this at ~08:00 (also reachable to wake a sleeping host).
 exports.cron = async (req, res) => {
+    // Waking the host is also a good moment for the auto tất toán / trích nợ scan.
+    await require('../services/autoFinance').runAutoFinanceForAll()
+        .catch(e => console.error('💸 auto-finance (cron):', e.message));
     const result = await sendMorningToAll();
     res.json({ data: result });
 };
