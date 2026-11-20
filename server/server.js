@@ -56,6 +56,7 @@ app.use('/api/cashback-records', require('./routes/cashback'));
 app.use('/api/game-matches', require('./routes/gameMatches'));
 app.use('/api/telegram', require('./routes/telegram'));
 app.use('/api/email', require('./routes/email'));
+app.use('/api/mailbox', require('./routes/mailbox'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/push', require('./routes/push'));
 

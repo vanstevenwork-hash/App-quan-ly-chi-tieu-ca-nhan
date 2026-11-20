@@ -12,7 +12,7 @@ import { useTransactionStore } from '@/hooks/useTransactions';
 import { useNotificationStore } from '@/hooks/useNotifications';
 import { cn, formatNumber } from '@/lib/utils';
 import ImageUpload from '@/components/ImageUpload';
-import { authApi, telegramApi, emailApi } from '@/lib/api';
+import { authApi, telegramApi, emailApi, mailboxApi } from '@/lib/api';
 import { isPushSupported, isPushEnabled, enablePush, disablePush } from '@/lib/push';
 import { toast } from 'sonner';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -133,6 +133,14 @@ export default function SettingsPage() {
     // Telegram quick-entry link
     const [tgConnected, setTgConnected] = useState<boolean | null>(null);
     const [tgLoading, setTgLoading] = useState(false);
+
+    // Hộp thư (EMAIL_USER) — only the app owner gets the entry.
+    const [mailboxAccount, setMailboxAccount] = useState<string | null>(null);
+    useEffect(() => {
+        mailboxApi.access()
+            .then(r => { if (r.data?.data?.allowed) setMailboxAccount(r.data.data.account || ''); })
+            .catch(() => {});
+    }, []);
 
     useEffect(() => {
         setHideBalanceOnOpen(localStorage.getItem('security.hideBalanceOnOpen') === '1');
@@ -583,6 +591,14 @@ export default function SettingsPage() {
                                 ? <span className="text-xs font-bold text-brand dark:text-brand-light tabular-nums flex-shrink-0">{scanProgress == null ? '' : `${scanProgress}%`}</span>
                                 : undefined}
                         />
+                        {mailboxAccount !== null && (
+                            <SettingItem
+                                icon={<CustomIcon type="mail" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
+                                label="Hộp thư"
+                                sublabel={mailboxAccount ? `Quản lý mail ${mailboxAccount}` : 'Quản lý mail của app'}
+                                onClick={() => router.push('/mailbox')}
+                            />
+                        )}
                         <SettingItem
                             icon={<CustomIcon type="download" size={18} tile={false} color="currentColor" className="w-[18px] h-[18px]" />}
                             label="Xuất dữ liệu"

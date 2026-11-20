@@ -244,6 +244,24 @@ export const ocrApi = {
 };
 
 // Email ingest — scan bank notification emails → review → commit
+// Mailbox of the app's Gmail account (EMAIL_USER) — owner only.
+export const mailboxApi = {
+    access: () => api.get('/mailbox/access'),
+    folders: () => api.get('/mailbox/folders', { timeout: 60000 }),
+    list: (params: { folder: string; page?: number; limit?: number; q?: string; status?: 'all' | 'unread' | 'read' }) =>
+        api.get('/mailbox/messages', { params, timeout: 60000 }),
+    get: (folder: string, uid: number) => api.get(`/mailbox/messages/${uid}`, { params: { folder }, timeout: 60000 }),
+    attachment: (folder: string, uid: number, index: number) =>
+        api.get(`/mailbox/messages/${uid}/attachments/${index}`, { params: { folder }, responseType: 'blob', timeout: 120000 }),
+    flags: (folder: string, uids: number[], flags: { seen?: boolean; flagged?: boolean }) =>
+        api.patch('/mailbox/messages/flags', { folder, uids, ...flags }),
+    remove: (folder: string, uids: number[]) => api.post('/mailbox/messages/delete', { folder, uids }),
+    move: (folder: string, uids: number[], target: string) => api.post('/mailbox/messages/move', { folder, uids, target }),
+    send: (data: { to: string; cc?: string; subject: string; text: string; inReplyTo?: string; references?: string[] }) =>
+        api.post('/mailbox/send', data, { timeout: 60000 }),
+    traveloka: (status: 'all' | 'unread' | 'read' = 'unread') => api.get('/mailbox/traveloka', { params: { status }, timeout: 120000 }),
+};
+
 export const emailApi = {
     sync: (days = 7) => api.post('/email/sync', { days }, { timeout: 120000 }),
     // Streams NDJSON progress; resolves with { items, statements } once done.
