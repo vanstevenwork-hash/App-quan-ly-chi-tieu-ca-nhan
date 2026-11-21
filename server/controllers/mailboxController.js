@@ -2,10 +2,13 @@ const mail = require('../services/mailboxService');
 
 // The mailbox is ONE shared server account (EMAIL_USER), so only the app
 // owner may open it — never every registered user. Owners are listed in
-// MAIL_ADMIN_EMAILS (comma-separated), falling back to MAIL_INGEST_USER_EMAIL.
+// MAIL_ADMIN_EMAILS / MAIL_INGEST_USER_EMAIL (comma-separated) plus DEFAULT_OWNERS.
+// Default owner when MAIL_ADMIN_EMAILS isn't set on the host (e.g. production).
+const DEFAULT_OWNERS = ['vansi19a@gmail.com'];
 function ownerEmails() {
-    const raw = process.env.MAIL_ADMIN_EMAILS || process.env.MAIL_INGEST_USER_EMAIL || '';
-    return raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    const list = [process.env.MAIL_ADMIN_EMAILS, process.env.MAIL_INGEST_USER_EMAIL]
+        .join(',').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    return [...new Set([...DEFAULT_OWNERS, ...list])];
 }
 const isOwner = user => ownerEmails().includes((user?.email || '').toLowerCase());
 
