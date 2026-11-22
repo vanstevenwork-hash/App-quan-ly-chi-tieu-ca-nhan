@@ -108,3 +108,52 @@ export function getDueThisCycle(balance: number, transactions: InstallmentTx[], 
     const postClose = getPostStatementCharges(transactions, cardId, statementDay);
     return Math.max(0, balance - notYetDuePrincipal - postClose);
 }
+
+// ─── Statement amount shown on "Lịch sao kê" ────────────────────────────────
+// Number of statement closes on/after `start` up to and including `close`,
+// minus one → the 0-based installment period billed on that close. A purchase
+// made on/before the close day bills its first period on that same close.
+function periodOnClose(start: Date, close: Date, statementDay: number): number {
+    const months = (close.getFullYear() - start.getFullYear()) * 12 + (close.getMonth() - start.getMonth());
+    const startCloseDay = Math.min(statementDay, new Date(start.getFullYear(), start.getMonth() + 1, 0).getDate());
+    return months - (start.getDate() > startCloseDay ? 1 : 0);
+}
+
+const sliceAt = (p: InstallmentPlan, idx: number) =>
+    idx === p.months - 1 ? Math.max(0, p.total - p.monthly * (p.months - 1)) : p.monthly;
+
+export interface StatementAmount {
+    amount: number;        // phải trả cho hạn thanh toán sắp tới
+    installment: number;   // phần trả góp nằm trong amount
+    estimated: boolean;    // true: kỳ chưa chốt → số dự kiến
+}
+
+// What the card owes at its NEXT payment due date.
+//  - The closed statement is still due → getDueThisCycle (unchanged).
+//  - It's already past due → the next statement hasn't closed yet; estimate
+//    it as charges since the last close + every installment period that
+//    bills on the upcoming close (previously this showed 0, hiding installments).
+export function getStatementAmount(
+    card: { _id: string; balance: number; statementDay: number },
+    transactions: InstallmentTx[],
+    cycle: { dueIsForClosedStatement: boolean; nextClose: Date },
+    now: Date = new Date(),
+): StatementAmount {
+    if (cycle.dueIsForClosedStatement) {
+        const amount = getDueThisCycle(card.balance, transactions, card._id, card.statementDay);
+        const plans = getInstallmentPlans(transactions, card._id, now);
+        const slices = plans.reduce((s, p) => s + sliceAt(p, p.paid), 0);
+        return { amount, installment: Math.min(amount, slices), estimated: false };
+    }
+    const close = getLastStatementClose(card.statementDay, now);
+    const charges = close
+        ? transactions
+            .filter(t => !t.isInstallment && t.type === 'expense' && resolveCardId(t) === card._id && new Date(t.date) > close)
+            .reduce((s, t) => s + (t.amount || 0), 0)
+        : 0;
+    const installment = getInstallmentPlans(transactions, card._id, now, true).reduce((s, p) => {
+        const idx = periodOnClose(p.startDate, cycle.nextClose, card.statementDay);
+        return idx >= 0 && idx < p.months ? s + sliceAt(p, idx) : s;
+    }, 0);
+    return { amount: charges + installment, installment, estimated: true };
+}

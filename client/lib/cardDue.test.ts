@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getLastStatementClose, getPostStatementCharges, getDueThisCycle } from './cardDue';
+import { getLastStatementClose, getPostStatementCharges, getDueThisCycle, getStatementAmount } from './cardDue';
 
 describe('getLastStatementClose', () => {
     it('returns null without a statement day', () => {
@@ -69,5 +69,54 @@ describe('getInstallmentPlans / schedule (now = 2026-09-06)', () => {
         const s = getInstallmentSchedule(getInstallmentPlans([plan]), 12);
         expect(s.reduce((a, m) => a + m.amount, 0)).toBe(700_000);
         expect(s[7].amount).toBe(0);
+    });
+});
+
+describe('getStatementAmount', () => {
+    // VIB-like card: close 28, due 15. Today Nov 22 → Oct-28 statement was due
+    // Nov 15 (passed), next close Nov 28.
+    const now = new Date(2026, 10, 22);
+    const card = { _id: 'c1', balance: 27_395_000, statementDay: 28 };
+    const open = { dueIsForClosedStatement: false, nextClose: new Date(2026, 10, 28) };
+    const txs = [
+        { _id: 'a', cardId: 'c1', type: 'expense', amount: 15_300_000, date: '2026-09-10', isInstallment: true, installmentMonths: 6, installmentMonthly: 2_550_000, installmentStartDate: '2026-09-10' },
+        { _id: 'b', cardId: 'c1', type: 'expense', amount: 12_000_000, date: '2026-11-10', isInstallment: true, installmentMonths: 9, installmentMonthly: 1_333_334, installmentStartDate: '2026-11-10' },
+        { _id: 'x', cardId: 'c1', type: 'expense', amount: 95_000, date: '2026-11-01' },   // after Oct-28 close
+        { _id: 'y', cardId: 'c1', type: 'expense', amount: 500_000, date: '2026-10-20' },  // on the old statement
+    ];
+
+    it('open statement: includes installment periods billing on the next close', () => {
+        const r = getStatementAmount(card, txs, open, now);
+        expect(r.estimated).toBe(true);
+        expect(r.installment).toBe(2_550_000 + 1_333_334);
+        expect(r.amount).toBe(95_000 + 2_550_000 + 1_333_334);
+    });
+
+    it('open statement: a finished plan adds nothing', () => {
+        const done = [{ ...txs[0], installmentStartDate: '2025-01-10', date: '2025-01-10' }];
+        expect(getStatementAmount(card, done, open, now).installment).toBe(0);
+    });
+
+    it('open statement: purchase after the close day starts on the following close', () => {
+        // bought Nov 29 (after close 28) → first period on Dec 28, not Nov 28
+        const late = [{ ...txs[1], date: '2026-11-29', installmentStartDate: '2026-11-29' }];
+        expect(getStatementAmount(card, late, open, now).installment).toBe(0);
+        const decOpen = { dueIsForClosedStatement: false, nextClose: new Date(2026, 11, 28) };
+        expect(getStatementAmount(card, late, decOpen, new Date(2026, 11, 20)).installment).toBe(1_333_334);
+    });
+
+    it('last period is adjusted so periods sum to the principal', () => {
+        const p = [{ _id: 'p', cardId: 'c1', type: 'expense', amount: 1_000_000, date: '2026-09-10', isInstallment: true, installmentMonths: 3, installmentMonthly: 333_334, installmentStartDate: '2026-09-10' }];
+        // Sep 28 = p0, Oct 28 = p1, Nov 28 = p2 (last)
+        expect(getStatementAmount(card, p, open, now).installment).toBe(1_000_000 - 333_334 * 2);
+    });
+
+    it('closed statement still due: same amount as getDueThisCycle, with installment part', () => {
+        const closed = { dueIsForClosedStatement: true, nextClose: new Date(2026, 10, 28) };
+        const r = getStatementAmount(card, txs, closed, now);
+        expect(r.estimated).toBe(false);
+        expect(r.amount).toBe(getDueThisCycle(card.balance, txs as any, 'c1', 28));
+        expect(r.installment).toBeGreaterThan(0);
+        expect(r.installment).toBeLessThanOrEqual(r.amount);
     });
 });

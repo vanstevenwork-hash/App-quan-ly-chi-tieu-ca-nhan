@@ -1,0 +1,3747 @@
+{
+ "generatedAt": "2026-11-22",
+ "banks": {
+  "VPBank": {
+   "name": "VPBank",
+   "aliases": [
+    "VPB",
+    "VPBANK"
+   ]
+  },
+  "Techcombank": {
+   "name": "Techcombank",
+   "aliases": [
+    "TCB",
+    "TECHCOMBANK"
+   ]
+  },
+  "Vietcombank": {
+   "name": "Vietcombank",
+   "aliases": [
+    "VCB"
+   ]
+  },
+  "VietinBank": {
+   "name": "VietinBank",
+   "aliases": [
+    "ICB",
+    "CTG",
+    "VTB",
+    "VIETINBANK"
+   ]
+  },
+  "BIDV": {
+   "name": "BIDV",
+   "aliases": [
+    "BIDV"
+   ]
+  },
+  "ACB": {
+   "name": "ACB",
+   "aliases": [
+    "ACB"
+   ]
+  },
+  "MBBank": {
+   "name": "MB Bank",
+   "aliases": [
+    "MB",
+    "MBB",
+    "MBBANK"
+   ]
+  },
+  "TPBank": {
+   "name": "TPBank",
+   "aliases": [
+    "TPB",
+    "TPBANK"
+   ]
+  },
+  "Sacombank": {
+   "name": "Sacombank",
+   "aliases": [
+    "STB",
+    "SACOMBANK"
+   ]
+  },
+  "HDBank": {
+   "name": "HDBank",
+   "aliases": [
+    "HDB",
+    "HDBANK"
+   ]
+  },
+  "VIB": {
+   "name": "VIB",
+   "aliases": [
+    "VIB"
+   ]
+  },
+  "SHB": {
+   "name": "SHB",
+   "aliases": [
+    "SHB"
+   ]
+  },
+  "Eximbank": {
+   "name": "Eximbank",
+   "aliases": [
+    "EIB",
+    "EXIMBANK"
+   ]
+  },
+  "MSB": {
+   "name": "MSB",
+   "aliases": [
+    "MSB"
+   ]
+  },
+  "OCB": {
+   "name": "OCB",
+   "aliases": [
+    "OCB"
+   ]
+  },
+  "SeABank": {
+   "name": "SeABank",
+   "aliases": [
+    "SEAB",
+    "SEABANK"
+   ]
+  },
+  "LPBank": {
+   "name": "LPBank",
+   "aliases": [
+    "LPB",
+    "LPBANK"
+   ]
+  },
+  "NamABank": {
+   "name": "Nam A Bank",
+   "aliases": [
+    "NAB",
+    "NAMABANK"
+   ]
+  },
+  "BacABank": {
+   "name": "Bac A Bank",
+   "aliases": [
+    "BAB",
+    "BACABANK"
+   ]
+  },
+  "ABBANK": {
+   "name": "ABBANK",
+   "aliases": [
+    "ABB",
+    "ABBANK"
+   ]
+  },
+  "NCB": {
+   "name": "NCB",
+   "aliases": [
+    "NCB"
+   ]
+  },
+  "Agribank": {
+   "name": "Agribank",
+   "aliases": [
+    "VBA",
+    "AGRIBANK"
+   ]
+  },
+  "VietCapitalBank": {
+   "name": "BVBank",
+   "aliases": [
+    "VCCB",
+    "BVBANK",
+    "VIETCAPITALBANK"
+   ]
+  },
+  "VietBank": {
+   "name": "Vietbank",
+   "aliases": [
+    "VIETBANK"
+   ]
+  },
+  "KBank": {
+   "name": "KBank",
+   "aliases": [
+    "KBANK"
+   ]
+  },
+  "ShinhanBank": {
+   "name": "Shinhan Bank",
+   "aliases": [
+    "SHBVN",
+    "SHINHANBANK",
+    "SHINHAN"
+   ]
+  },
+  "Woori": {
+   "name": "Woori Bank",
+   "aliases": [
+    "WVN",
+    "WOORI"
+   ]
+  },
+  "UOB": {
+   "name": "UOB",
+   "aliases": [
+    "UOB",
+    "UNITEDOVERSEAS"
+   ]
+  },
+  "HSBC": {
+   "name": "HSBC",
+   "aliases": [
+    "HSBC"
+   ]
+  },
+  "StandardChartered": {
+   "name": "Standard Chartered",
+   "aliases": [
+    "SCVN",
+    "STANDARDCHARTERED"
+   ]
+  },
+  "CAKE": {
+   "name": "Cake",
+   "aliases": [
+    "CAKE"
+   ]
+  }
+ },
+ "cards": [
+  {
+   "id": "ABBANK/visa-cashback",
+   "bank": "ABBANK",
+   "name": "ABBANK Visa Cashback",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ABBANK/visa-cashback.webp",
+   "w": 800,
+   "h": 480
+  },
+  {
+   "id": "ABBANK/visa-priority",
+   "bank": "ABBANK",
+   "name": "ABBANK Visa Priority",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ABBANK/visa-priority.webp",
+   "w": 800,
+   "h": 490
+  },
+  {
+   "id": "ABBANK/visa-travel",
+   "bank": "ABBANK",
+   "name": "ABBANK Visa Travel",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ABBANK/visa-travel.webp",
+   "w": 627,
+   "h": 406
+  },
+  {
+   "id": "ACB/express",
+   "bank": "ACB",
+   "name": "ACB Express",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ACB/express.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/green",
+   "bank": "ACB",
+   "name": "ACB Green",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ACB/green.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/jcb-debit",
+   "bank": "ACB",
+   "name": "ACB JCB Debit",
+   "network": "jcb",
+   "type": "debit",
+   "src": "/cards/ACB/jcb-debit.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/jcb-gold",
+   "bank": "ACB",
+   "name": "ACB JCB Gold",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/ACB/jcb-gold.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/lotusmiles-pay-gold-debit",
+   "bank": "ACB",
+   "name": "ACB Lotusmiles Pay Gold Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/ACB/lotusmiles-pay-gold-debit.webp",
+   "w": 800,
+   "h": 502
+  },
+  {
+   "id": "ACB/lotusmiles-pay-million-miler-debit",
+   "bank": "ACB",
+   "name": "ACB Lotusmiles Pay Million Miler Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/ACB/lotusmiles-pay-million-miler-debit.webp",
+   "w": 800,
+   "h": 492
+  },
+  {
+   "id": "ACB/lotusmiles-pay-platinum-debit",
+   "bank": "ACB",
+   "name": "ACB Lotusmiles Pay Platinum Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/ACB/lotusmiles-pay-platinum-debit.webp",
+   "w": 800,
+   "h": 513
+  },
+  {
+   "id": "ACB/lotusmiles-pay-silver-debit",
+   "bank": "ACB",
+   "name": "ACB Lotusmiles Pay Silver Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/ACB/lotusmiles-pay-silver-debit.webp",
+   "w": 800,
+   "h": 498
+  },
+  {
+   "id": "ACB/lotusmiles-pay-titanium-debit",
+   "bank": "ACB",
+   "name": "ACB Lotusmiles Pay Titanium Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/ACB/lotusmiles-pay-titanium-debit.webp",
+   "w": 800,
+   "h": 511
+  },
+  {
+   "id": "ACB/mastercard-debit",
+   "bank": "ACB",
+   "name": "ACB Mastercard Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/ACB/mastercard-debit.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/mastercard-gold",
+   "bank": "ACB",
+   "name": "ACB Mastercard Gold",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/ACB/mastercard-gold.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/napas-business",
+   "bank": "ACB",
+   "name": "ACB Napas Business",
+   "network": "napas",
+   "type": "debit",
+   "src": "/cards/ACB/napas-business.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "ACB/visa-business",
+   "bank": "ACB",
+   "name": "ACB Visa Business",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ACB/visa-business.webp",
+   "w": 800,
+   "h": 474
+  },
+  {
+   "id": "ACB/visa-debit",
+   "bank": "ACB",
+   "name": "ACB Visa Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/ACB/visa-debit.webp",
+   "w": 609,
+   "h": 384
+  },
+  {
+   "id": "ACB/visa-debit-ke-t-no-i-vo-i-ta-i-khoa-n-first-va-eco",
+   "bank": "ACB",
+   "name": "ACB Visa Debit Ke T No I Vo I Ta I Khoa N First Va Eco",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/ACB/visa-debit-ke-t-no-i-vo-i-ta-i-khoa-n-first-va-eco.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/visa-digi",
+   "bank": "ACB",
+   "name": "ACB Visa Digi",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ACB/visa-digi.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/visa-digi-debit",
+   "bank": "ACB",
+   "name": "ACB Visa Digi Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/ACB/visa-digi-debit.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/visa-gold",
+   "bank": "ACB",
+   "name": "ACB Visa Gold",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ACB/visa-gold.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/visa-infinite",
+   "bank": "ACB",
+   "name": "ACB Visa Infinite",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ACB/visa-infinite.webp",
+   "w": 496,
+   "h": 314
+  },
+  {
+   "id": "ACB/visa-platinum",
+   "bank": "ACB",
+   "name": "ACB Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ACB/visa-platinum.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/visa-platinum-debit",
+   "bank": "ACB",
+   "name": "ACB Visa Platinum Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/ACB/visa-platinum-debit.webp",
+   "w": 607,
+   "h": 384
+  },
+  {
+   "id": "ACB/visa-signature",
+   "bank": "ACB",
+   "name": "ACB Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ACB/visa-signature.webp",
+   "w": 609,
+   "h": 384
+  },
+  {
+   "id": "Agribank/jcb-debit-gold",
+   "bank": "Agribank",
+   "name": "Agribank JCB Debit Gold",
+   "network": "jcb",
+   "type": "debit",
+   "src": "/cards/Agribank/jcb-debit-gold.webp",
+   "w": 517,
+   "h": 326
+  },
+  {
+   "id": "Agribank/jcb-gold",
+   "bank": "Agribank",
+   "name": "Agribank JCB Gold",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Agribank/jcb-gold.webp",
+   "w": 520,
+   "h": 328
+  },
+  {
+   "id": "Agribank/jcb-ultimate",
+   "bank": "Agribank",
+   "name": "Agribank JCB Ultimate",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Agribank/jcb-ultimate.webp",
+   "w": 800,
+   "h": 506
+  },
+  {
+   "id": "Agribank/mastercard-debit-gold",
+   "bank": "Agribank",
+   "name": "Agribank Mastercard Debit Gold",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/Agribank/mastercard-debit-gold.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Agribank/mastercard-debit-standard",
+   "bank": "Agribank",
+   "name": "Agribank Mastercard Debit Standard",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/Agribank/mastercard-debit-standard.webp",
+   "w": 520,
+   "h": 328
+  },
+  {
+   "id": "Agribank/mastercard-gold",
+   "bank": "Agribank",
+   "name": "Agribank Mastercard Gold",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Agribank/mastercard-gold.webp",
+   "w": 504,
+   "h": 318
+  },
+  {
+   "id": "Agribank/mastercard-platinum",
+   "bank": "Agribank",
+   "name": "Agribank Mastercard Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Agribank/mastercard-platinum.webp",
+   "w": 495,
+   "h": 312
+  },
+  {
+   "id": "Agribank/success",
+   "bank": "Agribank",
+   "name": "Agribank Success",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Agribank/success.webp",
+   "w": 800,
+   "h": 502
+  },
+  {
+   "id": "Agribank/success-plus",
+   "bank": "Agribank",
+   "name": "Agribank Success Plus",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Agribank/success-plus.webp",
+   "w": 514,
+   "h": 324
+  },
+  {
+   "id": "Agribank/the-lo-c-vie-t",
+   "bank": "Agribank",
+   "name": "Agribank The Lo C Vie T",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Agribank/the-lo-c-vie-t.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Agribank/visa-debit-gold",
+   "bank": "Agribank",
+   "name": "Agribank Visa Debit Gold",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Agribank/visa-debit-gold.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Agribank/visa-debit-standard",
+   "bank": "Agribank",
+   "name": "Agribank Visa Debit Standard",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Agribank/visa-debit-standard.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Agribank/visa-gold",
+   "bank": "Agribank",
+   "name": "Agribank Visa Gold",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Agribank/visa-gold.webp",
+   "w": 517,
+   "h": 327
+  },
+  {
+   "id": "Agribank/visa-standard",
+   "bank": "Agribank",
+   "name": "Agribank Visa Standard",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Agribank/visa-standard.webp",
+   "w": 520,
+   "h": 329
+  },
+  {
+   "id": "BacABank/mastercard-cashback-platinum",
+   "bank": "BacABank",
+   "name": "Bac A Bank Mastercard Cashback Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/BacABank/mastercard-cashback-platinum.webp",
+   "w": 800,
+   "h": 525
+  },
+  {
+   "id": "BIDV/cashback-360",
+   "bank": "BIDV",
+   "name": "BIDV Cashback 360",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/BIDV/cashback-360.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "BIDV/flexi-precious",
+   "bank": "BIDV",
+   "name": "BIDV Flexi Precious",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/BIDV/flexi-precious.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/jcb-hybrid",
+   "bank": "BIDV",
+   "name": "BIDV JCB Hybrid",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/BIDV/jcb-hybrid.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/jcb-platinum-well-being",
+   "bank": "BIDV",
+   "name": "BIDV JCB Platinum Well Being",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/BIDV/jcb-platinum-well-being.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/jcb-ultimate",
+   "bank": "BIDV",
+   "name": "BIDV JCB Ultimate",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/BIDV/jcb-ultimate.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/mastercard-business-debit",
+   "bank": "BIDV",
+   "name": "BIDV Mastercard Business Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/BIDV/mastercard-business-debit.webp",
+   "w": 800,
+   "h": 498
+  },
+  {
+   "id": "BIDV/mastercard-discovery",
+   "bank": "BIDV",
+   "name": "BIDV Mastercard Discovery",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/BIDV/mastercard-discovery.webp",
+   "w": 800,
+   "h": 506
+  },
+  {
+   "id": "BIDV/mastercard-ready",
+   "bank": "BIDV",
+   "name": "BIDV Mastercard Ready",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/BIDV/mastercard-ready.webp",
+   "w": 800,
+   "h": 506
+  },
+  {
+   "id": "BIDV/mastercard-world-travel",
+   "bank": "BIDV",
+   "name": "BIDV Mastercard World Travel",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/BIDV/mastercard-world-travel.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/online",
+   "bank": "BIDV",
+   "name": "BIDV Online",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/BIDV/online.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/visa-business",
+   "bank": "BIDV",
+   "name": "BIDV Visa Business",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/BIDV/visa-business.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/visa-cashback-online",
+   "bank": "BIDV",
+   "name": "BIDV Visa Cashback Online",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/BIDV/visa-cashback-online.webp",
+   "w": 800,
+   "h": 500
+  },
+  {
+   "id": "BIDV/visa-debit-superads",
+   "bank": "BIDV",
+   "name": "BIDV Visa Debit Superads",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/BIDV/visa-debit-superads.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "BIDV/visa-easy",
+   "bank": "BIDV",
+   "name": "BIDV Visa Easy",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/BIDV/visa-easy.webp",
+   "w": 800,
+   "h": 496
+  },
+  {
+   "id": "BIDV/visa-flexi",
+   "bank": "BIDV",
+   "name": "BIDV Visa Flexi",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/BIDV/visa-flexi.webp",
+   "w": 646,
+   "h": 400
+  },
+  {
+   "id": "BIDV/visa-infinite",
+   "bank": "BIDV",
+   "name": "BIDV Visa Infinite",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/BIDV/visa-infinite.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "CAKE/be-cake-2in-1",
+   "bank": "CAKE",
+   "name": "Cake Be Cake 2in 1",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/CAKE/be-cake-2in-1.webp",
+   "w": 400,
+   "h": 265
+  },
+  {
+   "id": "CAKE/freedom-visa",
+   "bank": "CAKE",
+   "name": "Cake Freedom Visa",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/CAKE/freedom-visa.webp",
+   "w": 800,
+   "h": 515
+  },
+  {
+   "id": "Eximbank/jcb-platinum-travel-cash-back",
+   "bank": "Eximbank",
+   "name": "Eximbank JCB Platinum Travel Cash Back",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Eximbank/jcb-platinum-travel-cash-back.webp",
+   "w": 800,
+   "h": 503
+  },
+  {
+   "id": "Eximbank/jcb-ultimate",
+   "bank": "Eximbank",
+   "name": "Eximbank JCB Ultimate",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Eximbank/jcb-ultimate.webp",
+   "w": 800,
+   "h": 499
+  },
+  {
+   "id": "Eximbank/jcb-young-credit",
+   "bank": "Eximbank",
+   "name": "Eximbank JCB Young Credit",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Eximbank/jcb-young-credit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Eximbank/jcb-young-debit",
+   "bank": "Eximbank",
+   "name": "Eximbank JCB Young Debit",
+   "network": "jcb",
+   "type": "debit",
+   "src": "/cards/Eximbank/jcb-young-debit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Eximbank/mastercard-business-debit",
+   "bank": "Eximbank",
+   "name": "Eximbank Mastercard Business Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/Eximbank/mastercard-business-debit.webp",
+   "w": 800,
+   "h": 502
+  },
+  {
+   "id": "Eximbank/mastercard-business-world",
+   "bank": "Eximbank",
+   "name": "Eximbank Mastercard Business World",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Eximbank/mastercard-business-world.webp",
+   "w": 800,
+   "h": 499
+  },
+  {
+   "id": "Eximbank/mastercard-debit",
+   "bank": "Eximbank",
+   "name": "Eximbank Mastercard Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/Eximbank/mastercard-debit.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Eximbank/mastercard-va-ng",
+   "bank": "Eximbank",
+   "name": "Eximbank Mastercard Va Ng",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Eximbank/mastercard-va-ng.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Eximbank/one-world-mastercard",
+   "bank": "Eximbank",
+   "name": "Eximbank One World Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Eximbank/one-world-mastercard.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Eximbank/platinum-cashback",
+   "bank": "Eximbank",
+   "name": "Eximbank Platinum Cashback",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Eximbank/platinum-cashback.webp",
+   "w": 273,
+   "h": 175
+  },
+  {
+   "id": "Eximbank/priority-visa-signature",
+   "bank": "Eximbank",
+   "name": "Eximbank Priority Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Eximbank/priority-visa-signature.webp",
+   "w": 800,
+   "h": 501
+  },
+  {
+   "id": "Eximbank/the-no-i-di-a-v-top",
+   "bank": "Eximbank",
+   "name": "Eximbank The No I Di A V Top",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Eximbank/the-no-i-di-a-v-top.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Eximbank/visa-debit",
+   "bank": "Eximbank",
+   "name": "Eximbank Visa Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Eximbank/visa-debit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Eximbank/visa-platinum-debit",
+   "bank": "Eximbank",
+   "name": "Eximbank Visa Platinum Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Eximbank/visa-platinum-debit.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Eximbank/visa-va-ng",
+   "bank": "Eximbank",
+   "name": "Eximbank Visa Va Ng",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Eximbank/visa-va-ng.webp",
+   "w": 800,
+   "h": 503
+  },
+  {
+   "id": "Eximbank/visa-violet",
+   "bank": "Eximbank",
+   "name": "Eximbank Visa Violet",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Eximbank/visa-violet.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "HDBank/ezcard-visa-gold",
+   "bank": "HDBank",
+   "name": "HDBank Ezcard Visa Gold",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/HDBank/ezcard-visa-gold.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HDBank/jcb-ultimate",
+   "bank": "HDBank",
+   "name": "HDBank JCB Ultimate",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/HDBank/jcb-ultimate.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HDBank/mastercard-gold",
+   "bank": "HDBank",
+   "name": "HDBank Mastercard Gold",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/HDBank/mastercard-gold.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HDBank/priority-tinh-tu-phuong-dong",
+   "bank": "HDBank",
+   "name": "HDBank Priority Tinh Tú Phương Đông",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/HDBank/priority-tinh-tu-phuong-dong.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HDBank/tra-gop-muadee",
+   "bank": "HDBank",
+   "name": "HDBank Trả Góp Muadee",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/HDBank/tra-gop-muadee.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HDBank/vietjet-classic",
+   "bank": "HDBank",
+   "name": "HDBank Vietjet Classic",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/HDBank/vietjet-classic.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HDBank/vietjet-platinum",
+   "bank": "HDBank",
+   "name": "HDBank Vietjet Platinum",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/HDBank/vietjet-platinum.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HDBank/visa-classic",
+   "bank": "HDBank",
+   "name": "HDBank Visa Classic",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/HDBank/visa-classic.webp",
+   "w": 346,
+   "h": 218
+  },
+  {
+   "id": "HSBC/cash-back",
+   "bank": "HSBC",
+   "name": "HSBC Cash Back",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/HSBC/cash-back.webp",
+   "w": 546,
+   "h": 344
+  },
+  {
+   "id": "HSBC/livefree",
+   "bank": "HSBC",
+   "name": "HSBC Livefree",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/HSBC/livefree.webp",
+   "w": 547,
+   "h": 346
+  },
+  {
+   "id": "HSBC/premier-world-mastercard",
+   "bank": "HSBC",
+   "name": "HSBC Premier World Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/HSBC/premier-world-mastercard.webp",
+   "w": 795,
+   "h": 500
+  },
+  {
+   "id": "HSBC/travelone",
+   "bank": "HSBC",
+   "name": "HSBC Travelone",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/HSBC/travelone.webp",
+   "w": 548,
+   "h": 346
+  },
+  {
+   "id": "HSBC/visa-live",
+   "bank": "HSBC",
+   "name": "HSBC Visa Live",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/HSBC/visa-live.webp",
+   "w": 550,
+   "h": 346
+  },
+  {
+   "id": "KBank/cashback-plus",
+   "bank": "KBank",
+   "name": "KBank Cashback Plus",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/KBank/cashback-plus.webp",
+   "w": 592,
+   "h": 374
+  },
+  {
+   "id": "LPBank/jcb-platinum",
+   "bank": "LPBank",
+   "name": "LPBank JCB Platinum",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/LPBank/jcb-platinum.webp",
+   "w": 472,
+   "h": 298
+  },
+  {
+   "id": "LPBank/jcb-standard",
+   "bank": "LPBank",
+   "name": "LPBank JCB Standard",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/LPBank/jcb-standard.webp",
+   "w": 510,
+   "h": 321
+  },
+  {
+   "id": "LPBank/mastercard-gold",
+   "bank": "LPBank",
+   "name": "LPBank Mastercard Gold",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/LPBank/mastercard-gold.webp",
+   "w": 497,
+   "h": 315
+  },
+  {
+   "id": "LPBank/mastercard-standard",
+   "bank": "LPBank",
+   "name": "LPBank Mastercard Standard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/LPBank/mastercard-standard.webp",
+   "w": 526,
+   "h": 332
+  },
+  {
+   "id": "LPBank/the-ghi-no-no-i-di-a",
+   "bank": "LPBank",
+   "name": "LPBank The Ghi No No I Di A",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/LPBank/the-ghi-no-no-i-di-a.webp",
+   "w": 576,
+   "h": 364
+  },
+  {
+   "id": "LPBank/the-ghi-no-quo-c-te-jcb",
+   "bank": "LPBank",
+   "name": "LPBank The Ghi No Quo C Te JCB",
+   "network": "jcb",
+   "type": "debit",
+   "src": "/cards/LPBank/the-ghi-no-quo-c-te-jcb.webp",
+   "w": 614,
+   "h": 386
+  },
+  {
+   "id": "LPBank/the-ghi-no-quo-c-te-visa",
+   "bank": "LPBank",
+   "name": "LPBank The Ghi No Quo C Te Visa",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/LPBank/the-ghi-no-quo-c-te-visa.webp",
+   "w": 618,
+   "h": 389
+  },
+  {
+   "id": "LPBank/upi-air-card-classic",
+   "bank": "LPBank",
+   "name": "LPBank Upi Air Card Classic",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/LPBank/upi-air-card-classic.webp",
+   "w": 654,
+   "h": 413
+  },
+  {
+   "id": "LPBank/upi-air-card-platinum",
+   "bank": "LPBank",
+   "name": "LPBank Upi Air Card Platinum",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/LPBank/upi-air-card-platinum.webp",
+   "w": 658,
+   "h": 414
+  },
+  {
+   "id": "LPBank/visa-platinum",
+   "bank": "LPBank",
+   "name": "LPBank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/LPBank/visa-platinum.webp",
+   "w": 400,
+   "h": 250
+  },
+  {
+   "id": "LPBank/visa-signature",
+   "bank": "LPBank",
+   "name": "LPBank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/LPBank/visa-signature.webp",
+   "w": 526,
+   "h": 329
+  },
+  {
+   "id": "LPBank/visa-standard",
+   "bank": "LPBank",
+   "name": "LPBank Visa Standard",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/LPBank/visa-standard.webp",
+   "w": 372,
+   "h": 234
+  },
+  {
+   "id": "MBBank/active-plus",
+   "bank": "MBBank",
+   "name": "MB Bank Active Plus",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MBBank/active-plus.webp",
+   "w": 676,
+   "h": 425
+  },
+  {
+   "id": "MBBank/be-the-sky",
+   "bank": "MBBank",
+   "name": "MB Bank Be The Sky",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MBBank/be-the-sky.webp",
+   "w": 630,
+   "h": 397
+  },
+  {
+   "id": "MBBank/hi-shopeefood",
+   "bank": "MBBank",
+   "name": "MB Bank Hi Shopeefood",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MBBank/hi-shopeefood.webp",
+   "w": 630,
+   "h": 398
+  },
+  {
+   "id": "MBBank/infinite",
+   "bank": "MBBank",
+   "name": "MB Bank Infinite",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MBBank/infinite.webp",
+   "w": 448,
+   "h": 281
+  },
+  {
+   "id": "MBBank/jcb",
+   "bank": "MBBank",
+   "name": "MB Bank JCB",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/MBBank/jcb.webp",
+   "w": 278,
+   "h": 174
+  },
+  {
+   "id": "MBBank/jcb-platinum",
+   "bank": "MBBank",
+   "name": "MB Bank JCB Platinum",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/MBBank/jcb-platinum.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "MBBank/jcb-ultimate-kim-loa-i",
+   "bank": "MBBank",
+   "name": "MB Bank JCB Ultimate Kim Loa I",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/MBBank/jcb-ultimate-kim-loa-i.webp",
+   "w": 800,
+   "h": 487
+  },
+  {
+   "id": "MBBank/mastercard-hi-ads",
+   "bank": "MBBank",
+   "name": "MB Bank Mastercard Hi Ads",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MBBank/mastercard-hi-ads.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "MBBank/mastercard-hi-cashback",
+   "bank": "MBBank",
+   "name": "MB Bank Mastercard Hi Cashback",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MBBank/mastercard-hi-cashback.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "MBBank/mastercard-hi-green",
+   "bank": "MBBank",
+   "name": "MB Bank Mastercard Hi Green",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MBBank/mastercard-hi-green.webp",
+   "w": 800,
+   "h": 489
+  },
+  {
+   "id": "MBBank/mastercard-hi-lol",
+   "bank": "MBBank",
+   "name": "MB Bank Mastercard Hi Lol",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MBBank/mastercard-hi-lol.webp",
+   "w": 800,
+   "h": 485
+  },
+  {
+   "id": "MBBank/mastercard-hi-slaydy",
+   "bank": "MBBank",
+   "name": "MB Bank Mastercard Hi Slaydy",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MBBank/mastercard-hi-slaydy.webp",
+   "w": 800,
+   "h": 487
+  },
+  {
+   "id": "MBBank/mastercard-platinum",
+   "bank": "MBBank",
+   "name": "MB Bank Mastercard Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MBBank/mastercard-platinum.webp",
+   "w": 800,
+   "h": 502
+  },
+  {
+   "id": "MBBank/priceless-world-elite-mastercard",
+   "bank": "MBBank",
+   "name": "MB Bank Priceless World Elite Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MBBank/priceless-world-elite-mastercard.webp",
+   "w": 800,
+   "h": 487
+  },
+  {
+   "id": "MBBank/priority-visa-platinum",
+   "bank": "MBBank",
+   "name": "MB Bank Priority Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MBBank/priority-visa-platinum.webp",
+   "w": 525,
+   "h": 331
+  },
+  {
+   "id": "MBBank/priority-visa-signature",
+   "bank": "MBBank",
+   "name": "MB Bank Priority Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MBBank/priority-visa-signature.webp",
+   "w": 748,
+   "h": 447
+  },
+  {
+   "id": "MBBank/visa",
+   "bank": "MBBank",
+   "name": "MB Bank Visa",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MBBank/visa.webp",
+   "w": 800,
+   "h": 518
+  },
+  {
+   "id": "MBBank/visa-debit",
+   "bank": "MBBank",
+   "name": "MB Bank Visa Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/MBBank/visa-debit.webp",
+   "w": 800,
+   "h": 518
+  },
+  {
+   "id": "MBBank/visa-hi-collection-kim-loa-i",
+   "bank": "MBBank",
+   "name": "MB Bank Visa Hi Collection Kim Loa I",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MBBank/visa-hi-collection-kim-loa-i.webp",
+   "w": 558,
+   "h": 340
+  },
+  {
+   "id": "MBBank/visa-platinum",
+   "bank": "MBBank",
+   "name": "MB Bank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MBBank/visa-platinum.webp",
+   "w": 733,
+   "h": 460
+  },
+  {
+   "id": "MSB/lotte-mart",
+   "bank": "MSB",
+   "name": "MSB Lotte Mart",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MSB/lotte-mart.webp",
+   "w": 445,
+   "h": 284
+  },
+  {
+   "id": "MSB/lotte-mart-debit",
+   "bank": "MSB",
+   "name": "MSB Lotte Mart Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/MSB/lotte-mart-debit.webp",
+   "w": 443,
+   "h": 279
+  },
+  {
+   "id": "MSB/master-platinum-vpoint",
+   "bank": "MSB",
+   "name": "MSB Master Platinum Vpoint",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MSB/master-platinum-vpoint.webp",
+   "w": 445,
+   "h": 280
+  },
+  {
+   "id": "MSB/mastercard-family",
+   "bank": "MSB",
+   "name": "MSB Mastercard Family",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MSB/mastercard-family.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "MSB/mastercard-hybrid",
+   "bank": "MSB",
+   "name": "MSB Mastercard Hybrid",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MSB/mastercard-hybrid.webp",
+   "w": 800,
+   "h": 510
+  },
+  {
+   "id": "MSB/mastercard-mdigi",
+   "bank": "MSB",
+   "name": "MSB Mastercard Mdigi",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MSB/mastercard-mdigi.webp",
+   "w": 516,
+   "h": 325
+  },
+  {
+   "id": "MSB/mastercard-platinum-fcb",
+   "bank": "MSB",
+   "name": "MSB Mastercard Platinum Fcb",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/MSB/mastercard-platinum-fcb.webp",
+   "w": 395,
+   "h": 248
+  },
+  {
+   "id": "MSB/super-free",
+   "bank": "MSB",
+   "name": "MSB Super Free",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MSB/super-free.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "MSB/travel",
+   "bank": "MSB",
+   "name": "MSB Travel",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/MSB/travel.webp",
+   "w": 760,
+   "h": 480
+  },
+  {
+   "id": "MSB/visa-business",
+   "bank": "MSB",
+   "name": "MSB Visa Business",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MSB/visa-business.webp",
+   "w": 800,
+   "h": 529
+  },
+  {
+   "id": "MSB/visa-classic",
+   "bank": "MSB",
+   "name": "MSB Visa Classic",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MSB/visa-classic.webp",
+   "w": 396,
+   "h": 250
+  },
+  {
+   "id": "MSB/visa-online",
+   "bank": "MSB",
+   "name": "MSB Visa Online",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MSB/visa-online.webp",
+   "w": 697,
+   "h": 439
+  },
+  {
+   "id": "MSB/visa-signature",
+   "bank": "MSB",
+   "name": "MSB Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/MSB/visa-signature.webp",
+   "w": 326,
+   "h": 206
+  },
+  {
+   "id": "NamABank/nam-a-jcb-happy-lady",
+   "bank": "NamABank",
+   "name": "Nam A Bank Nam A JCB Happy Lady",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/NamABank/nam-a-jcb-happy-lady.webp",
+   "w": 331,
+   "h": 209
+  },
+  {
+   "id": "NCB/priority-cashback",
+   "bank": "NCB",
+   "name": "NCB Priority Cashback",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/NCB/priority-cashback.webp",
+   "w": 800,
+   "h": 497
+  },
+  {
+   "id": "OCB/bamboo-airways",
+   "bank": "OCB",
+   "name": "OCB Bamboo Airways",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/OCB/bamboo-airways.webp",
+   "w": 800,
+   "h": 509
+  },
+  {
+   "id": "OCB/doctor-mastercard-platinum",
+   "bank": "OCB",
+   "name": "OCB Doctor Mastercard Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/OCB/doctor-mastercard-platinum.webp",
+   "w": 800,
+   "h": 512
+  },
+  {
+   "id": "OCB/igen-mastercard-platinum",
+   "bank": "OCB",
+   "name": "OCB Igen Mastercard Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/OCB/igen-mastercard-platinum.webp",
+   "w": 357,
+   "h": 225
+  },
+  {
+   "id": "OCB/installment-mastercard-platinum",
+   "bank": "OCB",
+   "name": "OCB Installment Mastercard Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/OCB/installment-mastercard-platinum.webp",
+   "w": 349,
+   "h": 220
+  },
+  {
+   "id": "OCB/jcb",
+   "bank": "OCB",
+   "name": "OCB JCB",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/OCB/jcb.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "OCB/jcb-gold",
+   "bank": "OCB",
+   "name": "OCB JCB Gold",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/OCB/jcb-gold.webp",
+   "w": 351,
+   "h": 221
+  },
+  {
+   "id": "OCB/jcb-platinum",
+   "bank": "OCB",
+   "name": "OCB JCB Platinum",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/OCB/jcb-platinum.webp",
+   "w": 800,
+   "h": 512
+  },
+  {
+   "id": "OCB/mastercard-lifestyle",
+   "bank": "OCB",
+   "name": "OCB Mastercard Lifestyle",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/OCB/mastercard-lifestyle.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "OCB/mastercard-passport-debit",
+   "bank": "OCB",
+   "name": "OCB Mastercard Passport Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/OCB/mastercard-passport-debit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "OCB/mastercard-platinum",
+   "bank": "OCB",
+   "name": "OCB Mastercard Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/OCB/mastercard-platinum.webp",
+   "w": 800,
+   "h": 506
+  },
+  {
+   "id": "OCB/mastercard-priority",
+   "bank": "OCB",
+   "name": "OCB Mastercard Priority",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/OCB/mastercard-priority.webp",
+   "w": 800,
+   "h": 525
+  },
+  {
+   "id": "OCB/mastercard-world",
+   "bank": "OCB",
+   "name": "OCB Mastercard World",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/OCB/mastercard-world.webp",
+   "w": 800,
+   "h": 496
+  },
+  {
+   "id": "OCB/natural",
+   "bank": "OCB",
+   "name": "OCB Natural",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/OCB/natural.webp",
+   "w": 800,
+   "h": 506
+  },
+  {
+   "id": "OCB/natural-credit",
+   "bank": "OCB",
+   "name": "OCB Natural Credit",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/OCB/natural-credit.webp",
+   "w": 800,
+   "h": 525
+  },
+  {
+   "id": "OCB/natural-debit",
+   "bank": "OCB",
+   "name": "OCB Natural Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/OCB/natural-debit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Sacombank/ban-da-chon-3-the",
+   "bank": "Sacombank",
+   "name": "Sacombank Bạn Đã Chọn 3 Thẻ",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Sacombank/ban-da-chon-3-the.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/infinite",
+   "bank": "Sacombank",
+   "name": "Sacombank Infinite",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Sacombank/infinite.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/jcb",
+   "bank": "Sacombank",
+   "name": "Sacombank JCB",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Sacombank/jcb.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/jcb-platinum",
+   "bank": "Sacombank",
+   "name": "Sacombank JCB Platinum",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Sacombank/jcb-platinum.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/jcb-ultimate",
+   "bank": "Sacombank",
+   "name": "Sacombank JCB Ultimate",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Sacombank/jcb-ultimate.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/mastercard-debit",
+   "bank": "Sacombank",
+   "name": "Sacombank Mastercard Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/Sacombank/mastercard-debit.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/mastercard-metro-pass",
+   "bank": "Sacombank",
+   "name": "Sacombank Mastercard Metro Pass",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Sacombank/mastercard-metro-pass.webp",
+   "w": 800,
+   "h": 508
+  },
+  {
+   "id": "Sacombank/mastercard-multipass",
+   "bank": "Sacombank",
+   "name": "Sacombank Mastercard Multipass",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Sacombank/mastercard-multipass.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Sacombank/mastercard-only-one",
+   "bank": "Sacombank",
+   "name": "Sacombank Mastercard Only One",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Sacombank/mastercard-only-one.webp",
+   "w": 440,
+   "h": 278
+  },
+  {
+   "id": "Sacombank/napas",
+   "bank": "Sacombank",
+   "name": "Sacombank Napas",
+   "network": "napas",
+   "type": "debit",
+   "src": "/cards/Sacombank/napas.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/napas-combo-card",
+   "bank": "Sacombank",
+   "name": "Sacombank Napas Combo Card",
+   "network": "napas",
+   "type": "debit",
+   "src": "/cards/Sacombank/napas-combo-card.webp",
+   "w": 439,
+   "h": 277
+  },
+  {
+   "id": "Sacombank/napas-easy-card",
+   "bank": "Sacombank",
+   "name": "Sacombank Napas Easy Card",
+   "network": "napas",
+   "type": "debit",
+   "src": "/cards/Sacombank/napas-easy-card.webp",
+   "w": 439,
+   "h": 280
+  },
+  {
+   "id": "Sacombank/o2",
+   "bank": "Sacombank",
+   "name": "Sacombank O2",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Sacombank/o2.webp",
+   "w": 439,
+   "h": 278
+  },
+  {
+   "id": "Sacombank/platinum-american-express",
+   "bank": "Sacombank",
+   "name": "Sacombank Platinum American Express",
+   "network": "amex",
+   "type": "credit",
+   "src": "/cards/Sacombank/platinum-american-express.webp",
+   "w": 800,
+   "h": 511
+  },
+  {
+   "id": "Sacombank/platinum-american-express-debit",
+   "bank": "Sacombank",
+   "name": "Sacombank Platinum American Express Debit",
+   "network": "amex",
+   "type": "debit",
+   "src": "/cards/Sacombank/platinum-american-express-debit.webp",
+   "w": 626,
+   "h": 400
+  },
+  {
+   "id": "Sacombank/tiki-platinum",
+   "bank": "Sacombank",
+   "name": "Sacombank Tiki Platinum",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Sacombank/tiki-platinum.webp",
+   "w": 570,
+   "h": 360
+  },
+  {
+   "id": "Sacombank/unionpay-debit",
+   "bank": "Sacombank",
+   "name": "Sacombank Unionpay Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/Sacombank/unionpay-debit.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/vietnam-airlines-visa",
+   "bank": "Sacombank",
+   "name": "Sacombank Vietnam Airlines Visa",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/vietnam-airlines-visa.webp",
+   "w": 439,
+   "h": 278
+  },
+  {
+   "id": "Sacombank/visa",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/visa.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/visa-bach-kim-hoan-tien",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa Bạch Kim Hoàn Tiền",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/visa-bach-kim-hoan-tien.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/visa-debit",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Sacombank/visa-debit.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/visa-platinum",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/visa-platinum.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "Sacombank/visa-platinum-cashback",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa Platinum Cashback",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/visa-platinum-cashback.webp",
+   "w": 625,
+   "h": 396
+  },
+  {
+   "id": "Sacombank/visa-signature",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/visa-signature.webp",
+   "w": 625,
+   "h": 396
+  },
+  {
+   "id": "Sacombank/visa-signature-golf-long-bie-n",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa Signature Golf Long Bie N",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/visa-signature-golf-long-bie-n.webp",
+   "w": 400,
+   "h": 254
+  },
+  {
+   "id": "Sacombank/visa-uniq-platinum",
+   "bank": "Sacombank",
+   "name": "Sacombank Visa Uniq Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Sacombank/visa-uniq-platinum.webp",
+   "w": 440,
+   "h": 276
+  },
+  {
+   "id": "Sacombank/world-mastercard",
+   "bank": "Sacombank",
+   "name": "Sacombank World Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Sacombank/world-mastercard.webp",
+   "w": 490,
+   "h": 310
+  },
+  {
+   "id": "SeABank/brg-elite",
+   "bank": "SeABank",
+   "name": "SeABank BRG Elite",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/SeABank/brg-elite.webp",
+   "w": 500,
+   "h": 320
+  },
+  {
+   "id": "SeABank/brg-golf-visa-platinum",
+   "bank": "SeABank",
+   "name": "SeABank BRG Golf Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/SeABank/brg-golf-visa-platinum.webp",
+   "w": 406,
+   "h": 260
+  },
+  {
+   "id": "SeABank/mastercard-gold",
+   "bank": "SeABank",
+   "name": "SeABank Mastercard Gold",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/SeABank/mastercard-gold.webp",
+   "w": 500,
+   "h": 320
+  },
+  {
+   "id": "SeABank/s24",
+   "bank": "SeABank",
+   "name": "SeABank S24",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/SeABank/s24.webp",
+   "w": 504,
+   "h": 320
+  },
+  {
+   "id": "SeABank/sea-easy",
+   "bank": "SeABank",
+   "name": "SeABank Sea Easy",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/SeABank/sea-easy.webp",
+   "w": 519,
+   "h": 332
+  },
+  {
+   "id": "SeABank/sea-lady-mastercard",
+   "bank": "SeABank",
+   "name": "SeABank Sea Lady Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/SeABank/sea-lady-mastercard.webp",
+   "w": 504,
+   "h": 320
+  },
+  {
+   "id": "SeABank/seatravel",
+   "bank": "SeABank",
+   "name": "SeABank Seatravel",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/SeABank/seatravel.webp",
+   "w": 500,
+   "h": 320
+  },
+  {
+   "id": "SeABank/the-ghi-no-brg-elite",
+   "bank": "SeABank",
+   "name": "SeABank The Ghi No BRG Elite",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/SeABank/the-ghi-no-brg-elite.webp",
+   "w": 500,
+   "h": 320
+  },
+  {
+   "id": "SeABank/visa-gold",
+   "bank": "SeABank",
+   "name": "SeABank Visa Gold",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/SeABank/visa-gold.webp",
+   "w": 498,
+   "h": 318
+  },
+  {
+   "id": "SeABank/visa-platinum",
+   "bank": "SeABank",
+   "name": "SeABank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/SeABank/visa-platinum.webp",
+   "w": 502,
+   "h": 320
+  },
+  {
+   "id": "SeABank/visa-seapremium",
+   "bank": "SeABank",
+   "name": "SeABank Visa Seapremium",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/SeABank/visa-seapremium.webp",
+   "w": 500,
+   "h": 320
+  },
+  {
+   "id": "SeABank/visa-signature",
+   "bank": "SeABank",
+   "name": "SeABank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/SeABank/visa-signature.webp",
+   "w": 360,
+   "h": 228
+  },
+  {
+   "id": "SHB/mastercard-cashback",
+   "bank": "SHB",
+   "name": "SHB Mastercard Cashback",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/SHB/mastercard-cashback.webp",
+   "w": 800,
+   "h": 501
+  },
+  {
+   "id": "SHB/mastercard-debit",
+   "bank": "SHB",
+   "name": "SHB Mastercard Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/SHB/mastercard-debit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "SHB/mastercard-truly-free",
+   "bank": "SHB",
+   "name": "SHB Mastercard Truly Free",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/SHB/mastercard-truly-free.webp",
+   "w": 800,
+   "h": 510
+  },
+  {
+   "id": "SHB/mastercard-world",
+   "bank": "SHB",
+   "name": "SHB Mastercard World",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/SHB/mastercard-world.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "SHB/solid-card",
+   "bank": "SHB",
+   "name": "SHB Solid Card",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/SHB/solid-card.webp",
+   "w": 800,
+   "h": 510
+  },
+  {
+   "id": "SHB/visa-debit",
+   "bank": "SHB",
+   "name": "SHB Visa Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/SHB/visa-debit.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "SHB/visa-platinum",
+   "bank": "SHB",
+   "name": "SHB Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/SHB/visa-platinum.webp",
+   "w": 800,
+   "h": 503
+  },
+  {
+   "id": "SHB/visa-platinum-star",
+   "bank": "SHB",
+   "name": "SHB Visa Platinum Star",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/SHB/visa-platinum-star.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "ShinhanBank/365-cashback",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank 365 Cashback",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/365-cashback.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/baemin-shinhan",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Baemin Shinhan",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/baemin-shinhan.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/business-owner",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Business Owner",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/business-owner.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/signature-card-1",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Signature Card 1",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/signature-card-1.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/supreme",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Supreme",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/supreme.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/tiki-shinhan-hang-chuan",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Tiki Shinhan Hạng Chuẩn",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/tiki-shinhan-hang-chuan.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/travel-platinum",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Travel Platinum",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/travel-platinum.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/visa-cashback-gold-classic",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Visa Cashback Gold Classic",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/visa-cashback-gold-classic.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/visa-cashback-platinum-credit-24mar20",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Visa Cashback Platinum Credit 24mar20",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/visa-cashback-platinum-credit-24mar20.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/visa-hi-point-classic-gold-platinum",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Visa Hi Point Classic Gold Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/visa-hi-point-classic-gold-platinum.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/visa-pwm-ha-ng-ba-ch-kim",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Visa PWM Ha Ng Ba Ch Kim",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/visa-pwm-ha-ng-ba-ch-kim.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/visa-signature",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/visa-signature.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "ShinhanBank/visa-vang",
+   "bank": "ShinhanBank",
+   "name": "Shinhan Bank Visa Vàng",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/ShinhanBank/visa-vang.webp",
+   "w": 222,
+   "h": 140
+  },
+  {
+   "id": "StandardChartered/journey",
+   "bank": "StandardChartered",
+   "name": "Standard Chartered Journey",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/StandardChartered/journey.webp",
+   "w": 290,
+   "h": 183
+  },
+  {
+   "id": "StandardChartered/priority-worldmiles",
+   "bank": "StandardChartered",
+   "name": "Standard Chartered Priority Worldmiles",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/StandardChartered/priority-worldmiles.webp",
+   "w": 435,
+   "h": 274
+  },
+  {
+   "id": "StandardChartered/simply-cash",
+   "bank": "StandardChartered",
+   "name": "Standard Chartered Simply Cash",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/StandardChartered/simply-cash.webp",
+   "w": 435,
+   "h": 274
+  },
+  {
+   "id": "Techcombank/cam-nang-the",
+   "bank": "Techcombank",
+   "name": "Techcombank Cẩm Nang Thẻ",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Techcombank/cam-nang-the.webp",
+   "w": 234,
+   "h": 156
+  },
+  {
+   "id": "Techcombank/eco-visa-platinum",
+   "bank": "Techcombank",
+   "name": "Techcombank Eco Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/eco-visa-platinum.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Techcombank/f-staccess-napas",
+   "bank": "Techcombank",
+   "name": "Techcombank F Staccess Napas",
+   "network": "napas",
+   "type": "debit",
+   "src": "/cards/Techcombank/f-staccess-napas.webp",
+   "w": 610,
+   "h": 384
+  },
+  {
+   "id": "Techcombank/mastercard-spark",
+   "bank": "Techcombank",
+   "name": "Techcombank Mastercard Spark",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Techcombank/mastercard-spark.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Techcombank/platinum-debit",
+   "bank": "Techcombank",
+   "name": "Techcombank Platinum Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/Techcombank/platinum-debit.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/priority-debit",
+   "bank": "Techcombank",
+   "name": "Techcombank Priority Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/Techcombank/priority-debit.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/priority-visa-signature",
+   "bank": "Techcombank",
+   "name": "Techcombank Priority Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/priority-visa-signature.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/private-debit",
+   "bank": "Techcombank",
+   "name": "Techcombank Private Debit",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/Techcombank/private-debit.webp",
+   "w": 618,
+   "h": 388
+  },
+  {
+   "id": "Techcombank/style",
+   "bank": "Techcombank",
+   "name": "Techcombank Style",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Techcombank/style.webp",
+   "w": 618,
+   "h": 397
+  },
+  {
+   "id": "Techcombank/tin-dungthe-thanh-toantechcombank-oneu",
+   "bank": "Techcombank",
+   "name": "Techcombank Tín Dụngthẻ Thanh Toántechcombank Oneu",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Techcombank/tin-dungthe-thanh-toantechcombank-oneu.webp",
+   "w": 729,
+   "h": 475
+  },
+  {
+   "id": "Techcombank/vietnam-airlines-techcombank-visa-classic",
+   "bank": "Techcombank",
+   "name": "Techcombank Vietnam Airlines Techcombank Visa Classic",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/vietnam-airlines-techcombank-visa-classic.webp",
+   "w": 619,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/vietnam-airlines-techcombank-visa-gold",
+   "bank": "Techcombank",
+   "name": "Techcombank Vietnam Airlines Techcombank Visa Gold",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/vietnam-airlines-techcombank-visa-gold.webp",
+   "w": 619,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/vietnam-airlines-techcombank-visa-platinum",
+   "bank": "Techcombank",
+   "name": "Techcombank Vietnam Airlines Techcombank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/vietnam-airlines-techcombank-visa-platinum.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/vietnam-airlines-visa-platinum-priority",
+   "bank": "Techcombank",
+   "name": "Techcombank Vietnam Airlines Visa Platinum Priority",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/vietnam-airlines-visa-platinum-priority.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/visa-classic",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Classic",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/visa-classic.webp",
+   "w": 618,
+   "h": 389
+  },
+  {
+   "id": "Techcombank/visa-classic-debit",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Classic Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Techcombank/visa-classic-debit.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/visa-eco-debit",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Eco Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Techcombank/visa-eco-debit.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/visa-gold-debit",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Gold Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Techcombank/visa-gold-debit.webp",
+   "w": 618,
+   "h": 390
+  },
+  {
+   "id": "Techcombank/visa-infinite",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Infinite",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/visa-infinite.webp",
+   "w": 390,
+   "h": 247
+  },
+  {
+   "id": "Techcombank/visa-platinum-everyday",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Platinum Everyday",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/visa-platinum-everyday.webp",
+   "w": 619,
+   "h": 398
+  },
+  {
+   "id": "Techcombank/visa-seller",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Seller",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/visa-seller.webp",
+   "w": 464,
+   "h": 293
+  },
+  {
+   "id": "Techcombank/visa-signature",
+   "bank": "Techcombank",
+   "name": "Techcombank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Techcombank/visa-signature.webp",
+   "w": 611,
+   "h": 386
+  },
+  {
+   "id": "TPBank/atm-smart-247",
+   "bank": "TPBank",
+   "name": "TPBank ATM Smart 247",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/TPBank/atm-smart-247.webp",
+   "w": 800,
+   "h": 510
+  },
+  {
+   "id": "TPBank/evo-visa-gold",
+   "bank": "TPBank",
+   "name": "TPBank Evo Visa Gold",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/evo-visa-gold.webp",
+   "w": 208,
+   "h": 132
+  },
+  {
+   "id": "TPBank/flash-2in1",
+   "bank": "TPBank",
+   "name": "TPBank Flash 2in1",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/TPBank/flash-2in1.webp",
+   "w": 723,
+   "h": 459
+  },
+  {
+   "id": "TPBank/jcb-cashback",
+   "bank": "TPBank",
+   "name": "TPBank JCB Cashback",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/TPBank/jcb-cashback.webp",
+   "w": 270,
+   "h": 170
+  },
+  {
+   "id": "TPBank/jcb-rewards",
+   "bank": "TPBank",
+   "name": "TPBank JCB Rewards",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/TPBank/jcb-rewards.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "TPBank/mastercard-fest",
+   "bank": "TPBank",
+   "name": "TPBank Mastercard Fest",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/TPBank/mastercard-fest.webp",
+   "w": 650,
+   "h": 406
+  },
+  {
+   "id": "TPBank/mobifone-visa-platinum",
+   "bank": "TPBank",
+   "name": "TPBank Mobifone Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/mobifone-visa-platinum.webp",
+   "w": 800,
+   "h": 508
+  },
+  {
+   "id": "TPBank/momo-visa-platinum",
+   "bank": "TPBank",
+   "name": "TPBank Momo Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/momo-visa-platinum.webp",
+   "w": 400,
+   "h": 252
+  },
+  {
+   "id": "TPBank/vietnam-airlines-visa-platinum",
+   "bank": "TPBank",
+   "name": "TPBank Vietnam Airlines Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/vietnam-airlines-visa-platinum.webp",
+   "w": 400,
+   "h": 254
+  },
+  {
+   "id": "TPBank/visa-cashfree",
+   "bank": "TPBank",
+   "name": "TPBank Visa Cashfree",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/visa-cashfree.webp",
+   "w": 800,
+   "h": 502
+  },
+  {
+   "id": "TPBank/visa-classic",
+   "bank": "TPBank",
+   "name": "TPBank Visa Classic",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/visa-classic.webp",
+   "w": 347,
+   "h": 219
+  },
+  {
+   "id": "TPBank/visa-free-go",
+   "bank": "TPBank",
+   "name": "TPBank Visa Free Go",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/visa-free-go.webp",
+   "w": 347,
+   "h": 219
+  },
+  {
+   "id": "TPBank/visa-gold",
+   "bank": "TPBank",
+   "name": "TPBank Visa Gold",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/visa-gold.webp",
+   "w": 800,
+   "h": 508
+  },
+  {
+   "id": "TPBank/visa-mplus",
+   "bank": "TPBank",
+   "name": "TPBank Visa Mplus",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/visa-mplus.webp",
+   "w": 800,
+   "h": 502
+  },
+  {
+   "id": "TPBank/visa-platinum",
+   "bank": "TPBank",
+   "name": "TPBank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/visa-platinum.webp",
+   "w": 725,
+   "h": 460
+  },
+  {
+   "id": "TPBank/visa-signature",
+   "bank": "TPBank",
+   "name": "TPBank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/TPBank/visa-signature.webp",
+   "w": 561,
+   "h": 354
+  },
+  {
+   "id": "TPBank/world-mastercard",
+   "bank": "TPBank",
+   "name": "TPBank World Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/TPBank/world-mastercard.webp",
+   "w": 346,
+   "h": 223
+  },
+  {
+   "id": "UOB/cashback-mastercard",
+   "bank": "UOB",
+   "name": "UOB Cashback Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/UOB/cashback-mastercard.webp",
+   "w": 654,
+   "h": 412
+  },
+  {
+   "id": "UOB/lazada",
+   "bank": "UOB",
+   "name": "UOB Lazada",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/UOB/lazada.webp",
+   "w": 416,
+   "h": 262
+  },
+  {
+   "id": "UOB/lazada-uob",
+   "bank": "UOB",
+   "name": "UOB Lazada UOB",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/UOB/lazada-uob.webp",
+   "w": 720,
+   "h": 480
+  },
+  {
+   "id": "UOB/one",
+   "bank": "UOB",
+   "name": "UOB One",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/UOB/one.webp",
+   "w": 720,
+   "h": 480
+  },
+  {
+   "id": "UOB/one-mastercard-world",
+   "bank": "UOB",
+   "name": "UOB One Mastercard World",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/UOB/one-mastercard-world.webp",
+   "w": 800,
+   "h": 507
+  },
+  {
+   "id": "UOB/prvi-miles",
+   "bank": "UOB",
+   "name": "UOB Prvi Miles",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/UOB/prvi-miles.webp",
+   "w": 720,
+   "h": 480
+  },
+  {
+   "id": "UOB/world",
+   "bank": "UOB",
+   "name": "UOB World",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/UOB/world.webp",
+   "w": 720,
+   "h": 480
+  },
+  {
+   "id": "VIB/business-card",
+   "bank": "VIB",
+   "name": "VIB Business Card",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/business-card.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/cash-back",
+   "bank": "VIB",
+   "name": "VIB Cash Back",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/cash-back.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/family-link",
+   "bank": "VIB",
+   "name": "VIB Family Link",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/family-link.webp",
+   "w": 400,
+   "h": 252
+  },
+  {
+   "id": "VIB/financial-free",
+   "bank": "VIB",
+   "name": "VIB Financial Free",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/financial-free.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/ivy-card",
+   "bank": "VIB",
+   "name": "VIB Ivy Card",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/ivy-card.webp",
+   "w": 600,
+   "h": 378
+  },
+  {
+   "id": "VIB/lazcard",
+   "bank": "VIB",
+   "name": "VIB Lazcard",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/lazcard.webp",
+   "w": 600,
+   "h": 378
+  },
+  {
+   "id": "VIB/mastercard-online-plus-2in1",
+   "bank": "VIB",
+   "name": "VIB Mastercard Online Plus 2in1",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VIB/mastercard-online-plus-2in1.webp",
+   "w": 400,
+   "h": 252
+  },
+  {
+   "id": "VIB/maxcard-visa-platinum",
+   "bank": "VIB",
+   "name": "VIB Maxcard Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VIB/maxcard-visa-platinum.webp",
+   "w": 600,
+   "h": 378
+  },
+  {
+   "id": "VIB/one-card",
+   "bank": "VIB",
+   "name": "VIB One Card",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/one-card.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/premier-boundless",
+   "bank": "VIB",
+   "name": "VIB Premier Boundless",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/premier-boundless.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/premier-visa-signature-metal-limited-edition",
+   "bank": "VIB",
+   "name": "VIB Premier Visa Signature Metal Limited Edition",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VIB/premier-visa-signature-metal-limited-edition.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/rewards-unlimited",
+   "bank": "VIB",
+   "name": "VIB Rewards Unlimited",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/rewards-unlimited.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/super-card-american-express-platinum",
+   "bank": "VIB",
+   "name": "VIB Super Card American Express Platinum",
+   "network": "amex",
+   "type": "credit",
+   "src": "/cards/VIB/super-card-american-express-platinum.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/travel-e-lite",
+   "bank": "VIB",
+   "name": "VIB Travel E Lite",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/travel-e-lite.webp",
+   "w": 400,
+   "h": 253
+  },
+  {
+   "id": "VIB/travel-elite-kim-loa-i",
+   "bank": "VIB",
+   "name": "VIB Travel Elite Kim Loa I",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VIB/travel-elite-kim-loa-i.webp",
+   "w": 599,
+   "h": 381
+  },
+  {
+   "id": "VietCapitalBank/digimi",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Digimi",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/digimi.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "VietCapitalBank/jcb-7-eleven",
+   "bank": "VietCapitalBank",
+   "name": "BVBank JCB 7 Eleven",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/jcb-7-eleven.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "VietCapitalBank/jcb-cheer",
+   "bank": "VietCapitalBank",
+   "name": "BVBank JCB Cheer",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/jcb-cheer.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "VietCapitalBank/jcb-corporate",
+   "bank": "VietCapitalBank",
+   "name": "BVBank JCB Corporate",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/jcb-corporate.webp",
+   "w": 800,
+   "h": 503
+  },
+  {
+   "id": "VietCapitalBank/jcb-discovery",
+   "bank": "VietCapitalBank",
+   "name": "BVBank JCB Discovery",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/jcb-discovery.webp",
+   "w": 800,
+   "h": 502
+  },
+  {
+   "id": "VietCapitalBank/jcb-ms",
+   "bank": "VietCapitalBank",
+   "name": "BVBank JCB Ms",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/jcb-ms.webp",
+   "w": 662,
+   "h": 418
+  },
+  {
+   "id": "VietCapitalBank/jcb-platinum-sense",
+   "bank": "VietCapitalBank",
+   "name": "BVBank JCB Platinum Sense",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/jcb-platinum-sense.webp",
+   "w": 505,
+   "h": 319
+  },
+  {
+   "id": "VietCapitalBank/napas-shopon",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Napas Shopon",
+   "network": "napas",
+   "type": "debit",
+   "src": "/cards/VietCapitalBank/napas-shopon.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "VietCapitalBank/visa-corporate",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Visa Corporate",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/visa-corporate.webp",
+   "w": 800,
+   "h": 506
+  },
+  {
+   "id": "VietCapitalBank/visa-debit",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Visa Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/VietCapitalBank/visa-debit.webp",
+   "w": 400,
+   "h": 252
+  },
+  {
+   "id": "VietCapitalBank/visa-instyle",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Visa Instyle",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/visa-instyle.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "VietCapitalBank/visa-joy",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Visa Joy",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/visa-joy.webp",
+   "w": 800,
+   "h": 508
+  },
+  {
+   "id": "VietCapitalBank/visa-lifestyle",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Visa Lifestyle",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/visa-lifestyle.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "VietCapitalBank/visa-ms",
+   "bank": "VietCapitalBank",
+   "name": "BVBank Visa Ms",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietCapitalBank/visa-ms.webp",
+   "w": 662,
+   "h": 418
+  },
+  {
+   "id": "Vietcombank/american-express-corporate",
+   "bank": "Vietcombank",
+   "name": "Vietcombank American Express Corporate",
+   "network": "amex",
+   "type": "credit",
+   "src": "/cards/Vietcombank/american-express-corporate.webp",
+   "w": 800,
+   "h": 508
+  },
+  {
+   "id": "Vietcombank/american-express-corporate-gold",
+   "bank": "Vietcombank",
+   "name": "Vietcombank American Express Corporate Gold",
+   "network": "amex",
+   "type": "credit",
+   "src": "/cards/Vietcombank/american-express-corporate-gold.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "Vietcombank/cashplus-platinum-american-express",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Cashplus Platinum American Express",
+   "network": "amex",
+   "type": "credit",
+   "src": "/cards/Vietcombank/cashplus-platinum-american-express.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/connect24",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Connect24",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Vietcombank/connect24.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/digicard",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Digicard",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Vietcombank/digicard.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/jcb",
+   "bank": "Vietcombank",
+   "name": "Vietcombank JCB",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Vietcombank/jcb.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/jcb-platinum",
+   "bank": "Vietcombank",
+   "name": "Vietcombank JCB Platinum",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/Vietcombank/jcb-platinum.webp",
+   "w": 800,
+   "h": 508
+  },
+  {
+   "id": "Vietcombank/mastercard",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/Vietcombank/mastercard.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/mastercard-debit",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Mastercard Debit",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/Vietcombank/mastercard-debit.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/platinum-vibe",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Platinum Vibe",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Vietcombank/platinum-vibe.webp",
+   "w": 592,
+   "h": 374
+  },
+  {
+   "id": "Vietcombank/priority",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Priority",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Vietcombank/priority.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/vibe-platinum",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Vibe Platinum",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/Vietcombank/vibe-platinum.webp",
+   "w": 592,
+   "h": 374
+  },
+  {
+   "id": "Vietcombank/vietnam-airlines-american-express",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Vietnam Airlines American Express",
+   "network": "amex",
+   "type": "credit",
+   "src": "/cards/Vietcombank/vietnam-airlines-american-express.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/vietnam-airlines-platinum-american-express",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Vietnam Airlines Platinum American Express",
+   "network": "amex",
+   "type": "credit",
+   "src": "/cards/Vietcombank/vietnam-airlines-platinum-american-express.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/visa-business",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Business",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Vietcombank/visa-business.webp",
+   "w": 800,
+   "h": 507
+  },
+  {
+   "id": "Vietcombank/visa-business-debit",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Business Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Vietcombank/visa-business-debit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Vietcombank/visa-corporate",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Corporate",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Vietcombank/visa-corporate.webp",
+   "w": 800,
+   "h": 508
+  },
+  {
+   "id": "Vietcombank/visa-hanoi-metro-mego",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Hanoi Metro Mego",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Vietcombank/visa-hanoi-metro-mego.webp",
+   "w": 800,
+   "h": 489
+  },
+  {
+   "id": "Vietcombank/visa-platinum",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Vietcombank/visa-platinum.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/visa-platinum-debit",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Platinum Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/Vietcombank/visa-platinum-debit.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "Vietcombank/visa-signature",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Vietcombank/visa-signature.webp",
+   "w": 282,
+   "h": 179
+  },
+  {
+   "id": "Vietcombank/visa-snack",
+   "bank": "Vietcombank",
+   "name": "Vietcombank Visa Snack",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Vietcombank/visa-snack.webp",
+   "w": 800,
+   "h": 478
+  },
+  {
+   "id": "VietinBank/credit-2card",
+   "bank": "VietinBank",
+   "name": "VietinBank Credit 2card",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VietinBank/credit-2card.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/jcb-credit-platinum",
+   "bank": "VietinBank",
+   "name": "VietinBank JCB Credit Platinum",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietinBank/jcb-credit-platinum.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/jcb-debit-platinum-phong-ca-ch",
+   "bank": "VietinBank",
+   "name": "VietinBank JCB Debit Platinum Phong Ca Ch",
+   "network": "jcb",
+   "type": "debit",
+   "src": "/cards/VietinBank/jcb-debit-platinum-phong-ca-ch.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/jcb-debit-platinum-truye-n-tho-ng",
+   "bank": "VietinBank",
+   "name": "VietinBank JCB Debit Platinum Truye N Tho Ng",
+   "network": "jcb",
+   "type": "debit",
+   "src": "/cards/VietinBank/jcb-debit-platinum-truye-n-tho-ng.webp",
+   "w": 638,
+   "h": 401
+  },
+  {
+   "id": "VietinBank/jcb-ultimate-saviy",
+   "bank": "VietinBank",
+   "name": "VietinBank JCB Ultimate Saviy",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietinBank/jcb-ultimate-saviy.webp",
+   "w": 639,
+   "h": 402
+  },
+  {
+   "id": "VietinBank/jcb-ultimate-vietnamairlines",
+   "bank": "VietinBank",
+   "name": "VietinBank JCB Ultimate Vietnamairlines",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VietinBank/jcb-ultimate-vietnamairlines.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "VietinBank/mastercard-credit-platinum-eliv3",
+   "bank": "VietinBank",
+   "name": "VietinBank Mastercard Credit Platinum Eliv3",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VietinBank/mastercard-credit-platinum-eliv3.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/mastercard-platinum-cashback",
+   "bank": "VietinBank",
+   "name": "VietinBank Mastercard Platinum Cashback",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VietinBank/mastercard-platinum-cashback.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "VietinBank/mastercard-platinum-sendo",
+   "bank": "VietinBank",
+   "name": "VietinBank Mastercard Platinum Sendo",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VietinBank/mastercard-platinum-sendo.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/mastercard-premium-platinum",
+   "bank": "VietinBank",
+   "name": "VietinBank Mastercard Premium Platinum",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VietinBank/mastercard-premium-platinum.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/the-ti-n-du-ng-no-i-di-a-tre-connect",
+   "bank": "VietinBank",
+   "name": "VietinBank The Ti N Du Ng No I Di A Tre Connect",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VietinBank/the-ti-n-du-ng-no-i-di-a-tre-connect.webp",
+   "w": 427,
+   "h": 269
+  },
+  {
+   "id": "VietinBank/unionpay-credit-platinum-upi",
+   "bank": "VietinBank",
+   "name": "VietinBank Unionpay Credit Platinum Upi",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VietinBank/unionpay-credit-platinum-upi.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/unionpay-debit-platinum-upi",
+   "bank": "VietinBank",
+   "name": "VietinBank Unionpay Debit Platinum Upi",
+   "network": "",
+   "type": "debit",
+   "src": "/cards/VietinBank/unionpay-debit-platinum-upi.webp",
+   "w": 640,
+   "h": 403
+  },
+  {
+   "id": "VietinBank/visa-credit-platinum",
+   "bank": "VietinBank",
+   "name": "VietinBank Visa Credit Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietinBank/visa-credit-platinum.webp",
+   "w": 639,
+   "h": 404
+  },
+  {
+   "id": "VietinBank/visa-platinum-cashback",
+   "bank": "VietinBank",
+   "name": "VietinBank Visa Platinum Cashback",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietinBank/visa-platinum-cashback.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "VietinBank/visa-saigon-co-op-platinum",
+   "bank": "VietinBank",
+   "name": "VietinBank Visa Saigon Co Op Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietinBank/visa-saigon-co-op-platinum.webp",
+   "w": 640,
+   "h": 404
+  },
+  {
+   "id": "VietinBank/visa-signature",
+   "bank": "VietinBank",
+   "name": "VietinBank Visa Signature",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VietinBank/visa-signature.webp",
+   "w": 639,
+   "h": 404
+  },
+  {
+   "id": "VPBank/commcredit",
+   "bank": "VPBank",
+   "name": "VPBank Commcredit",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VPBank/commcredit.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "VPBank/diamond-world",
+   "bank": "VPBank",
+   "name": "VPBank Diamond World",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VPBank/diamond-world.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "VPBank/diamond-world-lady",
+   "bank": "VPBank",
+   "name": "VPBank Diamond World Lady",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VPBank/diamond-world-lady.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "VPBank/flex-card",
+   "bank": "VPBank",
+   "name": "VPBank Flex Card",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VPBank/flex-card.webp",
+   "w": 800,
+   "h": 491
+  },
+  {
+   "id": "VPBank/flex-mastercard",
+   "bank": "VPBank",
+   "name": "VPBank Flex Mastercard",
+   "network": "mastercard",
+   "type": "debit",
+   "src": "/cards/VPBank/flex-mastercard.webp",
+   "w": 634,
+   "h": 400
+  },
+  {
+   "id": "VPBank/gameon-mastercard",
+   "bank": "VPBank",
+   "name": "VPBank Gameon Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VPBank/gameon-mastercard.webp",
+   "w": 331,
+   "h": 209
+  },
+  {
+   "id": "VPBank/mwg-mastercard-credit",
+   "bank": "VPBank",
+   "name": "VPBank MWG Mastercard Credit",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VPBank/mwg-mastercard-credit.webp",
+   "w": 468,
+   "h": 295
+  },
+  {
+   "id": "VPBank/private-visa-infinite",
+   "bank": "VPBank",
+   "name": "VPBank Private Visa Infinite",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VPBank/private-visa-infinite.webp",
+   "w": 734,
+   "h": 462
+  },
+  {
+   "id": "VPBank/s-rewards-mastercard",
+   "bank": "VPBank",
+   "name": "VPBank S Rewards Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VPBank/s-rewards-mastercard.webp",
+   "w": 384,
+   "h": 242
+  },
+  {
+   "id": "VPBank/step-up-mastercard",
+   "bank": "VPBank",
+   "name": "VPBank Step Up Mastercard",
+   "network": "mastercard",
+   "type": "credit",
+   "src": "/cards/VPBank/step-up-mastercard.webp",
+   "w": 624,
+   "h": 396
+  },
+  {
+   "id": "VPBank/super-shopee",
+   "bank": "VPBank",
+   "name": "VPBank Super Shopee",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VPBank/super-shopee.webp",
+   "w": 373,
+   "h": 236
+  },
+  {
+   "id": "VPBank/unionpay-freeways",
+   "bank": "VPBank",
+   "name": "VPBank Unionpay Freeways",
+   "network": "",
+   "type": "credit",
+   "src": "/cards/VPBank/unionpay-freeways.webp",
+   "w": 381,
+   "h": 241
+  },
+  {
+   "id": "VPBank/visa-platinum-shopee",
+   "bank": "VPBank",
+   "name": "VPBank Visa Platinum Shopee",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VPBank/visa-platinum-shopee.webp",
+   "w": 650,
+   "h": 414
+  },
+  {
+   "id": "VPBank/visa-prime-platinum",
+   "bank": "VPBank",
+   "name": "VPBank Visa Prime Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VPBank/visa-prime-platinum.webp",
+   "w": 800,
+   "h": 522
+  },
+  {
+   "id": "VPBank/visa-shopee-debit",
+   "bank": "VPBank",
+   "name": "VPBank Visa Shopee Debit",
+   "network": "visa",
+   "type": "debit",
+   "src": "/cards/VPBank/visa-shopee-debit.webp",
+   "w": 800,
+   "h": 504
+  },
+  {
+   "id": "VPBank/visa-signature-travel-miles",
+   "bank": "VPBank",
+   "name": "VPBank Visa Signature Travel Miles",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VPBank/visa-signature-travel-miles.webp",
+   "w": 800,
+   "h": 515
+  },
+  {
+   "id": "VPBank/yojo-visa-platinum",
+   "bank": "VPBank",
+   "name": "VPBank Yojo Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/VPBank/yojo-visa-platinum.webp",
+   "w": 611,
+   "h": 389
+  },
+  {
+   "id": "VPBank/z-jcb",
+   "bank": "VPBank",
+   "name": "VPBank Z JCB",
+   "network": "jcb",
+   "type": "credit",
+   "src": "/cards/VPBank/z-jcb.webp",
+   "w": 376,
+   "h": 239
+  },
+  {
+   "id": "Woori/bank-visa-platinum-lux-point",
+   "bank": "Woori",
+   "name": "Woori Bank Bank Visa Platinum Lux Point",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Woori/bank-visa-platinum-lux-point.webp",
+   "w": 503,
+   "h": 316
+  },
+  {
+   "id": "Woori/napas",
+   "bank": "Woori",
+   "name": "Woori Bank Napas",
+   "network": "napas",
+   "type": "debit",
+   "src": "/cards/Woori/napas.webp",
+   "w": 505,
+   "h": 318
+  },
+  {
+   "id": "Woori/visa",
+   "bank": "Woori",
+   "name": "Woori Bank Visa",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Woori/visa.webp",
+   "w": 217,
+   "h": 134
+  },
+  {
+   "id": "Woori/visa-classic-vv-plus-point",
+   "bank": "Woori",
+   "name": "Woori Bank Visa Classic Vv Plus Point",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Woori/visa-classic-vv-plus-point.webp",
+   "w": 502,
+   "h": 316
+  },
+  {
+   "id": "Woori/visa-gold-vv-hype-point",
+   "bank": "Woori",
+   "name": "Woori Bank Visa Gold Vv Hype Point",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Woori/visa-gold-vv-hype-point.webp",
+   "w": 502,
+   "h": 315
+  },
+  {
+   "id": "Woori/visa-platinum",
+   "bank": "Woori",
+   "name": "Woori Bank Visa Platinum",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Woori/visa-platinum.webp",
+   "w": 203,
+   "h": 129
+  },
+  {
+   "id": "Woori/visa-sinh-vie-n",
+   "bank": "Woori",
+   "name": "Woori Bank Visa Sinh Vie N",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Woori/visa-sinh-vie-n.webp",
+   "w": 800,
+   "h": 505
+  },
+  {
+   "id": "Woori/visa-z",
+   "bank": "Woori",
+   "name": "Woori Bank Visa Z",
+   "network": "visa",
+   "type": "credit",
+   "src": "/cards/Woori/visa-z.webp",
+   "w": 503,
+   "h": 315
+  }
+ ]
+}

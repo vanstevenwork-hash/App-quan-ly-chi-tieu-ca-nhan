@@ -26,6 +26,8 @@ export interface Card {
     // "chia bill" receipt, never shown in the regular card list UI.
     receiveAccountNumber: string;
     receiveQrImage: string;
+    // Card artwork: bundled design (/cards/...) or own upload; '' = colour only
+    cardImage?: string;
     color: string;
     bankColor: string;
     isDefault: boolean;
@@ -60,6 +62,7 @@ export interface CardFormData {
     sharedLimit: boolean;
     receiveAccountNumber: string;
     receiveQrImage: string;
+    cardImage: string;
     color: string;
     bankColor: string;
     isDefault: boolean;

@@ -1,5 +1,6 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
+import { cardArtBackground, ART_TEXT } from '@/lib/cardArt';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
@@ -49,6 +50,8 @@ const CARD_GRADIENTS = [
 ];
 
 function getCardGradient(card: Card, idx: number): string {
+    const art = cardArtBackground(card.cardImage);
+    if (art) return art;
     if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
     // Single vibrant brand colour (avoids the muddy two-hue blend).
     const base = (card.bankColor && card.bankColor !== '#1B4FD8') ? card.bankColor
@@ -124,7 +127,7 @@ function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDeta
 }) {
     const logoOf = useBankLogo();
     const gradient = getCardGradient(card, idx);
-    const ts = cardTextStyle(card.color);
+    const ts = cardArtBackground(card.cardImage) ? ART_TEXT : cardTextStyle(card.color);
     const isPooled = card.sharedLimit && (card.sharedGroupSize ?? 1) > 1;
     const effLimit = isPooled ? (card.effectiveCreditLimit ?? card.creditLimit) : card.creditLimit;
     const effBalance = isPooled ? (card.groupBalance ?? card.balance) : card.balance;

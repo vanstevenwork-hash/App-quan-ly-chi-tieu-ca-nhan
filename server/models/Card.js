@@ -25,6 +25,15 @@ const cardSchema = new mongoose.Schema({
     receiveAccountNumber: { type: String, default: '' },
     receiveQrImage: { type: String, default: '' },
     color: { type: String, default: '#6C63FF' },
+    // Card artwork: a bundled design ("/cards/<bank>/<slug>.webp", served by
+    // the client) or the user's own upload on Cloudinary. '' = colour only.
+    cardImage: {
+        type: String, default: '', maxlength: 500,
+        validate: {
+            validator: v => !v || /^(\/cards\/[\w./-]+\.webp|https:\/\/res\.cloudinary\.com\/[\w.\-/%]+)$/.test(v) && !v.includes('..'),
+            message: 'Ảnh thẻ không hợp lệ',
+        },
+    },
     bankColor: { type: String, default: '#1B4FD8' },
     isDefault: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

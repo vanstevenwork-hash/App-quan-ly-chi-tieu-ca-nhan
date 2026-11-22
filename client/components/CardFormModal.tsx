@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn, formatNumber } from '@/lib/utils';
@@ -13,6 +13,9 @@ import { toast } from 'sonner';
 import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 import Image from 'next/image';
 import ImageUpload from '@/components/ImageUpload';
+import CardDesignPicker from '@/components/cards/CardDesignPicker';
+import { cardArtBackground } from '@/lib/cardArt';
+import type { CardDesign } from '@/lib/cardCatalog';
 
 const CARD_TYPES = [
     { value: 'credit', label: 'Thẻ tín dụng', iconType: 'creditCard', color: '#6C63FF', desc: 'Thanh toán sau, có hạn mức' },
@@ -61,7 +64,7 @@ const EMPTY: CardFormData = {
     bankName: '', bankShortName: '', cardType: 'debit',
     cardNumber: '', cardHolder: '', cardNetwork: '', balance: 0, creditLimit: 0, sharedLimit: false,
     receiveAccountNumber: '', receiveQrImage: '',
-    color: '#6C63FF', bankColor: '#1B4FD8', isDefault: false,
+    color: '#6C63FF', bankColor: '#1B4FD8', cardImage: '', isDefault: false,
     interestRate: 0, depositDate: '', maturityDate: '', term: 12,
     paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, cashbackMinSpend: 0, annualFee: 0, autoDebit: true, expirationDate: '', note: '',
 };
@@ -97,6 +100,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                     receiveAccountNumber: editCard.receiveAccountNumber || '',
                     receiveQrImage: editCard.receiveQrImage || '',
                     color: editCard.color,
+                    cardImage: editCard.cardImage || '',
                     bankColor: editCard.bankColor,
                     isDefault: editCard.isDefault,
                     interestRate: editCard.interestRate || 0,
@@ -133,6 +137,27 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
         // Auto-fill card label with SHORT name (e.g. VIB, VCB)
         setCardLabel(prev => (prev === '' || prev === form.bankName) ? short : prev);
         set('bankName', name);
+        // A bundled design belongs to one bank — clear it when the bank changes
+        // (the user's own upload is kept).
+        if (short !== form.bankShortName) {
+            setForm(prev => (prev.cardImage.startsWith('/cards/') ? { ...prev, cardImage: '' } : prev));
+        }
+    };
+
+    // Name/network filled in from the last picked design — only overwritten by
+    // the next pick while the user hasn't typed their own value.
+    const autoFromDesign = useRef<{ label: string; network: string }>({ label: '', network: '' });
+    const pickDesign = (src: string, design: CardDesign | null) => {
+        set('cardImage', src);
+        if (!design) return;
+        const auto = autoFromDesign.current;
+        const label = cardLabel.trim();
+        if (!label || label === form.bankShortName || label === form.bankName || label === auto.label) {
+            setCardLabel(design.name);
+            set('bankName', design.name);
+        }
+        if (design.network && (!form.cardNetwork || form.cardNetwork === auto.network)) set('cardNetwork', design.network);
+        autoFromDesign.current = { label: design.name, network: design.network };
     };
 
     const handleCardLabelChange = (val: string) => {
@@ -236,15 +261,18 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
         if (form.cardType === 'crypto') previewLogo = CRYPTOS.find(c => c.short === form.bankShortName)?.logo;
     }
 
-    const textCol = cardTextColor(form.color);
-    const textOpacity = cardTextOpacity(form.color);
-    const textSubtle = cardTextSubtle(form.color);
-    const isBlack = form.color === '#111111';
-    const isWhite = form.color === '#FFFFFF';
+    // Artwork wins over colour; text on artwork is always light with a shadow.
+    const art = cardArtBackground(form.cardImage);
+    const ART_TXT = 'text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]';
+    const textCol = art ? ART_TXT : cardTextColor(form.color);
+    const textOpacity = art ? ART_TXT : cardTextOpacity(form.color);
+    const textSubtle = art ? 'text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.6)]' : cardTextSubtle(form.color);
+    const isBlack = !art && form.color === '#111111';
+    const isWhite = !art && form.color === '#FFFFFF';
 
-    const cardBg = (isBlack || isWhite)
+    const cardBg = art || ((isBlack || isWhite)
         ? form.color
-        : `linear-gradient(135deg, ${form.bankColor}, ${form.color})`;
+        : `linear-gradient(135deg, ${form.bankColor}, ${form.color})`);
 
     const renderNetworkLogo = (network?: string) => {
         switch (network) {
@@ -298,12 +326,12 @@ data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=close
                     {/* PREVIEW CARD */}
                     {!isSavings && (
                         (isCredit || form.cardType === 'debit') ? (
-                            <div className="w-full h-35 p-2 rounded-xl relative flex flex-col justify-between transition-colors shadow-sm overflow-hidden"
+                            <div className={cn('w-full p-2 rounded-xl relative flex flex-col justify-between transition-colors shadow-sm overflow-hidden', art ? 'aspect-[1.586] p-3' : 'h-35')}
                                 style={{
                                     background: cardBg,
                                     border: isWhite ? '1px solid #E2E8F0' : undefined,
                                 }}>
-                                <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10" />
+                                {!art && <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10" />}
 
                                 <div className="flex justify-between items-start mb-2 relative z-10">
                                     <div className="flex flex-col gap-0.5">
@@ -439,6 +467,17 @@ data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=close
                             )}
                         </div>
                     </div>
+
+                    {/* ─── Card artwork (credit / debit) ─── */}
+                    {(isCredit || form.cardType === 'debit') && isBankSelected && (
+                        <CardDesignPicker
+                            bankShortName={form.bankShortName}
+                            bankName={form.bankName}
+                            cardType={form.cardType}
+                            value={form.cardImage}
+                            onChange={pickDesign}
+                        />
+                    )}
 
                     {/* ─── Card label / name (hidden for savings) ─── */}
                     <div className="flex flex-col gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
@@ -759,7 +798,9 @@ data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=close
                             {/* Color picker — enlarged with white + black options */}
                             {!isSavings && (
                                 <div>
-                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-3">Màu hiển thị</p>
+                                    <p className="text-sm font-bold text-[#000000] dark:text-white mb-3">
+                                        Màu hiển thị {form.cardImage && <span className="text-xs font-normal text-slate-400">(dùng khi bỏ ảnh thẻ)</span>}
+                                    </p>
                                     <div className="flex gap-2.5 flex-wrap">
                                         {/* Standard colors */}
                                         {CARD_COLORS.map(c => (

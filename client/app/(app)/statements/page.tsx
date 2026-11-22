@@ -7,7 +7,7 @@ import { useBanks } from '@/hooks/useBanks';
 import PageHeader from '@/components/PageHeader';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { getBankLogo } from '@/lib/bankLogos';
-import { getDueThisCycle } from '@/lib/cardDue';
+import { getStatementAmount } from '@/lib/cardDue';
 import { getCardCycle, type CardCycle } from '@/lib/statement';
 import { cn, formatNumber } from '@/lib/utils';
 
@@ -23,7 +23,7 @@ const fmtShort = (n: number) => {
     return `${Math.round(n)}`;
 };
 
-interface Row { card: Card; cycle: CardCycle | null; due: number; }
+interface Row { card: Card; cycle: CardCycle | null; due: number; installment: number; estimated: boolean; }
 
 const urgency = (days: number) =>
     days <= 3 ? 'bg-red-50 text-red-600 dark:bg-red-900/25 dark:text-red-400'
@@ -59,10 +59,12 @@ export default function StatementsPage() {
             .map(card => {
                 const ok = card.statementDay > 0 && card.paymentDueDay > 0;
                 const cycle = ok ? getCardCycle(card.statementDay, card.paymentDueDay, now) : null;
-                const due = cycle?.dueIsForClosedStatement
-                    ? getDueThisCycle(card.balance, transactions as any[], card._id, card.statementDay)
-                    : 0;
-                return { card, cycle, due };
+                // Closed statement still due → its amount; otherwise estimate the
+                // next statement (new charges + installment periods billing on it).
+                const s = cycle
+                    ? getStatementAmount(card, transactions as any[], cycle, now)
+                    : { amount: 0, installment: 0, estimated: false };
+                return { card, cycle, due: s.amount, installment: s.installment, estimated: s.estimated };
             });
     }, [cards, transactions]);
 
@@ -74,6 +76,8 @@ export default function StatementsPage() {
 
     const upcoming = configured.filter(r => r.due > 0);
     const totalDue = upcoming.reduce((s, r) => s + r.due, 0);
+    const totalInstallment = upcoming.reduce((s, r) => s + r.installment, 0);
+    const totalEstimated = upcoming.filter(r => r.estimated).reduce((s, r) => s + r.due, 0);
     const nearest = upcoming[0];
 
     const bestToSwipe = useMemo(
@@ -115,8 +119,15 @@ export default function StatementsPage() {
             <div className="px-5 pt-3 space-y-4">
                 {/* ── Hero ─────────────────────────────────────── */}
                 <div className="rounded-2xl p-4 text-white shadow-lg" style={{ background: 'linear-gradient(135deg, #7C5CF0 0%, #5B3FD0 55%, #2E2A7A 100%)' }}>
-                    <p className="text-xs opacity-90">Cần thanh toán kỳ này</p>
+                    <p className="text-xs opacity-90">Cần thanh toán sắp tới</p>
                     <p className="text-2xl leading-tight font-bold mt-1 tracking-tight text-money">{fmt(totalDue)}₫</p>
+                    {(totalInstallment > 0 || totalEstimated > 0) && (
+                        <p className="text-[11px] opacity-85 mt-1">
+                            {totalInstallment > 0 && <>gồm {fmt(totalInstallment)}₫ trả góp</>}
+                            {totalInstallment > 0 && totalEstimated > 0 && ' · '}
+                            {totalEstimated > 0 && <>{fmt(totalEstimated)}₫ dự kiến (kỳ chưa chốt)</>}
+                        </p>
+                    )}
                     <div className="flex items-center gap-2 mt-2.5 text-xs opacity-95">
                         <CustomIcon type="calendar" size={16} tile={false} color="currentColor" className="w-4 h-4" />
                         <span>
@@ -202,11 +213,15 @@ export default function StatementsPage() {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{r.card.bankShortName} •••• {(r.card.cardNumber || '').slice(-4)}</p>
                                     <p className="text-[11px] text-slate-400 truncate">Chốt ngày {r.card.statementDay} · Hạn ngày {r.card.paymentDueDay}</p>
+                                    {r.installment > 0 && (
+                                        <p className="text-[11px] text-indigo-500 dark:text-indigo-400 font-medium truncate">gồm góp {fmtShort(r.installment)}₫</p>
+                                    )}
                                 </div>
                                 <div className="text-right flex-shrink-0">
                                     <p className={cn('text-[13px] font-bold text-money', r.due > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-300 dark:text-slate-600')}>
-                                        {r.due > 0 ? `${fmtShort(r.due)}₫` : '—'}
+                                        {r.due > 0 ? `${r.estimated ? '~' : ''}${fmtShort(r.due)}₫` : '—'}
                                     </p>
+                                    {r.due > 0 && r.estimated && <p className="text-[10px] text-slate-400">dự kiến</p>}
                                     <span className={cn('inline-block mt-0.5 text-[10px] font-semibold px-2 py-0.5 rounded-full', urgency(r.cycle.daysToDue))}>
                                         {r.cycle.daysToDue === 0 ? 'Hôm nay' : `${r.cycle.daysToDue} ngày`}
                                     </span>

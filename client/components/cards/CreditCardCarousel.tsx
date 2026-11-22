@@ -1,5 +1,6 @@
 'use client';
 import { memo, useEffect, useState } from 'react';
+import { cardArtBackground, safeCardImage, ART_TEXT } from '@/lib/cardArt';
 import { createPortal } from 'react-dom';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/CustomIcon';
@@ -46,7 +47,9 @@ const BANK_BRAND_COLORS: Record<string, string> = {
     CAKE: '#EF3E9E',
 };
 
-function getGradient(card: Card, _idx: number): string {
+function getGradient(card: Card, _idx: number, scrim: 'full' | 'light' | 'none' = 'full'): string {
+    const art = cardArtBackground(card.cardImage, scrim);
+    if (art) return art;
     if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
     // Prefer the real bank brand colour so each card looks like its bank.
     const brand = BANK_BRAND_COLORS[(card.bankShortName || '').toUpperCase()];
@@ -60,6 +63,9 @@ function getGradient(card: Card, _idx: number): string {
     // app's violet theme instead of a random blue/other gradient).
     return 'linear-gradient(135deg, #6757ff 0%, #8b5cf6 55%, #c084fc 100%)';
 }
+
+const hasArt = (card: Card) => !!safeCardImage(card.cardImage);
+const textStyleFor = (card: Card) => (hasArt(card) ? ART_TEXT : cardTextStyle(card.color));
 
 function cardTextStyle(color: string) {
     if (color === '#111111') return { text: '#F59E0B', subtext: '#FCD34D', border: '1px solid #374151' };
@@ -104,18 +110,19 @@ function CardFace({ card, idx, onEdit, onDelete, onPay, bankLogoUrl, dueThisCycl
     const hasDueThisCycle = dueThisCycle > 0;
     const showDue = hasDueThisCycle && dueDays !== null;
     const isUrgent = showDue && dueDays <= 5;
-    const ts = cardTextStyle(card.color);
+    const art = hasArt(card);
+    const ts = textStyleFor(card);
     const [logoError, setLogoError] = useState(false);
     const logoUrl = bankLogoUrl || getBankLogo(card.bankShortName, card.bankName);
     const showLogo = logoUrl && !logoError;
-    const isSolid = card.color === '#111111' || card.color === '#FFFFFF';
+    const isSolid = !art && (card.color === '#111111' || card.color === '#FFFFFF');
     const stop = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn(); };
 
     return (
         <div className="relative w-full h-full rounded-[22px] p-4 overflow-hidden isolate flex flex-col"
-            style={{ background: getGradient(card, idx), border: ts.border, boxShadow: GLASS_SHADOW }}>
+            style={{ background: getGradient(card, idx), border: ts.border, boxShadow: GLASS_SHADOW, textShadow: art ? ART_TEXT.shadow : undefined }}>
 
-            {!isSolid && (
+            {!isSolid && !art && (
                 <>
                     <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: GLASS_OVERLAY }} />
                     <div className="absolute -top-12 -left-8 w-44 h-44 rounded-full bg-white/25 blur-2xl pointer-events-none" />
@@ -221,12 +228,13 @@ function CardFace({ card, idx, onEdit, onDelete, onPay, bankLogoUrl, dueThisCycl
 
 // ── A peeking card in the deck: just the glass surface + its last-4 digits ──
 function CardBack({ card, idx }: { card: Card; idx: number }) {
-    const ts = cardTextStyle(card.color);
-    const isSolid = card.color === '#111111' || card.color === '#FFFFFF';
+    const art = hasArt(card);
+    const ts = textStyleFor(card);
+    const isSolid = !art && (card.color === '#111111' || card.color === '#FFFFFF');
     return (
         <div className="relative w-full h-full rounded-[22px] overflow-hidden"
-            style={{ background: getGradient(card, idx), border: ts.border, boxShadow: GLASS_SHADOW }}>
-            {!isSolid && <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: GLASS_OVERLAY }} />}
+            style={{ background: getGradient(card, idx, 'light'), border: ts.border, boxShadow: GLASS_SHADOW, textShadow: art ? ART_TEXT.shadow : undefined }}>
+            {!isSolid && !art && <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: GLASS_OVERLAY }} />}
             <div className="absolute inset-0 rounded-[22px] pointer-events-none" style={{ boxShadow: GLASS_RING }} />
             <span className="absolute top-4 right-4 text-sm font-bold tracking-[0.18em]" style={{ color: ts.text }}>{card.cardNumber}</span>
         </div>
@@ -241,6 +249,12 @@ const MINI_SHEEN = 'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, transpare
 function MiniCard({ card, idx }: { card: Card; idx: number }) {
     const net = networkLabel(card.cardNetwork);
     const isSolid = card.color === '#111111' || card.color === '#FFFFFF';
+    if (hasArt(card)) {
+        return (
+            <div className="w-[52px] h-[34px] rounded-[7px] overflow-hidden flex-shrink-0 shadow-sm ring-1 ring-black/[0.06]"
+                style={{ background: getGradient(card, idx, 'none') }} />
+        );
+    }
     return (
         <div className="w-[52px] h-[34px] rounded-[9px] overflow-hidden relative flex-shrink-0 shadow-sm ring-1 ring-black/[0.04]"
             style={{ background: getGradient(card, idx) }}>

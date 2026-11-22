@@ -3,3 +3,5 @@ node_modules
 dist
 build
 .next
+# Raw card-art dump — processed into client/public/cards by client/scripts/build-card-catalog.mjs
+/image/

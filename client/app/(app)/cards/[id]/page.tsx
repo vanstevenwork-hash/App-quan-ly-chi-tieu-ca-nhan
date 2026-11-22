@@ -1,5 +1,6 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
+import { cardArtBackground, ART_TEXT } from '@/lib/cardArt';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { CustomIcon } from '@/components/icons/CustomIcon';
@@ -36,6 +37,8 @@ const CARD_GRADIENTS = [
 ];
 
 function getGradient(card: Card): string {
+    const art = cardArtBackground(card.cardImage);
+    if (art) return art;
     if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
     if (card.bankColor && card.color && card.bankColor !== '#1B4FD8')
         return `linear-gradient(135deg, ${card.bankColor} 0%, ${card.color} 100%)`;
@@ -173,7 +176,8 @@ export default function CardDetailPage() {
     const usedPct = effLimit > 0 ? Math.min((effBalance / effLimit) * 100, 100) : 0;
     const dueDays = daysUntilPayment(card.paymentDueDay);
     const isUrgent = dueDays !== null && dueDays <= 5;
-    const ts = cardTextStyle(card.color);
+    const hasArt = !!cardArtBackground(card.cardImage);
+    const ts = hasArt ? ART_TEXT : cardTextStyle(card.color);
     const logoUrl = (apiBank as any)?.logo || getBankLogo(card.bankShortName, card.bankName);
     const isCredit = card.cardType === 'credit';
 
@@ -194,8 +198,8 @@ export default function CardDetailPage() {
             <div className="px-5 pt-4 space-y-5">
                 {/* ── Card visual ───────────────────────────────── */}
                 <div className="relative rounded-[20px] p-5 shadow-xl overflow-hidden"
-                    style={{ background: getGradient(card), border: ts.border }}>
-                    {card.color !== '#111111' && card.color !== '#FFFFFF' && (
+                    style={{ background: getGradient(card), border: ts.border, textShadow: hasArt ? ART_TEXT.shadow : undefined }}>
+                    {!hasArt && card.color !== '#111111' && card.color !== '#FFFFFF' && (
                         <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
                     )}
                     <div className="flex justify-between items-start mb-6">

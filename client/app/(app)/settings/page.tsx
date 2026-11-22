@@ -465,16 +465,20 @@ export default function SettingsPage() {
             </div>
 
             <div className="px-5 space-y-6">
-                {/* Shortcuts — one row of 5, like the mockup */}
+                {/* Shortcuts — one horizontally scrollable row (~4.5 tiles visible so
+                    the peeking tile hints there's more), edge-to-edge with snap. */}
                 <div>
                     <p className="text-muted-foreground text-xs font-bold uppercase tracking-[0.15em] mb-2.5 px-1">Quản lý nhanh</p>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div
+                        className="-mx-5 px-5 flex gap-2 overflow-x-auto snap-x snap-mandatory scroll-px-5 pb-2 [&::-webkit-scrollbar]:hidden"
+                        style={{ scrollbarWidth: 'none' }}
+                    >
                         {SHORTCUTS.map((item) => (
                             <button
                                 key={item.href}
                                 onClick={() => router.push(item.href)}
                                 className={cn(
-                                    'bg-card rounded-2xl px-1 py-3 flex flex-col items-center gap-2 active:scale-95 transition-all border border-transparent dark:border-slate-800/60',
+                                    'snap-start shrink-0 basis-[calc((100%-2rem)/4.5)] bg-card rounded-2xl px-1 py-3 flex flex-col items-center gap-2 active:scale-95 transition-all border border-transparent dark:border-slate-800/60',
                                     TILE_SHADOW
                                 )}
                             >
