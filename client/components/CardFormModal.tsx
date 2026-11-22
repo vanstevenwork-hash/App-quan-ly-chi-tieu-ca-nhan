@@ -13,7 +13,12 @@ import { toast } from 'sonner';
 import { E_WALLETS, CRYPTOS } from '@/lib/constants';
 import Image from 'next/image';
 import ImageUpload from '@/components/ImageUpload';
-import CardDesignPicker from '@/components/cards/CardDesignPicker';
+import dynamic from 'next/dynamic';
+// The picker carries the ~80KB design catalog — load it only when shown.
+const CardDesignPicker = dynamic(() => import('@/components/cards/CardDesignPicker'), {
+    ssr: false,
+    loading: () => <div className="h-[118px] rounded-xl bg-slate-50 dark:bg-slate-800/50 animate-pulse" />,
+});
 import { cardArtBackground } from '@/lib/cardArt';
 import type { CardDesign } from '@/lib/cardCatalog';
 

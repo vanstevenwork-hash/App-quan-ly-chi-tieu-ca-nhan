@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useEffect } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useBanks } from '@/hooks/useBanks';
 import PageHeader from '@/components/PageHeader';
@@ -160,15 +160,7 @@ export default function CardExpiryPage() {
                             return (
                                 <button key={r.card._id} onClick={() => router.push(`/cards/${r.card._id}`)}
                                     className="w-full flex items-center gap-3 p-3.5 bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm active:scale-[0.99] transition text-left">
-                                    {logo ? (
-                                        <Image src={logo} width={44} height={44} alt={r.card.bankShortName}
-                                            className="w-11 h-11 rounded-xl object-contain bg-white p-1 flex-shrink-0" />
-                                    ) : (
-                                        <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-white font-black"
-                                            style={{ backgroundColor: r.card.bankColor || '#6C63FF' }}>
-                                            {(r.card.bankShortName || r.card.bankName || '?').slice(0, 3).toUpperCase()}
-                                        </div>
-                                    )}
+                                    <CardThumb card={r.card} size="lg" logoUrl={logo} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-[15px] font-bold text-slate-800 dark:text-white truncate">
                                             {r.card.bankName} <span className="text-slate-400 dark:text-slate-500 font-semibold">•••• {r.card.cardNumber}</span>

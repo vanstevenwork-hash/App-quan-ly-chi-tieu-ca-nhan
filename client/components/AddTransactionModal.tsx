@@ -1,5 +1,6 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
+import CardThumb from '@/components/cards/CardThumb';
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
@@ -447,7 +448,6 @@ export default function AddTransactionModal({
 
                         <div className="flex gap-3 overflow-x-auto hide-scrollbar snap-x py-1 pt-2">
                             {inlineCards.map(card => {
-                                const isSelected = selectedCardId === card._id;
                                 const cBg = card.bankColor || '#3B82F6';
 
                                 const renderNetworkLogo = (network?: string) => {
@@ -819,9 +819,7 @@ export default function AddTransactionModal({
                                         onClick={() => { setSelectedCardId(card._id); setShowCardPicker(false); }}
                                         className={cn('relative w-full flex items-center gap-2 p-2.5 rounded-lg border text-left transition active:scale-[0.98]',
                                             active ? 'border-brand bg-brand-light/40 dark:border-brand dark:bg-brand/20' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface hover:bg-gray-50 dark:hover:bg-slate-800/60')}>
-                                        <div className="w-8 h-8 rounded-lg bg-white ring-1 ring-gray-100 dark:ring-slate-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                            {url ? <img src={url} alt="" className="w-full h-full object-contain p-1" /> : <CustomIcon type="creditCard" size={16} tile={false} color="#94A3B8" />}
-                                        </div>
+                                        <CardThumb card={card} size="sm" logoUrl={url} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[12px] font-bold text-slate-800 dark:text-white truncate leading-tight">{card.bankName || card.bankShortName}</p>
                                             <div className="flex items-center gap-1 text-[10px] mt-0.5">

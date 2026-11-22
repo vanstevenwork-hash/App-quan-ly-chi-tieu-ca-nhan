@@ -1,6 +1,7 @@
 'use client';
 import { CustomIcon, CATEGORY_LABEL_TO_TYPE, CATEGORY_ICON_MAP } from '@/components/icons/CustomIcon';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
@@ -360,11 +361,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                             <div key={`${row.card._id}-${row.year}-${row.month}`}
                                                 onClick={() => { router.push('/cashback'); onClose(); }}
                                                 className="flex items-center px-3 py-2.5 gap-3 cursor-pointer rounded-2xl bg-white dark:bg-surface border border-gray-100 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
-                                                <div className={cn("w-10 h-10 flex items-center justify-center flex-shrink-0 bg-white dark:bg-slate-800 border border-gray-100 dark:border-transparent overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
-                                                    {logo
-                                                        ? <div className="w-10 h-10 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
-                                                        : '🎁'}
-                                                </div>
+                                                <CardThumb card={row.card} size="md" showLast4 logoUrl={logo || undefined} />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">Hoàn tiền {row.card.bankShortName || row.card.bankName}</p>
                                                     <p className="text-[11.5px] text-gray-500 dark:text-slate-400 truncate mt-0.5">Tháng {row.month + 1}/{row.year}</p>
@@ -567,11 +564,7 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
                                                     urgent
                                                         ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-500/30 ring-1 ring-red-200 dark:ring-red-500/30 hover:bg-red-100/70 dark:hover:bg-red-900/30"
                                                         : "bg-white dark:bg-surface border-gray-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50")}>
-                                                <div className={cn("w-10 h-10 border border-gray-100 dark:border-transparent flex items-center justify-center text-lg flex-shrink-0 bg-white dark:bg-slate-800 overflow-hidden", logo ? 'rounded-xl' : 'rounded-full')}>
-                                                    {logo
-                                                        ? <div className="w-10 h-10 p-1.5 flex items-center justify-center bg-white rounded-xl"><img src={logo} alt="bank" className="w-full h-full object-contain" /></div>
-                                                        : '💳'}
-                                                </div>
+                                                <CardThumb card={card} size="md" showLast4 logoUrl={logo || undefined} />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">Sao kê {card.bankName}</p>
                                                     <p className="text-[11.5px] text-gray-500 dark:text-slate-400 truncate mt-0.5">

@@ -1,5 +1,6 @@
 import { ActionIcon } from "@/components/icons/ActionIcon";
 import { cn } from "@/lib/utils";
+import { cardArtBackground } from "@/lib/cardArt";
 
 type PaymentCardProps = {
     card: any;
@@ -23,6 +24,42 @@ export default function PaymentCard({
     renderNetworkLogo,
     ownerLabel,
 }: PaymentCardProps) {
+    // Card with artwork: the tile IS the card — text sits on the art.
+    const art = cardArtBackground(card.cardImage, 'full', true);
+    if (art) {
+        const money = type === "credit"
+            ? `${(card.balance / 1000000).toFixed(1).replace('.0', '')}tr`
+            : `${card.balance.toLocaleString("vi-VN")}₫`;
+        return (
+            <div
+                onClick={() => onSelect(card._id)}
+                className={cn(
+                    "relative snap-start shrink-0 w-[110px] h-[68px] rounded-xl cursor-pointer transition-all overflow-visible",
+                    isSelected ? "ring-[2.5px] ring-brand ring-offset-2 ring-offset-white dark:ring-offset-surface" : "ring-1 ring-black/10 dark:ring-white/10"
+                )}
+            >
+                <div className="absolute inset-0 rounded-xl overflow-hidden p-1.5 flex flex-col text-white [text-shadow:0_1px_2px_rgba(0,0,0,0.7)]"
+                    style={{ background: art }}>
+                    <p className="text-[10px] font-semibold truncate leading-tight">{card.bankName}</p>
+                    <div className="mt-auto flex items-end justify-between gap-1">
+                        <p className={cn("text-[11px] font-bold tabular-nums", type === "credit" ? "text-rose-200" : "text-emerald-200")}>{money}</p>
+                        <p className="text-[9px] font-bold tracking-wider">{card.cardNumber || "...."}</p>
+                    </div>
+                </div>
+                {isSelected && (
+                    <div className="absolute top-[-6px] right-[-6px] w-4 h-4 rounded-full border border-brand flex items-center justify-center bg-white dark:bg-surface z-10">
+                        <ActionIcon type="check" size={10} tile={false} color="#36255C" />
+                    </div>
+                )}
+                {ownerLabel && (
+                    <div className="absolute top-[-6px] left-[-6px] px-1.5 py-[1px] rounded-full bg-indigo-500 text-white text-[8px] font-bold shadow-sm truncate max-w-[70%] z-10">
+                        {ownerLabel}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
     return (
         <div
             onClick={() => onSelect(card._id)}

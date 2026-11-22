@@ -68,4 +68,8 @@ const cardSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
+// Cards are always loaded per user (active only); the auto-finance scan
+// filters by type within a user.
+cardSchema.index({ userId: 1, isActive: 1, cardType: 1 });
+
 module.exports = mongoose.model('Card', cardSchema);

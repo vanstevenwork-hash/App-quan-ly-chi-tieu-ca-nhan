@@ -1,5 +1,7 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
+import { cardArtBackground } from '@/lib/cardArt';
 import { useRouter } from 'next/navigation';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -209,7 +211,7 @@ export default function InstallmentsPage() {
                                     <div className="flex gap-3">
                                         <div
                                             className="w-[92px] h-[62px] rounded-xl flex-shrink-0 relative overflow-hidden shadow-md"
-                                            style={{ background: `linear-gradient(135deg, ${card?.color || '#6C63FF'}, ${card?.bankColor || '#1B4FD8'})` }}
+                                            style={{ background: cardArtBackground(card?.cardImage, 'light') || `linear-gradient(135deg, ${card?.color || '#6C63FF'}, ${card?.bankColor || '#1B4FD8'})` }}
                                         >
                                             <span className="absolute left-2 top-1.5 text-[11px] font-extrabold text-white drop-shadow">{card?.bankShortName}</span>
                                             <span className="absolute left-2 bottom-1.5 text-[9px] text-white/90 tracking-wider">•••• {(card?.cardNumber || '').slice(-4)}</span>
@@ -314,12 +316,7 @@ export default function InstallmentsPage() {
                                         onClick={() => router.push(`/cards/${card._id}`)}
                                         className="bg-white dark:bg-surface rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-3 flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
                                     >
-                                        <div className="w-14 h-14 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                                            {logo
-                                                // eslint-disable-next-line @next/next/no-img-element
-                                                ? <img src={logo} alt={card.bankShortName} className="w-10 h-10 object-contain" />
-                                                : <span className="text-xs font-bold text-slate-500">{card.bankShortName}</span>}
-                                        </div>
+                                        <CardThumb card={card} size="lg" logoUrl={logo} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{card.bankShortName}</p>
                                             <p className="text-xs text-slate-400 tracking-wide">•••• {(card.cardNumber || '').slice(-4)}</p>

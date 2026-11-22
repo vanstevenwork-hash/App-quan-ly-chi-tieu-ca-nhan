@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/CustomIcon';
 import { UtilityIcon } from '@/components/icons/CustomIcon';
@@ -176,16 +177,7 @@ export default function CardPaymentModal({ open, onClose, onPaid, creditCards, a
                                                 className={cn('flex items-center gap-2.5 p-2.5 min-h-[62px] rounded-xl border-2 transition-all text-left',
                                                     isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-slate-800 border-gray-100 dark:border-slate-700' :
                                                         selectedId === card._id ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20' : 'border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 hover:border-gray-200 dark:hover:border-slate-600')}>
-                                                <div className="w-9 h-9 rounded-lg bg-white border border-gray-100 shadow-sm flex items-center justify-center flex-shrink-0">
-                                                    {(() => {
-                                                        const cardBankLogo = banks.find(x => x.shortName === card.bankShortName)?.logo;
-                                                        return cardBankLogo ? (
-                                                            <Image src={cardBankLogo} width={20} height={20} className="w-5 h-5 object-contain grayscale-0 group-disabled:grayscale" alt="" />
-                                                        ) : (
-                                                            <ActionIcon type="creditCard" size={18} tile={false} color="#6366F1" />
-                                                        );
-                                                    })()}
-                                                </div>
+                                                <CardThumb card={card} size="sm" logoUrl={banks.find(x => x.shortName === card.bankShortName)?.logo} />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-semibold text-[13px] text-gray-900 dark:text-white truncate">{card.bankName} ••{card.cardNumber}</p>
                                                     <p className={cn("text-xs font-medium", isDisabled ? "text-gray-400 dark:text-slate-500" : "text-red-500 dark:text-red-400")}>

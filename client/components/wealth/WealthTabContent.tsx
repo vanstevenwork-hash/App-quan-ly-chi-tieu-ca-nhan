@@ -1,5 +1,6 @@
 'use client';
 import { memo, useMemo, useState } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
 import { cn, formatNumber } from '@/lib/utils';
 import type { WealthSourceUI } from '@/hooks/useWealth';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -144,7 +145,9 @@ function WealthCard({ source, onEdit, onDelete, className }: {
             className
         )}>
             {isCard
-                ? <BankTile logoUrl={source.logoUrl} text={source.bankShortName!} color={source.color} size={42} />
+                ? (source.cardImage
+                    ? <CardThumb card={{ ...source, bankName: source.cardLabel }} size="lg" logoUrl={source.logoUrl} />
+                    : <BankTile logoUrl={source.logoUrl} text={source.bankShortName!} color={source.color} size={42} />)
                 : <LogoTile icon={source.icon} color={source.color} />}
             <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-slate-800 dark:text-white text-[15px] truncate">
@@ -199,7 +202,9 @@ function ChildRow({ source, bankShort, credit, isFirst, onEdit, onDelete }: {
 
     return (
         <div className={cn('group/c relative flex items-center gap-3 pl-4 pr-3 py-2.5', !isFirst && 'border-t border-slate-200/70 dark:border-white/5')}>
-            <BankTile logoUrl={source.logoUrl} text={source.bankShortName || bankShort} color={source.color} size={30} />
+            {source.cardImage
+                ? <CardThumb card={{ ...source, bankName: source.cardLabel }} size="sm" logoUrl={source.logoUrl} />
+                : <BankTile logoUrl={source.logoUrl} text={source.bankShortName || bankShort} color={source.color} size={30} />}
             <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate">
                     •••• {source.cardNumber}<span className="text-slate-400 dark:text-slate-400 font-semibold">{suffix}</span>

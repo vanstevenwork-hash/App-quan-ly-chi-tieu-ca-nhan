@@ -155,6 +155,7 @@
    "aliases": [
     "VCCB",
     "BVBANK",
+    "BVB",
     "VIETCAPITALBANK"
    ]
   },
@@ -384,12 +385,12 @@
    "h": 384
   },
   {
-   "id": "ACB/visa-debit-ke-t-no-i-vo-i-ta-i-khoa-n-first-va-eco",
+   "id": "ACB/visa-debit-ket-noi-voi-tai-khoan-first-va-eco",
    "bank": "ACB",
-   "name": "ACB Visa Debit Ke T No I Vo I Ta I Khoa N First Va Eco",
+   "name": "ACB Visa Debit Kết Nối Với Tài Khoản First Và Eco",
    "network": "visa",
    "type": "debit",
-   "src": "/cards/ACB/visa-debit-ke-t-no-i-vo-i-ta-i-khoa-n-first-va-eco.webp",
+   "src": "/cards/ACB/visa-debit-ket-noi-voi-tai-khoan-first-va-eco.webp",
    "w": 607,
    "h": 384
   },
@@ -1274,12 +1275,12 @@
    "h": 505
   },
   {
-   "id": "MBBank/jcb-ultimate-kim-loa-i",
+   "id": "MBBank/jcb-ultimate-kim-loai",
    "bank": "MBBank",
-   "name": "MB Bank JCB Ultimate Kim Loa I",
+   "name": "MB Bank JCB Ultimate Kim Loại",
    "network": "jcb",
    "type": "credit",
-   "src": "/cards/MBBank/jcb-ultimate-kim-loa-i.webp",
+   "src": "/cards/MBBank/jcb-ultimate-kim-loai.webp",
    "w": 800,
    "h": 487
   },
@@ -1394,12 +1395,12 @@
    "h": 518
   },
   {
-   "id": "MBBank/visa-hi-collection-kim-loa-i",
+   "id": "MBBank/visa-hi-collection-kim-loai",
    "bank": "MBBank",
-   "name": "MB Bank Visa Hi Collection Kim Loa I",
+   "name": "MB Bank Visa Hi Collection Kim Loại",
    "network": "visa",
    "type": "credit",
-   "src": "/cards/MBBank/visa-hi-collection-kim-loa-i.webp",
+   "src": "/cards/MBBank/visa-hi-collection-kim-loai.webp",
    "w": 558,
    "h": 340
   },
@@ -2264,12 +2265,12 @@
    "h": 140
   },
   {
-   "id": "ShinhanBank/visa-cashback-platinum-credit-24mar20",
+   "id": "ShinhanBank/visa-cashback-platinum-credit",
    "bank": "ShinhanBank",
-   "name": "Shinhan Bank Visa Cashback Platinum Credit 24mar20",
+   "name": "Shinhan Bank Visa Cashback Platinum Credit",
    "network": "visa",
    "type": "credit",
-   "src": "/cards/ShinhanBank/visa-cashback-platinum-credit-24mar20.webp",
+   "src": "/cards/ShinhanBank/visa-cashback-platinum-credit.webp",
    "w": 222,
    "h": 140
   },
@@ -2284,12 +2285,12 @@
    "h": 140
   },
   {
-   "id": "ShinhanBank/visa-pwm-ha-ng-ba-ch-kim",
+   "id": "ShinhanBank/visa-pwm-hang-bach-kim",
    "bank": "ShinhanBank",
-   "name": "Shinhan Bank Visa PWM Ha Ng Ba Ch Kim",
+   "name": "Shinhan Bank Visa PWM Hạng Bạch Kim",
    "network": "visa",
    "type": "credit",
-   "src": "/cards/ShinhanBank/visa-pwm-ha-ng-ba-ch-kim.webp",
+   "src": "/cards/ShinhanBank/visa-pwm-hang-bach-kim.webp",
    "w": 222,
    "h": 140
   },
@@ -2944,12 +2945,12 @@
    "h": 253
   },
   {
-   "id": "VIB/travel-elite-kim-loa-i",
+   "id": "VIB/travel-elite-kim-loai",
    "bank": "VIB",
-   "name": "VIB Travel Elite Kim Loa I",
+   "name": "VIB Travel Elite Kim Loại",
    "network": "",
    "type": "credit",
-   "src": "/cards/VIB/travel-elite-kim-loa-i.webp",
+   "src": "/cards/VIB/travel-elite-kim-loai.webp",
    "w": 599,
    "h": 381
   },

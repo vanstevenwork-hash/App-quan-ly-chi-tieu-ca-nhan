@@ -45,6 +45,9 @@ const nextConfig = {
         const YEAR = 'public, max-age=31536000, immutable';
         return [
             { source: '/images/:path*', headers: [{ key: 'Cache-Control', value: YEAR }] },
+            // Card art: names are stable but a rebuild may refresh a file, so
+            // 30 days fresh + serve-stale while revalidating for up to a year.
+            { source: '/cards/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }] },
             { source: '/icon-:size.png', headers: [{ key: 'Cache-Control', value: YEAR }] },
             { source: '/favicon.ico', headers: [{ key: 'Cache-Control', value: YEAR }] },
             { source: '/manifest.json', headers: [{ key: 'Cache-Control', value: 'public, max-age=86400' }] },

@@ -27,6 +27,18 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+// gzip JSON responses (the app pulls up to 2000 transactions on open — ~8× smaller).
+// Streaming endpoints are excluded: compression buffers output, which would
+// stall the SSE notification stream and the NDJSON email-scan progress.
+const compression = require('compression');
+const STREAMING = new Set(['/api/notifications/stream', '/api/email/scan']);
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    if (STREAMING.has(req.path) || (req.headers.accept || '').includes('text/event-stream')) return false;
+    return compression.filter(req, res);
+  },
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

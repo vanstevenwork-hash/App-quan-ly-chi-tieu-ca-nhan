@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
@@ -39,10 +40,6 @@ interface TransactionDetailModalProps {
 export default function TransactionDetailModal({ transaction, open, onClose, onEdit, onDelete }: TransactionDetailModalProps) {
     const [showLightbox, setShowLightbox] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
-    // Bank logo URLs 404 for some banks — fall back to the wallet glyph instead
-    // of a broken <img>. Reset per transaction so a past failure doesn't stick.
-    const [logoFailed, setLogoFailed] = useState(false);
-    useEffect(() => { setLogoFailed(false); }, [transaction?._id]);
     if (!transaction) return null;
 
     const cat = CATEGORIES_MAP.get(transaction.category) || CATEGORIES_MAP.get('Khác')!;
@@ -166,13 +163,13 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                         {/* Nguồn tiền — bank logo when a card is attached, generic icon for cash */}
                         <div className="flex items-center justify-between py-3.5">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                                    {bankLogo && !logoFailed ? (
-                                        <img src={bankLogo} alt={card?.bankShortName} className="w-full h-full object-contain bg-white p-1.5" onError={() => setLogoFailed(true)} />
-                                    ) : (
+                                {card ? (
+                                    <CardThumb card={card} size="md" logoUrl={bankLogo || undefined} />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center flex-shrink-0">
                                         <UtilityIcon type="wallet" size={18} tile={false} color="#3B82F6" />
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                                 <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Nguồn tiền</span>
                             </div>
                             <div className="text-right">

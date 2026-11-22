@@ -35,6 +35,7 @@ export type WealthSourceUI = Omit<WealthSource, 'icon'> & {
     // logo tile at a chosen size, "•••• 1234 · label" child names, and the
     // debt-vs-limit progress bars). Absent on user-created wealth sources.
     logoUrl?: string;
+    cardImage?: string;
     cardNumber?: string;
     cardLabel?: string;
     creditLimit?: number;

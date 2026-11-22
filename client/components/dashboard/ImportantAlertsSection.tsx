@@ -1,5 +1,6 @@
 'use client';
 import { memo, type ReactNode } from 'react';
+import CardThumb, { type CardThumbData } from '@/components/cards/CardThumb';
 import { useRouter } from 'next/navigation';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -20,10 +21,11 @@ const fmtViShort = (n: number) => {
 };
 
 function AlertCard({
-    title, sub, amount, badge, variant, urgent = false, onClick,
+    title, sub, amount, badge, variant, urgent = false, onClick, card,
 }: {
     title: string; sub: string; amount: string; badge: string;
     variant: 'credit' | 'savings'; urgent?: boolean; onClick: () => void;
+    card?: CardThumbData;   // credit alerts show the actual card
 }) {
     const isCredit = variant === 'credit';
     return (
@@ -33,15 +35,15 @@ function AlertCard({
                 ? 'bg-red-50/75 dark:bg-red-500/10 border-red-200/70 dark:border-red-500/30 ring-1 ring-red-200/60 dark:ring-red-500/20'
                 : 'bg-white/65 dark:bg-surface/55 border-white/60 dark:border-slate-700/40'
         )}>
-            {/* Icon tile, colored by alert type */}
-            <div className={cn(
+            {/* The card itself for credit alerts, else an icon tile by alert type */}
+            {card ? <CardThumb card={card} size="md" showLast4 /> : <div className={cn(
                 'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
                 isCredit ? 'bg-red-50 dark:bg-red-500/15' : 'bg-amber-50 dark:bg-amber-500/15'
             )}>
                 {isCredit
                     ? <CustomIcon type="receipt" size={17} tile={false} color="#EF4444" />
                     : <CustomIcon type="calendar" size={17} tile={false} color="#F59E0B" />}
-            </div>
+            </div>}
 
             {/* Title + sub */}
             <div className="flex-1 min-w-0">
@@ -171,6 +173,7 @@ function ImportantAlertsSectionBase({ creditAlerts, savingsCards, shareInvites =
                     amount={fmtViShort(dueThisCycle)}
                     badge={dueBadge}
                     variant="credit"
+                    card={card}
                     urgent={urgent}
                     onClick={onOpen}
                 />

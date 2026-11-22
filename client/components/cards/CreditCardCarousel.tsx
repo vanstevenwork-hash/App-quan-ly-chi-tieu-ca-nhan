@@ -47,8 +47,10 @@ const BANK_BRAND_COLORS: Record<string, string> = {
     CAKE: '#EF3E9E',
 };
 
-function getGradient(card: Card, _idx: number, scrim: 'full' | 'light' | 'none' = 'full'): string {
-    const art = cardArtBackground(card.cardImage, scrim);
+function getGradient(card: Card, _idx: number, scrim: 'full' | 'light' | 'none' = 'full', small = false): string {
+    // Full image behind the big card; the 240px copy for the 52px mini chip.
+    // (CSS would download every listed layer, so no full-size fallback layer.)
+    const art = cardArtBackground(card.cardImage, scrim, small);
     if (art) return art;
     if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
     // Prefer the real bank brand colour so each card looks like its bank.
@@ -252,7 +254,7 @@ function MiniCard({ card, idx }: { card: Card; idx: number }) {
     if (hasArt(card)) {
         return (
             <div className="w-[52px] h-[34px] rounded-[7px] overflow-hidden flex-shrink-0 shadow-sm ring-1 ring-black/[0.06]"
-                style={{ background: getGradient(card, idx, 'none') }} />
+                style={{ background: getGradient(card, idx, 'none', true) }} />
         );
     }
     return (

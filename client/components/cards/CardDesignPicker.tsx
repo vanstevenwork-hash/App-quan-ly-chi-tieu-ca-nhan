@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { uploadApi } from '@/lib/api';
 import { designsFor, type CardDesign } from '@/lib/cardCatalog';
-import { safeCardImage } from '@/lib/cardArt';
+import { safeCardImage, thumbSrc } from '@/lib/cardArt';
 
 interface Props {
     bankShortName: string;
@@ -28,7 +28,7 @@ export default function CardDesignPicker({ bankShortName, bankName, cardType, va
 
     const q = filter.trim().toLowerCase();
     const shown = q ? designs.filter(d => d.name.toLowerCase().includes(q)) : designs;
-    const custom = value && !value.startsWith('/cards/') ? safeCardImage(value) : null;
+    const custom = value && !value.startsWith('/cards/') ? thumbSrc(value) : null;
     const selected = designs.find(d => d.src === value);
 
     const upload = async (file?: File) => {
@@ -86,7 +86,8 @@ export default function CardDesignPicker({ bankShortName, bankName, cardType, va
                         className={cn(TILE, 'bg-slate-100 dark:bg-slate-800',
                             value === d.src ? 'ring-[3px] ring-brand ring-offset-2 ring-offset-white dark:ring-offset-surface' : 'ring-1 ring-black/5')}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={d.src} alt={d.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                        <img src={d.src.replace(/\.webp$/, '.sm.webp')} alt={d.name} loading="lazy" decoding="async" className="w-full h-full object-cover"
+                            onError={e => { const img = e.currentTarget; if (!img.dataset.full) { img.dataset.full = '1'; img.src = d.src; } }} />
                         {value === d.src && (
                             <span className="absolute top-1 right-1 w-5 h-5 rounded-full bg-brand text-white text-[11px] font-black flex items-center justify-center shadow">✓</span>
                         )}

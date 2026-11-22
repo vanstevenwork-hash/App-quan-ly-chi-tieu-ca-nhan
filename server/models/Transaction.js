@@ -28,4 +28,9 @@ const transactionSchema = new mongoose.Schema({
     sourceEmailId: { type: String, default: null, index: true, sparse: true },
 }, { timestamps: true });
 
+// Every list/report query is per user, newest first; card screens and the
+// auto-pay job read one card's charges.
+transactionSchema.index({ userId: 1, date: -1 });
+transactionSchema.index({ cardId: 1, type: 1, date: -1 });
+
 module.exports = mongoose.model('Transaction', transactionSchema);

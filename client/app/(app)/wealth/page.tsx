@@ -20,7 +20,7 @@ import { ActionIcon } from '@/components/icons/ActionIcon';
 const fmtFull = (n: number) => formatNumber(Math.round(n));
 
 export default function WealthPage() {
-    const { sources, total, loading, createSource, updateSource, deleteSource, refetch } = useWealth();
+    const { sources, loading, createSource, updateSource, deleteSource, refetch } = useWealth();
     const { cards, loading: cardsLoading, createCard, updateCard, deleteCard } = useCards();
     const [showModal, setShowModal] = useState(false);
     const [showCardModal, setShowCardModal] = useState(false);
@@ -72,6 +72,7 @@ export default function WealthPage() {
                 bankShortName: c.bankShortName,
                 cardType: c.cardType,
                 logoUrl: logoUrl || undefined,
+                cardImage: c.cardImage || undefined,
                 cardNumber: c.cardNumber,
                 cardLabel: c.bankName,            // user's per-card label (e.g. "Max", "Cash")
                 creditLimit: c.creditLimit,

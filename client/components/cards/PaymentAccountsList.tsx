@@ -1,5 +1,7 @@
 'use client';
 import { memo } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
+import { safeCardImage } from '@/lib/cardArt';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { getBankLogo } from '@/lib/bankLogos';
 import { cn, formatNumber } from '@/lib/utils';
@@ -19,7 +21,7 @@ function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
 
     return (
         <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700/50 shadow-sm transition-all hover:border-indigo-200 dark:hover:border-indigo-900/50 group">
-            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 overflow-hidden', 
+            {safeCardImage(card.cardImage) ? <CardThumb card={card} size="md" showLast4 /> : <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 overflow-hidden', 
                 logoUrl ? 'bg-white shadow-sm border border-gray-100' : 
                 isCrypto ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' :
                 isEWallet ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400' :
@@ -34,7 +36,7 @@ function AccountRow({ card, onEdit, onDelete, bankLogoUrl }: {
                 ) : (
                     <UtilityIcon type="theGhiNo" size={20} tile={false} color="#3D7BF0" />
                 )}
-            </div>
+            </div>}
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                     <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{card.bankName}</p>

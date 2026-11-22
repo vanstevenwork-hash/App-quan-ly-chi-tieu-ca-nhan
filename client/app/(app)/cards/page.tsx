@@ -1,5 +1,7 @@
 'use client';
 import { formatNumber } from '@/lib/utils';
+import { safeCardImage } from '@/lib/cardArt';
+import CardThumb from '@/components/cards/CardThumb';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -66,7 +68,11 @@ function daysUntilPayment(paymentDueDay: number): number | null {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CardsPage() {
-    const { cards, totalDebt, totalCreditLimit, loading, createCard, updateCard, deleteCard, setDefaultCard, refetch: refetchCards } = useCards();
+    const { cards, totalDebt, totalCreditLimit, loading, createCard, updateCard, deleteCard, refetch: refetchCards } = useCards();
+    const cardsWithoutArt = useMemo(
+        () => cards.filter(c => (c.cardType === 'credit' || c.cardType === 'debit') && !safeCardImage(c.cardImage)).length,
+        [cards]
+    );
     const { isAddModalOpen, openAddModal, closeAddModal } = useUIStore();
     const { transactions, refetch: refetchTx } = useTransactions();
     const { banks: fetchedBanks, fetchBanks } = useBanks();
@@ -197,6 +203,19 @@ export default function CardsPage() {
                         </div>
                     )}
                 </div>
+
+                {/* ── Cards without artwork → one-tap matcher ─────────── */}
+                {cardsWithoutArt > 0 && (
+                    <button onClick={() => router.push('/cards/designs')}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-brand/10 dark:bg-purple-900/20 text-left active:scale-[0.99] transition-all">
+                        <span className="text-xl">🖼️</span>
+                        <span className="flex-1 min-w-0">
+                            <span className="block text-[13px] font-bold text-slate-900 dark:text-white">{cardsWithoutArt} thẻ chưa có ảnh</span>
+                            <span className="block text-[11px] text-slate-500 dark:text-slate-400">Tự gắn ảnh theo tên thẻ bạn đã đặt</span>
+                        </span>
+                        <span className="text-xs font-bold text-brand dark:text-purple-300">Gắn ảnh ›</span>
+                    </button>
+                )}
 
                 {/* ── Card carousel ───────────────────────────── */}
                 <CreditCardCarousel
@@ -400,13 +419,7 @@ export default function CardsPage() {
                                         onClick={() => router.push(`/cards/${sc._id}`)}
                                         className="w-full flex items-center gap-3 p-3 bg-white dark:bg-slate-800 rounded-xl border border-indigo-100 dark:border-indigo-900/40 shadow-sm transition-all hover:border-indigo-300 dark:hover:border-indigo-700 active:scale-[0.98] text-left"
                                     >
-                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-white shadow-sm border border-gray-100 overflow-hidden">
-                                            {logoUrl ? (
-                                                <img src={logoUrl} alt={sc.bankName} className="w-full h-full object-contain p-1.5" />
-                                            ) : (
-                                                <span className="text-xs font-bold text-slate-500">{(sc.bankShortName || sc.bankName).substring(0, 3).toUpperCase()}</span>
-                                            )}
-                                        </div>
+                                        <CardThumb card={sc} size="md" showLast4 logoUrl={logoUrl} />
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-1.5">
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{sc.bankName}</p>

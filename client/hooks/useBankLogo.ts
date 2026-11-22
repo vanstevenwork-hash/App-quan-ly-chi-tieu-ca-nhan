@@ -7,20 +7,27 @@ import { getBankLogo } from '@/lib/bankLogos';
 // every bank incl. HSBC/Shinhan/Standard Chartered) first, then the static
 // CDN map as a fallback. `getBankLogo` alone misses many banks, so pages that
 // used it directly showed blank logos. Returns a `(shortName, name) => url?`.
+// One lookup map per loaded bank list, shared by every caller (lists render
+// dozens of CardThumbs — they must not each rebuild it).
+const mapCache = new WeakMap<any[], Map<string, any>>();
+function mapFor(banks: any[]) {
+    let m = mapCache.get(banks);
+    if (!m) {
+        m = new Map();
+        banks.forEach((b: any) => { if (b.shortName) m!.set(b.shortName.toUpperCase(), b); });
+        mapCache.set(banks, m);
+    }
+    return m;
+}
+
 export function useBankLogo() {
     const banks = useBanks(s => s.banks);
     const fetchBanks = useBanks(s => s.fetchBanks);
     useEffect(() => { fetchBanks(); }, [fetchBanks]);
 
-    const byShort = useMemo(() => {
-        const m = new Map<string, any>();
-        banks.forEach((b: any) => { if (b.shortName) m.set(b.shortName.toUpperCase(), b); });
-        return m;
+    return useMemo(() => {
+        const byShort = mapFor(banks);
+        return (bankShortName?: string, bankName?: string): string | undefined =>
+            byShort.get((bankShortName || '').toUpperCase())?.logo || getBankLogo(bankShortName, bankName);
     }, [banks]);
-
-    return useMemo(
-        () => (bankShortName?: string, bankName?: string): string | undefined =>
-            byShort.get((bankShortName || '').toUpperCase())?.logo || getBankLogo(bankShortName, bankName),
-        [byShort]
-    );
 }

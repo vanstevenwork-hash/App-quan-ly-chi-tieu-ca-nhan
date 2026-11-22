@@ -1,8 +1,8 @@
 'use client';
 import { CustomIcon } from '@/components/icons/CustomIcon';
-import { cardArtBackground, ART_TEXT } from '@/lib/cardArt';
+import { safeCardImage } from '@/lib/cardArt';
+import CardThumb from '@/components/cards/CardThumb';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -33,185 +33,6 @@ function daysUntil(dateStr: string | null): number | null {
     return Math.ceil(diff / 86_400_000);
 }
 
-function getUrgencyColor(days: number | null) {
-    if (days === null) return '#6B7280';
-    if (days <= 3) return '#EF4444';
-    if (days <= 7) return '#F59E0B';
-    return '#10B981';
-}
-
-const CARD_GRADIENTS = [
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-];
-
-function getCardGradient(card: Card, idx: number): string {
-    const art = cardArtBackground(card.cardImage);
-    if (art) return art;
-    if (card.color === '#111111' || card.color === '#FFFFFF') return card.color;
-    // Single vibrant brand colour (avoids the muddy two-hue blend).
-    const base = (card.bankColor && card.bankColor !== '#1B4FD8') ? card.bankColor
-        : (card.color && card.color !== '#6C63FF') ? card.color
-            : null;
-    if (base) return base;
-    return CARD_GRADIENTS[idx % CARD_GRADIENTS.length];
-}
-
-function cardTextStyle(color: string) {
-    if (color === '#111111') return { text: '#F59E0B', subtext: '#FCD34D', border: '1px solid #374151' };
-    if (color === '#FFFFFF') return { text: '#1E293B', subtext: '#64748B', border: '1px solid #E2E8F0' };
-    return { text: '#FFFFFF', subtext: 'rgba(255,255,255,0.82)', border: undefined };
-}
-
-// Liquid-glass light play (same recipe as the credit-card deck).
-const GLASS_OVERLAY =
-    'radial-gradient(120% 85% at 82% -18%, rgba(255,255,255,0.30), transparent 52%),' +
-    'linear-gradient(158deg, rgba(255,255,255,0.22) 0%, transparent 34%),' +
-    'linear-gradient(110deg, transparent 42%, rgba(255,255,255,0.10) 51%, transparent 63%),' +
-    'linear-gradient(to bottom, transparent 58%, rgba(0,0,0,0.10) 100%)';
-const GLASS_RING =
-    'inset 0 1px 1px rgba(255,255,255,0.55), inset 0 0 0 1px rgba(255,255,255,0.16), inset 0 -12px 22px -20px rgba(0,0,0,0.25)';
-const GLASS_SHADOW =
-    '0 16px 36px -12px rgba(31,17,71,0.5), 0 4px 12px -4px rgba(0,0,0,0.26)';
-
-// ─── Card Context Menu ─────────────────────────────────────────────────────
-function CardMenu({ onEdit, onDelete, onSetDefault, onViewDetail, isDefault }: {
-    onEdit: () => void; onDelete: () => void; onSetDefault: () => void; onViewDetail?: () => void; isDefault: boolean;
-}) {
-    const [open, setOpen] = useState(false);
-    return (
-        <div className="relative">
-            <button onClick={() => setOpen(v => !v)}
-                className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition">
-                <CustomIcon type="moreHorizontal" size={14} tile={false} color="currentColor" className="w-3.5 h-3.5 text-white" />
-            </button>
-            {open && (
-                <>
-                    <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-                    <div className="absolute top-9 right-0 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-xl py-1 min-w-[150px] overflow-hidden border border-gray-100 dark:border-slate-700">
-                        {onViewDetail && (
-                            <button onClick={() => { setOpen(false); onViewDetail(); }}
-                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-                                <CustomIcon type="info" size={16} tile={false} color="currentColor" className="w-4 h-4 text-purple-500" /> Chi tiết
-                            </button>
-                        )}
-                        {!isDefault && (
-                            <button onClick={() => { setOpen(false); onSetDefault(); }}
-                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-                                <CustomIcon type="star" size={16} tile={false} color="currentColor" className="w-4 h-4 text-yellow-500" /> Đặt mặc định
-                            </button>
-                        )}
-                        <button onClick={() => { setOpen(false); onEdit(); }}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700">
-                            <CustomIcon type="pencil" size={16} tile={false} color="currentColor" className="w-4 h-4 text-indigo-500" /> Chỉnh sửa
-                        </button>
-                        <button onClick={() => { setOpen(false); onDelete(); }}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10">
-                            <CustomIcon type="trash" size={16} tile={false} color="currentColor" className="w-4 h-4" /> Xoá
-                        </button>
-                    </div>
-                </>
-            )}
-        </div>
-    );
-}
-
-// ─── Credit Card Slide ─────────────────────────────────────────────────────
-function CreditCardSlide({ card, idx, onEdit, onDelete, onSetDefault, onViewDetail }: {
-    card: Card; idx: number;
-    onEdit: () => void; onDelete: () => void; onSetDefault: () => void; onViewDetail: () => void;
-}) {
-    const logoOf = useBankLogo();
-    const gradient = getCardGradient(card, idx);
-    const ts = cardArtBackground(card.cardImage) ? ART_TEXT : cardTextStyle(card.color);
-    const isPooled = card.sharedLimit && (card.sharedGroupSize ?? 1) > 1;
-    const effLimit = isPooled ? (card.effectiveCreditLimit ?? card.creditLimit) : card.creditLimit;
-    const effBalance = isPooled ? (card.groupBalance ?? card.balance) : card.balance;
-    const usedPct = effLimit > 0 ? (effBalance / effLimit) * 100 : 0;
-    const dueDays = card.paymentDueDay
-        ? (() => {
-            const now = new Date();
-            const due = new Date(now.getFullYear(), now.getMonth(), card.paymentDueDay);
-            if (due < now) due.setMonth(due.getMonth() + 1);
-            return Math.ceil((due.getTime() - now.getTime()) / 86_400_000);
-        })()
-        : null;
-    const logoUrl = logoOf(card.bankShortName, card.bankName);
-
-    return (
-        <div className="snap-center shrink-0 w-[85%] rounded-xl p-6 shadow-xl relative overflow-hidden"
-            style={{ background: gradient, border: ts.border }}>
-            {card.color !== '#111111' && card.color !== '#FFFFFF' && (
-                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/10 pointer-events-none" />
-            )}
-            <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-2">
-                    {/* Bank logo */}
-                    {logoUrl ? (
-                        <img
-                            src={logoUrl}
-                            alt={card.bankShortName || card.bankName}
-                            className="w-9 h-9 rounded-xl object-contain bg-white/90 p-0.5 flex-shrink-0 shadow-sm"
-                            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                    ) : (
-                        <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-                            <span className="text-xs font-bold" style={{ color: ts.text }}>
-                                {(card.bankShortName || card.bankName || '?').substring(0, 3).toUpperCase()}
-                            </span>
-                        </div>
-                    )}
-                    <div>
-                        <p className="text-xs font-semibold tracking-wider uppercase" style={{ color: ts.subtext }}>{card.bankName}</p>
-                        <p className="text-base font-bold mt-0.5 tracking-widest" style={{ color: ts.text }}>•••• {card.cardNumber}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {card.isDefault && (
-                        <span className="bg-yellow-400/90 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <CustomIcon type="star" size={10} tile={false} color="currentColor" className="w-2.5 h-2.5" /> Mặc định
-                        </span>
-                    )}
-                    <CardMenu onEdit={onEdit} onDelete={onDelete} onSetDefault={onSetDefault} onViewDetail={onViewDetail} isDefault={card.isDefault} />
-                </div>
-            </div>
-            <div className="flex justify-between items-end mb-3">
-                <div>
-                    <p className="text-xs mb-1" style={{ color: ts.subtext }}>Dư nợ hiện tại</p>
-                    <p className="text-xl font-bold" style={{ color: ts.text }}>{fmt(card.balance)}</p>
-                </div>
-                {dueDays !== null && (
-                    <div className="text-right">
-                        <p className="text-xs mb-1" style={{ color: ts.subtext }}>Hạn thanh toán</p>
-                        <p className={cn('text-sm font-bold', dueDays <= 3 ? 'text-red-400' : '')} style={dueDays > 3 ? { color: ts.subtext } : undefined}>
-                            {dueDays <= 0 ? 'Đã quá hạn!' : `${dueDays} ngày nữa`}
-                        </p>
-                    </div>
-                )}
-            </div>
-            {effLimit > 0 && (
-                <>
-                    <div className="flex justify-between text-[10px] mb-1" style={{ color: ts.subtext }}>
-                        <span>Đã dùng {usedPct.toFixed(0)}%{isPooled ? ' (chung hạn mức)' : ''}</span>
-                        <span>Hạn mức: {fmtShort(effLimit)}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all"
-                            style={{
-                                width: `${Math.min(usedPct, 100)}%`,
-                                backgroundColor: usedPct > 80 ? '#FCA5A5' : ts.subtext,
-                            }} />
-                    </div>
-                </>
-            )}
-        </div>
-    );
-}
-
 // ─── Debit/eWallet/Crypto row ───────────────────────────────────────────────
 function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
     card: Card; onEdit: () => void; onDelete: () => void; onSetDefault: () => void;
@@ -230,6 +51,7 @@ function AccountRow({ card, onEdit, onDelete, onSetDefault }: {
             <div className="flex items-center gap-2.5">
                 {(() => {
                     const logoUrl = logoOf(card.bankShortName, card.bankName);
+                    if (safeCardImage(card.cardImage)) return <CardThumb card={card} size="md" showLast4 logoUrl={logoUrl} />;
                     return logoUrl ? (
                         <img
                             src={logoUrl}
@@ -326,7 +148,6 @@ export default function AccountsPage() {
         return fetchedBanks.find((b: any) => b.name?.toUpperCase().includes((bankName || '').toUpperCase()));
     }, [banksByShortName, fetchedBanks]);
     const [defaultType, setDefaultType] = useState<typeof cards[0]['cardType']>('debit');
-    const [creditCardsExpanded, setCreditCardsExpanded] = useState(true);
     const [paymentAccountsExpanded, setPaymentAccountsExpanded] = useState(true);
 
     const netWorth = totalBalance - totalDebt;

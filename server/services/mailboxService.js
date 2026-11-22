@@ -307,26 +307,65 @@ function parseTravelokaVouchers(parsed) {
     return { vouchers, expiresAt, sender };
 }
 
+// Bump when parseTravelokaVouchers changes, so cached results get re-parsed.
+const VOUCHER_PARSER_VERSION = 1;
+
 // Searches "All Mail" so archived mails count too; never marks anything read.
+// Fast path: codes come from MailVoucherCache; only never-seen mails are
+// downloaded + parsed. Read/unread flags are always fetched live (cheap).
 async function travelokaVouchers({ status = 'unread', limit = 100 } = {}) {
+    const MailVoucherCache = require('../models/MailVoucherCache');
+    const account = creds().user;
     return withFolder('all', async client => {
         const q = `from:traveloka.com (subject:"phiếu quà tặng" OR subject:"gift voucher")${status === 'unread' ? ' is:unread' : status === 'read' ? ' is:read' : ''}`;
         const uids = ((await client.search({ gmraw: q }, { uid: true })) || []).sort((a, b) => b - a).slice(0, limit);
-        const out = [];
-        if (!uids.length) return { folder: 'all', emails: out };
-        for await (const msg of client.fetch(uids, { uid: true, source: true, flags: true, envelope: true }, { uid: true })) {
-            const parsed = await simpleParser(msg.source);
-            const info = parseTravelokaVouchers(parsed);
-            out.push({
-                uid: msg.uid,
-                subject: msg.envelope?.subject || '',
-                date: msg.envelope?.date || parsed.date,
-                seen: msg.flags?.has('\\Seen') || false,
-                ...info,
-            });
+        if (!uids.length) return { folder: 'all', emails: [], cached: 0, parsed: 0 };
+        const uidValidity = String(client.mailbox.uidValidity);
+
+        // 1) Live flags (and envelope) for every mail — no bodies.
+        const flags = new Map();
+        for await (const m of client.fetch(uids, { uid: true, flags: true }, { uid: true })) {
+            flags.set(m.uid, m.flags?.has('\\Seen') || false);
         }
-        out.sort((a, b) => b.uid - a.uid);
-        return { folder: 'all', emails: out };
+
+        // 2) Cached codes.
+        const cached = await MailVoucherCache.find({
+            account, uidValidity, uid: { $in: uids }, parserVersion: VOUCHER_PARSER_VERSION,
+        }).lean().catch(() => []);
+        const byUid = new Map(cached.map(c => [c.uid, c]));
+
+        // 3) Download + parse only what's missing, then remember it.
+        const missing = uids.filter(u => !byUid.has(u));
+        if (missing.length) {
+            const fresh = [];
+            for await (const msg of client.fetch(missing, { uid: true, source: true, envelope: true }, { uid: true })) {
+                const parsed = await simpleParser(msg.source);
+                const info = parseTravelokaVouchers(parsed);
+                const doc = {
+                    account, uidValidity, uid: msg.uid,
+                    subject: msg.envelope?.subject || '',
+                    date: msg.envelope?.date || parsed.date,
+                    parserVersion: VOUCHER_PARSER_VERSION,
+                    ...info,
+                };
+                byUid.set(msg.uid, doc);
+                fresh.push(doc);
+            }
+            if (fresh.length) {
+                await MailVoucherCache.bulkWrite(fresh.map(d => ({
+                    updateOne: { filter: { account, uidValidity, uid: d.uid }, update: { $set: d }, upsert: true },
+                })), { ordered: false }).catch(e => console.error('📬 voucher cache:', e.message));
+            }
+        }
+
+        const emails = uids.filter(u => byUid.has(u)).map(u => {
+            const c = byUid.get(u);
+            return {
+                uid: u, subject: c.subject, date: c.date, seen: flags.get(u) ?? false,
+                sender: c.sender, expiresAt: c.expiresAt, vouchers: c.vouchers || [],
+            };
+        });
+        return { folder: 'all', emails, cached: uids.length - missing.length, parsed: missing.length };
     });
 }
 

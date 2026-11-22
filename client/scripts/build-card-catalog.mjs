@@ -24,6 +24,9 @@ const OUT_DIR = path.join(ROOT, 'public', 'cards');
 const OUT_JSON = path.join(ROOT, 'lib', 'cardCatalog.json');
 const WIDTH = 800;
 const QUALITY = 80;
+// Small copy for thumbnails/pickers (≤ 120 CSS px wide → 240 px for retina).
+const THUMB_WIDTH = 240;
+const THUMB_SUFFIX = '.sm.webp';
 
 // Canonical bank id → display name + every bankShortName spelling seen in the
 // app (VietQR shortName, VietQR code, older codes). Keep in sync with lib/cardCatalog.ts.
@@ -50,7 +53,7 @@ const BANKS = {
     ABBANK: { name: 'ABBANK', aliases: ['ABB', 'ABBANK'], prefixes: ['abbank'], folders: ['abbank'] },
     NCB: { name: 'NCB', aliases: ['NCB'], prefixes: ['ncb'], folders: ['ncb'] },
     Agribank: { name: 'Agribank', aliases: ['VBA', 'AGRIBANK'], prefixes: ['agribank'], folders: ['agribank'] },
-    VietCapitalBank: { name: 'BVBank', aliases: ['VCCB', 'BVBANK', 'VIETCAPITALBANK'], prefixes: ['bvbank'], folders: ['bvbank'] },
+    VietCapitalBank: { name: 'BVBank', aliases: ['VCCB', 'BVBANK', 'BVB', 'VIETCAPITALBANK'], prefixes: ['bvbank', 'bvb'], folders: ['bvbank'] },
     VietBank: { name: 'Vietbank', aliases: ['VIETBANK'], prefixes: ['vietbank'], folders: ['vietbank'] },
     KBank: { name: 'KBank', aliases: ['KBANK'], prefixes: ['kbank'], folders: ['kbank'] },
     ShinhanBank: { name: 'Shinhan Bank', aliases: ['SHBVN', 'SHINHANBANK', 'SHINHAN'], prefixes: ['shinhan'], folders: ['shinhan', 'shinhan-bank'] },
@@ -82,13 +85,20 @@ function bankFor(relPath) {
 }
 
 const UPPER = new Set(['jcb', 'atm', 'mwg', 'vna', 'sme', 'ii', 'iii', 'pvoil', 'hsbc', 'vib', 'mb', 'uob', 'acb', 'shb', 'ocb', 'msb', 'ncb', 'bidv', 'evn', 'cgv', 'nfc', 'qr', 'pwm', 'brg']);
+// Some source file names lost their Vietnamese letters ("kim-loa-i").
+const NAME_FIXES = [
+    [/\bKim Loa I\b/g, 'Kim Loại'],
+    [/\bHa Ng Ba Ch Kim\b/g, 'Hạng Bạch Kim'],
+    [/\bKe T No I Vo I Ta I Khoa N\b/g, 'Kết Nối Với Tài Khoản'],
+    [/\bVa Eco\b/g, 'Và Eco'],
+];
 const LEAD = [['the', 'tin', 'dung', 'quoc', 'te'], ['the', 'tin', 'dung'], ['the', 'ghi', 'no', 'quoc', 'te'], ['the', 'ghi', 'no'], ['the', 'da', 'nang', '2', 'trong', '1'], ['the']];
 // Clean product name from a file name, keeping Vietnamese diacritics:
 // "thẻ-tín-dụng-vpbank-z-jcb" → "Z JCB",
 // "xxxxxxxx_Shinhan_Visa_Cashback_Platinum-Credit_UnEmb-(0014)_24Mar20" → "Visa Cashback Platinum Credit".
 function productName(file, bankId) {
     let tokens = path.parse(file).name.normalize('NFC')
-        .replace(/x{4,}|unemb|\(\d+\)|\b\d{1,2}[a-z]{3}\d{2}\b/gi, ' ')
+        .replace(/x{4,}|unemb|\(\d+\)|(?<![a-z0-9])\d{1,2}[a-z]{3}\d{2}(?![a-z0-9])/gi, ' ')
         .split(/[-_\s]+/).filter(Boolean);
     const key = () => tokens.map(t => slugify(t));
     for (const lead of LEAD) if (lead.every((w, i) => key()[i] === w)) { tokens = tokens.slice(lead.length); break; }
@@ -105,7 +115,9 @@ function productName(file, bankId) {
         if (sl === 'mastercard') return 'Mastercard';
         return t[0].toLocaleUpperCase('vi') + t.slice(1).toLocaleLowerCase('vi');
     });
-    return words.join(' ') || 'Thẻ';
+    let name = words.join(' ');
+    for (const [bad, good] of NAME_FIXES) name = name.replace(bad, good);
+    return name.replace(/\s+/g, ' ').trim() || 'Thẻ';
 }
 function networkOf(slug) {
     if (/visa/.test(slug)) return 'visa';
@@ -123,6 +135,16 @@ async function* walk(dir, rel = '') {
         const r = path.join(rel, e.name);
         if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name.toLowerCase())) yield* walk(path.join(dir, e.name), r); }
         else if (IMG_EXT.has(path.extname(e.name).toLowerCase()) && rel) yield r; // root files are strays
+    }
+}
+
+async function* walkAll(dir, rel = '') {
+    let entries = [];
+    try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+        const r = rel ? `${rel}/${e.name}` : e.name;
+        if (e.isDirectory()) yield* walkAll(path.join(dir, e.name), r);
+        else if (e.name.endsWith('.webp') && !e.name.endsWith(THUMB_SUFFIX)) yield r;
     }
 }
 
@@ -181,7 +203,9 @@ async function main() {
     const picked = [...byKey.values()].sort((a, b) => a.bank.localeCompare(b.bank) || a.name.localeCompare(b.name));
 
     // 3) Encode.
-    await fs.rm(OUT_DIR, { recursive: true, force: true });
+    // Never delete existing files: saved cards may point at an older file name.
+    const before = new Set();
+    for await (const f of walkAll(OUT_DIR)) before.add(f);
     const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'cards-'));
     let bytes = 0;
     const cards = await pool(picked, 6, async (c, i) => {
@@ -209,6 +233,26 @@ async function main() {
         };
     });
     await fs.rm(tmp, { recursive: true, force: true });
+
+    // Thumbnails for every full image (new and kept-for-compat ones), only when
+    // missing or older than the full image.
+    let thumbs = 0, thumbBytes = 0;
+    const fulls = [];
+    for await (const f of walkAll(OUT_DIR)) fulls.push(f);
+    await pool(fulls, 6, async f => {
+        const full = path.join(OUT_DIR, f);
+        const thumb = full.replace(/\.webp$/, THUMB_SUFFIX);
+        const [fs1, ts1] = await Promise.all([fs.stat(full), fs.stat(thumb).catch(() => null)]);
+        if (!ts1 || ts1.mtimeMs < fs1.mtimeMs) {
+            await run('cwebp', ['-quiet', '-q', '78', '-m', '6', '-resize', String(THUMB_WIDTH), '0', full, '-o', thumb]);
+            thumbs++;
+        }
+        thumbBytes += (await fs.stat(thumb)).size;
+    });
+    console.log(`Ảnh nhỏ: ${fulls.length} (${thumbs} tạo mới) · ${(thumbBytes / 1024).toFixed(0)}KB, TB ${(thumbBytes / fulls.length / 1024).toFixed(1)}KB`);
+
+    const stale = [...before].filter(f => !cards.some(c => c.src === `/cards/${f}`));
+    if (stale.length) console.log(`Giữ lại ${stale.length} ảnh cũ không còn trong danh mục (thẻ đã lưu có thể đang dùng): ${stale.slice(0, 5).join(', ')}${stale.length > 5 ? '…' : ''}`);
 
     const catalog = {
         generatedAt: new Date().toISOString().slice(0, 10),

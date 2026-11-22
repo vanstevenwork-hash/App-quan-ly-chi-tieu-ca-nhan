@@ -1,5 +1,6 @@
 'use client';
 import { Suspense, useMemo, useState } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
@@ -155,9 +156,7 @@ function NotificationsContent() {
                         <button key={card._id}
                             onClick={() => router.push(`/cards/${card._id}`)}
                             className="w-full flex items-start gap-4 px-5 py-4 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors text-left">
-                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-red-50 dark:bg-red-500/15">
-                                💳
-                            </div>
+                            <CardThumb card={card} size="lg" showLast4 className="mt-0.5" />
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm leading-snug font-bold text-foreground">Sao kê {card.bankName}</p>
                                 <p className="text-xs mt-0.5 text-red-500 font-medium">Cần thanh toán kỳ này: {fmtFull(dueThisCycle)}đ</p>

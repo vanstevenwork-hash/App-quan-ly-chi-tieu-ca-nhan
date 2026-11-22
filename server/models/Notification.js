@@ -25,4 +25,8 @@ const notificationSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+// List = per user newest first; on-open review = unseen automatic events.
+notificationSchema.index({ userId: 1, createdAt: -1 });
+notificationSchema.index({ userId: 1, autoEvent: 1, toastShown: 1 });
+
 module.exports = mongoose.model('Notification', notificationSchema);

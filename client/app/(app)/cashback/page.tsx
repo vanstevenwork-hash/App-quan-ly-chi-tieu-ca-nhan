@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import CardThumb from '@/components/cards/CardThumb';
 import Image from 'next/image';
 import { UtilityIcon } from '@/components/icons/UtilityIcon';
 import { ActionIcon } from '@/components/icons/ActionIcon';
@@ -473,14 +474,7 @@ export default function CashbackPage() {
                                     return (
                                         <div key={card._id} className="rounded-[20px] bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 shadow-sm p-4">
                                             <div className="flex items-start gap-3">
-                                                {logoUrl ? (
-                                                    <Image src={logoUrl} width={48} height={48} alt={card.bankShortName}
-                                                        className="w-12 h-12 rounded-2xl object-contain bg-white p-1.5 border border-gray-100 dark:border-slate-700 flex-shrink-0" />
-                                                ) : (
-                                                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                                                        <ActionIcon type="creditCard" size={20} tile={false} color="#6366F1" />
-                                                    </div>
-                                                )}
+                                                <CardThumb card={card} size="lg" logoUrl={logoUrl} className="mt-0.5" />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[15px] font-bold text-slate-800 dark:text-white truncate">{card.bankName} •••• {card.cardNumber}</p>
                                                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
@@ -634,14 +628,7 @@ export default function CashbackPage() {
                                                     const logoUrl = getCardLogo(row.card);
                                                     return (
                                                         <div key={key} className="flex items-center gap-3 px-4 py-3">
-                                                            {logoUrl ? (
-                                                                <Image src={logoUrl} width={40} height={40} alt={row.card.bankShortName}
-                                                                    className="w-10 h-10 rounded-xl object-contain bg-white p-1 border border-gray-100 dark:border-slate-700 flex-shrink-0" />
-                                                            ) : (
-                                                                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                                                                    <ActionIcon type="creditCard" size={16} tile={false} color="#6366F1" />
-                                                                </div>
-                                                            )}
+                                                            <CardThumb card={row.card} size="md" showLast4 logoUrl={logoUrl} />
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.card.bankName} •••• {row.card.cardNumber}</p>
                                                                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">

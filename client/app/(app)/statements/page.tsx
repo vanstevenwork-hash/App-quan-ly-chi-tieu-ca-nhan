@@ -5,6 +5,7 @@ import { useCards, type Card } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBanks } from '@/hooks/useBanks';
 import PageHeader from '@/components/PageHeader';
+import CardThumb from '@/components/cards/CardThumb';
 import { CustomIcon } from '@/components/icons/CustomIcon';
 import { getBankLogo } from '@/lib/bankLogos';
 import { getStatementAmount } from '@/lib/cardDue';
@@ -100,18 +101,6 @@ export default function StatementsPage() {
     const listed = configured.filter(matches);
     const listedMissing = missing.filter(matches);
 
-    const Logo = ({ card }: { card: Card }) => {
-        const logo = logoFor(card);
-        return (
-            <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0">
-                {logo
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={logo} alt={card.bankShortName} className="w-7 h-7 object-contain" />
-                    : <span className="text-[10px] font-bold text-slate-500">{card.bankShortName}</span>}
-            </div>
-        );
-    };
-
     return (
         <div className="min-h-screen pb-32 bg-gray-50 dark:bg-surface-deep transition-colors duration-200">
             <PageHeader title="Lịch sao kê" subtitle="Chốt sao kê & hạn thanh toán các thẻ" backHref="/cards" />
@@ -149,7 +138,7 @@ export default function StatementsPage() {
                             {bestToSwipe.map((r, i) => (
                                 <button key={r.card._id} onClick={() => router.push(`/cards/${r.card._id}`)}
                                     className="w-full flex items-center gap-3 p-3 text-left active:opacity-70">
-                                    <Logo card={r.card} />
+                                    <CardThumb card={r.card} size="md" showLast4 logoUrl={logoFor(r.card)} />
                                     <div className="flex-1 min-w-0">
                                         <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">
                                             {r.card.bankShortName} •••• {(r.card.cardNumber || '').slice(-4)}
@@ -209,7 +198,7 @@ export default function StatementsPage() {
                         {listed.map(r => (
                             <button key={r.card._id} onClick={() => router.push(`/cards/${r.card._id}`)}
                                 className="w-full flex items-center gap-3 p-3 text-left active:opacity-70">
-                                <Logo card={r.card} />
+                                <CardThumb card={r.card} size="md" showLast4 logoUrl={logoFor(r.card)} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{r.card.bankShortName} •••• {(r.card.cardNumber || '').slice(-4)}</p>
                                     <p className="text-[11px] text-slate-400 truncate">Chốt ngày {r.card.statementDay} · Hạn ngày {r.card.paymentDueDay}</p>
@@ -231,7 +220,7 @@ export default function StatementsPage() {
                         {listedMissing.map(r => (
                             <button key={r.card._id} onClick={() => router.push(`/cards/${r.card._id}`)}
                                 className="w-full flex items-center gap-3 p-3 text-left active:opacity-70">
-                                <Logo card={r.card} />
+                                <CardThumb card={r.card} size="md" showLast4 logoUrl={logoFor(r.card)} />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{r.card.bankShortName} •••• {(r.card.cardNumber || '').slice(-4)}</p>
                                     <p className="text-[11px] text-amber-600 dark:text-amber-400 truncate">
