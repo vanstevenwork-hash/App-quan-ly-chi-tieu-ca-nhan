@@ -2,7 +2,7 @@
 /// server's AutoAction + the on-open review events (cardController.autoProcess).
 class AutoActionInfo {
   final String id;
-  final String kind; // savings_settle | credit_autopay
+  final String kind; // savings_settle | credit_autopay | goal_autosave
   final String status; // done | reverted
   final num amount;
   final num interest;
@@ -17,6 +17,8 @@ class AutoActionInfo {
   });
 
   bool get isPay => kind == 'credit_autopay';
+  bool get isGoal => kind == 'goal_autosave';
+  bool get isSettle => kind == 'savings_settle';
   bool get reverted => status == 'reverted';
 
   AutoActionInfo copyWith({String? status}) => AutoActionInfo(

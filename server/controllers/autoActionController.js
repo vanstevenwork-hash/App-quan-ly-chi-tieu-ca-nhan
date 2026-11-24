@@ -1,6 +1,7 @@
 const AutoAction = require('../models/AutoAction');
 const Card = require('../models/Card');
 const Transaction = require('../models/Transaction');
+const Goal = require('../models/Goal');
 const { createNotification } = require('./notificationController');
 const { lastStatementClose, dueThisCycle } = require('../services/autoFinance');
 
@@ -42,7 +43,20 @@ exports.revert = async (req, res) => {
         );
         if (!action) return res.status(404).json({ success: false, message: 'Không tìm thấy hoặc đã hoàn tác' });
 
-        if (action.kind === 'credit_autopay') {
+        if (action.kind === 'goal_autosave') {
+            // Take the deposit back out (this period is NOT re-deposited).
+            const goal = await Goal.findOne({ _id: action.goalId, userId: req.user.id });
+            if (goal) {
+                const c = action.contributionId && goal.contributions.id(action.contributionId);
+                if (c) c.deleteOne();
+                goal.currentAmount = Math.max(0, goal.currentAmount - action.amount);
+                if (goal.status === 'completed' && goal.currentAmount < goal.targetAmount) {
+                    goal.status = 'active';
+                    goal.completedAt = undefined;
+                }
+                await goal.save();
+            }
+        } else if (action.kind === 'credit_autopay') {
             // Debt comes back on the card, money comes back to the account.
             // autoPaidCycle stays set, so this cycle is NOT auto-paid again —
             // the user pays it manually.
@@ -65,10 +79,14 @@ exports.revert = async (req, res) => {
 
         await createNotification({
             userId: req.user.id.toString(),
-            title: action.kind === 'credit_autopay'
+            title: action.kind === 'goal_autosave'
+                ? `Đã hoàn tác góp tự động ${action.cardLabel}`
+                : action.kind === 'credit_autopay'
                 ? `Đã hoàn tác thanh toán ${action.cardLabel}`
                 : `Đã hoàn tác tất toán ${action.cardLabel}`,
-            message: action.kind === 'credit_autopay'
+            message: action.kind === 'goal_autosave'
+                ? `Đã rút lại ${fmt(action.amount)}đ khỏi mục tiêu.`
+                : action.kind === 'credit_autopay'
                 ? `Trả lại ${fmt(action.amount)}đ vào ${action.accountLabel}, dư nợ thẻ được khôi phục. Hãy thanh toán thủ công khi đã trả.`
                 : `Sổ được mở lại, đã trừ ${fmt(action.amount)}đ khỏi ${action.accountLabel || 'tài khoản nhận'}.`,
             type: 'system', icon: '↩️', iconBg: '#F1F5F9',

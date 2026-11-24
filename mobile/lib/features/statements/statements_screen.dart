@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_title.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -27,13 +28,13 @@ class StatementsScreen extends ConsumerWidget {
         backgroundColor: AppColors.pageLight,
         elevation: 0,
         leading: const AppBackButton(fallback: '/accounts'),
-        title: const Text('Lịch sao kê', style: TextStyle(color: AppColors.slate800, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const PageTitle('Lịch sao kê', subtitle: 'Chốt sao kê & hạn thanh toán các thẻ'),
       ),
       body: cardsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => ErrorRetry(onRetry: () => ref.invalidate(cardsProvider)),
         data: (cards) {
-          final txs = txAsync.value ?? const [];
+          final txs = txAsync.valueOrNull ?? const [];
           final now = DateTime.now();
           final rows = <_Row>[];
           final missing = <BankCard>[];
@@ -125,7 +126,7 @@ class StatementsScreen extends ConsumerWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Cần thanh toán sắp tới', style: TextStyle(fontSize: 12, color: Colors.white70)),
           const SizedBox(height: 4),
-          Text('${formatMoney(total)}₫', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text('${formatMoney(total)}₫', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           if (inst > 0 || est > 0)
             Text(
               [if (inst > 0) 'gồm ${formatMoney(inst)}₫ trả góp', if (est > 0) '${formatMoney(est)}₫ dự kiến (kỳ chưa chốt)'].join(' · '),
@@ -146,7 +147,7 @@ class StatementsScreen extends ConsumerWidget {
   Widget _title(String t, {String? trailing}) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(t, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.slate800)),
+          Text(t, style: AppText.section),
           const Spacer(),
           if (trailing != null) Text(trailing, style: const TextStyle(fontSize: 11, color: AppColors.slate400)),
         ]),

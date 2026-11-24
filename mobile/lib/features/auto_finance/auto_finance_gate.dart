@@ -2,7 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'dart:async';
+
+import 'package:home_widget/home_widget.dart';
+
+import '../../core/home_widget_sync.dart';
+import '../../core/prefs.dart';
 import '../../models/auto_action.dart';
+import '../../state/important_alerts.dart';
+import '../transactions/add_transaction_sheet.dart';
+import '../../state/auth_provider.dart';
 import '../../state/finance_providers.dart';
 import '../../theme/app_theme.dart';
 
@@ -29,17 +38,65 @@ class _AutoFinanceGateState extends ConsumerState<AutoFinanceGate> with WidgetsB
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _run());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Launched offline / while the server slept → fetch the profile now.
+      if ((ref.read(authProvider).user?.id ?? '').isEmpty) ref.read(authProvider.notifier).reloadUser();
+      _run();
+      _initHomeWidget();
+    });
+  }
+
+  // ── iOS home-screen widgets ───────────────────────────────────────────
+  StreamSubscription<Uri?>? _widgetTaps;
+  Timer? _widgetDebounce;
+
+  Future<void> _initHomeWidget() async {
+    await HomeWidgetSync.init();
+    _scheduleWidgetPush();
+    _widgetTaps = HomeWidget.widgetClicked.listen(_onWidgetTap);
+    final first = await HomeWidget.initiallyLaunchedFromHomeWidget();
+    if (first != null) _onWidgetTap(first);
+  }
+
+  /// chitieu://add · chitieu://scan · chitieu://statements (…?homeWidget)
+  void _onWidgetTap(Uri? uri) {
+    if (uri == null || !mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      switch (uri.host) {
+        case 'add':
+          showAddTransactionSheet(context);
+        case 'scan':
+          showAddTransactionSheet(context, scan: true);
+        case 'statements':
+          context.push('/statements');
+      }
+    });
+  }
+
+  void _scheduleWidgetPush() {
+    _widgetDebounce?.cancel();
+    _widgetDebounce = Timer(const Duration(milliseconds: 800), () async {
+      final txs = ref.read(transactionsProvider).valueOrNull;
+      final cards = ref.read(cardsProvider).valueOrNull;
+      if (txs == null || cards == null) return;
+      final hidden = await PrefFlags.get(PrefFlags.hideBalance, fallback: true);
+      await HomeWidgetSync.push(txs: txs, cards: cards, dues: ref.read(importantAlertsProvider).credit, hidden: hidden).catchError((_) {});
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _widgetTaps?.cancel();
+    _widgetDebounce?.cancel();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Re-read the "hide balance" pref and refresh the widgets on every return.
+    if (state == AppLifecycleState.resumed || state == AppLifecycleState.paused) _scheduleWidgetPush();
     if (state == AppLifecycleState.resumed && (_lastRun == null || DateTime.now().difference(_lastRun!) > _resumeGap)) {
       _run();
     }
@@ -54,7 +111,7 @@ class _AutoFinanceGateState extends ConsumerState<AutoFinanceGate> with WidgetsB
       if (!mounted || events.isEmpty) return;
       refreshFinance(ref);
       _sheetOpen = true;
-      await showModalBottomSheet<void>(
+      await showModalBottomSheet<void>(useRootNavigator: true, 
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.white,
@@ -70,7 +127,11 @@ class _AutoFinanceGateState extends ConsumerState<AutoFinanceGate> with WidgetsB
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    ref.listen(transactionsProvider, (_, _) => _scheduleWidgetPush());
+    ref.listen(cardsProvider, (_, _) => _scheduleWidgetPush());
+    return widget.child;
+  }
 }
 
 class _ReviewSheet extends ConsumerStatefulWidget {
@@ -92,7 +153,9 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hoàn tác?'),
-        content: Text(a.isPay
+        content: Text(a.isGoal
+            ? 'Rút lại ${formatMoney(a.amount)}đ đã tự góp vào ${a.cardLabel}?'
+            : a.isPay
             ? 'Trả lại ${formatMoney(a.amount)}đ vào ${a.accountLabel} và khôi phục dư nợ ${a.cardLabel}?'
             : 'Mở lại ${a.cardLabel} và trừ ${formatMoney(a.amount)}đ khỏi ${a.accountLabel.isEmpty ? 'tài khoản nhận' : a.accountLabel}?'),
         actions: [
@@ -141,7 +204,7 @@ class _ReviewSheetState extends ConsumerState<_ReviewSheet> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Thay đổi tự động', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.slate800)),
+              const Text('Thay đổi tự động', style: AppText.sheetTitle),
               const SizedBox(height: 4),
               Text('App đã tự xử lý ${_events.length} việc từ lần trước. Kiểm tra lại — nếu ngoài thực tế chưa đúng, bấm Hoàn tác.',
                   style: const TextStyle(fontSize: 12, color: AppColors.slate400, height: 1.4)),

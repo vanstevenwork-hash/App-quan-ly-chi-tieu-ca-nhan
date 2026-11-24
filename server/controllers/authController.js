@@ -63,9 +63,35 @@ exports.checkEmail = async (req, res) => {
     }
 };
 
+// Only what the app needs about the signed-in user. Never the email-change
+// code (that would let a session change the email without owning the new
+// inbox), Telegram link codes or internal ingest bookkeeping.
+function safeUser(u) {
+    const o = u && typeof u.toObject === 'function' ? u.toObject() : (u || {});
+    return {
+        _id: o._id,
+        id: o._id,
+        name: o.name,
+        email: o.email,
+        avatar: o.avatar || '',
+        currency: o.currency || 'VND',
+        language: o.language || 'vi',
+        role: o.role || 'user',
+        telegramConnected: !!o.telegramChatId,
+        createdAt: o.createdAt,
+    };
+}
+exports.safeUser = safeUser;
+
 // @desc Get profile
 exports.getProfile = async (req, res) => {
-    res.json({ success: true, user: req.user });
+    res.json({ success: true, user: safeUser(req.user) });
+};
+
+// @desc  Current user, flat (what the web + mobile clients read after login)
+// @route GET /api/auth/me
+exports.getMe = async (req, res) => {
+    res.json(safeUser(req.user));
 };
 
 // @desc Update profile
@@ -75,7 +101,7 @@ exports.updateProfile = async (req, res) => {
         const user = await User.findByIdAndUpdate(
             req.user._id, { name, avatar, currency, language }, { new: true, select: '-password' }
         );
-        res.json({ success: true, user });
+        res.json({ success: true, user: safeUser(user) });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -134,9 +160,7 @@ exports.confirmEmailChange = async (req, res) => {
         user.emailChangeExpires = null;
         await user.save();
 
-        const safe = user.toObject();
-        delete safe.password;
-        res.json({ success: true, user: safe, message: 'Đã đổi email thành công' });
+        res.json({ success: true, user: safeUser(user), message: 'Đã đổi email thành công' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }

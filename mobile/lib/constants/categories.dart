@@ -34,12 +34,53 @@ const List<ExpenseCategory> kCategories = [
 
 final ExpenseCategory _fallback = kCategories.last;
 
+// ── User's own categories (server: user.customCategories) ──────────────────
+// Loaded once when the app opens (like the web useCustomCategoriesStore) so
+// every list that looks a category up by label shows it properly.
+final List<ExpenseCategory> _custom = [];
+List<ExpenseCategory> get customCategories => List.unmodifiable(_custom);
+
+/// Icon types the app ships an SVG for — anything else falls back to "khac".
+final Set<String> kIconTypes = {for (final c in kCategories) c.iconType};
+
+void setCustomCategories(List<Map<String, dynamic>> raw) {
+  _custom
+    ..clear()
+    ..addAll(raw.map((j) {
+      final icon = (j['catIconType'] ?? 'khac').toString();
+      return ExpenseCategory(
+        (j['_id'] ?? j['label']).toString(),
+        (j['label'] ?? '').toString(),
+        '🏷️',
+        _hex((j['color'] ?? '#6B7280').toString()),
+        kIconTypes.contains(icon) ? icon : 'khac',
+        isIncome: j['type'] == 'income',
+      );
+    }).where((c) => c.label.isNotEmpty));
+}
+
+Color _hex(String h) {
+  final v = int.tryParse(h.replaceFirst('#', ''), radix: 16);
+  return v == null ? const Color(0xFF6B7280) : Color(0xFF000000 | v);
+}
+
 ExpenseCategory categoryByLabel(String label) {
   for (final c in kCategories) {
+    if (c.label == label) return c;
+  }
+  for (final c in _custom) {
     if (c.label == label) return c;
   }
   return _fallback;
 }
 
-List<ExpenseCategory> categoriesFor(bool income) =>
-    kCategories.where((c) => income ? c.isIncome : !c.isIncome).toList();
+/// Built-ins of that type, then the user's own ("Khác" stays last).
+List<ExpenseCategory> categoriesFor(bool income) {
+  final builtIn = kCategories.where((c) => income ? c.isIncome : !c.isIncome).toList();
+  final other = builtIn.where((c) => c.id == 'other').toList();
+  return [
+    ...builtIn.where((c) => c.id != 'other'),
+    ..._custom.where((c) => c.isIncome == income),
+    ...other,
+  ];
+}

@@ -216,7 +216,7 @@ function scheduleAutoFinance() {
   if (process.env.AUTO_FINANCE === 'false') return;
   const { runAutoFinanceForAll } = require('./services/autoFinance');
   const run = () => runAutoFinanceForAll()
-    .then(r => { if (r.savings || r.credit) console.log(`💸 auto-finance: ${r.savings} sổ tất toán, ${r.credit} thẻ trích nợ`); })
+    .then(r => { if (r.savings || r.credit || r.goals) console.log(`💸 auto-finance: ${r.savings} sổ tất toán, ${r.credit} thẻ trích nợ, ${r.goals} góp mục tiêu`); })
     .catch(e => console.error('💸 auto-finance:', e.message));
   setTimeout(run, 60_000).unref?.();
   setInterval(run, 60 * 60_000).unref?.();

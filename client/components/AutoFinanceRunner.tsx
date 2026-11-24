@@ -18,7 +18,7 @@ interface AutoEvent {
     cardId: string | null;
     action: {
         _id: string;
-        kind: 'savings_settle' | 'credit_autopay';
+        kind: 'savings_settle' | 'credit_autopay' | 'goal_autosave';
         status: 'done' | 'reverted';
         amount: number;
         cardLabel: string;
@@ -64,7 +64,9 @@ export default function AutoFinanceRunner() {
     const revert = async (e: AutoEvent) => {
         if (!e.action) return;
         const a = e.action;
-        const msg = a.kind === 'credit_autopay'
+        const msg = a.kind === 'goal_autosave'
+            ? `Hoàn tác: rút lại ${formatNumber(a.amount)}đ đã tự góp vào ${a.cardLabel}?`
+            : a.kind === 'credit_autopay'
             ? `Hoàn tác: trả lại ${formatNumber(a.amount)}đ vào ${a.accountLabel} và khôi phục dư nợ ${a.cardLabel}?`
             : `Hoàn tác: mở lại ${a.cardLabel} và trừ ${formatNumber(a.amount)}đ khỏi ${a.accountLabel || 'tài khoản nhận'}?`;
         if (!confirm(msg)) return;

@@ -67,6 +67,7 @@ class InstallmentPlan {
   final num monthly, total;
   final DateTime startDate;
   const InstallmentPlan(this.tx, this.months, this.monthly, this.total, this.remaining, this.paid, this.startDate);
+  String get cardId => tx.cardId ?? '';
 }
 
 List<InstallmentPlan> installmentPlans(List<TransactionModel> txs, String cardId, DateTime now, {bool includeCompleted = false}) {
@@ -139,3 +140,30 @@ StatementAmount statementAmount(BankCard card, List<TransactionModel> txs, CardC
   });
   return StatementAmount(charges + installment, installment, true);
 }
+
+/// Month of a plan's last period.
+DateTime planEnd(InstallmentPlan p) => DateTime(p.startDate.year, p.startDate.month + p.months - 1, 1);
+
+/// Amount to pay in each of the next `count` months (from the current month),
+/// last period adjusted so the periods sum to the principal — port of
+/// getInstallmentSchedule.
+List<({DateTime month, num amount, int planCount})> installmentSchedule(List<InstallmentPlan> plans, int count, DateTime now) {
+  return List.generate(count, (i) {
+    final month = DateTime(now.year, now.month + i, 1);
+    num amount = 0;
+    var n = 0;
+    for (final p in plans) {
+      if (i >= p.remaining) continue;
+      amount += _sliceAt(p, p.paid + i);
+      n++;
+    }
+    return (month: month, amount: amount, planCount: n);
+  });
+}
+
+/// All plans (optionally finished ones too) across every card.
+List<InstallmentPlan> allInstallmentPlans(List<TransactionModel> txs, Iterable<String> cardIds, DateTime now, {bool includeCompleted = false}) =>
+    [for (final id in cardIds) ...installmentPlans(txs, id, now, includeCompleted: includeCompleted)];
+
+/// Current period's amount for one plan (0 once finished).
+num planCurrentSlice(InstallmentPlan p) => p.remaining > 0 ? _sliceAt(p, p.paid) : 0;

@@ -6,7 +6,7 @@ import '../../state/finance_providers.dart';
 import '../../theme/app_theme.dart';
 
 Future<bool?> showPayCardSheet(BuildContext context, BankCard card) {
-  return showModalBottomSheet<bool>(
+  return showModalBottomSheet<bool>(useRootNavigator: true, 
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,

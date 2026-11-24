@@ -22,6 +22,10 @@ const goalSchema = new mongoose.Schema({
     // Auto-save settings
     autoSaveAmount: { type: Number, default: 0 },
     autoSaveFrequency: { type: String, enum: ['daily', 'weekly', 'monthly', ''], default: '' },
+    // Last auto-save period handled by services/autoFinance.js ('2026-11',
+    // '2026-W48', '2026-11-24'). Set to the current period whenever the plan
+    // changes, so the first automatic deposit lands at the START of the next one.
+    autoSavePeriodKey: { type: String, default: '' },
     completedAt: { type: Date },
 }, { timestamps: true });
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_title.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,7 +27,9 @@ class _AutoActionsScreenState extends ConsumerState<AutoActionsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Hoàn tác?'),
-        content: Text(a.isPay
+        content: Text(a.isGoal
+            ? 'Rút lại ${formatMoney(a.amount)}đ đã tự góp vào ${a.cardLabel}. Kỳ này sẽ không tự góp lại.'
+            : a.isPay
             ? 'Tiền sẽ trả lại ${a.accountLabel}, dư nợ ${a.cardLabel} được khôi phục. Kỳ này sẽ không tự trừ lại — bạn thanh toán thủ công khi đã trả.'
             : 'Sổ được mở lại và trừ ${formatMoney(a.amount)}đ khỏi ${a.accountLabel.isEmpty ? 'tài khoản nhận' : a.accountLabel}. Sổ không tự tất toán lại tới khi bạn tái tục/sửa ngày đáo hạn.'),
         actions: [
@@ -59,7 +62,7 @@ class _AutoActionsScreenState extends ConsumerState<AutoActionsScreen> {
         backgroundColor: AppColors.pageLight,
         elevation: 0,
         leading: const AppBackButton(fallback: '/settings'),
-        title: const Text('Giao dịch tự động', style: TextStyle(color: AppColors.slate800, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const PageTitle('Giao dịch tự động', subtitle: 'Tất toán, trừ thẻ & góp mục tiêu'),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -68,7 +71,8 @@ class _AutoActionsScreenState extends ConsumerState<AutoActionsScreen> {
           final monthStart = DateTime(DateTime.now().year, DateTime.now().month);
           final live = d.actions.where((a) => !a.reverted && !a.createdAt.isBefore(monthStart));
           final paid = live.where((a) => a.isPay).fold<num>(0, (s, a) => s + a.amount);
-          final settled = live.where((a) => !a.isPay).fold<num>(0, (s, a) => s + a.amount);
+          final settled = live.where((a) => a.isSettle).fold<num>(0, (s, a) => s + a.amount);
+          final goalSaved = live.where((a) => a.isGoal).fold<num>(0, (s, a) => s + a.amount);
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(autoActionsProvider),
             child: ListView(padding: const EdgeInsets.fromLTRB(20, 4, 20, 40), children: [
@@ -77,6 +81,7 @@ class _AutoActionsScreenState extends ConsumerState<AutoActionsScreen> {
                 const SizedBox(width: 12),
                 Expanded(child: _stat('Đã tất toán tháng này', settled)),
               ]),
+              if (goalSaved > 0) ...[const SizedBox(height: 12), _stat('Đã tự góp mục tiêu tháng này', goalSaved)],
               if (d.pending.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 const Text('Chưa trừ được tiền', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.slate800)),
@@ -131,19 +136,15 @@ class _AutoActionsScreenState extends ConsumerState<AutoActionsScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: kCardShadow),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            width: 40, height: 40, alignment: Alignment.center,
-            decoration: BoxDecoration(color: (a.isPay ? AppColors.income : AppColors.primary).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-            child: Text(a.isPay ? '💳' : '🏦', style: const TextStyle(fontSize: 18)),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(a.isPay ? 'Tự trừ tiền ${a.cardLabel}' : 'Tất toán ${a.cardLabel}',
+              Text(a.isPay ? 'Tự trừ tiền ${a.cardLabel}' : a.isGoal ? 'Góp tự động ${a.cardLabel}' : 'Tất toán ${a.cardLabel}',
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.slate800)),
               const SizedBox(height: 2),
               Text(
-                a.isPay
+                a.isGoal
+                    ? '+${formatMoney(a.amount)}đ vào mục tiêu${a.accountLabel.isEmpty ? '' : ' · ${a.accountLabel}'}'
+                    : a.isPay
                     ? '${formatMoney(a.amount)}đ từ ${a.accountLabel}'
                     : '${formatMoney(a.amount)}đ (lãi ${formatMoney(a.interest)}đ) → ${a.accountLabel.isEmpty ? 'chưa có TK nhận' : a.accountLabel}',
                 style: const TextStyle(fontSize: 12, color: AppColors.slate500),

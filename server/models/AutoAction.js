@@ -5,8 +5,10 @@ const mongoose = require('mongoose');
 // happen at the bank (e.g. the card wasn't actually paid).
 const autoActionSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    kind: { type: String, enum: ['savings_settle', 'credit_autopay'], required: true },
-    cardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card', required: true },    // sổ / thẻ tín dụng
+    kind: { type: String, enum: ['savings_settle', 'credit_autopay', 'goal_autosave'], required: true },
+    cardId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card', default: null },     // sổ / thẻ tín dụng
+    goalId: { type: mongoose.Schema.Types.ObjectId, ref: 'Goal', default: null },     // goal_autosave
+    contributionId: { type: mongoose.Schema.Types.ObjectId, default: null },          // goal_autosave
     accountId: { type: mongoose.Schema.Types.ObjectId, ref: 'Card', default: null },  // TK nhận / TK bị trừ
     amount: { type: Number, required: true },        // tiền chuyển (gốc + lãi | số trừ)
     principal: { type: Number, default: 0 },

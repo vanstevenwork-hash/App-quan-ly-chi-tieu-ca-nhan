@@ -14,6 +14,7 @@ class TransactionModel {
   final num installmentMonthly;
   final DateTime? installmentStartDate;
   final num feeAmount; // phí giao dịch (quẹt thẻ)
+  final String receiptImage; // ảnh hóa đơn (Cloudinary URL)
 
   const TransactionModel({
     required this.id,
@@ -29,6 +30,7 @@ class TransactionModel {
     this.installmentMonthly = 0,
     this.installmentStartDate,
     this.feeAmount = 0,
+    this.receiptImage = '',
   });
 
   bool get isIncome => type == 'income';
@@ -46,6 +48,7 @@ class TransactionModel {
         installmentMonths: (j['installmentMonths'] is num) ? (j['installmentMonths'] as num).toInt() : 0,
         installmentMonthly: (j['installmentMonthly'] is num) ? j['installmentMonthly'] as num : 0,
         feeAmount: (j['feeAmount'] is num) ? j['feeAmount'] as num : 0,
+        receiptImage: (j['receiptImage'] ?? '').toString(),
         installmentStartDate: j['installmentStartDate'] == null ? null : DateTime.tryParse(j['installmentStartDate'].toString())?.toLocal(),
       );
 

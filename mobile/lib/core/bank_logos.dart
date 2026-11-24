@@ -53,3 +53,17 @@ String? bankLogo(String? bankShortName, [String? bankName]) {
   }
   return null;
 }
+
+/// First bank mentioned in free text (notification title/message), e.g.
+/// "Đã tự động thanh toán thẻ SHB World…" → SHB logo. Port of the web
+/// NotificationPanel getMatchingLogo (word-level, so "MB" ≠ "MBBANK" noise).
+String? bankLogoInText(String? text) {
+  if (text == null || text.isEmpty) return null;
+  for (final w in text.split(RegExp(r'[\s,.:;()/\-–·•]+'))) {
+    final k = _key(w);
+    if (k.length < 2) continue;
+    final code = _codeByAlias[k];
+    if (code != null) return '$_cdn/$code.png';
+  }
+  return null;
+}

@@ -208,7 +208,9 @@ function GoalCard({ goal, onContribute, onEdit, onDelete }: {
                     </button>
                     <button onClick={onEdit}
                         className="px-4 py-2.5 rounded-xl text-[13px] font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.98] transition-all">
-                        {goal.autoSaveAmount ? `Tự động: ${fmtViShort(goal.autoSaveAmount)}` : 'Góp tự động'}
+                        {goal.autoSaveAmount && goal.autoSaveFrequency
+                            ? `Tự động: ${fmtViShort(goal.autoSaveAmount)}/${({ daily: 'ngày', weekly: 'tuần', monthly: 'tháng' } as Record<string, string>)[goal.autoSaveFrequency] ?? ''}`
+                            : 'Góp tự động'}
                     </button>
                 </div>
             ) : (

@@ -17,6 +17,17 @@ import '../features/cards/card_detail_screen.dart';
 import '../features/statements/statements_screen.dart';
 import '../features/auto_finance/auto_actions_screen.dart';
 import '../features/cards/card_designs_screen.dart';
+import '../features/search/search_screen.dart';
+import '../features/installments/installments_screen.dart';
+import '../features/savings/savings_screen.dart';
+import '../features/cards/card_expiry_screen.dart';
+import '../features/cashback/cashback_screen.dart';
+import '../features/wealth/wealth_screen.dart';
+import '../features/mailbox/mailbox_screen.dart';
+import '../features/mailbox/traveloka_screen.dart';
+import '../features/settings/categories_screen.dart';
+import '../features/games/games_screen.dart';
+import '../features/games/match_screen.dart';
 import '../widgets/app_scaffold.dart';
 
 /// go_router wired to the auth state (mirrors the web AuthGuard). While the
@@ -55,6 +66,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/auto-actions', builder: (_, _) => const AutoActionsScreen()),
       // Must sit before /cards/:id so "designs" isn't read as a card id.
       GoRoute(path: '/cards/designs', builder: (_, _) => const CardDesignsScreen()),
+      GoRoute(path: '/cards/expiry', builder: (_, _) => const CardExpiryScreen()),
+      GoRoute(path: '/search', builder: (_, _) => const SearchScreen()),
+      GoRoute(path: '/games', builder: (_, _) => const GamesScreen()),
+      GoRoute(path: '/games/:id', builder: (_, state) => MatchScreen(matchId: state.pathParameters['id']!)),
+      GoRoute(path: '/settings/categories', builder: (_, _) => const CategoriesScreen()),
+      GoRoute(path: '/installments', builder: (_, _) => const InstallmentsScreen()),
+      GoRoute(path: '/savings', builder: (_, _) => const SavingsScreen()),
+      GoRoute(path: '/cashback', builder: (_, _) => const CashbackScreen()),
+      GoRoute(path: '/wealth', builder: (_, _) => const WealthScreen()),
+      GoRoute(path: '/mailbox', builder: (_, _) => const MailboxScreen()),
+      GoRoute(path: '/mailbox/traveloka', builder: (_, _) => const TravelokaScreen()),
       GoRoute(
         path: '/cards/:id',
         builder: (_, state) => CardDetailScreen(cardId: state.pathParameters['id']!),

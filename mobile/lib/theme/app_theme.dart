@@ -38,10 +38,34 @@ class AppColors {
   static const slate900 = Color(0xFF0F172A);
   static const slate800 = Color(0xFF1E293B);
   static const slate700 = Color(0xFF334155);
+  static const slate600 = Color(0xFF475569);
   static const slate500 = Color(0xFF64748B);
   static const slate400 = Color(0xFF94A3B8);
+  static const slate300 = Color(0xFFCBD5E1);
   static const slate200 = Color(0xFFE2E8F0);
   static const slate100 = Color(0xFFF1F5F9);
+}
+
+/// Type scale — the web REMAPS Tailwind sizes (tailwind.config.ts fontSize):
+/// text-xl = 16px, text-lg = 14px, text-base = 13px, text-2xl = 18px,
+/// text-3xl = 22px, text-4xl = 26px (text-sm 14 / text-xs 12 unchanged).
+/// Mobile mirrors those real pixel sizes, not Tailwind's defaults.
+class AppText {
+  /// PageHeader <h1>: text-xl font-bold text-slate-900.
+  static const pageTitle = TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.slate900, height: 1.25);
+  /// PageHeader subtitle: text-xs font-medium text-slate-400.
+  static const pageSubtitle = TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.slate400, height: 1.2);
+  /// Section <h3> on inner pages: text-base/lg font-bold text-slate-800 (13–14px).
+  static const section = TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.slate800);
+  /// Dashboard section <h2>: text-[15px] font-bold.
+  static const sectionHome = TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.slate800);
+  /// Dialog / bottom-sheet title: text-xl font-bold (16px).
+  static const sheetTitle = TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.slate900);
+  /// List row title / body: text-sm font-bold (14) — secondary: text-xs (12) slate-400.
+  static const rowTitle = TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.slate800);
+  static const caption = TextStyle(fontSize: 12, color: AppColors.slate400);
+  /// Uppercase group label (settings): text-xs font-bold tracking-[0.15em].
+  static const groupLabel = TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.8, color: AppColors.slate400);
 }
 
 /// Soft purple-tinted elevation, matching the web's
@@ -66,6 +90,21 @@ class AppTheme {
     return base.copyWith(
       textTheme: GoogleFonts.manropeTextTheme(base.textTheme),
       splashFactory: InkRipple.splashFactory,
+      // Web PageHeader: title LEFT-aligned next to the back button (Flutter
+      // centres AppBar titles on iOS by default), flat, page-coloured.
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: AppColors.pageLight,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppColors.slate800,
+        toolbarHeight: 60,
+        // web: px-5 · 40px back circle · gap-4 → title starts ~76px in
+        leadingWidth: 68,
+        titleSpacing: 8,
+        titleTextStyle: GoogleFonts.manrope(textStyle: AppText.pageTitle),
+      ),
     );
   }
 

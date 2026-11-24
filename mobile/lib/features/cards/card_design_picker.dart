@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/card_art.dart';
 import '../../core/card_catalog.dart';
+import '../../state/finance_providers.dart';
 import '../../theme/app_theme.dart';
 
 /// "Mẫu thẻ" strip — port of the web CardDesignPicker. Shows the bank's real
 /// card designs (requested type first) plus a "Dùng màu" tile; picking a
 /// design hands it back so the form can fill the card's name and network.
-class CardDesignPicker extends StatefulWidget {
+class CardDesignPicker extends ConsumerStatefulWidget {
   final String bankShortName;
   final String bankName;
   final String cardType;
@@ -24,12 +27,30 @@ class CardDesignPicker extends StatefulWidget {
   });
 
   @override
-  State<CardDesignPicker> createState() => _CardDesignPickerState();
+  ConsumerState<CardDesignPicker> createState() => _CardDesignPickerState();
 }
 
-class _CardDesignPickerState extends State<CardDesignPicker> {
+class _CardDesignPickerState extends ConsumerState<CardDesignPicker> {
   CardCatalog? _catalog;
   String _filter = '';
+  bool _uploading = false;
+
+  /// Own photo → Cloudinary (chi_tieu/cards), resized on device first.
+  Future<void> _uploadOwn() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 1200, imageQuality: 85);
+    if (picked == null) return;
+    setState(() => _uploading = true);
+    try {
+      final url = await ref.read(financeServiceProvider).uploadImage(picked.path, folder: 'chi_tieu/cards');
+      widget.onChanged(url, null);
+      messenger.showSnackBar(const SnackBar(content: Text('Đã tải ảnh thẻ')));
+    } catch (_) {
+      messenger.showSnackBar(const SnackBar(content: Text('Tải ảnh thất bại')));
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
 
   @override
   void initState() {
@@ -82,12 +103,26 @@ class _CardDesignPickerState extends State<CardDesignPicker> {
               child: const Center(child: Text('Dùng màu', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.slate400))),
               dashed: true,
             ),
-            if (hasCustom)
-              _tile(
-                selected: true,
-                onTap: () {},
-                child: Image(image: cardImageProvider(widget.value, small: true)!, fit: BoxFit.cover),
-              ),
+            _tile(
+              selected: hasCustom,
+              onTap: _uploading ? () {} : _uploadOwn,
+              dashed: !hasCustom,
+              child: hasCustom
+                  ? Stack(fit: StackFit.expand, children: [
+                      Image(image: cardImageProvider(widget.value, small: true)!, fit: BoxFit.cover),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          width: double.infinity, color: Colors.black45, padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: const Text('Ảnh của bạn · đổi', textAlign: TextAlign.center, style: TextStyle(fontSize: 9, color: Colors.white)),
+                        ),
+                      ),
+                    ])
+                  : Center(
+                      child: Text(_uploading ? 'Đang tải…' : '＋ Ảnh của bạn',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.slate400)),
+                    ),
+            ),
             for (final d in shown)
               _tile(
                 selected: widget.value == d.src,
@@ -103,7 +138,7 @@ class _CardDesignPickerState extends State<CardDesignPicker> {
             ? 'Đã chọn ${selected.name}.'
             : all.isEmpty
                 ? 'Chưa có mẫu cho ngân hàng này — nhập đúng tên ngân hàng (vd: VPBank, VCB).'
-                : 'Chọn đúng mẫu thẻ bạn đang dùng để dễ nhận ra.',
+                : 'Chọn đúng mẫu thẻ bạn đang dùng để dễ nhận ra. Ảnh tự tải nên che số thẻ, tên, ngày hết hạn; không chụp mặt sau (CVV).',
         style: const TextStyle(fontSize: 11, color: AppColors.slate400),
       ),
     ]);

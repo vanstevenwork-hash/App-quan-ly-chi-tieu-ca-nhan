@@ -1,16 +1,17 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'secure_storage.dart';
 
 /// dio wrapper mirroring the web client's axios setup: attaches the JWT to every
 /// request and, on a 401 from a non-auth endpoint, clears the session and pings
 /// [onUnauthorized] so the app can bounce back to the login screen.
 class ApiClient {
-  // iOS Simulator shares the Mac's network, so localhost works there. For a
-  // real iPhone, point this at your Mac's LAN IP (e.g. http://192.168.1.10:8000/api).
-  static const baseUrl = String.fromEnvironment(
-    'API_URL',
-    defaultValue: 'http://localhost:8000/api',
-  );
+  // --dart-define=API_URL=… wins. Otherwise release builds (TestFlight /
+  // App Store) talk to production on Render, debug builds to the local server
+  // (the iOS Simulator shares the Mac's network, so localhost works there).
+  static const _override = String.fromEnvironment('API_URL');
+  static const _production = 'https://app-quan-ly-chi-tieu-ca-nhan.onrender.com/api';
+  static String get baseUrl => _override.isNotEmpty ? _override : (kReleaseMode ? _production : 'http://localhost:8000/api');
 
   /// Set by the auth layer; called when the token is rejected.
   static void Function()? onUnauthorized;
@@ -20,8 +21,10 @@ class ApiClient {
   static Dio _build() {
     final d = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 20),
+      connectTimeout: const Duration(seconds: 20),
+      // Render's free tier sleeps; the first request after a nap can take
+      // 30-50s while it boots — don't fail it as a timeout.
+      receiveTimeout: const Duration(seconds: 60),
       headers: {'Content-Type': 'application/json'},
     ));
 

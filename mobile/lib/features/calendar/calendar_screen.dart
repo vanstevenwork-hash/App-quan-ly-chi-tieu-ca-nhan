@@ -6,6 +6,7 @@ import '../../state/finance_providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/transaction_row.dart';
+import '../../widgets/tab_header.dart';
 import '../transactions/transaction_detail_sheet.dart';
 
 const _months = [
@@ -96,10 +97,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         child: txAsync.isLoading && all.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : ListView(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
                 children: [
                   _monthHeader(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   _summaryCard(mExpense, mIncome, expensePct),
                   const SizedBox(height: 16),
                   _filterTabs(),
@@ -113,32 +114,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _monthHeader() => Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('LỊCH GIAO DỊCH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.slate400, letterSpacing: 1)),
-                const SizedBox(height: 2),
-                Text('${_months[_month - 1]}, $_year',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.slate800)),
-              ],
-            ),
-          ),
-          _navBtn(Icons.chevron_left, _prevMonth),
-          const SizedBox(width: 8),
-          _navBtn(Icons.chevron_right, _nextMonth),
+  Widget _monthHeader() => TabHeader(
+        title: '${_months[_month - 1]}, $_year',
+        subtitle: 'LỊCH GIAO DỊCH',
+        actions: [
+          HeaderButton(icon: Icons.chevron_left_rounded, style: HeaderButtonStyle.neutral, onTap: _prevMonth),
+          HeaderButton(icon: Icons.chevron_right_rounded, style: HeaderButtonStyle.neutral, onTap: _nextMonth),
         ],
-      );
-
-  Widget _navBtn(IconData icon, VoidCallback onTap) => GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 40, height: 40,
-          decoration: const BoxDecoration(color: AppColors.slate100, shape: BoxShape.circle),
-          child: Icon(icon, size: 22, color: AppColors.slate500),
-        ),
       );
 
   Widget _summaryCard(num expense, num income, double expensePct) => Container(

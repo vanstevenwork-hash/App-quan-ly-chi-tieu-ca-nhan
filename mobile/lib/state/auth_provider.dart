@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/home_widget_sync.dart';
 import '../core/api_client.dart';
 import '../models/user.dart';
 import '../services/auth_service.dart';
@@ -56,8 +57,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = AuthState(status: AuthStatus.authenticated, user: user);
   }
 
+  /// Re-fetch /auth/me after the profile changed (name, email, avatar).
+  Future<void> reloadUser() async {
+    try {
+      final user = await _service.reload();
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+    } catch (_) {}
+  }
+
   Future<void> logout() async {
     await _service.logout();
+    HomeWidgetSync.clear().catchError((_) {}); // don't leave amounts on the home screen
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 }

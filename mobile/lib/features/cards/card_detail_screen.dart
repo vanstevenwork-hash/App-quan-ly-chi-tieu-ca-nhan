@@ -1,4 +1,6 @@
 import 'dart:ui' as ui;
+import '../../widgets/page_title.dart';
+import 'card_share_sheet.dart';
 import 'package:flutter/material.dart';
 
 import '../../widgets/card_thumb.dart';
@@ -31,14 +33,7 @@ class CardDetailScreen extends ConsumerWidget {
         backgroundColor: AppColors.pageLight,
         elevation: 0,
         leading: const AppBackButton(),
-        title: const Text(
-          'Chi tiết thẻ',
-          style: TextStyle(
-            color: AppColors.slate800,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
+        title: const PageTitle('Chi tiết thẻ'),
         iconTheme: const IconThemeData(color: AppColors.slate700),
       ),
       body: cardsAsync.when(
@@ -46,7 +41,12 @@ class CardDetailScreen extends ConsumerWidget {
         error: (_, _) =>
             ErrorRetry(onRetry: () => ref.invalidate(cardsProvider)),
         data: (cards) {
-          final card = cards.where((c) => c.id == cardId).firstOrNull;
+          // Own card, or a card someone shared with me.
+          final own = cards.where((c) => c.id == cardId).firstOrNull;
+          final shared = own == null
+              ? (ref.watch(sharedCardsProvider).valueOrNull ?? const []).where((s) => s.card.id == cardId).firstOrNull
+              : null;
+          final card = own ?? shared?.card;
           if (card == null) {
             return const Center(
               child: Text(
@@ -62,6 +62,21 @@ class CardDetailScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
             children: [
               _cardVisual(card),
+              if (shared != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(12)),
+                  child: Row(children: [
+                    const Text('🤝', style: TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('Chia sẻ bởi ${shared.ownerName.isNotEmpty ? shared.ownerName : shared.ownerEmail}',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF4F46E5))),
+                    ),
+                  ]),
+                ),
+              ],
               const SizedBox(height: 20),
               if (card.isCredit) _creditStats(card) else _balanceStat(card),
               if (card.isCredit &&
@@ -72,7 +87,7 @@ class CardDetailScreen extends ConsumerWidget {
               const SizedBox(height: 20),
               _infoRow(card),
               const SizedBox(height: 16),
-              _actionButtons(context, ref, card),
+              if (shared == null) _actionButtons(context, ref, card),
               const SizedBox(height: 24),
               Row(
                 children: [
@@ -197,7 +212,16 @@ class CardDetailScreen extends ConsumerWidget {
       ],
     );
 
-    if (!card.isCredit) return editDelete;
+    final share = (card.isCredit || card.cardType == 'debit')
+        ? Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _btn('🤝  Chia sẻ thẻ', Icons.group_add_outlined, const Color(0xFF4F46E5),
+                () => showCardShareSheet(context, cardId: card.id, cardName: '${card.bankShortName} •••• ${card.cardNumber}'),
+                tonal: true),
+          )
+        : const SizedBox.shrink();
+
+    if (!card.isCredit) return Column(children: [share, editDelete]);
     return Column(
       children: [
         GestureDetector(
@@ -227,6 +251,7 @@ class CardDetailScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
+        share,
         editDelete,
       ],
     );

@@ -1,5 +1,11 @@
 const Goal = require('../models/Goal');
 const { createNotification } = require('./notificationController');
+const { autoSavePeriodKey } = require('../utils/goalAutoSave');
+
+// Only these fields are user-editable — never userId / status / currentAmount /
+// contributions (those change through deposit / withdraw / the scheduler).
+const EDITABLE = ['name', 'targetAmount', 'deadline', 'icon', 'color', 'category', 'description', 'autoSaveAmount', 'autoSaveFrequency'];
+const pick = (body = {}) => Object.fromEntries(EDITABLE.filter(k => body[k] !== undefined).map(k => [k, body[k]]));
 
 // GET /api/goals
 exports.getGoals = async (req, res) => {
@@ -25,7 +31,10 @@ exports.getGoal = async (req, res) => {
 // POST /api/goals
 exports.createGoal = async (req, res) => {
     try {
-        const goal = await Goal.create({ ...req.body, userId: req.user._id, status: 'active' });
+        const data = pick(req.body);
+        // First automatic deposit happens at the start of the NEXT period.
+        data.autoSavePeriodKey = autoSavePeriodKey(data.autoSaveFrequency) || '';
+        const goal = await Goal.create({ ...data, userId: req.user._id, status: 'active' });
         res.status(201).json({ success: true, data: goal });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -35,12 +44,14 @@ exports.createGoal = async (req, res) => {
 // PUT /api/goals/:id
 exports.updateGoal = async (req, res) => {
     try {
-        const goal = await Goal.findOneAndUpdate(
-            { _id: req.params.id, userId: req.user._id },
-            req.body,
-            { new: true, runValidators: true }
-        );
+        const goal = await Goal.findOne({ _id: req.params.id, userId: req.user._id });
         if (!goal) return res.status(404).json({ success: false, message: 'Không tìm thấy mục tiêu' });
+        const data = pick(req.body);
+        const planChanged = (data.autoSaveAmount !== undefined && Number(data.autoSaveAmount) !== goal.autoSaveAmount)
+            || (data.autoSaveFrequency !== undefined && data.autoSaveFrequency !== goal.autoSaveFrequency);
+        goal.set(data);
+        if (planChanged) goal.autoSavePeriodKey = autoSavePeriodKey(goal.autoSaveFrequency) || '';
+        await goal.save();
         res.json({ success: true, data: goal });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -139,3 +150,5 @@ exports.withdraw = async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 };
+
+exports.notifyMilestone = notifyMilestone;

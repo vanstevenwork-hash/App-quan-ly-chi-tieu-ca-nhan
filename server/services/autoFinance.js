@@ -9,6 +9,9 @@
 //     statement cycle, as soon as the statement has closed — only when that
 //     account holds enough money. Otherwise the user is told once per cycle
 //     and the next scan tries again (e.g. after a top-up).
+//  3. Goals with "Góp tự động" get their planned amount added once per
+//     day / ISO week / month (VN time), capped at what's left to reach the
+//     target. Reviewable + undoable like the others.
 //
 // Everything here is idempotent and race-safe (each step is claimed with an
 // atomic update), so the hourly scheduler, the cron endpoint and the
@@ -16,6 +19,8 @@
 const Card = require('../models/Card');
 const Transaction = require('../models/Transaction');
 const AutoAction = require('../models/AutoAction');
+const Goal = require('../models/Goal');
+const { autoSavePeriodKey } = require('../utils/goalAutoSave');
 const { createNotification } = require('../controllers/notificationController');
 
 const VN_OFFSET_MS = 7 * 3600_000; // Asia/Ho_Chi_Minh, no DST
@@ -215,13 +220,66 @@ async function autoPayCreditCards(userId, payAccounts, now = new Date()) {
     return results;
 }
 
+// ─── 3. Goal auto-save ─────────────────────────────────────────────────────
+const FREQ_LABEL = { daily: 'hằng ngày', weekly: 'hằng tuần', monthly: 'hằng tháng' };
+const AUTOSAVE_QUERY = { status: 'active', autoSaveAmount: { $gt: 0 }, autoSaveFrequency: { $in: ['daily', 'weekly', 'monthly'] } };
+
+async function autoSaveGoals(userId, now = new Date()) {
+    const { notifyMilestone } = require('../controllers/goalController'); // lazy: avoids a require cycle
+    const goals = await Goal.find({ userId, ...AUTOSAVE_QUERY });
+    const results = [];
+    for (const goal of goals) {
+        const key = autoSavePeriodKey(goal.autoSaveFrequency, now);
+        if (!key || goal.autoSavePeriodKey === key) continue;
+        // Plan set up before period tracking existed → start counting from now,
+        // don't back-fill a deposit the user never saw coming.
+        if (!goal.autoSavePeriodKey) {
+            await Goal.updateOne({ _id: goal._id, autoSavePeriodKey: '' }, { $set: { autoSavePeriodKey: key } });
+            continue;
+        }
+        const remaining = Math.max(0, goal.targetAmount - goal.currentAmount);
+        const amount = Math.min(goal.autoSaveAmount, remaining);
+        // Claim this period atomically (scheduler / cron / app-open may overlap).
+        const claimed = await Goal.findOneAndUpdate(
+            { _id: goal._id, status: 'active', autoSavePeriodKey: goal.autoSavePeriodKey },
+            amount > 0
+                ? { $set: { autoSavePeriodKey: key }, $inc: { currentAmount: amount }, $push: { contributions: { amount, type: 'deposit', note: 'Góp tự động', date: now } } }
+                : { $set: { autoSavePeriodKey: key } },
+            { new: true }
+        );
+        if (!claimed || amount <= 0) continue;
+
+        const prevPct = goal.targetAmount > 0 ? Math.floor((goal.currentAmount / goal.targetAmount) * 100) : 0;
+        const newPct = goal.targetAmount > 0 ? Math.round((claimed.currentAmount / goal.targetAmount) * 100) : 0;
+        if (newPct >= 100) await Goal.updateOne({ _id: goal._id }, { $set: { status: 'completed', completedAt: now } });
+        for (const m of [25, 50, 75, 100]) if (prevPct < m && newPct >= m) await notifyMilestone(userId, claimed, m);
+
+        const contribution = claimed.contributions[claimed.contributions.length - 1];
+        const action = await AutoAction.create({
+            userId, kind: 'goal_autosave', goalId: goal._id, contributionId: contribution?._id || null,
+            amount, cardLabel: `${goal.icon || '🎯'} ${goal.name}`, accountLabel: FREQ_LABEL[goal.autoSaveFrequency] || '',
+        });
+        await createNotification({
+            userId: userId.toString(),
+            title: `Đã tự động góp vào "${goal.name}"`,
+            message: `+${fmt(amount)}đ (${FREQ_LABEL[goal.autoSaveFrequency]}) · tiến độ ${Math.min(100, newPct)}%`
+                + (amount < goal.autoSaveAmount ? ' · đã chạm mục tiêu' : ''),
+            type: 'saving', icon: goal.icon || '🎯', iconBg: '#EEF2FF',
+            relatedId: action._id, relatedModel: 'AutoAction', actionUrl: '/auto-actions', autoEvent: true,
+        });
+        results.push({ goalId: goal._id, amount });
+    }
+    return results;
+}
+
 async function runAutoFinanceForUser(userId, now = new Date()) {
     // Shared, mutable list so money landing from a settled book can fund a
     // credit card payment in the same run.
     const payAccounts = await Card.find({ userId, isActive: true, cardType: { $in: PAYMENT_TYPES } });
     const savings = await settleMaturedSavings(userId, payAccounts, now);
     const credit = await autoPayCreditCards(userId, payAccounts, now);
-    return { savings, credit };
+    const goals = await autoSaveGoals(userId, now);
+    return { savings, credit, goals };
 }
 
 let running = false;
@@ -229,21 +287,23 @@ async function runAutoFinanceForAll(now = new Date()) {
     if (running) return { skipped: true };
     running = true;
     try {
-        const userIds = await Card.distinct('userId', {
+        const cardUsers = await Card.distinct('userId', {
             isActive: true,
             $or: [
                 { cardType: 'savings', settledAt: null, maturityDate: { $ne: null, $lte: now } },
                 { cardType: 'credit', autoDebit: { $ne: false }, statementDay: { $gt: 0 }, balance: { $gt: 0 } },
             ],
         });
-        let savings = 0, credit = 0;
+        const goalUsers = await Goal.distinct('userId', AUTOSAVE_QUERY);
+        const userIds = [...new Map([...cardUsers, ...goalUsers].map(id => [id.toString(), id])).values()];
+        let savings = 0, credit = 0, goals = 0;
         for (const uid of userIds) {
             try {
                 const r = await runAutoFinanceForUser(uid, now);
-                savings += r.savings.length; credit += r.credit.length;
+                savings += r.savings.length; credit += r.credit.length; goals += r.goals.length;
             } catch (e) { console.error('💸 auto-finance user', uid.toString(), e.message); }
         }
-        return { users: userIds.length, savings, credit };
+        return { users: userIds.length, savings, credit, goals };
     } finally { running = false; }
 }
 

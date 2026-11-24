@@ -71,15 +71,24 @@ class _SpendingTrendChartState extends State<SpendingTrendChart> {
     final tickEvery = _range == _Range.week ? 1 : (_range == _Range.month ? 5 : 1);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), boxShadow: kCardShadow),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+        boxShadow: const [BoxShadow(color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 2))],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Range segmented control
           Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(color: AppColors.slate100, borderRadius: BorderRadius.circular(10)),
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.slate200.withValues(alpha: 0.7)),
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -89,22 +98,25 @@ class _SpendingTrendChartState extends State<SpendingTrendChart> {
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Row(children: [
-            _legend(AppColors.incomeLight, 'Thu'),
-            const SizedBox(width: 14),
-            _legend(AppColors.expenseLight, 'Chi'),
-          ]),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           SizedBox(
-            height: 150,
+            height: 118,
             child: LineChart(
               LineChartData(
                 minY: 0,
                 maxY: maxY * 1.2,
-                gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: maxY / 2, getDrawingHorizontalLine: (_) => const FlLine(color: AppColors.slate100, strokeWidth: 1)),
+                gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: maxY * 1.2 / 2, getDrawingHorizontalLine: (_) => const FlLine(color: AppColors.slate100, strokeWidth: 1)),
                 titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      interval: maxY * 1.2 / 2,
+                      getTitlesWidget: (v, meta) => v == meta.max
+                          ? const SizedBox.shrink()
+                          : Text(v <= 0 ? '0' : formatCompact(v), style: const TextStyle(fontSize: 9, color: AppColors.slate400)),
+                    ),
+                  ),
                   rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   bottomTitles: AxisTitles(
@@ -144,12 +156,13 @@ class _SpendingTrendChartState extends State<SpendingTrendChart> {
     return GestureDetector(
       onTap: () => setState(() => _range = r),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: active ? AppColors.brand : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: active ? [BoxShadow(color: AppColors.brand.withValues(alpha: 0.3), blurRadius: 6, offset: const Offset(0, 2))] : null,
         ),
-        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: active ? Colors.white : AppColors.slate500)),
+        child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: active ? Colors.white : AppColors.slate500)),
       ),
     );
   }
@@ -157,6 +170,7 @@ class _SpendingTrendChartState extends State<SpendingTrendChart> {
   LineChartBarData _line(List<FlSpot> spots, Color color) => LineChartBarData(
         spots: spots,
         isCurved: true,
+        preventCurveOverShooting: true,
         color: color,
         barWidth: 3,
         dotData: const FlDotData(show: false),
@@ -165,10 +179,4 @@ class _SpendingTrendChartState extends State<SpendingTrendChart> {
           gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [color.withValues(alpha: 0.28), color.withValues(alpha: 0)]),
         ),
       );
-
-  Widget _legend(Color color, String label) => Row(children: [
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 5),
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.slate500, fontWeight: FontWeight.w600)),
-      ]);
 }

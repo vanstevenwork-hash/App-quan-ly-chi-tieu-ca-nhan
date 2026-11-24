@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/cashback.dart';
+import '../../core/prefs.dart';
 import '../../core/statement.dart';
 import '../../models/bank_card.dart';
+import '../../models/card_share.dart';
 import '../../models/transaction.dart';
 import '../../models/user.dart';
 import '../../state/auth_provider.dart';
@@ -33,6 +35,13 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _hide = true;
 
+  @override
+  void initState() {
+    super.initState();
+    // "Ẩn số dư khi mở app" (Settings) — default on, like the web.
+    PrefFlags.get(PrefFlags.hideBalance, fallback: true).then((v) => mounted ? setState(() => _hide = v) : null);
+  }
+
   Future<void> _refresh() async {
     refreshFinance(ref);
     ref.invalidate(notificationsProvider);
@@ -50,12 +59,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider).user;
-    final summary = ref.watch(summaryProvider).value;
-    final cards = ref.watch(cardsProvider).value ?? const <BankCard>[];
+    final summary = ref.watch(summaryProvider).valueOrNull;
+    final cards = ref.watch(cardsProvider).valueOrNull ?? const <BankCard>[];
     final txAsync = ref.watch(transactionsProvider);
-    final txs = txAsync.value ?? const <TransactionModel>[];
-    final wealth = ref.watch(wealthTotalProvider).value ?? 0;
-    final unread = (ref.watch(notificationsProvider).value ?? const []).where((n) => !n.read).length;
+    final txs = txAsync.valueOrNull ?? const <TransactionModel>[];
+    final wealth = ref.watch(wealthTotalProvider).valueOrNull ?? 0;
+    final unread = (ref.watch(notificationsProvider).valueOrNull ?? const []).where((n) => !n.read).length;
     final now = DateTime.now();
 
     // ── Derived (same formulas as the web dashboard) ──
@@ -74,7 +83,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
     }
     final netWorth = assets + wealth - debt;
-    final cashback = monthCashback(cards, txs, now);
+    // Own cards + cards shared with me (web: ownCashback + sharedCashbackTotal).
+    final sharedCashback = (ref.watch(sharedCashbackProvider).valueOrNull ?? const []).fold<num>(0, (s, x) => s + x.amount);
+    final cashback = monthCashback(cards, txs, now) + sharedCashback;
+    final shared = ref.watch(sharedCardsProvider).valueOrNull ?? const [];
 
     final creditIds = {for (final c in cards.where((c) => c.isCredit)) c.id};
     final plans = [for (final id in creditIds) ...installmentPlans(txs, id, now)];
@@ -133,7 +145,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   const SizedBox(height: 20),
                   _recentHeader(),
                   txAsync.when(
-                    data: (list) => _recent(list, cards),
+                    data: (list) => _recent(list, cards, shared),
                     loading: () => const LoadingBox(height: 160),
                     error: (_, _) => ErrorRetry(onRetry: () => ref.invalidate(transactionsProvider)),
                   ),
@@ -178,8 +190,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               maxLines: 1, overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.slate800)),
           const SizedBox(height: 4),
-          // Cashback this month, right under the name (web pill).
-          Container(
+          // Cashback this month, right under the name (web pill → /cashback).
+          GestureDetector(
+            onTap: () => context.push('/cashback'),
+            child: Container(
             padding: const EdgeInsets.fromLTRB(4, 2, 8, 2),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFBEB),
@@ -193,9 +207,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309))),
             ]),
           ),
+          ),
         ]),
       ),
-      _circleBtn(Icons.document_scanner_outlined, () => showAddTransactionSheet(context)),
+      _circleBtn(Icons.search_rounded, () => context.push('/search')),
+      const SizedBox(width: 8),
+      _circleBtn(Icons.document_scanner_outlined, () => showAddTransactionSheet(context, scan: true)),
       const SizedBox(width: 8),
       Stack(clipBehavior: Clip.none, children: [
         _circleBtn(null, () => context.push('/notifications'), svg: 'bell'),
@@ -230,7 +247,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           GestureDetector(
-            onTap: () => context.go('/accounts'),
+            onTap: () => context.push('/wealth'),
             child: const Text('Tài sản ròng', style: TextStyle(fontSize: 15, color: AppColors.slate800)),
           ),
           const SizedBox(width: 4),
@@ -242,7 +259,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ]),
         const SizedBox(height: 6),
         GestureDetector(
-          onTap: () => context.go('/accounts'),
+          onTap: () => context.push('/wealth'),
           child: Text(_hide ? '*******' : '${formatMoney(netWorth)}đ',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, letterSpacing: -0.4, color: AppColors.slate800, height: 1.1)),
         ),
@@ -269,12 +286,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _tiles(num savings, int savingsCount, num debt, int creditCount, ({num monthly, int count})? inst) {
     final items = <Widget>[
       _tile(Icons.savings_outlined, const Color(0xFF10B981), _hide ? '••••' : '${formatCompact(savings)}đ',
-          'Tiết kiệm · ${savingsCount > 0 ? '$savingsCount sổ' : 'Chưa có sổ'}', () => context.go('/accounts')),
+          'Tiết kiệm · ${savingsCount > 0 ? '$savingsCount sổ' : 'Chưa có sổ'}', () => context.push('/savings')),
       _tile(Icons.credit_card, const Color(0xFFEF4444), _hide ? '••••' : (debt > 0 ? '-${formatCompact(debt)}đ' : '0đ'),
           'Dư nợ · ${creditCount > 0 ? '$creditCount thẻ' : 'Chưa có thẻ'}', () => context.go('/accounts')),
       if (inst != null)
         _tile(Icons.calendar_month_outlined, const Color(0xFF6366F1), _hide ? '••••' : '${formatCompact(inst.monthly)}đ',
-            'Trả góp · ${inst.count} khoản', () => context.push('/statements')),
+            'Trả góp · ${inst.count} khoản', () => context.push('/installments')),
     ];
     if (inst == null) {
       return Row(children: [Expanded(child: items[0]), const SizedBox(width: 12), Expanded(child: items[1])]);
@@ -327,6 +344,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     void open() => context.push('/notifications?tab=important');
     // Top 2 only (web VISIBLE_ALERTS); the count links to the full list.
     final shown = <Widget>[
+      for (final g in alerts.gameInvites) GameInviteTile(match: g, onRespond: (ok) => respondToGameInvite(context, ref, g, ok)),
+      for (final i in alerts.invites) InviteTile(invite: i, onRespond: (ok) => respondToInvite(context, ref, i, ok)),
       for (final a in alerts.credit) CreditAlertTile(card: a.card, due: a.due, onTap: open),
       for (final s in alerts.savings) SavingsAlertTile(card: s, onTap: open),
     ].take(2).toList();
@@ -381,15 +400,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return _weekdays[d.weekday - 1];
   }
 
-  String _source(TransactionModel t, List<BankCard> cards) {
+  String _source(TransactionModel t, List<BankCard> cards, List<SharedCard> shared) {
     if (t.paymentMethod != 'card') return 'Tiền mặt';
     for (final c in cards) {
       if (c.id == t.cardId) return c.isWallet ? 'Ví ${c.bankShortName}' : 'Thẻ ${c.bankShortName} ••${c.cardNumber}';
     }
+    // A card shared with me (e.g. my wife's) — tag it with the owner.
+    for (final s in shared) {
+      if (s.card.id == t.cardId) return '👤 ${s.ownerName.isNotEmpty ? s.ownerName : 'Thẻ chung'} · ${s.card.bankShortName} ••${s.card.cardNumber}';
+    }
     return 'Thẻ';
   }
 
-  Widget _recent(List<TransactionModel> list, List<BankCard> cards) {
+  Widget _recent(List<TransactionModel> list, List<BankCard> cards, List<SharedCard> shared) {
     if (list.isEmpty) {
       return WhiteCard(
         padding: const EdgeInsets.symmetric(vertical: 32),
@@ -447,7 +470,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               border: Border.all(color: AppColors.slate100),
               boxShadow: const [BoxShadow(color: Color(0x0A0F172A), blurRadius: 3, offset: Offset(0, 1))],
             ),
-            child: TransactionRow(tx: t, source: _source(t, cards), onTap: () => showTransactionDetailSheet(context, t)),
+            child: TransactionRow(tx: t, source: _source(t, cards, shared), onTap: () => showTransactionDetailSheet(context, t)),
           ),
         const SizedBox(height: 6),
       ],

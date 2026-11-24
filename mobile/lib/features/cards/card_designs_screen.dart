@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/page_title.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/card_art.dart';
@@ -72,13 +73,13 @@ class _CardDesignsScreenState extends ConsumerState<CardDesignsScreen> {
         backgroundColor: AppColors.pageLight,
         elevation: 0,
         leading: const AppBackButton(fallback: '/accounts'),
-        title: const Text('Gắn ảnh thẻ', style: TextStyle(color: AppColors.slate800, fontWeight: FontWeight.bold, fontSize: 18)),
+        title: const PageTitle('Gắn ảnh thẻ'),
       ),
       body: (cardsAsync.isLoading || catAsync.isLoading)
           ? const Center(child: CircularProgressIndicator())
           : cardsAsync.hasError || catAsync.hasError
               ? ErrorRetry(onRetry: () => ref.invalidate(cardsProvider))
-              : _body(cardsAsync.value!, catAsync.value!),
+              : _body(cardsAsync.valueOrNull!, catAsync.valueOrNull!),
     );
   }
 

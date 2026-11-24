@@ -22,6 +22,15 @@ class BankCard {
   final num cashbackCap; // hoàn tối đa/tháng, 0 = không giới hạn
   final num cashbackMinSpend; // chi tối thiểu/tháng để được hoàn
   final DateTime? maturityDate; // savings: ngày đáo hạn
+  final DateTime? depositDate; // savings: ngày gửi
+  final int term; // savings: kỳ hạn (tháng)
+  final String expirationDate; // 'MM/YY' or 'YYYY-MM'
+  final num annualFee; // phí thường niên
+  final String receiveQrImage; // QR nhận tiền (chia bill)
+  final String receiveAccountNumber;
+  final String note;
+  final bool sharedLimit; // credit cards of one bank sharing a pooled limit
+  final num? effectiveCreditLimit; // server-derived pooled limit (max in group)
 
   const BankCard({
     required this.id,
@@ -45,6 +54,15 @@ class BankCard {
     this.cashbackCap = 0,
     this.cashbackMinSpend = 0,
     this.maturityDate,
+    this.depositDate,
+    this.term = 0,
+    this.expirationDate = '',
+    this.annualFee = 0,
+    this.receiveQrImage = '',
+    this.receiveAccountNumber = '',
+    this.note = '',
+    this.sharedLimit = false,
+    this.effectiveCreditLimit,
   });
 
   bool get isCredit => cardType == 'credit';
@@ -71,6 +89,15 @@ class BankCard {
         cardImage: (j['cardImage'] ?? '').toString(),
         autoDebit: j['autoDebit'] != false,
         cashbackCap: (j['cashbackCap'] ?? 0) is num ? (j['cashbackCap'] ?? 0) as num : 0,
+        depositDate: j['depositDate'] == null ? null : DateTime.tryParse(j['depositDate'].toString())?.toLocal(),
+        expirationDate: (j['expirationDate'] ?? '').toString(),
+        annualFee: (j['annualFee'] is num) ? j['annualFee'] as num : 0,
+        receiveQrImage: (j['receiveQrImage'] ?? '').toString(),
+        receiveAccountNumber: (j['receiveAccountNumber'] ?? '').toString(),
+        note: (j['note'] ?? '').toString(),
+        sharedLimit: j['sharedLimit'] == true,
+        effectiveCreditLimit: j['effectiveCreditLimit'] is num ? j['effectiveCreditLimit'] as num : null,
+        term: (j['term'] is num) ? (j['term'] as num).toInt() : 0,
         maturityDate: j['maturityDate'] == null ? null : DateTime.tryParse(j['maturityDate'].toString())?.toLocal(),
         cashbackMinSpend: (j['cashbackMinSpend'] ?? 0) is num ? (j['cashbackMinSpend'] ?? 0) as num : 0,
       );

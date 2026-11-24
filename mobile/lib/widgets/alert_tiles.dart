@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:go_router/go_router.dart';
+
+import '../services/game_service.dart';
+import '../state/finance_providers.dart';
+import '../state/important_alerts.dart';
 
 import '../core/statement.dart';
 import '../models/bank_card.dart';
+import '../models/card_share.dart';
 import '../theme/app_theme.dart';
 import 'card_thumb.dart';
 
@@ -77,6 +85,157 @@ class SavingsAlertTile extends StatelessWidget {
         badgeBg: const Color(0xFFFFFBEB),
         badgeBorder: const Color(0xFFFDE68A),
       );
+}
+
+/// Card-share invite with inline Accept / Decline (web ShareInviteCard).
+class InviteTile extends StatefulWidget {
+  final SharedCard invite;
+  final Future<void> Function(bool accept) onRespond;
+  const InviteTile({super.key, required this.invite, required this.onRespond});
+  @override
+  State<InviteTile> createState() => _InviteTileState();
+}
+
+class _InviteTileState extends State<InviteTile> {
+  bool _busy = false;
+
+  Future<void> _go(bool accept) async {
+    setState(() => _busy = true);
+    try {
+      await widget.onRespond(accept);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i = widget.invite;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE0E7FF)),
+      ),
+      child: Row(children: [
+        Container(
+          width: 36, height: 36, alignment: Alignment.center,
+          decoration: BoxDecoration(color: const Color(0xFFEEF2FF), borderRadius: BorderRadius.circular(10)),
+          child: const Text('🤝', style: TextStyle(fontSize: 17)),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${i.ownerName.isNotEmpty ? i.ownerName : 'Ai đó'} mời chia sẻ thẻ', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.slate800)),
+            Text('${i.card.bankName} •••• ${i.card.cardNumber}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: AppColors.slate400)),
+          ]),
+        ),
+        const SizedBox(width: 6),
+        if (_busy)
+          const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+        else ...[
+          GestureDetector(
+            onTap: () => _go(false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(color: AppColors.slate100, borderRadius: BorderRadius.circular(10)),
+              child: const Text('Từ chối', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.slate500)),
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: () => _go(true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(color: const Color(0xFF4F46E5), borderRadius: BorderRadius.circular(10)),
+              child: const Text('Chấp nhận', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
+}
+
+/// Card-game invite with inline Chơi / Từ chối (web GameInviteCard).
+class GameInviteTile extends StatelessWidget {
+  final Map<String, dynamic> match;
+  final void Function(bool accept) onRespond;
+  const GameInviteTile({super.key, required this.match, required this.onRespond});
+
+  @override
+  Widget build(BuildContext context) {
+    final host = match['hostId'] is Map ? (match['hostId']['name'] ?? '').toString() : '';
+    final game = match['gameType'] == 'phom' ? 'Phỏm' : 'Tiến lên miền Nam';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFEDE9FE))),
+      child: Row(children: [
+        Container(
+          width: 36, height: 36, alignment: Alignment.center,
+          decoration: BoxDecoration(color: const Color(0xFFF5F3FF), borderRadius: BorderRadius.circular(10)),
+          child: const Text('🃏', style: TextStyle(fontSize: 17)),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('${host.isNotEmpty ? host : 'Ai đó'} mời chơi bài', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.slate800)),
+            Text(game, style: const TextStyle(fontSize: 11, color: AppColors.slate400)),
+          ]),
+        ),
+        GestureDetector(
+          onTap: () => onRespond(false),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(color: AppColors.slate100, borderRadius: BorderRadius.circular(10)),
+            child: const Text('Từ chối', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.slate500)),
+          ),
+        ),
+        const SizedBox(width: 6),
+        GestureDetector(
+          onTap: () => onRespond(true),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(color: const Color(0xFF047857), borderRadius: BorderRadius.circular(10)),
+            child: const Text('Chơi', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Accept → straight into the table; decline → just drop the invite.
+Future<void> respondToGameInvite(BuildContext context, WidgetRef ref, Map<String, dynamic> match, bool accept) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final router = GoRouter.of(context);
+  try {
+    final r = await GameService().respond(match['_id'].toString(), accept);
+    ref.invalidate(gameInvitesProvider);
+    if (accept) {
+      router.push('/games/${r['_id'] ?? match['_id']}');
+    } else {
+      messenger.showSnackBar(const SnackBar(content: Text('Đã từ chối lời mời')));
+    }
+  } catch (_) {
+    messenger.showSnackBar(const SnackBar(content: Text('Thao tác thất bại')));
+  }
+}
+
+/// Accept / decline a share invite, then refresh what depends on it.
+Future<void> respondToInvite(BuildContext context, WidgetRef ref, SharedCard invite, bool accept) async {
+  final messenger = ScaffoldMessenger.of(context);
+  try {
+    await ref.read(financeServiceProvider).respondShare(invite.shareId, accept);
+    ref.invalidate(incomingInvitesProvider);
+    ref.invalidate(sharedCardsProvider);
+    messenger.showSnackBar(SnackBar(content: Text(accept ? 'Đã tham gia thẻ ${invite.card.bankName}' : 'Đã từ chối lời mời')));
+  } catch (_) {
+    messenger.showSnackBar(const SnackBar(content: Text('Thao tác thất bại')));
+  }
 }
 
 class _Shell extends StatelessWidget {

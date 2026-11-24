@@ -76,4 +76,15 @@ void main() {
       expect(r.installment > 0 && r.installment <= r.amount, isTrue);
     });
   });
+
+  group('installmentSchedule', () {
+    test('sums to the principal and stops when plans end', () {
+      final now = DateTime(2026, 11, 22);
+      final plans = installmentPlans([tx('p', 1000000, '2026-11-10', inst: true, months: 3, monthly: 333334, start: '2026-11-10')], 'c1', now);
+      final s = installmentSchedule(plans, 4, now);
+      expect(s.map((m) => m.amount).toList(), [333334, 333334, 1000000 - 333334 * 2, 0]);
+      expect(s.fold<num>(0, (a, m) => a + m.amount), 1000000);
+      expect(planEnd(plans.first), DateTime(2027, 1, 1));
+    });
+  });
 }

@@ -11,7 +11,7 @@ import { useNotificationStore } from '@/hooks/useNotifications';
 
 interface AutoAction {
     _id: string;
-    kind: 'savings_settle' | 'credit_autopay';
+    kind: 'savings_settle' | 'credit_autopay' | 'goal_autosave';
     cardId: string;
     amount: number;
     principal: number;
@@ -58,11 +58,14 @@ export default function AutoActionsPage() {
         return {
             paid: live.filter(a => a.kind === 'credit_autopay').reduce((s, a) => s + a.amount, 0),
             settled: live.filter(a => a.kind === 'savings_settle').reduce((s, a) => s + a.amount, 0),
+            goals: live.filter(a => a.kind === 'goal_autosave').reduce((s, a) => s + a.amount, 0),
         };
     }, [actions]);
 
     const handleRevert = async (a: AutoAction) => {
-        const msg = a.kind === 'credit_autopay'
+        const msg = a.kind === 'goal_autosave'
+            ? `Hoàn tác góp tự động ${formatNumber(a.amount)}đ vào ${a.cardLabel}?\n\nSố tiền được rút lại khỏi mục tiêu. Kỳ này sẽ không tự góp lại.`
+            : a.kind === 'credit_autopay'
             ? `Hoàn tác thanh toán ${formatNumber(a.amount)}đ cho ${a.cardLabel}?\n\nTiền sẽ trả lại ${a.accountLabel}, dư nợ thẻ được khôi phục. Kỳ này sẽ không tự trừ lại — bạn thanh toán thủ công khi đã trả.`
             : `Hoàn tác tất toán ${a.cardLabel}?\n\nSổ được mở lại và trừ ${formatNumber(a.amount)}đ khỏi ${a.accountLabel || 'tài khoản nhận'}. Sổ sẽ không tự tất toán lại cho tới khi bạn tái tục/sửa ngày đáo hạn.`;
         if (!confirm(msg)) return;
@@ -83,7 +86,7 @@ export default function AutoActionsPage() {
 
     return (
         <div className="min-h-screen pb-28 bg-gray-50 dark:bg-surface-deep">
-            <PageHeader title="Giao dịch tự động" subtitle="Tất toán & trừ tiền thẻ" onBack={() => router.back()} />
+            <PageHeader title="Giao dịch tự động" subtitle="Tất toán, trừ thẻ & góp mục tiêu" onBack={() => router.back()} />
 
             <div className="px-5 space-y-5">
                 {/* Month summary */}
@@ -96,6 +99,12 @@ export default function AutoActionsPage() {
                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Đã tất toán tháng này</p>
                         <p className="text-lg font-bold text-foreground mt-1">{formatNumber(stats.settled)}đ</p>
                     </div>
+                    {stats.goals > 0 && (
+                        <div className="col-span-2 bg-white dark:bg-surface rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Đã tự góp mục tiêu tháng này</p>
+                            <p className="text-lg font-bold text-foreground mt-1">{formatNumber(stats.goals)}đ</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Waiting for money */}
@@ -123,18 +132,21 @@ export default function AutoActionsPage() {
                     )}
                     {actions.map(a => {
                         const isPay = a.kind === 'credit_autopay';
+                        const isGoal = a.kind === 'goal_autosave';
                         const reverted = a.status === 'reverted';
                         return (
                             <div key={a._id} className={cn('bg-white dark:bg-surface rounded-2xl p-4 border border-slate-100 dark:border-slate-800 flex items-start gap-3', reverted && 'opacity-60')}>
                                 <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0', isPay ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-indigo-50 dark:bg-indigo-900/20')}>
-                                    {isPay ? '💳' : '🏦'}
+                                    {isPay ? '💳' : isGoal ? '🎯' : '🏦'}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-bold text-foreground">
-                                        {isPay ? `Tự trừ tiền ${a.cardLabel}` : `Tất toán ${a.cardLabel}`}
+                                        {isPay ? `Tự trừ tiền ${a.cardLabel}` : isGoal ? `Góp tự động ${a.cardLabel}` : `Tất toán ${a.cardLabel}`}
                                     </p>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                        {isPay
+                                        {isGoal
+                                            ? `+${formatNumber(a.amount)}đ vào mục tiêu${a.accountLabel ? ` · ${a.accountLabel}` : ''}`
+                                            : isPay
                                             ? `${formatNumber(a.amount)}đ từ ${a.accountLabel}`
                                             : `${formatNumber(a.amount)}đ (lãi ${formatNumber(a.interest)}đ) → ${a.accountLabel || 'chưa có TK nhận'}`}
                                     </p>
