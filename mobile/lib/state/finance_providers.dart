@@ -20,6 +20,10 @@ final cardsProvider = FutureProvider<List<BankCard>>((ref) {
   return ref.read(financeServiceProvider).getCards();
 });
 
+final wealthTotalProvider = FutureProvider<num>((ref) {
+  return ref.read(financeServiceProvider).getWealthTotal();
+});
+
 final goalsProvider = FutureProvider<List<Goal>>((ref) {
   return ref.read(financeServiceProvider).getGoals();
 });
@@ -63,5 +67,6 @@ void refreshFinance(WidgetRef ref) {
   ref.invalidate(summaryProvider);
   ref.invalidate(transactionsProvider);
   ref.invalidate(cardsProvider);
+  ref.invalidate(wealthTotalProvider);
   ref.invalidate(categoryBreakdownProvider);
 }

@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../features/transactions/add_transaction_sheet.dart';
+import '../features/auto_finance/auto_finance_gate.dart';
 
 /// Bottom-nav shell mirroring the web app's floating pill + center FAB.
 /// Wraps the 5 main tab branches (StatefulShellRoute keeps each tab's state).
@@ -24,7 +25,8 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      body: shell,
+      // Runs auto tất toán / trích nợ on open and shows the review sheet.
+      body: AutoFinanceGate(child: shell),
       extendBody: true,
       bottomNavigationBar: SafeArea(
         top: false,

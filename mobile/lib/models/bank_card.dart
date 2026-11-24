@@ -15,6 +15,13 @@ class BankCard {
   final num cashbackRate;
   final int paymentDueDay;
   final int statementDay;
+  final String cardNetwork; // visa | mastercard | jcb | amex | napas | ''
+  final String bankColor;
+  final String cardImage; // '/cards/<bank>/<slug>.webp' | Cloudinary URL | ''
+  final bool autoDebit; // trích nợ tự động sau sao kê (credit)
+  final num cashbackCap; // hoàn tối đa/tháng, 0 = không giới hạn
+  final num cashbackMinSpend; // chi tối thiểu/tháng để được hoàn
+  final DateTime? maturityDate; // savings: ngày đáo hạn
 
   const BankCard({
     required this.id,
@@ -31,6 +38,13 @@ class BankCard {
     this.cashbackRate = 0,
     this.paymentDueDay = 0,
     this.statementDay = 0,
+    this.cardNetwork = '',
+    this.bankColor = '',
+    this.cardImage = '',
+    this.autoDebit = true,
+    this.cashbackCap = 0,
+    this.cashbackMinSpend = 0,
+    this.maturityDate,
   });
 
   bool get isCredit => cardType == 'credit';
@@ -52,5 +66,12 @@ class BankCard {
         cashbackRate: (j['cashbackRate'] ?? 0) as num,
         paymentDueDay: (j['paymentDueDay'] ?? 0) is int ? (j['paymentDueDay'] ?? 0) as int : 0,
         statementDay: (j['statementDay'] ?? 0) is int ? (j['statementDay'] ?? 0) as int : 0,
+        cardNetwork: (j['cardNetwork'] ?? '').toString(),
+        bankColor: (j['bankColor'] ?? '').toString(),
+        cardImage: (j['cardImage'] ?? '').toString(),
+        autoDebit: j['autoDebit'] != false,
+        cashbackCap: (j['cashbackCap'] ?? 0) is num ? (j['cashbackCap'] ?? 0) as num : 0,
+        maturityDate: j['maturityDate'] == null ? null : DateTime.tryParse(j['maturityDate'].toString())?.toLocal(),
+        cashbackMinSpend: (j['cashbackMinSpend'] ?? 0) is num ? (j['cashbackMinSpend'] ?? 0) as num : 0,
       );
 }

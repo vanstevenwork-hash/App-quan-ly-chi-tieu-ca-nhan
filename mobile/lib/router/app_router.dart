@@ -14,6 +14,9 @@ import '../features/settings/settings_screen.dart';
 import '../features/notifications/notifications_screen.dart';
 import '../features/analytics/analytics_screen.dart';
 import '../features/cards/card_detail_screen.dart';
+import '../features/statements/statements_screen.dart';
+import '../features/auto_finance/auto_actions_screen.dart';
+import '../features/cards/card_designs_screen.dart';
 import '../widgets/app_scaffold.dart';
 
 /// go_router wired to the auth state (mirrors the web AuthGuard). While the
@@ -46,8 +49,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/auth/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/auth/register', builder: (_, _) => const RegisterScreen()),
       // Full-screen routes pushed over the tab shell.
-      GoRoute(path: '/notifications', builder: (_, _) => const NotificationsScreen()),
+      GoRoute(path: '/notifications', builder: (_, state) => NotificationsScreen(initialTab: state.uri.queryParameters['tab'])),
       GoRoute(path: '/analytics', builder: (_, _) => const AnalyticsScreen()),
+      GoRoute(path: '/statements', builder: (_, _) => const StatementsScreen()),
+      GoRoute(path: '/auto-actions', builder: (_, _) => const AutoActionsScreen()),
+      // Must sit before /cards/:id so "designs" isn't read as a card id.
+      GoRoute(path: '/cards/designs', builder: (_, _) => const CardDesignsScreen()),
       GoRoute(
         path: '/cards/:id',
         builder: (_, state) => CardDetailScreen(cardId: state.pathParameters['id']!),

@@ -8,6 +8,12 @@ class TransactionModel {
   final DateTime date;
   final String paymentMethod;
   final String? cardId;
+  // Trả góp (installment) — mirrors the web Transaction fields.
+  final bool isInstallment;
+  final int installmentMonths;
+  final num installmentMonthly;
+  final DateTime? installmentStartDate;
+  final num feeAmount; // phí giao dịch (quẹt thẻ)
 
   const TransactionModel({
     required this.id,
@@ -18,6 +24,11 @@ class TransactionModel {
     required this.date,
     required this.paymentMethod,
     this.cardId,
+    this.isInstallment = false,
+    this.installmentMonths = 0,
+    this.installmentMonthly = 0,
+    this.installmentStartDate,
+    this.feeAmount = 0,
   });
 
   bool get isIncome => type == 'income';
@@ -31,6 +42,11 @@ class TransactionModel {
         date: DateTime.tryParse((j['date'] ?? '').toString())?.toLocal() ?? DateTime.now(),
         paymentMethod: (j['paymentMethod'] ?? 'cash').toString(),
         cardId: _extractCardId(j['cardId']),
+        isInstallment: j['isInstallment'] == true,
+        installmentMonths: (j['installmentMonths'] is num) ? (j['installmentMonths'] as num).toInt() : 0,
+        installmentMonthly: (j['installmentMonthly'] is num) ? j['installmentMonthly'] as num : 0,
+        feeAmount: (j['feeAmount'] is num) ? j['feeAmount'] as num : 0,
+        installmentStartDate: j['installmentStartDate'] == null ? null : DateTime.tryParse(j['installmentStartDate'].toString())?.toLocal(),
       );
 
   // The API sometimes populates cardId as a full card object instead of a

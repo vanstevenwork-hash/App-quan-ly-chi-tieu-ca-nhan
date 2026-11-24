@@ -4,6 +4,7 @@ import '../models/bank_card.dart';
 import '../models/goal.dart';
 import '../models/summary.dart';
 import '../models/app_notification.dart';
+import '../models/auto_action.dart';
 
 /// One service covering the read/write endpoints the mobile app needs.
 /// The .NET API wraps payloads as { data: ... } (mirrors the web client's
@@ -30,7 +31,9 @@ class FinanceService {
   }
 
   Future<List<TransactionModel>> getTransactions() async {
-    final res = await _dio.get('/transactions');
+    // Same window as the web (useTransactions): the server defaults to 20,
+    // which silently broke every per-card/installment/statement calculation.
+    final res = await _dio.get('/transactions', queryParameters: {'limit': 2000});
     return _list(res.data).map(TransactionModel.fromJson).toList();
   }
 
@@ -39,15 +42,27 @@ class FinanceService {
     return _list(res.data).map(BankCard.fromJson).toList();
   }
 
+  /// Sum of the user's other wealth sources (stocks, gold, real estate…) —
+  /// the web's net worth = card balances + this − card debt.
+  Future<num> getWealthTotal() async {
+    final res = await _dio.get('/wealth');
+    final d = res.data;
+    return (d is Map && d['total'] is num) ? d['total'] as num : 0;
+  }
+
   Future<List<Goal>> getGoals() async {
     final res = await _dio.get('/goals');
     return _list(res.data).map(Goal.fromJson).toList();
   }
 
   Future<List<AppNotification>> getNotifications() async {
-    final res = await _dio.get('/notifications');
+    // Same window as the web (limit 50); the server defaults to 20.
+    final res = await _dio.get('/notifications', queryParameters: {'limit': 50});
     return _list(res.data).map(AppNotification.fromJson).toList();
   }
+
+  Future<void> markNotificationRead(String id) => _dio.patch('/notifications/$id/read');
+  Future<void> deleteNotification(String id) => _dio.delete('/notifications/$id');
 
   /// [{ category, total }] for the current period — used by the analytics pie.
   Future<List<({String category, num total})>> getCategoryBreakdown() async {
@@ -109,6 +124,25 @@ class FinanceService {
   Future<void> createCard(Map<String, dynamic> data) => _dio.post('/cards', data: data);
   Future<void> updateCard(String id, Map<String, dynamic> data) => _dio.put('/cards/$id', data: data);
   Future<void> deleteCard(String id) => _dio.delete('/cards/$id');
+
+  // ── Automatic actions (auto tất toán / trích nợ thẻ) ───────────────────
+  /// Runs the server's automatic jobs for this user and returns every
+  /// automatic event not yet reviewed (also ones the hourly scan did).
+  Future<List<AutoEvent>> autoProcess() async {
+    final res = await _dio.post('/cards/auto-process');
+    return _list(res.data).map(AutoEvent.fromJson).toList();
+  }
+
+  /// User pressed "Đã kiểm tra" — stop showing these events.
+  Future<void> ackAutoEvents(List<String> ids) => _dio.post('/cards/auto-process/ack', data: {'ids': ids});
+
+  Future<({List<AutoActionInfo> actions, List<PendingAutoPay> pending})> getAutoActions() async {
+    final d = _obj((await _dio.get('/cards/auto-actions')).data);
+    List<Map<String, dynamic>> l(dynamic x) => x is List ? x.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() : const [];
+    return (actions: l(d['actions']).map(AutoActionInfo.fromJson).toList(), pending: l(d['pending']).map(PendingAutoPay.fromJson).toList());
+  }
+
+  Future<void> revertAutoAction(String id) => _dio.post('/cards/auto-actions/$id/revert');
 
   /// Pay down a credit card's debt (optionally from a source account).
   Future<void> payCard(String id, {required num amount, String? sourceId}) =>

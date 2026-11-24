@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/card_catalog.dart';
+import 'card_design_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/bank_card.dart';
@@ -47,6 +49,10 @@ class _CardFormSheetState extends ConsumerState<_CardFormSheet> {
   final _dueDay = TextEditingController();
   String _type = 'credit';
   String _color = '#6C63FF';
+  String _cardImage = '';
+  String _network = '';
+  bool _autoDebit = true;
+  String _autoLabel = ''; // name filled in from the last picked design
   bool _saving = false;
   String? _error;
 
@@ -70,7 +76,34 @@ class _CardFormSheetState extends ConsumerState<_CardFormSheet> {
       _statementDay.text = c.statementDay == 0 ? '' : c.statementDay.toString();
       _dueDay.text = c.paymentDueDay == 0 ? '' : c.paymentDueDay.toString();
       _color = c.color;
+      _cardImage = c.cardImage;
+      _network = c.cardNetwork;
+      _autoDebit = c.autoDebit;
     }
+    // The design strip follows the bank typed in these two fields.
+    _short.addListener(_onBankChanged);
+    _bank.addListener(_onBankChanged);
+  }
+
+  String _lastBankKey = '';
+  void _onBankChanged() {
+    final key = '${_short.text}|${_bank.text}';
+    if (key == _lastBankKey) return;
+    _lastBankKey = key;
+    setState(() {});
+  }
+
+  void _pickDesign(String src, CardDesign? d) {
+    setState(() {
+      _cardImage = src;
+      if (d == null) return;
+      final label = _bank.text.trim();
+      if (label.isEmpty || label == _short.text.trim() || label == _autoLabel) {
+        _bank.text = d.name;
+        _autoLabel = d.name;
+      }
+      if (d.network.isNotEmpty) _network = d.network;
+    });
   }
 
   @override
@@ -98,7 +131,10 @@ class _CardFormSheetState extends ConsumerState<_CardFormSheet> {
       'cardHolder': _holder.text.trim(),
       'balance': _n(_balance),
       'color': _color,
+      'cardImage': _cardImage,
+      if (_network.isNotEmpty) 'cardNetwork': _network,
       if (_isCredit) ...{
+        'autoDebit': _autoDebit,
         'creditLimit': _n(_limit),
         'interestRate': _n(_interest),
         'cashbackRate': _n(_cashback),
@@ -178,6 +214,16 @@ class _CardFormSheetState extends ConsumerState<_CardFormSheet> {
                   ]),
                   const SizedBox(height: 12),
                   _field(_bank, 'Ngân hàng', hint: 'Vietcombank'),
+                  if (_type == 'credit' || _type == 'debit') ...[
+                    const SizedBox(height: 14),
+                    CardDesignPicker(
+                      bankShortName: _short.text.trim(),
+                      bankName: _bank.text.trim(),
+                      cardType: _type,
+                      value: _cardImage,
+                      onChanged: _pickDesign,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   _field(_holder, 'Chủ thẻ', hint: 'NGUYEN VAN A'),
                   const SizedBox(height: 12),
@@ -197,9 +243,24 @@ class _CardFormSheetState extends ConsumerState<_CardFormSheet> {
                     ]),
                     const SizedBox(height: 12),
                     _field(_dueDay, 'Hạn thanh toán (ngày)', hint: '25', number: true, maxLen: 2),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(14, 6, 6, 10),
+                      decoration: BoxDecoration(border: Border.all(color: AppColors.slate200), borderRadius: BorderRadius.circular(14)),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          const Expanded(child: Text('Tự động trừ tiền sau sao kê', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.slate800))),
+                          Switch.adaptive(value: _autoDebit, activeTrackColor: AppColors.brand, onChanged: (v) => setState(() => _autoDebit = v)),
+                        ]),
+                        Text(
+                          'Sau ngày chốt sao kê, app tự trừ số tiền phải trả kỳ đó từ tài khoản thanh toán cùng ngân hàng${_short.text.trim().isNotEmpty ? ' (${_short.text.trim()})' : ''}, nếu tài khoản đủ tiền.',
+                          style: const TextStyle(fontSize: 11, color: AppColors.slate400, height: 1.35),
+                        ),
+                      ]),
+                    ),
                   ],
                   const SizedBox(height: 16),
-                  _label('Màu thẻ'),
+                  _label(_cardImage.isNotEmpty ? 'Màu thẻ (dùng khi bỏ ảnh thẻ)' : 'Màu thẻ'),
                   Wrap(spacing: 10, runSpacing: 10, children: [
                     for (final c in _palette)
                       GestureDetector(

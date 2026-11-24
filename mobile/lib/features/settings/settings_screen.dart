@@ -66,6 +66,9 @@ class SettingsScreen extends ConsumerWidget {
 
             _group('QUẢN LÝ NHANH', [
               _row(context, Icons.credit_card, const Color(0xFF6C63FF), 'Quản lý thẻ', sub: 'Thẻ tín dụng, ghi nợ, ví', route: '/accounts'),
+              _row(context, Icons.event_note_outlined, const Color(0xFF8B5CF6), 'Lịch sao kê', sub: 'Chốt sao kê, hạn trả, trả góp', route: '/statements'),
+              _row(context, Icons.image_outlined, const Color(0xFF6366F1), 'Gắn ảnh thẻ', sub: 'Tự gắn ảnh theo tên thẻ', route: '/cards/designs'),
+              _row(context, Icons.autorenew_rounded, const Color(0xFF0EA5E9), 'Giao dịch tự động', sub: 'Tất toán & trừ tiền thẻ · hoàn tác', route: '/auto-actions'),
               _row(context, Icons.event_busy_outlined, const Color(0xFFF59E0B), 'Hạn thẻ', sub: 'Ngày sao kê & thanh toán'),
               _row(context, Icons.savings_outlined, const Color(0xFF10B981), 'Hoàn tiền', sub: 'Cashback theo thẻ'),
               _row(context, Icons.account_balance_outlined, const Color(0xFF3B82F6), 'Tiết kiệm', sub: 'Sổ tiết kiệm & kỳ hạn', route: '/accounts'),

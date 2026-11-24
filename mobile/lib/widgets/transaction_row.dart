@@ -9,7 +9,9 @@ import 'common.dart';
 class TransactionRow extends StatelessWidget {
   final TransactionModel tx;
   final VoidCallback? onTap;
-  const TransactionRow({super.key, required this.tx, this.onTap});
+  /// Money source under the amount ("Thẻ VIB ••4021", "Ví MoMo", "Tiền mặt").
+  final String? source;
+  const TransactionRow({super.key, required this.tx, this.onTap, this.source});
 
   @override
   Widget build(BuildContext context) {
@@ -35,16 +37,35 @@ class TransactionRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.slate800)),
                   const SizedBox(height: 2),
-                  Text('${tx.category} · $hh:$mm',
-                      style: const TextStyle(fontSize: 11, color: AppColors.slate400, fontWeight: FontWeight.w500)),
+                  Text.rich(
+                    TextSpan(children: [
+                      TextSpan(text: '${tx.category} · $hh:$mm'),
+                      if (tx.feeAmount > 0)
+                        TextSpan(text: ' · phí ${formatCompact(tx.feeAmount)}', style: const TextStyle(color: Color(0xFFD97706), fontWeight: FontWeight.w600)),
+                    ]),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 11, color: AppColors.slate400, fontWeight: FontWeight.w500),
+                  ),
                 ],
               ),
             ),
-            Text('${tx.isIncome ? '+' : '-'}${formatCompact(tx.amount)}đ',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: tx.isIncome ? AppColors.income : AppColors.expense)),
+            const SizedBox(width: 8),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text('${tx.isIncome ? '+' : '-'}${formatCompact(tx.amount)}đ',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: tx.isIncome ? AppColors.income : AppColors.expense)),
+              if (source != null) ...[
+                const SizedBox(height: 2),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  child: Text(source!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 10, color: AppColors.slate400, fontWeight: FontWeight.w500)),
+                ),
+              ],
+            ]),
           ],
         ),
       ),
