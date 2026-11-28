@@ -10,7 +10,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useCards } from '@/hooks/useCards';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCashbackRecords } from '@/hooks/useCashbackRecords';
-import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { resolveCardId, getCardCashback, cashbackPeriodOf } from '@/lib/cashback';
 import CategoryIcon from '@/components/icons/CategoryIcon';
 import { useAuthStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
@@ -139,13 +139,14 @@ function PanelContent({ onClose, open, initialTab }: { onClose: () => void; open
             const cardTxs = transactions.filter(t => t.type === 'expense' && t.paymentMethod === 'card' && resolveCardId(t) === card._id);
             const byMonth = new Map<string, { year: number; month: number; txs: typeof cardTxs }>();
             cardTxs.forEach(t => {
-                const d = new Date(t.date);
-                const key = `${d.getFullYear()}-${d.getMonth()}`;
-                if (!byMonth.has(key)) byMonth.set(key, { year: d.getFullYear(), month: d.getMonth(), txs: [] });
+                // Bucket by the card's cashback period (kỳ sao kê / tháng).
+                const { year, month } = cashbackPeriodOf(card, t.date);
+                const key = `${year}-${month}`;
+                if (!byMonth.has(key)) byMonth.set(key, { year, month, txs: [] });
                 byMonth.get(key)!.txs.push(t);
             });
             byMonth.forEach(({ year, month, txs }) => {
-                const amount = getCappedCashbackTotal(txs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+                const amount = getCardCashback(card, txs);
                 if (amount <= 0) return;
                 const rec = records.find(r => r.cardId === card._id && r.year === year && r.month === month);
                 rows.push({ card, year, month, amount, status: rec?.status || 'pending' });

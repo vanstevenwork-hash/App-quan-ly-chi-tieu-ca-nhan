@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Transaction = require('../models/Transaction');
 const { createNotification } = require('./notificationController');
 const { hasCardAccess } = require('../utils/cardAccess');
+const { cashbackPeriodRange, currentCashbackPeriod, summarizeCashback, cashbackPeriodLabel } = require('../utils/cashbackPeriod');
 
 // @desc  Invite a registered user to collaborate on a card
 // @route POST /api/card-shares/invite
@@ -240,18 +241,19 @@ exports.getCashback = async (req, res) => {
         }
         const card = access.card;
 
-        // Date range: explicit startDate/endDate, or month/year, else current month.
-        const now = new Date();
+        // Date range: explicit startDate/endDate, or the card's cashback period
+        // (kỳ sao kê or calendar month, per card.cashbackPeriod) named by
+        // month/year, else the current period.
         let start, end;
+        let period = null;
         if (req.query.startDate && req.query.endDate) {
             start = new Date(req.query.startDate); start.setHours(0, 0, 0, 0);
             end = new Date(req.query.endDate); end.setHours(23, 59, 59, 999);
-        } else if (req.query.month != null && req.query.year != null) {
-            const m = Number(req.query.month), y = Number(req.query.year);
-            start = new Date(y, m, 1); end = new Date(y, m + 1, 0, 23, 59, 59, 999);
         } else {
-            start = new Date(now.getFullYear(), now.getMonth(), 1);
-            end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            period = req.query.month != null && req.query.year != null
+                ? { year: Number(req.query.year), month: Number(req.query.month) }
+                : currentCashbackPeriod(card);
+            ({ start, end } = cashbackPeriodRange(card, period.year, period.month));
         }
 
         const txs = await Transaction.find({
@@ -259,31 +261,12 @@ exports.getCashback = async (req, res) => {
             paymentMethod: 'card',
             type: 'expense',
             date: { $gte: start, $lte: end },
-        }).select('amount date feeAmount');
+        }).select('amount date feeAmount noCashback');
 
-        // Net cashback, bucketed by calendar month (cap + min-spend apply monthly),
-        // minus transaction fees — matching the client's getCappedCashbackTotal.
-        const rate = card.cashbackRate || 0;
-        const cap = card.cashbackCap || 0;
-        const minSpend = card.cashbackMinSpend || 0;
-        const byMonth = new Map();
-        txs.forEach(t => {
-            const d = new Date(t.date);
-            const key = `${d.getFullYear()}-${d.getMonth()}`;
-            const b = byMonth.get(key) || { spend: 0, fee: 0 };
-            b.spend += t.amount;
-            b.fee += t.feeAmount || 0;
-            byMonth.set(key, b);
-        });
-        let net = 0, totalSpend = 0, gross = 0, cappedFlag = false;
-        byMonth.forEach(({ spend, fee }) => {
-            totalSpend += spend;
-            const g = spend * rate / 100;
-            gross += g;
-            if (cap > 0 && g > cap) cappedFlag = true;
-            const earned = (minSpend > 0 && spend < minSpend) ? 0 : (cap > 0 ? Math.min(g, cap) : g);
-            net += earned - fee;
-        });
+        // Net cashback, bucketed by the card's period (cap + min-spend apply per
+        // period), minus transaction fees — matching the client's getCardCashback.
+        const cb = summarizeCashback(card, txs);
+        const rate = cb.rate, cap = cb.cap, totalSpend = cb.spend, net = cb.net, cappedFlag = cb.capped;
 
         res.json({
             success: true,
@@ -295,6 +278,7 @@ exports.getCashback = async (req, res) => {
                 totalSpend,
                 cashbackEarned: net,   // net of fees (cashback ròng)
                 capped: cappedFlag,
+                periodLabel: period ? cashbackPeriodLabel(card, period.year, period.month) : '',
             },
         });
     } catch (err) {

@@ -23,7 +23,7 @@ import PageHeader from '@/components/PageHeader';
 import RefreshButton from '@/components/RefreshButton';
 import { useUIStore } from '@/store/useStore';
 import { useRouter } from 'next/navigation';
-import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { resolveCardId, getCardCashback, inCashbackPeriod, currentCashbackPeriod, cashbackPeriodUnit } from '@/lib/cashback';
 import { getDueThisCycle, getInstallmentPlans } from '@/lib/cardDue';
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ const fmtShort = (n: number) => {
 // it this month, so the shared cap is reflected correctly (a partial number
 // counting only "my" transactions could easily be wrong or misleadingly high).
 function SharedCardCashbackBadge({ cardId }: { cardId: string }) {
-    const [data, setData] = useState<{ cashbackEarned: number; capped: boolean } | null>(null);
+    const [data, setData] = useState<{ cashbackEarned: number; capped: boolean; periodLabel?: string } | null>(null);
 
     useEffect(() => {
         let alive = true;
@@ -52,7 +52,7 @@ function SharedCardCashbackBadge({ cardId }: { cardId: string }) {
     if (!data || data.cashbackEarned <= 0) return null;
     return (
         <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold mt-0.5 truncate">
-            🪙 +{fmt(data.cashbackEarned)}đ hoàn tiền tháng này{data.capped ? ' · đã chạm trần' : ''}
+            🪙 +{fmt(data.cashbackEarned)}đ hoàn tiền {data.periodLabel ? `kỳ ${data.periodLabel}` : 'tháng này'}{data.capped ? ' · đã chạm trần' : ''}
         </p>
     );
 }
@@ -116,10 +116,12 @@ export default function CardsPage() {
             const cardTxs = transactions.filter(t =>
                 t.type === 'expense' && t.paymentMethod === 'card' && resolveCardId(t) === card._id
             );
-            const monthTxs = cardTxs.filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
+            // Current cashback period of this card (kỳ sao kê or tháng).
+            const cur = currentCashbackPeriod(card, now);
+            const monthTxs = cardTxs.filter(t => inCashbackPeriod(card, t.date, cur.year, cur.month));
             const yearTxs = cardTxs.filter(t => new Date(t.date).getFullYear() === now.getFullYear());
-            const monthTotal = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
-            const yearTotal = getCappedCashbackTotal(yearTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+            const monthTotal = getCardCashback(card, monthTxs);
+            const yearTotal = getCardCashback(card, yearTxs);
             return { card, monthTotal, yearTotal };
         }).sort((a, b) => b.monthTotal - a.monthTotal);
     }, [creditCards, transactions]);
@@ -314,7 +316,7 @@ export default function CardsPage() {
                                             <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">{card.bankName} •••• {card.cardNumber}</p>
                                             <p className="text-xs text-slate-400 dark:text-slate-500">
                                                 {card.cashbackRate > 0
-                                                    ? `${card.cashbackRate}% hoàn tiền${card.cashbackCap > 0 ? ` · tối đa ${fmtShort(card.cashbackCap)}₫/tháng` : ''}`
+                                                    ? `${card.cashbackRate}% hoàn tiền${card.cashbackCap > 0 ? ` · tối đa ${fmtShort(card.cashbackCap)}₫/${cashbackPeriodUnit(card)}` : ''}`
                                                     : 'Chưa thiết lập tỷ lệ — bấm để sửa'}
                                             </p>
                                         </div>

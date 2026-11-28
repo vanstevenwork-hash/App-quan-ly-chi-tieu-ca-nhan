@@ -23,6 +23,7 @@ interface Transaction {
     cardId?: any;
     receiptImage?: string;
     feeAmount?: number;
+    noCashback?: boolean;
     isInstallment?: boolean;
     installmentMonths?: number;
     installmentMonthly?: number;
@@ -181,6 +182,19 @@ export default function TransactionDetailModal({ transaction, open, onClose, onE
                                 </p>
                             </div>
                         </div>
+
+                        {/* Giao dịch không được hoàn tiền */}
+                        {transaction.noCashback && (
+                            <div className="flex items-center justify-between py-3.5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                        <CustomIcon type="coins" size={18} tile={false} color="#94A3B8" />
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Hoàn tiền</span>
+                                </div>
+                                <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Không được hoàn</p>
+                            </div>
+                        )}
 
                         {/* Phí giao dịch — only when charged */}
                         {(transaction.feeAmount || 0) > 0 && (

@@ -16,6 +16,9 @@ const transactionSchema = new mongoose.Schema({
     // % luôn suy ra = feeAmount / amount * 100 (không lưu để tránh lệch). Phí này
     // được trừ vào tiền hoàn (cashback ròng = cashback − feeAmount).
     feeAmount: { type: Number, default: 0 },
+    // Giao dịch không được hoàn tiền (vd. nạp ví, đóng phí, rút tiền mặt):
+    // không tính tiền hoàn và không tính vào chi tiêu tối thiểu, phí vẫn trừ.
+    noCashback: { type: Boolean, default: false },
     // Installment (trả góp)
     isInstallment: { type: Boolean, default: false },
     installmentMonths: { type: Number, default: 0 },

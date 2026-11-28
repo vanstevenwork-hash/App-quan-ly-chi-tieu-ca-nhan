@@ -29,7 +29,7 @@ import { useCards } from '@/hooks/useCards';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useWealth } from '@/hooks/useWealth';
 import { useImportantAlerts } from '@/hooks/useImportantAlerts';
-import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { resolveCardId, getCardCashback, inCashbackPeriod, currentCashbackPeriod } from '@/lib/cashback';
 import { getInstallmentPlans, getInstallmentSchedule } from '@/lib/cardDue';
 import { useSharedCashback } from '@/hooks/useSharedCashback';
 import { useCardShares } from '@/hooks/useCardShares';
@@ -100,12 +100,12 @@ export default function DashboardPage() {
     const ownCashback = useMemo(() => {
         const now = new Date();
         return creditCardsForCashback.reduce((sum, card) => {
+            const cur = currentCashbackPeriod(card, now);
             const cardMonthTxs = transactions.filter(t => {
                 if (t.type !== 'expense' || t.paymentMethod !== 'card' || resolveCardId(t) !== card._id) return false;
-                const d = new Date(t.date);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                return inCashbackPeriod(card, t.date, cur.year, cur.month);
             });
-            return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+            return sum + getCardCashback(card, cardMonthTxs);
         }, 0);
     }, [creditCardsForCashback, transactions]);
     const monthCashback = ownCashback + sharedCashbackTotal;

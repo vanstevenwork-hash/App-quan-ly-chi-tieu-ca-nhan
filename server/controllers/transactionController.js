@@ -58,7 +58,7 @@ exports.getTransaction = async (req, res) => {
 exports.createTransaction = async (req, res) => {
     try {
         console.log('🚀 SERVER: createTransaction REACHED!');
-        const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate, receiptImage, feeAmount } = req.body;
+        const { type, amount, category, note, date, cardId, paymentMethod, isInstallment, installmentMonths, installmentMonthly, installmentStartDate, receiptImage, feeAmount, noCashback } = req.body;
 
         // Determine the userId for the transaction:
         // If creating on a shared card, userId = card owner (so it shows up in card history)
@@ -87,6 +87,7 @@ exports.createTransaction = async (req, res) => {
             cardId, paymentMethod,
             receiptImage,
             feeAmount: Math.max(0, Math.min(Number(feeAmount) || 0, Number(amount) || 0)),
+            noCashback: !!noCashback,
             isInstallment: useInstallment,
             installmentMonths: useInstallment ? months : 0,
             installmentMonthly: monthly,

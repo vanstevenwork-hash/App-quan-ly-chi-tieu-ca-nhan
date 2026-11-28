@@ -4,7 +4,7 @@ import { memo, useMemo, useState } from 'react';
 import { ActionIcon } from '@/components/icons/ActionIcon';
 import { cn, formatNumber } from '@/lib/utils';
 import type { Card } from '@/hooks/useCards';
-import { resolveCardId, getCashbackAmount } from '@/lib/cashback';
+import { resolveCardId, getTxCashback } from '@/lib/cashback';
 
 const fmt = (n: number) => formatNumber(Math.round(Math.abs(n)));
 const fmtShort = (n: number) => {
@@ -45,7 +45,7 @@ function CreditCardHistoryListBase({ transactions, cards }: CreditCardHistoryLis
                 {(historyExpanded ? transactions : transactions.slice(0, 5)).map(t => {
                     const isExpense = t.type === 'expense';
                     const isInstallment = (t as any).isInstallment;
-                    const cb = isExpense ? getCashbackAmount(rateByCardId.get(resolveCardId(t)), t.amount) : 0;
+                    const cb = isExpense ? getTxCashback(rateByCardId.get(resolveCardId(t)), t as any) : 0;
                     const txDate = new Date(t.date);
                     const isToday = txDate.toDateString() === new Date().toDateString();
                     const isYesterday = txDate.toDateString() === new Date(Date.now() - 86400000).toDateString();

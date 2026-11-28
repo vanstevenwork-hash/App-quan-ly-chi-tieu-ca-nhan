@@ -56,6 +56,10 @@ const cardSchema = new mongoose.Schema({
     cashbackRate: { type: Number, default: 0 },        // % hoàn tiền, e.g. 1.5 = 1.5%
     cashbackCap: { type: Number, default: 0 },         // hoàn tiền tối đa/tháng (VNĐ), 0 = không giới hạn
     cashbackMinSpend: { type: Number, default: 0 },    // chi tiêu tối thiểu/tháng mới được hoàn (VNĐ), 0 = không yêu cầu
+    // Kỳ tính hoàn tiền (trần + chi tiêu tối thiểu áp dụng theo kỳ này):
+    // 'statement' = theo kỳ sao kê (ngày chốt +1 → ngày chốt kế tiếp),
+    // 'month' = theo tháng dương lịch. Thẻ chưa có ngày chốt → theo tháng.
+    cashbackPeriod: { type: String, enum: ['statement', 'month'], default: 'statement' },
     annualFee: { type: Number, default: 0 },           // phí thường niên (VNĐ), 0 = miễn phí/không có
     // Trích nợ tự động: after the statement closes, pay the amount due from a
     // payment account at the same bank (services/autoFinance.js).

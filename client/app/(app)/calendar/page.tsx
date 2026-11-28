@@ -5,7 +5,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useCards } from '@/hooks/useCards';
 import { useUIStore } from '@/store/useStore';
 import { useDayNotes } from '@/hooks/useDayNotes';
-import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { resolveCardId, getCardCashback, inCashbackPeriod } from '@/lib/cashback';
 import DayCell from '@/components/calendar/DayCell';
 import DayActionSheet from '@/components/calendar/DayActionSheet';
 import ImageNoteUploadModal, { type ImageNoteUploadModalHandle } from '@/components/calendar/ImageNoteUploadModal';
@@ -150,10 +150,10 @@ export default function CalendarPage() {
         return creditCards.reduce((sum, card) => {
             const cardMonthTxs = transactions.filter(t => {
                 if (t.type !== 'expense' || t.paymentMethod !== 'card' || resolveCardId(t) !== card._id) return false;
-                const d = new Date(t.date);
-                return d.getMonth() === month && d.getFullYear() === year;
+                // The card's cashback period (kỳ sao kê / tháng) named by this month.
+                return inCashbackPeriod(card, t.date, year, month);
             });
-            return sum + getCappedCashbackTotal(cardMonthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+            return sum + getCardCashback(card, cardMonthTxs);
         }, 0);
     }, [creditCards, transactions]);
 

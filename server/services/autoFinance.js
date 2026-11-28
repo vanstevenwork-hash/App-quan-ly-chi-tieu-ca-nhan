@@ -50,26 +50,47 @@ function lastStatementClose(statementDay, now = new Date()) {
     };
 }
 
-// Server port of client getDueThisCycle (lib/cardDue.ts): balance minus
-// installment months not reached yet minus ordinary charges made after the
-// statement closed (those bill next cycle).
-async function dueThisCycle(card, closeEnd, now = new Date()) {
+// 0-based installment period billed on the statement that closed on `close`
+// (VN date parts). Counted in statement cycles, not calendar months: a
+// purchase made AFTER its month's close day bills its first period on the
+// next close. Negative → nothing billed yet. Mirrors client periodOnClose.
+function periodOnClose(start, close, statementDay) {
+    const months = (close.y - start.y) * 12 + (close.m - start.m);
+    const startCloseDay = Math.min(statementDay, daysInMonth(start.y, start.m));
+    return months - (start.d > startCloseDay ? 1 : 0);
+}
+
+// Installment principal still sitting in `balance` that has NOT been billed
+// on any statement up to and including `close`. The last period absorbs the
+// rounding so the periods sum to the principal exactly.
+function unbilledInstallment(tx, close, statementDay) {
+    const months = tx.installmentMonths;
+    const total = tx.amount || 0;
+    const monthly = tx.installmentMonthly || Math.ceil(total / months);
+    const k = periodOnClose(vnParts(new Date(tx.installmentStartDate || tx.date)), close, statementDay);
+    if (k < 0) return total;
+    if (k >= months - 1) return 0;
+    return Math.max(0, total - (k + 1) * monthly);
+}
+
+// Amount owed on the statement that closed at `closeEnd` (from
+// lastStatementClose): balance minus installment principal not billed by
+// that close, minus ordinary charges made after it (those bill next cycle).
+// Depends only on the close, so a retry days or weeks later (e.g. after a
+// top-up, even into the next calendar month) still pays the same amount.
+async function dueThisCycle(card, closeEnd) {
     const txs = await Transaction.find({ userId: card.userId, cardId: card._id, type: 'expense' })
         .select('amount date isInstallment installmentMonths installmentMonthly installmentStartDate').lean();
-    const t = vnParts(now);
-    let notYetDue = 0, postClose = 0;
+    const close = vnParts(closeEnd);
+    let unbilled = 0, postClose = 0;
     for (const tx of txs) {
         if (tx.isInstallment && tx.installmentMonths > 0) {
-            const s = vnParts(new Date(tx.installmentStartDate || tx.date));
-            const elapsed = (t.y - s.y) * 12 + (t.m - s.m);
-            const remaining = Math.max(0, tx.installmentMonths - Math.max(0, elapsed));
-            const monthly = tx.installmentMonthly || Math.ceil((tx.amount || 0) / tx.installmentMonths);
-            if (remaining > 0) notYetDue += Math.max(0, remaining - 1) * monthly;
+            unbilled += unbilledInstallment(tx, close, card.statementDay);
         } else if (new Date(tx.date) > closeEnd) {
             postClose += tx.amount || 0;
         }
     }
-    return Math.max(0, Math.round((card.balance || 0) - notYetDue - postClose));
+    return Math.max(0, Math.round((card.balance || 0) - unbilled - postClose));
 }
 
 const norm = s => (s || '').trim().toLowerCase();
@@ -148,7 +169,7 @@ async function autoPayCreditCards(userId, payAccounts, now = new Date()) {
         const close = lastStatementClose(card.statementDay, now);
         if (card.autoPaidCycle === close.key) continue;
 
-        const due = await dueThisCycle(card, close.end, now);
+        const due = await dueThisCycle(card, close.end);
         if (due <= 0) {
             await Card.updateOne({ _id: card._id }, { $set: { autoPaidCycle: close.key } });
             continue;

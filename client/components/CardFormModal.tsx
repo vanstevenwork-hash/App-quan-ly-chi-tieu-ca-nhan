@@ -71,7 +71,7 @@ const EMPTY: CardFormData = {
     receiveAccountNumber: '', receiveQrImage: '',
     color: '#6C63FF', bankColor: '#1B4FD8', cardImage: '', isDefault: false,
     interestRate: 0, depositDate: '', maturityDate: '', term: 12,
-    paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, cashbackMinSpend: 0, annualFee: 0, autoDebit: true, expirationDate: '', note: '',
+    paymentDueDay: 0, statementDay: 0, cashbackRate: 0, cashbackCap: 0, cashbackMinSpend: 0, cashbackPeriod: 'statement', annualFee: 0, autoDebit: true, expirationDate: '', note: '',
 };
 
 export default function CardFormModal({ open, onClose, onSave, editCard, initialType }: CardFormModalProps) {
@@ -117,6 +117,7 @@ export default function CardFormModal({ open, onClose, onSave, editCard, initial
                     cashbackRate: editCard.cashbackRate || 0,
                     cashbackCap: editCard.cashbackCap || 0,
                     cashbackMinSpend: editCard.cashbackMinSpend || 0,
+                    cashbackPeriod: editCard.cashbackPeriod === 'month' ? 'month' : 'statement',
                     annualFee: editCard.annualFee || 0,
                     autoDebit: editCard.autoDebit !== false,
                     expirationDate: (editCard as any).expirationDate || '',
@@ -771,7 +772,7 @@ data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=close
                                                 className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hoàn tiền tối đa/tháng</p>
+                                            <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Hoàn tiền tối đa/{form.cashbackPeriod === 'month' ? 'tháng' : 'kỳ'}</p>
                                             <Input type="text"
                                                 value={form.cashbackCap ? formatNumber(form.cashbackCap) : ''}
                                                 onChange={e => set('cashbackCap', Number(e.target.value.replace(/\D/g, '')))}
@@ -780,14 +781,33 @@ data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=close
                                         </div>
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Chi tiêu tối thiểu/tháng để nhận hoàn (VND)</p>
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Chi tiêu tối thiểu/{form.cashbackPeriod === 'month' ? 'tháng' : 'kỳ'} để nhận hoàn (VND)</p>
                                         <Input type="text"
                                             value={form.cashbackMinSpend ? formatNumber(form.cashbackMinSpend) : ''}
                                             onChange={e => set('cashbackMinSpend', Number(e.target.value.replace(/\D/g, '')))}
                                             placeholder="vd: 15.000.000 · để trống nếu không yêu cầu"
                                             className="rounded-xl bg-white dark:bg-surface border-slate-200 dark:border-slate-700 h-12 text-base font-semibold text-black dark:text-white focus:border-brand dark:focus:border-purple-400 focus:ring-1 focus:ring-brand" />
                                     </div>
-                                    <p className="text-xs text-slate-400 -mt-2">Theo chính sách hoàn tiền thật của thẻ này, dùng để tính "Hoàn tiền" trên trang Thẻ. Tháng nào chi chưa đủ mức tối thiểu sẽ không được tính hoàn. Để trống mục tối đa nếu thẻ không giới hạn.</p>
+                                    <div>
+                                        <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Tính hoàn tiền theo</p>
+                                        <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+                                            {([['statement', 'Kỳ sao kê'], ['month', 'Tháng']] as const).map(([v, label]) => (
+                                                <button key={v} type="button" onClick={() => set('cashbackPeriod', v)}
+                                                    className={cn('h-10 rounded-lg text-sm font-bold transition-colors',
+                                                        form.cashbackPeriod === v ? 'bg-white dark:bg-surface text-brand dark:text-purple-400 shadow-sm' : 'text-slate-500 dark:text-slate-400')}>
+                                                    {label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <p className="text-xs text-slate-400 mt-2">
+                                            {form.cashbackPeriod === 'month'
+                                                ? 'Gom chi tiêu từ ngày 1 đến cuối tháng.'
+                                                : form.statementDay > 0
+                                                    ? `Gom chi tiêu từ ngày ${form.statementDay >= 31 ? 1 : form.statementDay + 1} đến ngày ${form.statementDay} tháng sau (theo ngày sao kê).`
+                                                    : 'Cần nhập ngày sao kê — chưa có thì tạm tính theo tháng.'}
+                                        </p>
+                                    </div>
+                                    <p className="text-xs text-slate-400 -mt-2">Theo chính sách hoàn tiền thật của thẻ này, dùng để tính "Hoàn tiền" trên trang Thẻ. {form.cashbackPeriod === 'month' ? 'Tháng' : 'Kỳ'} nào chi chưa đủ mức tối thiểu sẽ không được tính hoàn. Để trống mục tối đa nếu thẻ không giới hạn.</p>
 
                                     <div>
                                         <p className="text-sm font-bold text-[#000000] dark:text-white mb-2">Phí thường niên (VND)</p>

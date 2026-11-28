@@ -49,6 +49,8 @@ export default function AddTransactionModal({
     // Installment (Trả góp)
     const [isInstallment, setIsInstallment] = useState(false);
     const [installmentMonths, setInstallmentMonths] = useState(12);
+    // Được hoàn tiền? Off = giao dịch không được hoàn (nạp ví, đóng phí...).
+    const [hasCashback, setHasCashback] = useState(true);
 
     // Transaction fee (phí quẹt thẻ). Canonical value is the đồng amount; % is
     // derived. The two inputs stay in sync (edit one → the other recomputes).
@@ -98,6 +100,7 @@ export default function AddTransactionModal({
 
                 setIsInstallment(initialData.isInstallment || false);
                 setInstallmentMonths(initialData.installmentMonths || 12);
+                setHasCashback(!initialData.noCashback);
                 setReceiptImage(initialData.receiptImage || '');
 
                 const initFee = initialData.feeAmount || 0;
@@ -116,6 +119,7 @@ export default function AddTransactionModal({
                 setSelectedCardId('cash');
                 setIsInstallment(false);
                 setInstallmentMonths(12);
+                setHasCashback(true);
                 setReceiptImage('');
                 setHasFee(false);
                 setFeePctStr('');
@@ -207,7 +211,8 @@ export default function AddTransactionModal({
     };
     // Net cashback preview = gross cashback of the selected card − fee.
     const feeCard = [...creditCards, ...sharedCardList].find(c => c._id === selectedCardId);
-    const grossCashback = feeCard ? amountNum * ((feeCard.cashbackRate || 0) / 100) : 0;
+    const cardEarnsCashback = !!feeCard && (feeCard.cashbackRate || 0) > 0 && type === 'expense';
+    const grossCashback = feeCard && hasCashback ? amountNum * ((feeCard.cashbackRate || 0) / 100) : 0;
     const netCashback = grossCashback - feeAmountNum;
 
     const handleSave = async () => {
@@ -233,6 +238,7 @@ export default function AddTransactionModal({
                 installmentMonthly: paymentTab === 'credit' && isInstallment ? monthlyPayment : 0,
                 installmentStartDate: paymentTab === 'credit' && isInstallment ? new Date(date) : undefined,
                 feeAmount: selectedCardId !== 'cash' && hasFee ? feeAmountNum : 0,
+                noCashback: cardEarnsCashback && !hasCashback,
             };
 
             console.log('Saving transaction payload:', payload);
@@ -603,6 +609,48 @@ export default function AddTransactionModal({
                                 </div>
                             )}
                         </div>
+                    )}
+
+                    {/* ── Có được hoàn tiền không — thẻ có % hoàn ── */}
+                    {cardEarnsCashback && (
+                        <button
+                            type="button"
+                            onClick={() => setHasCashback(v => !v)}
+                            className={cn(
+                                'flex items-center justify-between w-full rounded-xl p-3 border-2 transition-all',
+                                hasCashback
+                                    ? 'border-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/15'
+                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-surface hover:border-slate-300 dark:hover:border-slate-600'
+                            )}
+                        >
+                            <div className="flex items-center gap-2">
+                                <div className={cn(
+                                    'w-9 h-9 rounded-xl flex items-center justify-center transition-colors',
+                                    hasCashback ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                )}>
+                                    <CustomIcon type="coins" size={16} tile={false} color="currentColor" className="w-4 h-4" />
+                                </div>
+                                <div className="text-left">
+                                    <p className={cn('text-sm font-bold', hasCashback ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300')}>
+                                        Được hoàn tiền
+                                    </p>
+                                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                                        {hasCashback
+                                            ? `Hoàn ${feeCard!.cashbackRate}%${amountNum > 0 ? ` · ~${formatNumber(Math.round(grossCashback))}₫` : ''}`
+                                            : 'Không tính hoàn & không tính vào chi tiêu tối thiểu'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={cn(
+                                'w-12 h-6 rounded-full transition-colors flex items-center px-1 flex-shrink-0',
+                                hasCashback ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                            )}>
+                                <div className={cn(
+                                    'w-4 h-4 rounded-full bg-white shadow-sm transition-transform',
+                                    hasCashback ? 'translate-x-6' : 'translate-x-0'
+                                )} />
+                            </div>
+                        </button>
                     )}
 
                     {/* ── Phí giao dịch — cho giao dịch trả bằng thẻ ── */}

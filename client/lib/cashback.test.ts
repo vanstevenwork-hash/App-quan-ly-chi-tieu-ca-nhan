@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCashbackAmount, getCappedCashbackTotal } from './cashback';
+import { getCashbackAmount, getCappedCashbackTotal, cashbackPeriodOf, cashbackPeriodLabel, cashbackPeriodRange, getCardCashback, getTxCashback } from './cashback';
 
 describe('getCashbackAmount', () => {
     it('computes rate% of amount', () => {
@@ -43,3 +43,46 @@ describe('getCappedCashbackTotal', () => {
         expect(getCappedCashbackTotal(txs, 2, 50_000, 0)).toBe(100_000);
     });
 });
+
+describe('cashback period (kỳ sao kê / tháng)', () => {
+    const stmt = { cashbackRate: 2, cashbackCap: 100_000, statementDay: 20 } as const;
+    const month = { ...stmt, cashbackPeriod: 'month' as const };
+
+    it('statement mode: after the close day belongs to the next period', () => {
+        expect(cashbackPeriodOf(stmt, new Date(2026, 10, 20))).toEqual({ year: 2026, month: 10 });
+        expect(cashbackPeriodOf(stmt, new Date(2026, 10, 28))).toEqual({ year: 2026, month: 11 });
+        expect(cashbackPeriodOf(stmt, new Date(2026, 11, 25))).toEqual({ year: 2027, month: 0 });
+        expect(cashbackPeriodLabel(stmt, 2026, 11)).toBe('21/11–20/12');
+    });
+
+    it('month mode, or no statement day: calendar month', () => {
+        expect(cashbackPeriodOf(month, new Date(2026, 10, 28))).toEqual({ year: 2026, month: 10 });
+        expect(cashbackPeriodOf({ statementDay: 0 }, new Date(2026, 10, 28))).toEqual({ year: 2026, month: 10 });
+        expect(cashbackPeriodLabel(month, 2026, 10)).toBe('');
+    });
+
+    it('clamps the close day to short months (statementDay 31)', () => {
+        const c = { statementDay: 31 };
+        expect(cashbackPeriodOf(c, new Date(2027, 1, 28))).toEqual({ year: 2027, month: 1 });
+        expect(cashbackPeriodRange(c, 2027, 2).start).toEqual(new Date(2027, 2, 1));
+    });
+
+    it('cap applies per statement period, not per calendar month', () => {
+        // 21/11–20/12 and 21/12–20/01: 4tr each side of the 20/12 close → 2 caps
+        const txs = [tx2('2026-12-10', 4_000_000), tx2('2026-12-25', 4_000_000)];
+        expect(getCardCashback(stmt, txs)).toBe(160_000);
+        // same txs in one calendar month → one cap
+        expect(getCardCashback(month, txs)).toBe(100_000);
+    });
+
+    it('noCashback: earns nothing, excluded from min-spend, fee still applies', () => {
+        const c = { cashbackRate: 2, cashbackMinSpend: 2_000_000, statementDay: 20 };
+        const txs = [tx2('2026-11-25', 1_500_000), { ...tx2('2026-11-26', 1_000_000, 5_000), noCashback: true }];
+        expect(getCardCashback(c, txs)).toBe(-5_000); // eligible 1.5tr < 2tr min
+        expect(getTxCashback(2, txs[1])).toBe(0);
+    });
+});
+
+function tx2(day: string, amount: number, feeAmount = 0) {
+    return { date: `${day}T10:00:00`, amount, feeAmount };
+}

@@ -4,6 +4,7 @@ const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const Card = require('../models/Card');
 const { hasCardAccess } = require('../utils/cardAccess');
+const { usesStatement, cashbackPeriodRange, currentCashbackPeriod, summarizeCashback, cashbackPeriodLabel } = require('../utils/cashbackPeriod');
 const { sendMessage, answerCallbackQuery, editMessageText, downloadTelegramFile, sendDocument, callTelegram } = require('../utils/telegram');
 
 // Category labels must match client/lib/mockData.ts CATEGORIES exactly so the
@@ -199,20 +200,20 @@ const confirmKeyboard = (txId) => ({
 });
 
 // ─── Cashback (hoàn tiền) — same formula as client/lib/cashback.ts ───
-// This month's cashback on a card: spend × rate, gated by min-spend, capped.
+// Current period's cashback on a card (kỳ sao kê or calendar month, per
+// card.cashbackPeriod): eligible spend × rate, gated by min-spend, capped.
 async function cashbackForCard(card) {
     const rate = card.cashbackRate || 0;
     if (rate <= 0) return null;
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const txs = await Transaction.find({ cardId: card._id, type: 'expense', date: { $gte: start } });
-    const spend = txs.reduce((s, t) => s + t.amount, 0);
-    const cap = card.cashbackCap || 0;
-    const minSpend = card.cashbackMinSpend || 0;
-    const reached = !(minSpend > 0 && spend < minSpend);
-    const raw = spend * rate / 100;
-    const cashback = !reached ? 0 : (cap > 0 ? Math.min(raw, cap) : raw);
-    return { rate, spend, cap, minSpend, cashback, reached, capped: cap > 0 && raw > cap && reached, needMore: minSpend > 0 ? Math.max(0, minSpend - spend) : 0 };
+    const period = currentCashbackPeriod(card);
+    const { start, end } = cashbackPeriodRange(card, period.year, period.month);
+    const txs = await Transaction.find({ cardId: card._id, type: 'expense', date: { $gte: start, $lte: end } });
+    const cb = summarizeCashback(card, txs);
+    const label = usesStatement(card) ? `kỳ ${cashbackPeriodLabel(card, period.year, period.month)}` : 'tháng này';
+    return {
+        rate, spend: cb.spend, cap: cb.cap, minSpend: cb.minSpend, cashback: cb.earned, reached: cb.reached,
+        capped: cb.capped, needMore: cb.minSpend > 0 ? Math.max(0, cb.minSpend - cb.spend) : 0, label,
+    };
 }
 
 // One-line cashback hint appended to an expense confirmation on a cashback card.
@@ -220,7 +221,7 @@ async function cashbackNote(card) {
     const cb = await cashbackForCard(card);
     if (!cb) return '';
     if (!cb.reached) return `💵 Hoàn ${cb.rate}% — cần chi thêm ${fmt(cb.needMore)}đ để đạt mốc`;
-    return `💵 Hoàn tiền tháng này: ~${fmt(cb.cashback)}đ (${cb.rate}%)${cb.capped ? ` · đã chạm trần ${fmt(cb.cap)}đ` : ''}`;
+    return `💵 Hoàn tiền ${cb.label}: ~${fmt(cb.cashback)}đ (${cb.rate}%)${cb.capped ? ` · đã chạm trần ${fmt(cb.cap)}đ` : ''}`;
 }
 
 // This month's spend in one category vs its budget (if set).
@@ -535,7 +536,7 @@ async function handleHoantien(chatId, user) {
     for (const c of cards) {
         const cb = await cashbackForCard(c);
         total += cb.cashback;
-        let line = `${sourceLabel(c)} · <b>${cb.rate}%</b>\n  Chi ${fmt(cb.spend)}đ → hoàn ~<b>${fmt(cb.cashback)}đ</b>`;
+        let line = `${sourceLabel(c)} · <b>${cb.rate}%</b> · ${cb.label}\n  Chi ${fmt(cb.spend)}đ → hoàn ~<b>${fmt(cb.cashback)}đ</b>`;
         if (!cb.reached) line += `\n  ⚠️ cần chi thêm ${fmt(cb.needMore)}đ để đạt mốc`;
         else if (cb.capped) line += `\n  🔒 đã chạm trần ${fmt(cb.cap)}đ`;
         lines.push(line);
@@ -548,7 +549,7 @@ async function handleHoantien(chatId, user) {
         ? `\n\n💡 Nên quẹt: <b>${sourceLabel(best.card)}</b> (${best.rate}%${best.remaining !== Infinity ? `, còn ~${fmt(best.remaining)}đ hoàn` : ''})`
         : '';
 
-    await sendMessage(chatId, `💵 <b>Hoàn tiền tháng ${new Date().getMonth() + 1}</b>\n${lines.join('\n')}\n\nTổng ước tính: <b>~${fmt(total)}đ</b>${tip}`);
+    await sendMessage(chatId, `💵 <b>Hoàn tiền kỳ hiện tại</b>\n${lines.join('\n')}\n\nTổng ước tính: <b>~${fmt(total)}đ</b>${tip}`);
 }
 
 async function handleDinhky(chatId, user, argText) {

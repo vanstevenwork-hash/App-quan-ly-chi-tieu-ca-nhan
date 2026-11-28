@@ -15,7 +15,7 @@ import CardPaymentModal from '@/components/CardPaymentModal';
 import CardShareModal from '@/components/CardShareModal';
 import PageHeader from '@/components/PageHeader';
 import { cn, formatNumber } from '@/lib/utils';
-import { resolveCardId, getCashbackAmount, getCappedCashbackTotal } from '@/lib/cashback';
+import { resolveCardId, getTxCashback, getCardCashback, inCashbackPeriod, currentCashbackPeriod, cashbackPeriodUnit } from '@/lib/cashback';
 import { getActiveInstallmentPlans, getDueThisCycle } from '@/lib/cardDue';
 
 // ─── Formatters ────────────────────────────────────────────────────────────
@@ -101,16 +101,16 @@ export default function CardDetailPage() {
     }, [transactions, card]);
 
     const cashbackThisMonth = useMemo(() => {
-        const now = new Date();
+        const cur = currentCashbackPeriod(card);
         const monthTxs = cardTxs
             .filter(t => t.type === 'expense')
-            .filter(t => { const d = new Date(t.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); });
-        return getCappedCashbackTotal(monthTxs, card?.cashbackRate, card?.cashbackCap, card?.cashbackMinSpend);
+            .filter(t => inCashbackPeriod(card, t.date, cur.year, cur.month));
+        return getCardCashback(card, monthTxs);
     }, [cardTxs, card]);
 
     const cashbackTotal = useMemo(() => {
         const expenseTxs = cardTxs.filter(t => t.type === 'expense');
-        return getCappedCashbackTotal(expenseTxs, card?.cashbackRate, card?.cashbackCap, card?.cashbackMinSpend);
+        return getCardCashback(card, expenseTxs);
     }, [cardTxs, card]);
 
     const activeInstallmentPlans = useMemo(() => {
@@ -397,7 +397,7 @@ export default function CardDetailPage() {
                         <div className="flex items-center gap-3 px-4 py-3">
                             <CustomIcon type="hoanTien" size={16} tile={false} color="currentColor" className="text-slate-400 flex-shrink-0" />
                             <span className="text-xs text-slate-400 flex-1">Chi tối thiểu để nhận hoàn</span>
-                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{formatNumber(card.cashbackMinSpend)}đ/tháng</span>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{formatNumber(card.cashbackMinSpend)}đ/{cashbackPeriodUnit(card)}</span>
                         </div>
                     )}
                     {card.annualFee > 0 && (
@@ -427,7 +427,7 @@ export default function CardDetailPage() {
                         <div className="bg-white dark:bg-surface rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden divide-y divide-gray-100 dark:divide-slate-700/50">
                             {(historyExpanded ? cardTxs : cardTxs.slice(0, 5)).map(t => {
                                 const isExpense = t.type === 'expense';
-                                const cb = isExpense ? getCashbackAmount(card.cashbackRate, t.amount) : 0;
+                                const cb = isExpense ? getTxCashback(card.cashbackRate, t) : 0;
                                 const txDate = new Date(t.date);
                                 const dateLabel = txDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit' });
                                 return (

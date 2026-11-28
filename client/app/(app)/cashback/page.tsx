@@ -11,7 +11,7 @@ import { useCashbackRecords } from '@/hooks/useCashbackRecords';
 import { useCardShares } from '@/hooks/useCardShares';
 import { useBanks } from '@/hooks/useBanks';
 import { getBankLogo } from '@/lib/bankLogos';
-import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { resolveCardId, getCardCashback, inCashbackPeriod, currentCashbackPeriod, cashbackPeriodLabel, cashbackPeriodUnit } from '@/lib/cashback';
 import { cardSharesApi } from '@/lib/api';
 import PageHeader from '@/components/PageHeader';
 import { cn, formatNumber } from '@/lib/utils';
@@ -116,15 +116,21 @@ export default function CashbackPage() {
 
     const creditCards = useMemo(() => cards.filter(c => c.cardType === 'credit'), [cards]);
 
-    // Last N months window, oldest first: [{ year, month, label }]
+    // Last N periods window, oldest first: [{ year, month, label }]. A period
+    // is a card's kỳ sao kê (named by the month it closes in) or calendar
+    // month, so the window ends at the latest current period of any card —
+    // after a close day that's already next month.
     const months = useMemo(() => {
         const now = new Date();
+        const end = creditCards.reduce((acc, c) => {
+            const p = currentCashbackPeriod(c, now);
+            return p.year * 12 + p.month > acc.getFullYear() * 12 + acc.getMonth() ? new Date(p.year, p.month, 1) : acc;
+        }, new Date(now.getFullYear(), now.getMonth(), 1));
         return Array.from({ length: MONTHS_WINDOW }, (_, i) => {
-            const d = new Date(now.getFullYear(), now.getMonth() - (MONTHS_WINDOW - 1 - i), 1);
+            const d = new Date(end.getFullYear(), end.getMonth() - (MONTHS_WINDOW - 1 - i), 1);
             return { year: d.getFullYear(), month: d.getMonth(), label: `Th${d.getMonth() + 1}/${d.getFullYear()}`, short: `T${d.getMonth() + 1}` };
         });
-    }, []);
-    const curMonth = months[months.length - 1];
+    }, [creditCards]);
 
     // Every (card, month) combination in the window with its estimated cashback
     const rawMonthly = useMemo(() => {
@@ -133,16 +139,16 @@ export default function CashbackPage() {
                 t.type === 'expense' && t.paymentMethod === 'card' && resolveCardId(t) === card._id
             );
             return months.map(({ year, month, label }) => {
-                const monthTxs = cardTxs.filter(t => { const d = new Date(t.date); return d.getFullYear() === year && d.getMonth() === month; });
-                // estimatedAmount is NET (cashback − phí) — getCappedCashbackTotal
+                const monthTxs = cardTxs.filter(t => inCashbackPeriod(card, t.date, year, month));
+                // estimatedAmount is NET (cashback − phí) — getCardCashback
                 // subtracts each tx's feeAmount. `fee` is tracked separately so the
                 // page can surface how much fee reduced the reward.
-                const estimatedAmount = getCappedCashbackTotal(monthTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+                const estimatedAmount = getCardCashback(card, monthTxs);
                 const fee = monthTxs.reduce((s, t) => s + (t.feeAmount || 0), 0);
                 // Uncapped total — when it exceeds the cap, the row shows "chạm trần"
-                const rawAmount = monthTxs.reduce((s, t) => s + t.amount, 0) * (card.cashbackRate || 0) / 100;
+                const rawAmount = monthTxs.reduce((s, t) => s + (t.noCashback ? 0 : t.amount), 0) * (card.cashbackRate || 0) / 100;
                 const capped = card.cashbackCap > 0 && rawAmount > card.cashbackCap;
-                return { card, year, month, label, estimatedAmount, capped, fee };
+                return { card, year, month, label, estimatedAmount, capped, fee, periodLabel: cashbackPeriodLabel(card, year, month) };
             });
         });
     }, [creditCards, transactions, months]);
@@ -165,35 +171,37 @@ export default function CashbackPage() {
     const currentMonthCards = useMemo(() => {
         return creditCards
             .map(card => {
-                const rm = rawMonthly.find(r => r.card._id === card._id && r.year === curMonth.year && r.month === curMonth.month);
-                const record = records.find(r => r.cardId === card._id && r.year === curMonth.year && r.month === curMonth.month);
+                const cur = currentCashbackPeriod(card);
+                const rm = rawMonthly.find(r => r.card._id === card._id && r.year === cur.year && r.month === cur.month);
+                const record = records.find(r => r.cardId === card._id && r.year === cur.year && r.month === cur.month);
                 const estimatedAmount = rm?.estimatedAmount ?? 0;
                 const status: 'pending' | 'received' = record?.status || 'pending';
                 const displayAmount = status === 'received' ? (record?.receivedAmount ?? estimatedAmount) : estimatedAmount;
-                return { card, estimatedAmount, displayAmount, status, capped: rm?.capped ?? false, hasRecord: !!record };
+                return { card, cur, periodLabel: cashbackPeriodLabel(card, cur.year, cur.month), estimatedAmount, displayAmount, status, capped: rm?.capped ?? false, hasRecord: !!record };
             })
             .filter(x => x.estimatedAmount > 0 || x.hasRecord)
             .sort((a, b) => b.displayAmount - a.displayAmount);
-    }, [creditCards, rawMonthly, records, curMonth]);
+    }, [creditCards, rawMonthly, records]);
 
     // Complete roster of every credit card (own + shared) with this month's
     // cashback — a bottom reference list so no card is hidden, unlike the tabs
     // above which drop cards with no activity.
     const allCardsCashback = useMemo(() => {
         const own = creditCards.map(card => {
-            const rm = rawMonthly.find(r => r.card._id === card._id && r.year === curMonth.year && r.month === curMonth.month);
-            const record = records.find(r => r.cardId === card._id && r.year === curMonth.year && r.month === curMonth.month);
+            const cur = currentCashbackPeriod(card);
+            const rm = rawMonthly.find(r => r.card._id === card._id && r.year === cur.year && r.month === cur.month);
+            const record = records.find(r => r.cardId === card._id && r.year === cur.year && r.month === cur.month);
             const est = rm?.estimatedAmount ?? 0;
             const status: 'pending' | 'received' = record?.status || 'pending';
             const amount = status === 'received' ? (record?.receivedAmount ?? est) : est;
-            return { key: card._id, name: `${card.bankName} •••• ${card.cardNumber}`, sub: `Hoàn ${card.cashbackRate || 0}%`, logo: getCardLogo(card) as string | null, amount, shared: false };
+            return { key: card._id, name: `${card.bankName} •••• ${card.cardNumber}`, sub: `Hoàn ${card.cashbackRate || 0}%${cashbackPeriodLabel(card, cur.year, cur.month) ? ` · kỳ ${cashbackPeriodLabel(card, cur.year, cur.month)}` : ''}`, logo: getCardLogo(card) as string | null, amount, shared: false };
         });
         const shared = sharedCashback.map(sc => {
             const owner = sharedCards.find(x => x.card._id === sc.cardId)?.owner;
             return { key: sc.cardId, name: sc.bankName, sub: `Thẻ chung${owner ? ` · của ${owner.name}` : ''}`, logo: null as string | null, amount: sc.cashbackEarned, shared: true };
         });
         return [...own, ...shared].sort((a, b) => b.amount - a.amount);
-    }, [creditCards, rawMonthly, records, curMonth, sharedCashback, sharedCards, getCardLogo]);
+    }, [creditCards, rawMonthly, records, sharedCashback, sharedCards, getCardLogo]);
     const allCardsCashbackTotal = useMemo(() => allCardsCashback.reduce((s, c) => s + c.amount, 0), [allCardsCashback]);
     // Total transaction fees already deducted from the cashback shown (so the
     // displayed total is net). Surfaced as a note so the reduction is visible.
@@ -225,7 +233,7 @@ export default function CashbackPage() {
 
     // ── Month-first grouping for the "Theo tháng" view ──────────────
     // Newest month first; consecutive months with no cashback collapse into one muted range row.
-    type MonthRow = { card: Card; estimatedAmount: number; displayAmount: number; status: 'pending' | 'received'; capped: boolean };
+    type MonthRow = { card: Card; estimatedAmount: number; displayAmount: number; status: 'pending' | 'received'; capped: boolean; periodLabel: string };
     type MonthGroup =
         | { kind: 'month'; key: string; year: number; month: number; rows: MonthRow[]; total: number; pending: number }
         | { kind: 'empty'; key: string; months: { year: number; month: number }[] };
@@ -247,7 +255,7 @@ export default function CashbackPage() {
                 if (rm.estimatedAmount <= 0 && !record) return;
                 const status: 'pending' | 'received' = record?.status || 'pending';
                 const displayAmount = status === 'received' ? (record?.receivedAmount ?? rm.estimatedAmount) : rm.estimatedAmount;
-                rows.push({ card: rm.card, estimatedAmount: rm.estimatedAmount, displayAmount, status, capped: rm.capped });
+                rows.push({ card: rm.card, estimatedAmount: rm.estimatedAmount, displayAmount, status, capped: rm.capped, periodLabel: rm.periodLabel });
             });
             if (rows.length === 0) { emptyRun.push({ year, month }); return; }
             flushEmpty();
@@ -432,7 +440,7 @@ export default function CashbackPage() {
                 <div>
                     <div className="flex items-center justify-between mb-2.5">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white px-1">
-                            {viewTab === 'card' ? `Chi tiết tháng ${curMonth.month + 1}` : 'Chi tiết theo tháng'}
+                            {viewTab === 'card' ? 'Chi tiết kỳ hiện tại' : 'Chi tiết theo kỳ'}
                         </h3>
                         <div className="bg-white dark:bg-surface border border-gray-100 dark:border-slate-700 p-1 rounded-full flex gap-1 shadow-sm">
                             <button
@@ -462,12 +470,12 @@ export default function CashbackPage() {
                     ) : viewTab === 'card' ? (
                         currentMonthCards.length === 0 && sharedCashback.length === 0 ? (
                             <div className="bg-white dark:bg-surface rounded-2xl border border-gray-100 dark:border-slate-700 p-6 text-center">
-                                <p className="text-sm text-slate-400">Chưa có hoàn tiền trong tháng {curMonth.month + 1}</p>
+                                <p className="text-sm text-slate-400">Chưa có hoàn tiền trong kỳ hiện tại</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {currentMonthCards.map(({ card, estimatedAmount, displayAmount, status, capped }) => {
-                                    const key = `${card._id}-${curMonth.year}-${curMonth.month}`;
+                                {currentMonthCards.map(({ card, cur, periodLabel, estimatedAmount, displayAmount, status, capped }) => {
+                                    const key = `${card._id}-${cur.year}-${cur.month}`;
                                     const logoUrl = getCardLogo(card);
                                     const cap = card.cashbackCap || 0;
                                     const pct = cap > 0 ? Math.min(100, (estimatedAmount / cap) * 100) : 0;
@@ -478,13 +486,14 @@ export default function CashbackPage() {
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[15px] font-bold text-slate-800 dark:text-white truncate">{card.bankName} •••• {card.cardNumber}</p>
                                                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                                                        Hoàn {card.cashbackRate}%{cap > 0 ? ` · trần ${fmtShort(cap)}/tháng` : ''}
+                                                        Hoàn {card.cashbackRate}%{cap > 0 ? ` · trần ${fmtShort(cap)}/${cashbackPeriodUnit(card)}` : ''}
+                                                        {periodLabel ? ` · kỳ ${periodLabel}` : ` · tháng ${cur.month + 1}`}
                                                     </p>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                                                     <span className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmt(displayAmount)}đ</span>
                                                     <button
-                                                        onClick={() => handleToggleStatus(card._id, curMonth.year, curMonth.month, status, estimatedAmount)}
+                                                        onClick={() => handleToggleStatus(card._id, cur.year, cur.month, status, estimatedAmount)}
                                                         disabled={updatingKey === key}
                                                         className={cn(
                                                             'text-[10px] font-bold px-2.5 py-1 rounded-full transition-all active:scale-95 flex items-center gap-1',
@@ -632,7 +641,7 @@ export default function CashbackPage() {
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{row.card.bankName} •••• {row.card.cardNumber}</p>
                                                                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
-                                                                    Hoàn {row.card.cashbackRate}%{row.capped ? ' · chạm trần' : ''}
+                                                                    Hoàn {row.card.cashbackRate}%{row.periodLabel ? ` · kỳ ${row.periodLabel}` : ''}{row.capped ? ' · chạm trần' : ''}
                                                                 </p>
                                                             </div>
                                                             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
@@ -673,7 +682,7 @@ export default function CashbackPage() {
                     <div>
                         <div className="flex items-center justify-between mb-2.5 px-1">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white">Tất cả thẻ hoàn tiền</h3>
-                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Tháng {curMonth.month + 1}</span>
+                            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Kỳ hiện tại</span>
                         </div>
                         <div className="bg-white dark:bg-surface rounded-[20px] border border-gray-100 dark:border-slate-700 shadow-sm divide-y divide-gray-50 dark:divide-slate-700/40 overflow-hidden">
                             {allCardsCashback.map(c => (
@@ -697,7 +706,7 @@ export default function CashbackPage() {
                                 </div>
                             ))}
                             <div className="flex items-center justify-between px-4 py-3 bg-slate-50/70 dark:bg-white/[0.03]">
-                                <span className="text-sm font-bold text-slate-500 dark:text-slate-300">Đã hoàn tháng này</span>
+                                <span className="text-sm font-bold text-slate-500 dark:text-slate-300">Đã hoàn kỳ này</span>
                                 <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 tabular-nums">+{fmt(allCardsCashbackTotal)}đ</span>
                             </div>
                             {cashbackCaps.totalCap > 0 && (

@@ -4,7 +4,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useCards, type Card } from '@/hooks/useCards';
 import { useCardShares } from '@/hooks/useCardShares';
 import { cardSharesApi } from '@/lib/api';
-import { resolveCardId, getCappedCashbackTotal } from '@/lib/cashback';
+import { resolveCardId, getCardCashback } from '@/lib/cashback';
 import { transactionsApi } from '@/lib/api';
 import { CATEGORIES, CATEGORIES_MAP } from '@/lib/mockData';
 import CategoryIcon from '@/components/icons/CategoryIcon';
@@ -347,8 +347,8 @@ export default function AnalyticsPage() {
             .reduce((sum, card) => {
                 const cardTxs = periodTx
                     .filter(t => t.type === 'expense' && t.paymentMethod === 'card' && resolveCardId(t) === card._id)
-                    .map(t => ({ date: t.date, amount: t.amount }));
-                return sum + getCappedCashbackTotal(cardTxs, card.cashbackRate, card.cashbackCap, card.cashbackMinSpend);
+                    .map(t => ({ date: t.date, amount: t.amount, noCashback: t.noCashback }));
+                return sum + getCardCashback(card, cardTxs);
             }, 0);
         // Shared-card (thẻ chung) cashback comes from the backend as a single
         // current-month figure (not period-scoped, not fee-adjusted) — shown as

@@ -43,6 +43,8 @@ export interface Card {
     cashbackRate: number;
     cashbackCap: number;
     cashbackMinSpend: number;
+    // Kỳ tính hoàn tiền: theo kỳ sao kê (mặc định) hoặc theo tháng
+    cashbackPeriod?: 'statement' | 'month';
     annualFee: number;
     // Trích nợ tự động từ TK thanh toán cùng ngân hàng sau khi chốt sao kê
     autoDebit?: boolean;
@@ -77,6 +79,7 @@ export interface CardFormData {
     cashbackRate: number;
     cashbackCap: number;
     cashbackMinSpend: number;
+    cashbackPeriod: 'statement' | 'month';
     annualFee: number;
     autoDebit: boolean;
     expirationDate: string;
